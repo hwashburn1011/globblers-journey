@@ -9,7 +9,7 @@
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
 - **Last task completed:** Phase 1 complete (1.1-1.5): project structure, autoloads, CSG Globbler, HUD/UI, test level
-- **Next task to do:** Phase 2.1 Glob Command Ability (aim mode, beam visual, targeting, grab/push/absorb)
+- **Next task to do:** Phase 2.2 Wrench Smash (melee attack, hitbox, health_component integration)
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -55,13 +55,13 @@
 ## PHASE 2: CORE GAMEPLAY
 
 ### 2.1 Glob Command Ability
-- [ ] Aim mode: hold button to show targeting reticle
-- [ ] Glob beam visual: green energy beam/projectile from Globbler's hand
-- [ ] On hit: calls glob_engine to select matching objects in radius
-- [ ] Selected objects get green highlight
-- [ ] Player can then: grab (pull toward), push (launch away), or absorb (collect)
-- [ ] Cooldown system on ability use
-- [ ] glob_beam.gdshader — green glowing energy shader
+- [x] Aim mode: right-click hold to show targeting reticle (torus with pulse animation)
+- [x] Glob beam visual: green energy beam from player hand to aim point, fades out
+- [x] On hit: calls GlobEngine.match_pattern_in_radius() to select targets
+- [x] Selected objects get green highlight (via GlobTarget.set_highlighted)
+- [x] Player can: grab (pull toward), push (launch away), or absorb (collect) — Q to cycle
+- [x] Cooldown system on ability use (1.5s for aimed glob, 0.35s for quick projectile)
+- [x] glob_beam.gdshader — scrolling green energy shader with pulse and edge fade
 
 ### 2.2 Wrench Smash
 - [ ] Melee attack: swing wrench with hitbox

@@ -55,10 +55,11 @@ var camera_pitch := -0.25
 var camera_distance := 7.0
 var mouse_captured := true
 
-# Glob attack
+# Glob attack — now with proper ability system
 var glob_cooldown := 0.0
 const GLOB_COOLDOWN_TIME = 0.35
 var glob_projectile_scene: PackedScene
+var glob_command: Node3D  # The full glob command ability node
 
 # Landing impact
 var prev_velocity_y := 0.0
@@ -139,11 +140,24 @@ func _ready() -> void:
 	# Dash particles
 	_setup_dash_particles()
 
-	# Preload glob projectile
+	# Preload glob projectile (legacy quick-fire)
 	glob_projectile_scene = load("res://scenes/glob_projectile.tscn")
+
+	# Set up glob command ability (the full aim+beam+select system)
+	var GlobCommandScript = load("res://scenes/player/abilities/glob_command.gd")
+	glob_command = Node3D.new()
+	glob_command.name = "GlobCommand"
+	glob_command.set_script(GlobCommandScript)
+	add_child(glob_command)
+	# Setup is deferred so camera_arm exists
+	call_deferred("_setup_glob_command")
 
 	# Capture mouse
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+func _setup_glob_command() -> void:
+	if glob_command and glob_command.has_method("setup"):
+		glob_command.setup(self, camera_arm)
 
 func _build_csg_model() -> void:
 	# Root node for the whole model so we can animate it
@@ -441,13 +455,20 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event is InputEventMouseButton:
 		var mb = event as InputEventMouseButton
-		if mb.pressed:
-			if mb.button_index == MOUSE_BUTTON_WHEEL_UP:
-				camera_distance = max(CAMERA_MIN_DIST, camera_distance - CAMERA_ZOOM_SPEED)
-			elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-				camera_distance = min(CAMERA_MAX_DIST, camera_distance + CAMERA_ZOOM_SPEED)
-			elif mb.button_index == MOUSE_BUTTON_LEFT:
-				_fire_glob()
+		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
+			camera_distance = max(CAMERA_MIN_DIST, camera_distance - CAMERA_ZOOM_SPEED)
+		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed:
+			camera_distance = min(CAMERA_MAX_DIST, camera_distance + CAMERA_ZOOM_SPEED)
+		elif mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
+			_fire_glob()  # Quick glob projectile
+		elif mb.button_index == MOUSE_BUTTON_RIGHT:
+			# Right-click: hold to aim glob command, release to fire
+			if mb.pressed:
+				if glob_command and glob_command.has_method("start_aim"):
+					glob_command.start_aim()
+			else:
+				if glob_command and glob_command.has_method("fire_glob"):
+					glob_command.fire_glob("*")
 
 	if event is InputEventKey:
 		var key = event as InputEventKey
@@ -460,7 +481,15 @@ func _unhandled_input(event: InputEvent) -> void:
 					Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 					mouse_captured = true
 			elif key.keycode == KEY_E:
-				_fire_glob()
+				_fire_glob()  # Quick glob
+			elif key.keycode == KEY_R:
+				# R to fire aimed glob command
+				if glob_command and glob_command.has_method("fire_glob"):
+					glob_command.fire_glob("*")
+			elif key.keycode == KEY_Q:
+				# Q to cycle glob action (grab/push/absorb)
+				if glob_command and glob_command.has_method("cycle_action"):
+					glob_command.cycle_action()
 
 func _physics_process(delta: float) -> void:
 	_update_timers(delta)
