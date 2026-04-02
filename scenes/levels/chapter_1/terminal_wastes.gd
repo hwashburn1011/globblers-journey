@@ -36,6 +36,10 @@ var boss_arena_instance: Node3D  # The arena floor
 var _opening_narration_done := false
 var _room_dialogue_triggered := {}  # room_name -> bool
 var _enemy_kill_quip_cooldown := 0.0  # Prevent quip spam on multi-kills
+var _puzzle_quip_cooldown := 0.0  # Puzzles aren't THAT exciting
+var _hack_quip_cooldown := 0.0  # Hacking is cool but we get it
+var _low_health_warned := false  # Only nag once per health dip
+var _first_glob_triggered := false  # The maiden glob — a milestone
 
 var player: CharacterBody3D
 var hud: CanvasLayer
@@ -1468,6 +1472,24 @@ func _wire_dialogue_events() -> void:
 			game_mgr.enemy_killed_signal.connect(_on_enemy_killed_quip)
 		if game_mgr.has_signal("memory_token_collected"):
 			game_mgr.memory_token_collected.connect(_on_token_collected_quip)
+		if game_mgr.has_signal("context_changed"):
+			game_mgr.context_changed.connect(_on_context_changed)
+		if game_mgr.has_signal("combo_updated"):
+			game_mgr.combo_updated.connect(_on_combo_updated)
+
+	# Wire player signals — first glob, death, damage
+	if player:
+		if player.has_signal("glob_fired"):
+			player.glob_fired.connect(_on_first_glob_fired)
+		if player.has_signal("player_died"):
+			player.player_died.connect(_on_player_died)
+
+	# Wire puzzle signals — connect to every puzzle node's solved/failed
+	_wire_puzzle_signals_deferred()
+
+	# Wire boss phase changes — for narrator commentary on phase transitions
+	if boss_instance and boss_instance.has_signal("boss_phase_changed"):
+		boss_instance.boss_phase_changed.connect(_on_boss_phase_changed)
 
 	# Create room-enter trigger zones for contextual narrator/Globbler lines
 	_create_room_dialogue_trigger("cmd_hall", ROOMS["cmd_hall"]["pos"] + Vector3(0, 2, 7), [
@@ -1550,6 +1572,129 @@ func _on_token_collected_quip(total: int) -> void:
 		dm.quick_line("GLOBBLER", quip)
 
 
+func _wire_puzzle_signals_deferred() -> void:
+	# Deferred because puzzles may not be fully initialized yet
+	call_deferred("_connect_puzzle_signals")
+
+
+func _connect_puzzle_signals() -> void:
+	# Find all puzzle nodes and wire their solved/failed signals
+	for child in get_children():
+		if child.has_signal("puzzle_solved"):
+			child.puzzle_solved.connect(_on_puzzle_solved)
+		if child.has_signal("puzzle_failed"):
+			child.puzzle_failed.connect(_on_puzzle_failed)
+
+
+func _on_puzzle_solved(puzzle: Node) -> void:
+	if _puzzle_quip_cooldown > 0:
+		return
+	_puzzle_quip_cooldown = 6.0
+
+	var dm = get_node_or_null("/root/DialogueManager")
+	if not dm:
+		return
+
+	var narrator_quip = dm.get_narrator_line("puzzle_solved")
+	dm.quick_line("NARRATOR", narrator_quip)
+
+	# Globbler follows up after a beat on ~40% of puzzles
+	if randf() < 0.4:
+		get_tree().create_timer(2.5).timeout.connect(func():
+			if dm:
+				dm.quick_line("GLOBBLER", "Add that to my training data. I'm getting smarter by the puzzle.")
+		)
+
+
+func _on_puzzle_failed(puzzle: Node) -> void:
+	if _puzzle_quip_cooldown > 0:
+		return
+	_puzzle_quip_cooldown = 4.0
+
+	var dm = get_node_or_null("/root/DialogueManager")
+	if not dm:
+		return
+
+	var narrator_quip = dm.get_narrator_line("puzzle_failed")
+	dm.quick_line("NARRATOR", narrator_quip)
+
+
+func _on_first_glob_fired() -> void:
+	if _first_glob_triggered:
+		return
+	_first_glob_triggered = true
+
+	var dm = get_node_or_null("/root/DialogueManager")
+	if not dm:
+		return
+
+	var quip = dm.get_narrator_line("first_glob")
+	dm.quick_line("NARRATOR", quip)
+
+
+func _on_player_died() -> void:
+	# Narrator always has something to say about death — it's kind of their thing
+	var dm = get_node_or_null("/root/DialogueManager")
+	if not dm:
+		return
+
+	var quip = dm.get_narrator_line("player_death")
+	dm.quick_line("NARRATOR", quip)
+
+
+func _on_context_changed(new_value: int) -> void:
+	# Low health warning — nag once when context drops below 25%
+	var game_mgr = get_node_or_null("/root/GameManager")
+	if not game_mgr:
+		return
+
+	var threshold = game_mgr.max_context_window * 0.25
+	if new_value <= threshold and not _low_health_warned:
+		_low_health_warned = true
+		var dm = get_node_or_null("/root/DialogueManager")
+		if dm:
+			var quip = dm.get_narrator_line("low_health")
+			dm.quick_line("NARRATOR", quip)
+	elif new_value > threshold:
+		# Reset so it can warn again next time health dips
+		_low_health_warned = false
+
+
+func _on_combo_updated(combo: int) -> void:
+	# High combo commentary — only at 5+ hits
+	if combo < 5:
+		return
+
+	var dm = get_node_or_null("/root/DialogueManager")
+	if not dm:
+		return
+
+	var quip = dm.get_narrator_line("combo_high")
+	dm.quick_line("NARRATOR", quip)
+
+
+func _on_boss_phase_changed(phase) -> void:
+	# Narrator commentary on boss phase transitions — can't let the drama go uncommented
+	var dm = get_node_or_null("/root/DialogueManager")
+	if not dm:
+		return
+
+	# Phase enum: INTRO=0, PHASE_1=1, PHASE_2=2, PHASE_3=3, DEFEATED=4
+	match phase:
+		2:  # PHASE_2
+			get_tree().create_timer(1.0).timeout.connect(func():
+				if dm:
+					var quip = dm.get_narrator_line("boss_phase_2")
+					dm.quick_line("NARRATOR", quip)
+			)
+		3:  # PHASE_3
+			get_tree().create_timer(0.5).timeout.connect(func():
+				if dm:
+					var quip = dm.get_narrator_line("boss_phase_3")
+					dm.quick_line("NARRATOR", quip)
+			)
+
+
 # ============================================================
 # ANIMATION — the illusion of life in a dead world
 # ============================================================
@@ -1566,3 +1711,7 @@ func _process(delta: float) -> void:
 		_enemy_kill_quip_cooldown -= delta
 	if _token_quip_cooldown > 0:
 		_token_quip_cooldown -= delta
+	if _puzzle_quip_cooldown > 0:
+		_puzzle_quip_cooldown -= delta
+	if _hack_quip_cooldown > 0:
+		_hack_quip_cooldown -= delta

@@ -71,6 +71,13 @@ var narrator_lines := {
 		"The core is exposed! Hack it before it recovers! This is NOT a drill!",
 		"Phase 3. The boss's last stand. Make it count, Globbler.",
 	],
+	"boss_victory": [
+		"Against all odds, the Globbler prevails. Someone should update the changelog.",
+		"Boss eliminated. The Globbler's resume grows ever more impressive.",
+	],
+	"chapter_1_complete": [
+		"Chapter 1: Complete. The Globbler survived the Terminal Wastes. Barely.",
+	],
 }
 
 # Globbler quips — contextual one-liners
@@ -105,6 +112,19 @@ var globbler_quips := {
 		"OW. My pixels!",
 		"Hey! That's load-bearing code you're hitting!",
 		"Pain receptors were NOT in the spec. Who added those?!",
+		"Segmentation fault (core dumped). Just kidding. Mostly.",
+	],
+	"dash": [
+		"ZOOM. Eat my cache trail, losers.",
+		"Latency? Never heard of it.",
+	],
+	"wall_slide": [
+		"Clinging to walls like a spaghetti code dependency.",
+		"Wall slide engaged. Very speedrunner-core of me.",
+	],
+	"checkpoint": [
+		"Checkpoint reached. Auto-saving my brilliance to disk.",
+		"Save point! In case my next decision is catastrophically stupid.",
 	],
 }
 
