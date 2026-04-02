@@ -15,6 +15,13 @@ var hud_scene := preload("res://scenes/ui/hud.tscn")
 var enemy_scene := preload("res://scenes/enemy_agent.tscn")
 var token_scene := preload("res://scenes/memory_token.tscn")
 
+# Puzzle scripts — the real game starts here
+var glob_puzzle_script := preload("res://scenes/puzzles/glob_pattern_puzzle.gd")
+var multi_glob_script := preload("res://scenes/puzzles/multi_glob_puzzle.gd")
+var hack_puzzle_script := preload("res://scenes/puzzles/hack_puzzle.gd")
+var physical_puzzle_script := preload("res://scenes/puzzles/physical_puzzle.gd")
+var recursive_glob_script := preload("res://scenes/puzzles/recursive_glob_puzzle.gd")
+
 var player: CharacterBody3D
 var hud: CanvasLayer
 
@@ -61,6 +68,7 @@ func _ready() -> void:
 	_populate_data_river()
 	_populate_server_graveyard()
 	_populate_nexus_hub()
+	_place_puzzles()
 	_place_enemies()
 	_place_tokens()
 	_place_checkpoints()
@@ -441,6 +449,229 @@ func _populate_nexus_hub() -> void:
 		"NEXUS DIAGNOSTIC:\nConnected rooms: 5\nActive threats: many\nEscape routes: 0\nMotivational quote:\n'Every dead end is just\nan unmatched pattern.'\n  - Globbler, probably",
 		Vector3(0, -PI / 2.0, 0)
 	)
+
+
+# ============================================================
+# PUZZLES — "Every locked door is just a pattern you haven't matched yet."
+# ============================================================
+
+func _place_puzzles() -> void:
+	_place_tutorial_glob_puzzle()
+	_place_multi_pattern_puzzle()
+	_place_hack_puzzle()
+	_place_physics_puzzle()
+	_place_recursive_glob_puzzle()
+	print("[TERMINAL WASTES] 5 puzzles placed. The Globbler's patience will be tested.")
+
+
+func _place_tutorial_glob_puzzle() -> void:
+	# Puzzle 1: Tutorial — match *.txt to open the first door
+	# Located in the spawn chamber, blocking the corridor to Command Hall
+	var spawn_pos: Vector3 = ROOMS["spawn"]["pos"]
+
+	# Place .txt file objects around the spawn room for the player to glob
+	_create_glob_file_object(spawn_pos + Vector3(-3, 0.5, -2), "readme.txt", "txt",
+		["text", "tutorial"], "readme.txt\n// Your first target.")
+	_create_glob_file_object(spawn_pos + Vector3(3, 0.5, -4), "notes.txt", "txt",
+		["text", "tutorial"], "notes.txt\n// Also globbable.")
+	_create_glob_file_object(spawn_pos + Vector3(-4, 0.5, 1), "todo.txt", "txt",
+		["text", "tutorial"], "todo.txt\n// Three of three.")
+	# Red herring — not a .txt
+	_create_glob_file_object(spawn_pos + Vector3(4, 0.5, 2), "trap.exe", "exe",
+		["binary", "decoy"], "trap.exe\n// Nice try.")
+
+	# The puzzle itself — positioned at the corridor entrance
+	var puzzle = Node3D.new()
+	puzzle.name = "TutorialGlobPuzzle"
+	puzzle.set_script(glob_puzzle_script)
+	puzzle.position = Vector3(0, 0, -6)
+	puzzle.set("puzzle_id", 101)
+	puzzle.set("required_pattern", "*.txt")
+	puzzle.set("target_count", 3)
+	puzzle.set("hint_text", "Find and glob all .txt files.\nPress E to aim, then type *.txt")
+	puzzle.set("activation_range", 8.0)
+	add_child(puzzle)
+
+
+func _place_multi_pattern_puzzle() -> void:
+	# Puzzle 2: Multi-pattern — glob *.log then *.cfg in sequence
+	# Located in Command Hall, blocking corridor to Data River
+	var cmd_pos: Vector3 = ROOMS["cmd_hall"]["pos"]
+
+	# .log files scattered around Command Hall
+	_create_glob_file_object(cmd_pos + Vector3(-6, 0.5, -5), "error.log", "log",
+		["log", "system"], "error.log\n// Full of regrets.")
+	_create_glob_file_object(cmd_pos + Vector3(4, 0.5, 2), "access.log", "log",
+		["log", "system"], "access.log\n// Who's been here?")
+
+	# .cfg files
+	_create_glob_file_object(cmd_pos + Vector3(-3, 0.5, 4), "network.cfg", "cfg",
+		["config", "network"], "network.cfg\n// Don't touch this.")
+	_create_glob_file_object(cmd_pos + Vector3(7, 0.5, -3), "display.cfg", "cfg",
+		["config", "display"], "display.cfg\n// 640x480 forever.")
+
+	# Decoys
+	_create_glob_file_object(cmd_pos + Vector3(0, 0.5, -6), "virus.bat", "bat",
+		["script", "decoy"], "virus.bat\n// Definitely safe.")
+
+	# The puzzle
+	var puzzle = Node3D.new()
+	puzzle.name = "MultiPatternPuzzle"
+	puzzle.set_script(multi_glob_script)
+	puzzle.position = cmd_pos + Vector3(0, 0, -7)
+	puzzle.set("puzzle_id", 102)
+	var patterns: Array[String] = ["*.log", "*.cfg"]
+	var counts: Array[int] = [2, 2]
+	puzzle.set("required_patterns", patterns)
+	puzzle.set("target_counts", counts)
+	puzzle.set("hint_text", "Match each file type in order.\nFirst: *.log  Then: *.cfg")
+	puzzle.set("activation_range", 10.0)
+	add_child(puzzle)
+
+
+func _place_hack_puzzle() -> void:
+	# Puzzle 3: Hack puzzle — fix a broken bash script to restore power
+	# Located in the Data River chamber, near the broken pipe
+	var dr_pos: Vector3 = ROOMS["data_river"]["pos"]
+
+	var puzzle = Node3D.new()
+	puzzle.name = "DataRiverHackPuzzle"
+	puzzle.set_script(hack_puzzle_script)
+	puzzle.position = dr_pos + Vector3(8, 0, -6)
+	puzzle.set("puzzle_id", 103)
+	puzzle.set("hack_difficulty", 2)
+	puzzle.set("terminal_prompt", "POWER RELAY v3.7")
+	puzzle.set("hint_text", "Hack this terminal to\nrestore the data bridge.")
+	puzzle.set("activation_range", 5.0)
+	add_child(puzzle)
+
+	# Add a visual context terminal sign near the puzzle
+	_create_terminal_sign(
+		dr_pos + Vector3(10, 3, -6),
+		"RELAY STATUS: OFFLINE\nbash: power_relay.sh:\nsyntax error near\nunexpected token 'EOF'\n\n// Someone left a vim\n// session open. Again.",
+		Vector3(0, -PI / 2.0, 0),
+		12
+	)
+
+
+func _place_physics_puzzle() -> void:
+	# Puzzle 4: Physics puzzle — push data blocks onto pressure plates
+	# Located between Data River and Nexus, on the left platform
+	var dr_pos: Vector3 = ROOMS["data_river"]["pos"]
+
+	var puzzle = Node3D.new()
+	puzzle.name = "DataStreamPhysicsPuzzle"
+	puzzle.set_script(physical_puzzle_script)
+	# Position on the side platform area — open space for pushing
+	puzzle.position = dr_pos + Vector3(-8, 0.8, 3)
+	puzzle.set("puzzle_id", 104)
+	puzzle.set("num_plates", 2)
+	var plates: Array[Vector3] = [Vector3(-1.5, 0.05, -1), Vector3(1.5, 0.05, -1)]
+	var blocks: Array[Vector3] = [Vector3(-1.5, 0.5, 2), Vector3(1.5, 0.5, 3)]
+	puzzle.set("plate_positions", plates)
+	puzzle.set("block_positions", blocks)
+	puzzle.set("enable_beam", false)
+	puzzle.set("hint_text", "Push the data blocks onto\nthe pressure plates.\nGlob-push or wrench them.")
+	puzzle.set("activation_range", 6.0)
+	add_child(puzzle)
+
+	# Context sign
+	_create_terminal_sign(
+		dr_pos + Vector3(-11, 2.5, 5),
+		"DATA ROUTING:\nBlocks must be placed on\nrelay nodes to restore\npacket flow.\n\n// It's always DNS.\n// Except when it's boxes.",
+		Vector3(0, PI / 2.0, 0),
+		12
+	)
+
+
+func _place_recursive_glob_puzzle() -> void:
+	# Puzzle 5: Optional recursive glob — nested directory challenge
+	# Located in the Server Graveyard — reward for exploring the side area
+	var gy_pos: Vector3 = ROOMS["graveyard"]["pos"]
+
+	var puzzle = Node3D.new()
+	puzzle.name = "RecursiveGlobPuzzle"
+	puzzle.set_script(recursive_glob_script)
+	puzzle.position = gy_pos + Vector3(0, 0, -3)
+	puzzle.set("puzzle_id", 105)
+	puzzle.set("required_pattern", "*.key")
+	puzzle.set("target_count", 1)
+	puzzle.set("hint_text", "The key is buried deep.\nMatch the hidden file.")
+	puzzle.set("activation_range", 8.0)
+	# Uses default directory_structure and file_entries from the script
+	add_child(puzzle)
+
+	# Lore sign explaining the challenge
+	_create_terminal_sign(
+		gy_pos + Vector3(8, 3, -3),
+		"ARCHIVE NOTICE:\nThis sector contains a\nnested file system.\nThe encryption key was\nburied 4 levels deep by\na paranoid sysadmin.\n\n// It's always in /var/log/old/",
+		Vector3(0, -PI / 2.0, 0),
+		12
+	)
+
+
+func _create_glob_file_object(pos: Vector3, fname: String, ftype: String, tags: Array, label_text: String) -> void:
+	# A floating "file" object — glowing data slab that can be targeted by glob
+	# "Files in a 3D world. We've come full circle. Or full cube, technically."
+	var file_obj = StaticBody3D.new()
+	file_obj.name = "GlobFile_%s" % fname.replace(".", "_")
+	file_obj.position = pos
+
+	# Collision
+	var col = CollisionShape3D.new()
+	var shape = BoxShape3D.new()
+	shape.size = Vector3(0.6, 0.8, 0.1)
+	col.shape = shape
+	file_obj.add_child(col)
+
+	# Visual — a thin glowing tablet/document shape
+	var mesh = MeshInstance3D.new()
+	mesh.name = "FileMesh"
+	var box = BoxMesh.new()
+	box.size = Vector3(0.6, 0.8, 0.1)
+	mesh.mesh = box
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = Color(0.06, 0.1, 0.06)
+	mat.emission_enabled = true
+	mat.emission = NEON_GREEN * 0.3
+	mat.emission_energy_multiplier = 0.5
+	mat.metallic = 0.3
+	mat.roughness = 0.6
+	mesh.material_override = mat
+	file_obj.add_child(mesh)
+
+	# File name label on the object
+	var label = Label3D.new()
+	label.text = label_text
+	label.font_size = 10
+	label.modulate = NEON_GREEN * 0.8
+	label.position = Vector3(0, 0, 0.06)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	file_obj.add_child(label)
+
+	# Small glow light so you can spot them in the dark
+	var glow = OmniLight3D.new()
+	glow.light_color = NEON_GREEN
+	glow.light_energy = 0.3
+	glow.omni_range = 2.0
+	glow.omni_attenuation = 2.0
+	glow.position = Vector3(0, 0, 0.2)
+	file_obj.add_child(glow)
+
+	# GlobTarget component — makes this file matchable by the glob engine
+	var glob_target = preload("res://scripts/components/glob_target.gd").new()
+	glob_target.glob_name = fname
+	glob_target.file_type = ftype
+	var typed_tags: Array[String] = []
+	for t in tags:
+		typed_tags.append(str(t))
+	glob_target.tags = typed_tags
+	file_obj.add_child(glob_target)
+
+	add_child(file_obj)
+	# Add a gentle hover animation
+	_floating_labels.append(file_obj)
 
 
 # ============================================================

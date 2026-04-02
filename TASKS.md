@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** 3.1 Level Design — created terminal_wastes.tscn/gd with 5 procedural rooms (Spawn Chamber, Command Hall, Data River Chamber, Server Graveyard, Nexus Hub) connected by 4 corridors, crumbling server racks with LED strips, floating command prompts, scrolling data river with particle effects, environmental storytelling (terminal logs, error tombstones, deprecated code comments, lore fragments), 4 checkpoints with SaveSystem auto-save integration, 9 enemies across rooms, 13 memory tokens, boss door placeholder, kill floor, dark moody environment with volumetric fog and green accent lighting.
-- **Next task to do:** 3.2 Chapter 1 Puzzles (3-5 total)
+- **Last task completed:** 3.2 Chapter 1 Puzzles — created 5 puzzles integrated into terminal_wastes.gd: (1) Tutorial glob puzzle in Spawn Chamber with 3 .txt file objects + decoy .exe, match *.txt to open corridor, (2) Multi-pattern sequence puzzle in Command Hall with .log and .cfg files, new multi_glob_puzzle.gd requiring sequential pattern matches, (3) Hack puzzle in Data River Chamber with difficulty 2 terminal for power relay, (4) Physics puzzle on Data River side platform with 2 pushable blocks and pressure plates, (5) Optional recursive glob puzzle in Server Graveyard with nested directory tree visualization and hidden secret.key, new recursive_glob_puzzle.gd. All puzzles include GlobTarget file objects, contextual terminal signs, sarcastic labels, and proper door blocking.
+- **Next task to do:** 3.3 Chapter 1 Boss: rm -rf /
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -110,11 +110,11 @@
 - [x] Checkpoints (auto-save triggers) — 4 Area3D checkpoints at room entrances calling SaveSystem.checkpoint_save(), visual markers with green glow, tween feedback on trigger
 
 ### 3.2 Chapter 1 Puzzles (3-5 total)
-- [ ] Tutorial glob puzzle: match *.txt to open the first door
-- [ ] Multi-pattern puzzle: glob different file types in sequence
-- [ ] Hack puzzle: fix a broken bash script to restore power
-- [ ] Physics puzzle: redirect data streams using glob to move objects
-- [ ] Optional hard puzzle: recursive glob challenge with nested directories
+- [x] Tutorial glob puzzle: match *.txt to open the first door — 3 .txt files + decoy .exe in Spawn Chamber, glob_pattern_puzzle at corridor entrance
+- [x] Multi-pattern puzzle: glob different file types in sequence — new multi_glob_puzzle.gd, *.log then *.cfg in Command Hall
+- [x] Hack puzzle: fix a broken bash script to restore power — hack_puzzle difficulty 2 in Data River Chamber with power relay theme
+- [x] Physics puzzle: redirect data streams using glob to move objects — physical_puzzle with 2 blocks/plates on Data River side platform
+- [x] Optional hard puzzle: recursive glob challenge with nested directories — new recursive_glob_puzzle.gd in Server Graveyard with 8-dir tree and hidden secret.key
 
 ### 3.3 Chapter 1 Boss: rm -rf /
 - [ ] Boss arena: the floor is a file system that gets deleted in waves
