@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** 2.6 Hack puzzle — created hack_puzzle.gd extending BasePuzzle with hackable terminal, Hackable component integration, sequence memory minigame wiring, door unlock on success, visual feedback (screen glow, red flash on fail), sarcastic labels.
-- **Next task to do:** 2.6 Physical puzzle (move blocks, redirect beams, etc.)
+- **Last task completed:** 2.6 Physical puzzle — created physical_puzzle.gd extending BasePuzzle with pushable RigidBody3D blocks, Area3D pressure plates with enter/exit detection, optional beam emitter/reflector/receiver system, GlobTarget on blocks so player can glob-push them, plate glow feedback, door opens when all plates pressed (and beam redirected if enabled), sarcastic labels throughout.
+- **Next task to do:** 3.1 Level Design — Terminal Wastes environment
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -91,7 +91,7 @@
 - [x] base_puzzle.gd — states: Locked, Active, Solved, Failed. Emits signals. Auto-activate on proximity.
 - [x] Glob pattern puzzle: terminal shows pattern, listens to GlobEngine for matches, opens door on solve
 - [x] Hack puzzle: hack_puzzle.gd — extends BasePuzzle, spawns hackable terminal with Hackable component, wires into terminal_hack.gd sequence memory minigame, opens door on success
-- [ ] Physical puzzle: move blocks, redirect beams, etc.
+- [x] Physical puzzle: physical_puzzle.gd — pushable blocks on pressure plates, optional beam redirect, GlobTarget integration, visual feedback, door unlock on solve
 
 ### 2.7 Save and Load
 - [x] save_system.gd autoload — saves to user:// as JSON
