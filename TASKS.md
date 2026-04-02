@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** 1.3 GlobTarget test — fixed critical bug in glob_engine.gd where _target_matches and highlight_targets checked properties on parent nodes instead of GlobTarget children. Test scene with 5 objects and 27 pattern assertions verified.
-- **Next task to do:** 2.6 hack puzzle (already marked ~), then 2.6 physical puzzle
+- **Last task completed:** 2.6 Hack puzzle — created hack_puzzle.gd extending BasePuzzle with hackable terminal, Hackable component integration, sequence memory minigame wiring, door unlock on success, visual feedback (screen glow, red flash on fail), sarcastic labels.
+- **Next task to do:** 2.6 Physical puzzle (move blocks, redirect beams, etc.)
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -90,7 +90,7 @@
 ### 2.6 Puzzle Framework
 - [x] base_puzzle.gd — states: Locked, Active, Solved, Failed. Emits signals. Auto-activate on proximity.
 - [x] Glob pattern puzzle: terminal shows pattern, listens to GlobEngine for matches, opens door on solve
-- [~] Hack puzzle: covered by terminal_hack.gd minigame (sequence memory)
+- [x] Hack puzzle: hack_puzzle.gd — extends BasePuzzle, spawns hackable terminal with Hackable component, wires into terminal_hack.gd sequence memory minigame, opens door on success
 - [ ] Physical puzzle: move blocks, redirect beams, etc.
 
 ### 2.7 Save and Load
