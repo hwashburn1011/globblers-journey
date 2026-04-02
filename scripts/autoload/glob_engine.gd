@@ -58,25 +58,35 @@ func match_pattern_in_radius(pattern: String, origin: Vector3, radius: float) ->
 				in_range.append(target)
 	return in_range
 
+## Find the GlobTarget child component on a registered node
+## "Looking for a GlobTarget? Check under the couch cushions."
+func _find_glob_target(node: Node) -> Node:
+	var gt = node.get_node_or_null("GlobTarget")
+	if gt:
+		return gt
+	# Fallback: search children for anything with get_glob_name
+	for child in node.get_children():
+		if child.has_method("get_glob_name"):
+			return child
+	return null
+
 ## Check if a single target matches a glob pattern
 func _target_matches(target: Node, pattern: String) -> bool:
-	# Target must have glob_target.gd or equivalent properties
+	# The registered node is the parent — properties live on the GlobTarget child
 	var glob_name := ""
 	var file_type := ""
 	var tags: Array = []
 
-	if target.has_method("get_glob_name"):
-		glob_name = target.get_glob_name()
-	elif "glob_name" in target:
-		glob_name = target.glob_name
+	var gt = _find_glob_target(target)
+	if gt:
+		glob_name = gt.get_glob_name() if gt.has_method("get_glob_name") else gt.glob_name
+		if "file_type" in gt:
+			file_type = gt.file_type
+		if "tags" in gt:
+			tags = gt.tags
 	else:
+		# No GlobTarget child — fallback to node name
 		glob_name = target.name
-
-	if "file_type" in target:
-		file_type = target.file_type
-
-	if "tags" in target:
-		tags = target.tags
 
 	# Check against glob_name
 	if _glob_match(glob_name, pattern):
@@ -137,14 +147,16 @@ func get_all_targets() -> Array[Node]:
 	return _targets
 
 ## Highlight matched targets with green glow
+## "Making things glow green is basically my whole personality."
 func highlight_targets(targets: Array[Node], duration: float = 2.0) -> void:
 	for target in targets:
 		if not is_instance_valid(target):
 			continue
-		if target.has_method("set_highlighted"):
-			target.set_highlighted(true)
-			# Auto-unhighlight after duration
+		# set_highlighted lives on the GlobTarget child, not the parent
+		var gt = _find_glob_target(target)
+		if gt and gt.has_method("set_highlighted"):
+			gt.set_highlighted(true)
 			get_tree().create_timer(duration).timeout.connect(func():
-				if is_instance_valid(target) and target.has_method("set_highlighted"):
-					target.set_highlighted(false)
+				if is_instance_valid(gt) and gt.has_method("set_highlighted"):
+					gt.set_highlighted(false)
 			)

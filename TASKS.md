@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** 1.2 animation state machine — full procedural animation system with Idle, Walk, Run, Jump, Fall, Land, Dash, Wall Slide states
-- **Next task to do:** 1.3 GlobTarget test (place 5 objects, verify patterns)
+- **Last task completed:** 1.3 GlobTarget test — fixed critical bug in glob_engine.gd where _target_matches and highlight_targets checked properties on parent nodes instead of GlobTarget children. Test scene with 5 objects and 27 pattern assertions verified.
+- **Next task to do:** 2.6 hack puzzle (already marked ~), then 2.6 physical puzzle
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -33,7 +33,7 @@
 - [x] glob_target.gd — component script. Has export vars: tags (Array of strings), file_type (String), glob_name (String)
 - [x] Pattern matching logic: support *.enemy, boss_*, *fire*, exact matches
 - [x] Visual feedback: selected objects get green highlight (material swap via set_highlighted)
-- [ ] Test: place 5 objects with GlobTarget in a test scene, verify glob patterns select correctly
+- [x] Test: place 5 objects with GlobTarget in a test scene, verify glob patterns select correctly — fixed glob_engine.gd to read properties from GlobTarget child nodes
 
 ### 1.4 HUD and UI
 - [x] Create hud.tscn — overlay with: health bar, context window meter, current glob pattern display, ability cooldowns (scenes/ui/hud.tscn)
