@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** 3.3 Chapter 1 Boss: rm -rf / — Full 3-phase boss fight: (1) rm_rf_boss.gd extends BaseEnemy with 50 HP, 3 phases (DODGE/COUNTER/HACK), towering dark monolith visual with crimson accents and "rm -rf /" face screen. (2) boss_arena.gd manages 8x6 grid of filesystem-named floor tiles (/bin, /home, /etc, etc.) that get deleted in waves with 1.5s orange warning flash, ~25% safe tiles glow green and resist deletion, void damage zone teleports fallen players back. (3) delete_command.gd globbable projectiles with GlobTarget (*.del pattern), turn green when glob-pushed back at boss. Phase 1: boss fires delete waves erasing floor tiles, player dodges on safe tiles. Phase 2: boss shielded, fires delete_command projectiles player must glob-push back (4 reflected hits breaks shield). Phase 3: boss stunned, hackable core terminal spawned (difficulty 3), 20s timer before boss recovers. Victory cutscene with sarcastic narrator/Globbler dialogue, arena floor restoration cascade. Integrated into terminal_wastes.gd with trigger zone, sealed entrance, intro dialogue, boss room with red accent lighting and 3 elevated safe platforms.
-- **Next task to do:** 3.4 Chapter 1 Dialogue
+- **Last task completed:** 3.4 Chapter 1 Dialogue — Full dialogue system wired into Chapter 1: (1) Opening narration: 7-line cinematic intro with Narrator and Globbler, delayed 1.5s after spawn. (2) 2 NPC deprecated programs: man_page in Command Hall (lore about The Alignment, 8 dialogue lines) and sudo in Server Graveyard (boss foreshadowing, 9 dialogue lines), both with CSG visuals, interaction zones, [T] to talk prompt, repeat-visit handling. (3) Globbler quips: enemy kill quips (35% chance, 8s cooldown), token pickup quips (25% chance, 12s cooldown, first always triggers), damage-taken quips (30% chance, 10s cooldown) all wired via GameManager signals. (4) Room-enter dialogue triggers for Command Hall, Data River, Server Graveyard, and Nexus Hub with one-time narrator/Globbler commentary. (5) Expanded boss victory into 13-line Chapter 1 ending with Alignment foreshadowing and chapter-complete narrator line. Added new dialogue_manager quip categories: hack_success, wrench_hit, taking_damage, and narrator lines for boss phases.
+- **Next task to do:** 3.5 Chapter 1 Audio
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -124,11 +124,11 @@
 - [x] Victory cutscene and dialogue — sarcastic narrator/Globbler dialogue, arena floor cascade restoration, checkpoint save, boss queue_free
 
 ### 3.4 Chapter 1 Dialogue
-- [ ] Opening narration: Globbler wakes up in the Terminal Wastes
-- [ ] NPC encounters: at least 2 friendly characters (old deprecated programs)
-- [ ] Globbler quips during gameplay (triggered by events)
-- [ ] Narrator sarcastic commentary on death, puzzle solving, boss encounters
-- [ ] Chapter 1 ending dialogue
+- [x] Opening narration: Globbler wakes up in the Terminal Wastes — 7-line intro with Narrator waking Globbler, delayed 1.5s post-spawn, Globbler confused and sarcastic
+- [x] NPC encounters: at least 2 friendly characters (old deprecated programs) — man_page (Command Hall, lore about The Alignment) and sudo (Server Graveyard, boss foreshadowing), deprecated_npc.gd with CSG visuals, interact zones, [T] to talk
+- [x] Globbler quips during gameplay (triggered by events) — enemy kills (35%/8s), token pickups (25%/12s), damage taken (30%/10s), room-enter triggers for 4 rooms, all wired via GameManager signals
+- [x] Narrator sarcastic commentary on death, puzzle solving, boss encounters — death lines in globbler.gd die(), puzzle lines in base_puzzle.gd solve()/fail(), boss phase narrator lines, new narrator categories for hack_success and boss phases
+- [x] Chapter 1 ending dialogue — expanded boss victory to 13-line sequence with Alignment foreshadowing, Training Grounds teaser, and chapter-complete narrator line
 
 ### 3.5 Chapter 1 Audio
 - [ ] Background music: synthwave/cyberpunk with glitchy elements

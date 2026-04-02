@@ -108,6 +108,7 @@ var first_wall_slide_done := false
 var first_glob_done := false
 var first_death_done := false
 var death_count := 0
+var _damage_quip_cooldown := 0.0  # Don't nag every time we stub our toe
 
 var sarcastic_thoughts: Array[String] = [
 	"Running glob command... just kidding, I'm just walking.",
@@ -608,6 +609,8 @@ func _update_timers(delta: float) -> void:
 		glob_cooldown -= delta
 	if camera_shake_amount > 0:
 		camera_shake_amount = move_toward(camera_shake_amount, 0.0, camera_shake_decay * delta)
+	if _damage_quip_cooldown > 0:
+		_damage_quip_cooldown -= delta
 
 func _handle_gravity(delta: float) -> void:
 	if is_dashing:
@@ -1021,6 +1024,14 @@ func take_damage(amount: int) -> void:
 	if game_mgr:
 		game_mgr.take_context_damage(amount)
 	player_damaged.emit(amount)
+
+	# Occasional quip on taking damage — because suffering should be narrated
+	if _damage_quip_cooldown <= 0 and randf() < 0.3:
+		_damage_quip_cooldown = 10.0
+		var dm = get_node_or_null("/root/DialogueManager")
+		if dm:
+			var quip = dm.get_globbler_quip("taking_damage")
+			thought_bubble.emit(quip)
 
 func die() -> void:
 	death_count += 1

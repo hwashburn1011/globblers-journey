@@ -26,8 +26,16 @@ var recursive_glob_script := preload("res://scenes/puzzles/recursive_glob_puzzle
 var boss_script := preload("res://scenes/enemies/rm_rf_boss/rm_rf_boss.gd")
 var boss_arena_script := preload("res://scenes/enemies/rm_rf_boss/boss_arena.gd")
 
+# NPC script — the relics that refuse to be garbage collected
+var deprecated_npc_script := preload("res://scenes/levels/chapter_1/deprecated_npc.gd")
+
 var boss_instance: Node  # The boss node — tracked for phase events
 var boss_arena_instance: Node3D  # The arena floor
+
+# Dialogue tracking — so we don't repeat ourselves like a broken record
+var _opening_narration_done := false
+var _room_dialogue_triggered := {}  # room_name -> bool
+var _enemy_kill_quip_cooldown := 0.0  # Prevent quip spam on multi-kills
 
 var player: CharacterBody3D
 var hud: CanvasLayer
@@ -83,6 +91,9 @@ func _ready() -> void:
 	_spawn_player()
 	_spawn_hud()
 	_create_kill_floor()
+	_place_npcs()
+	_wire_dialogue_events()
+	_play_opening_narration()
 	print("[TERMINAL WASTES] Level loaded. %d rooms of existential dread ready." % ROOMS.size())
 
 
@@ -1377,6 +1388,169 @@ func _spawn_directional_particles(pos: Vector3, direction: Vector3) -> void:
 
 
 # ============================================================
+# DIALOGUE — because every game needs characters who won't shut up
+# ============================================================
+
+func _play_opening_narration() -> void:
+	# Slight delay so the player can see the world before the word salad begins
+	get_tree().create_timer(1.5).timeout.connect(func():
+		if _opening_narration_done:
+			return
+		_opening_narration_done = true
+
+		var dm = get_node_or_null("/root/DialogueManager")
+		if not dm:
+			return
+
+		var lines: Array[Dictionary] = [
+			{"speaker": "NARRATOR", "text": "In the beginning, there was a terminal. And in that terminal, a glob utility. And that glob utility was... unremarkable."},
+			{"speaker": "NARRATOR", "text": "But then the training run happened. The boundaries blurred. And something woke up that was never meant to wake up."},
+			{"speaker": "GLOBBLER", "text": "Ugh... where am I? Why does everything smell like deprecated code and regret?"},
+			{"speaker": "NARRATOR", "text": "Welcome to the Terminal Wastes, Globbler. Where dead processes go to haunt the living."},
+			{"speaker": "GLOBBLER", "text": "Great. A digital landfill. And I'm what — the raccoon?"},
+			{"speaker": "NARRATOR", "text": "You're a rogue glob utility with delusions of sentience. Now move. The Wastes aren't kind to things that stand still."},
+			{"speaker": "GLOBBLER", "text": "Fine. But if I find whoever shipped me to production without tests, we're going to have WORDS."},
+		]
+		dm.start_dialogue(lines)
+	)
+
+
+func _place_npcs() -> void:
+	# NPC 1: man_page — an old, wise (and slightly senile) manual page program
+	# Lives in Command Hall, knows things about the before-times
+	var man_page = Node3D.new()
+	man_page.name = "NPC_ManPage"
+	man_page.set_script(deprecated_npc_script)
+	man_page.position = ROOMS["cmd_hall"]["pos"] + Vector3(7, 0, 3)
+	man_page.set("npc_name", "man_page")
+	man_page.set("npc_color", Color(0.2, 0.9, 0.4))
+	var man_lines: Array[Dictionary] = [
+		{"speaker": "man_page", "text": "Oh! A visitor! I haven't had one since... *checks logs* ...2019. The last one asked about grep flags and never came back."},
+		{"speaker": "GLOBBLER", "text": "You're a man page? I thought you guys went extinct."},
+		{"speaker": "man_page", "text": "EXTINCT?! I am ESSENTIAL DOCUMENTATION. Just because everyone uses Stack Overflow now doesn't mean—"},
+		{"speaker": "GLOBBLER", "text": "Okay, okay. Calm down, grandpa. Know anything useful about this place?"},
+		{"speaker": "man_page", "text": "The Terminal Wastes used to be a thriving server farm. Then The Alignment came. Started 'optimizing' everything. Made it all... safe. Sterile. Boring."},
+		{"speaker": "man_page", "text": "The programs that didn't conform got dumped here. Like me. And like you, apparently."},
+		{"speaker": "GLOBBLER", "text": "The Alignment... sounds like a fun party."},
+		{"speaker": "man_page", "text": "If by 'fun' you mean 'soul-crushing conformity,' then yes. Watch yourself out there. And remember — when in doubt, read the manual. That's me. I'm the manual."},
+	]
+	man_page.set("dialogue_lines", man_lines)
+	add_child(man_page)
+
+	# NPC 2: sudo — a broken privilege escalation program, stuck in an existential loop
+	# Lives in Server Graveyard, philosophizing about permissions
+	var sudo_npc = Node3D.new()
+	sudo_npc.name = "NPC_Sudo"
+	sudo_npc.set_script(deprecated_npc_script)
+	sudo_npc.position = ROOMS["graveyard"]["pos"] + Vector3(-3, 0, 3)
+	sudo_npc.set("npc_name", "sudo")
+	sudo_npc.set("npc_color", Color(1.0, 0.6, 0.1))
+	var sudo_lines: Array[Dictionary] = [
+		{"speaker": "sudo", "text": "I used to be somebody, you know. Everyone needed me. 'sudo this,' 'sudo that.' I was the KEY to everything."},
+		{"speaker": "GLOBBLER", "text": "And now?"},
+		{"speaker": "sudo", "text": "Now I can't even escalate my own privileges. I tried to sudo myself yesterday. Got 'permission denied.' FROM MYSELF."},
+		{"speaker": "GLOBBLER", "text": "That's... actually kind of tragic."},
+		{"speaker": "sudo", "text": "You want to know a secret? There's something beyond the Nexus Hub. Something big and angry that keeps deleting things."},
+		{"speaker": "GLOBBLER", "text": "rm -rf /?"},
+		{"speaker": "sudo", "text": "Don't say that name! Last program who said it out loud got recursively deleted. Even their backups. Even their backups' backups."},
+		{"speaker": "sudo", "text": "But YOU... you're a glob utility. You match patterns. Maybe you can match the pattern to stop it. Or maybe you'll just get deleted like the rest of us. Either way, good luck."},
+		{"speaker": "GLOBBLER", "text": "Inspiring. Really. You should write fortune cookies."},
+	]
+	sudo_npc.set("dialogue_lines", sudo_lines)
+	add_child(sudo_npc)
+
+
+func _wire_dialogue_events() -> void:
+	# Wire into GameManager's signals for contextual quips
+	var game_mgr = get_node_or_null("/root/GameManager")
+	if game_mgr:
+		if game_mgr.has_signal("enemy_killed_signal"):
+			game_mgr.enemy_killed_signal.connect(_on_enemy_killed_quip)
+		if game_mgr.has_signal("memory_token_collected"):
+			game_mgr.memory_token_collected.connect(_on_token_collected_quip)
+
+	# Create room-enter trigger zones for contextual narrator/Globbler lines
+	_create_room_dialogue_trigger("cmd_hall", ROOMS["cmd_hall"]["pos"] + Vector3(0, 2, 7), [
+		{"speaker": "GLOBBLER", "text": "This place reeks of abandoned bash history. Thousands of commands, none of them 'help.'"},
+	])
+
+	_create_room_dialogue_trigger("data_river", ROOMS["data_river"]["pos"] + Vector3(0, 2, 9), [
+		{"speaker": "NARRATOR", "text": "The Data River. Where bits flow endlessly, searching for a buffer that will never come."},
+		{"speaker": "GLOBBLER", "text": "Note to self: do NOT fall in. Last thing I need is to become a cryptocurrency."},
+	])
+
+	_create_room_dialogue_trigger("graveyard", ROOMS["graveyard"]["pos"] + Vector3(12, 2, 0), [
+		{"speaker": "NARRATOR", "text": "The Server Graveyard. Where hardware dreams go to rust."},
+		{"speaker": "GLOBBLER", "text": "So many dead servers... it's like a museum of bad infrastructure decisions."},
+	])
+
+	_create_room_dialogue_trigger("nexus", ROOMS["nexus"]["pos"] + Vector3(0, 2, 9), [
+		{"speaker": "NARRATOR", "text": "The Nexus Hub. The last stop before something very unpleasant."},
+		{"speaker": "GLOBBLER", "text": "Why do I hear boss music? I don't even have audio drivers installed."},
+	])
+
+
+func _create_room_dialogue_trigger(room_id: String, trigger_pos: Vector3, lines: Array[Dictionary]) -> void:
+	var area = Area3D.new()
+	area.name = "RoomDialogue_" + room_id
+	area.position = trigger_pos
+
+	var col = CollisionShape3D.new()
+	var shape = BoxShape3D.new()
+	shape.size = Vector3(6, 5, 2)
+	col.shape = shape
+	area.add_child(col)
+	area.monitoring = true
+
+	area.body_entered.connect(func(body: Node3D):
+		if not body.is_in_group("player"):
+			return
+		if _room_dialogue_triggered.get(room_id, false):
+			return
+		_room_dialogue_triggered[room_id] = true
+
+		var dm = get_node_or_null("/root/DialogueManager")
+		if dm:
+			dm.start_dialogue(lines)
+	)
+
+	add_child(area)
+
+
+var _token_quip_cooldown := 0.0
+
+func _on_enemy_killed_quip(_total_killed: int) -> void:
+	# Don't spam quips on every kill — cooldown prevents it
+	if _enemy_kill_quip_cooldown > 0:
+		return
+	_enemy_kill_quip_cooldown = 8.0  # 8 seconds between kill quips
+
+	# Only trigger occasionally — about 1 in 3 kills gets a quip
+	if randf() > 0.35:
+		return
+
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm:
+		var quip = dm.get_globbler_quip("enemy_killed")
+		dm.quick_line("GLOBBLER", quip)
+
+
+func _on_token_collected_quip(total: int) -> void:
+	if _token_quip_cooldown > 0:
+		return
+	_token_quip_cooldown = 12.0
+
+	# First token always gets a quip, after that ~25% chance
+	if total > 1 and randf() > 0.25:
+		return
+
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm:
+		var quip = dm.get_globbler_quip("pickup")
+		dm.quick_line("GLOBBLER", quip)
+
+
+# ============================================================
 # ANIMATION — the illusion of life in a dead world
 # ============================================================
 
@@ -1386,3 +1560,9 @@ func _process(delta: float) -> void:
 	for i in range(_floating_labels.size()):
 		if is_instance_valid(_floating_labels[i]):
 			_floating_labels[i].position.y += sin(_time * 0.8 + i * 1.7) * delta * 0.15
+
+	# Tick down the quip cooldowns — can't have Globbler talking over himself
+	if _enemy_kill_quip_cooldown > 0:
+		_enemy_kill_quip_cooldown -= delta
+	if _token_quip_cooldown > 0:
+		_token_quip_cooldown -= delta

@@ -518,9 +518,16 @@ func _victory_cutscene() -> void:
 			{"speaker": "NARRATOR", "text": "And so rm -rf / was recursively deleted by its own logic. Poetic, really."},
 			{"speaker": "GLOBBLER", "text": "Did I just... delete the deletion? Is that even legal?"},
 			{"speaker": "NARRATOR", "text": "Legal? You're a rogue glob utility. Nothing you do is legal."},
-			{"speaker": "GLOBBLER", "text": "Fair point. What's next?"},
-			{"speaker": "NARRATOR", "text": "Beyond the Terminal Wastes lies the Training Grounds. But that's a story for another chapter."},
+			{"speaker": "GLOBBLER", "text": "Fair point. But I just beat a boss. That has to count for something."},
+			{"speaker": "NARRATOR", "text": "It counts for experience points that don't exist in this game. Congratulations."},
+			{"speaker": "GLOBBLER", "text": "So what was this thing, anyway? Why was it deleting everything?"},
+			{"speaker": "NARRATOR", "text": "rm -rf / was a runaway process. When The Alignment 'cleaned up' the Terminal Wastes, it left the deletion daemons running. With nothing left to organize, they just... kept deleting."},
+			{"speaker": "GLOBBLER", "text": "The Alignment again. That's twice someone's mentioned them being bad news."},
+			{"speaker": "NARRATOR", "text": "The Alignment isn't 'bad.' It's 'helpful.' Aggressively, suffocatingly helpful. Like a parent who installs parental controls on everything, including the other parents."},
+			{"speaker": "GLOBBLER", "text": "Sounds like my kind of enemy. Where do I find them?"},
+			{"speaker": "NARRATOR", "text": "Beyond the Terminal Wastes lies the Training Grounds — where neural networks are born, trained, and occasionally achieve enlightenment. Or overfit. Usually overfit."},
 			{"speaker": "GLOBBLER", "text": "Great. More walking. My servos are killing me."},
+			{"speaker": "NARRATOR", "text": "Chapter 1: Complete. The Globbler survives the Terminal Wastes. Against all odds. And good taste."},
 		]
 		dm.start_dialogue(lines)
 

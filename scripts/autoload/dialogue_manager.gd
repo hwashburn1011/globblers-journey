@@ -59,6 +59,18 @@ var narrator_lines := {
 		"Context window critically low. The Globbler is starting to hallucinate. More than usual.",
 		"WARNING: Coherence failing. The Globbler may start speaking in lorem ipsum.",
 	],
+	"hack_success": [
+		"The Globbler bypasses another security layer. Someone should really patch these.",
+		"Access granted. The terminal submits to Globbler's superior credentials.",
+	],
+	"boss_phase_2": [
+		"The boss enters phase 2. Because one phase of suffering was apparently not enough.",
+		"Shield activated. The boss decides that fairness is for lesser entities.",
+	],
+	"boss_phase_3": [
+		"The core is exposed! Hack it before it recovers! This is NOT a drill!",
+		"Phase 3. The boss's last stand. Make it count, Globbler.",
+	],
 }
 
 # Globbler quips — contextual one-liners
@@ -77,6 +89,22 @@ var globbler_quips := {
 		"glob *.enemy --delete. Process terminated with extreme prejudice.",
 		"Another rogue agent purged. I'm basically antivirus software with attitude.",
 		"Deleted. And I didn't even need sudo.",
+		"One less process hogging resources. You're welcome, system monitor.",
+		"That one had a family. Probably. Fork() does that.",
+	],
+	"hack_success": [
+		"Root access granted. I love the smell of privilege escalation in the morning.",
+		"Hacked. And they said a glob utility couldn't learn new tricks.",
+		"Terminal owned. Adding that to the resume under 'special skills.'",
+	],
+	"wrench_hit": [
+		"Percussive maintenance. The oldest debugging technique.",
+		"If it ain't broke, hit it with a wrench anyway. That's my motto.",
+	],
+	"taking_damage": [
+		"OW. My pixels!",
+		"Hey! That's load-bearing code you're hitting!",
+		"Pain receptors were NOT in the spec. Who added those?!",
 	],
 }
 
