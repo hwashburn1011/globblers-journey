@@ -598,12 +598,12 @@ func _on_fullscreen_toggled(toggled_on: bool) -> void:
 # --- Scene Transition ---
 
 func _transition_to_game() -> void:
-	# Fade out menu music, then load level
+	# Fade out menu music, then hand off to loading screen
 	var audio = get_node_or_null("/root/AudioManager")
 	if audio:
 		audio.stop_menu_music()
 
-	# Brief fade-to-black effect
+	# Brief fade-to-black, then show loading screen with sarcastic tips
 	var fade = ColorRect.new()
 	fade.color = Color(0, 0, 0, 0)
 	fade.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
@@ -613,13 +613,12 @@ func _transition_to_game() -> void:
 	var tween = create_tween()
 	tween.tween_property(fade, "color:a", 1.0, 0.4)
 	tween.tween_callback(func():
-		# Load the appropriate level scene
 		var game_mgr = get_node_or_null("/root/GameManager")
 		var level = 1
 		if game_mgr:
 			level = game_mgr.current_level
 		var scene_path = _get_level_scene(level)
-		get_tree().change_scene_to_file(scene_path)
+		_show_loading_screen(scene_path)
 	)
 
 
@@ -633,6 +632,16 @@ func _get_level_scene(level: int) -> String:
 			# All roads lead to Chapter 1 until we build more
 			# "You think you can escape? There's only one level, genius."
 			return "res://scenes/main_level.tscn"
+
+
+func _show_loading_screen(scene_path: String) -> void:
+	# Summon the loading screen — complete with sarcastic tips and a judgy ASCII Globbler
+	var loading_scene = preload("res://scenes/main/loading_screen.tscn")
+	var loading = loading_scene.instantiate()
+	loading.set_target_scene(scene_path)
+	get_tree().root.add_child(loading)
+	# Remove the menu so the loading screen takes over
+	queue_free()
 
 
 func _input(event: InputEvent) -> void:

@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** 4.3 Main Menu — Created main_menu.tscn/gd with full terminal-aesthetic green-on-dark UI. Title screen with ASCII Globbler art, blinking cursor subtitle, and periodic glitch effect on title text. Scanline overlay for CRT feel. 5 buttons: Continue (disabled if no save), New Game (resets save/progression), Chapter Select (5 chapters, lock/unlock based on save data), Settings, Quit. Settings panel with Music/SFX/Ambient volume sliders (wired to AudioManager), fullscreen toggle, and controls reference. Chapter Select shows chapter names/descriptions with locked chapters grayed out. Added menu music (90bpm dreamy synthwave with arpeggio), menu SFX (hover/select/back bleeps), and stop_all_audio() to AudioManager. Removed auto-start of chapter audio — levels now call GameManager.start_level_audio() explicitly. Added return_to_menu() to GameManager. Changed project.godot main scene to main_menu.tscn. Fade-to-black transition on scene change.
-- **Next task to do:** 4.4 Loading Screens
+- **Last task completed:** 4.4 Loading Screens — Created loading_screen.tscn/gd with full terminal-aesthetic loading screen. 28 sarcastic loading tips rotating every 3s. Green progress bar with ReferenceRect border and percentage counter in terminal style ([  0%] to [100%]). 4-frame ASCII Globbler idle animation (standing, foot tap, head tilt, terminal tap). Scanline CRT overlay. Blinking cursor on "LOADING..." title. Uses ResourceLoader.load_threaded_request() for real background loading with fake-smooth progress curve (exponential approach to 80%, then fills to 100% when ready). Minimum 2.5s display time so tips are actually readable. Fade-out transition on completion. Wired into main_menu.gd _transition_to_game() and game_manager.gd return_to_menu() — both now route through the loading screen instead of direct scene changes.
+- **Next task to do:** 4.5 Visual Polish
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -162,9 +162,9 @@
 - [x] Chapter select (unlocked chapters only) — 5 chapters with lock/unlock based on save data, descriptions, fade-to-black scene transition
 
 ### 4.4 Loading Screens
-- [ ] Sarcastic loading tips (at least 20)
-- [ ] Green progress bar with terminal aesthetic
-- [ ] Random Globbler idle animations or art
+- [x] Sarcastic loading tips (at least 20) — 28 tips rotating every 3s with green monospace text
+- [x] Green progress bar with terminal aesthetic — ReferenceRect border, #39FF14 fill, [%3d%%] counter, smooth fake progress curve
+- [x] Random Globbler idle animations or art — 4-frame ASCII Globbler animation cycling at 0.6s (standing, foot tap, head tilt, terminal tap)
 
 ### 4.5 Visual Polish
 - [ ] Green glow shader on all Globbler elements and interactive objects

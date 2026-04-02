@@ -163,7 +163,19 @@ func return_to_menu() -> void:
 	var audio = get_node_or_null("/root/AudioManager")
 	if audio:
 		audio.stop_all_audio()
-	get_tree().change_scene_to_file("res://scenes/main/main_menu.tscn")
+	_show_loading_screen("res://scenes/main/main_menu.tscn")
+
+
+## Show the loading screen for any scene transition — sarcasm included at no extra cost
+func _show_loading_screen(scene_path: String) -> void:
+	var loading_scene = load("res://scenes/main/loading_screen.tscn")
+	var loading = loading_scene.instantiate()
+	loading.set_target_scene(scene_path)
+	get_tree().root.add_child(loading)
+	# Remove current scene so the loading screen takes over
+	var current = get_tree().current_scene
+	if current:
+		current.queue_free()
 
 
 ## Start level audio — called by level scenes when they're ready
