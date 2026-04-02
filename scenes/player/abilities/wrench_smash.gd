@@ -4,12 +4,14 @@ extends Node3D
 # "Have you tried turning it off and on again? No? Then I'll just hit it."
 # Also interacts with mechanical puzzle elements like switches and gears.
 
-const DAMAGE := 2
-const KNOCKBACK_FORCE := 12.0
-const ATTACK_COOLDOWN := 0.6
 const SWING_DURATION := 0.3
 const HIT_RANGE := 2.0
 const HIT_ARC := 120.0  # Degrees of the swing arc
+
+# Upgradeable stats — ProgressionManager says I can hit harder
+var damage := 2
+var knockback_force := 12.0
+var attack_cooldown := 0.6
 
 var cooldown_timer := 0.0
 var is_swinging := false
@@ -113,7 +115,7 @@ func swing() -> void:
 
 	is_swinging = true
 	swing_timer = SWING_DURATION
-	cooldown_timer = ATTACK_COOLDOWN
+	cooldown_timer = attack_cooldown
 	has_hit_this_swing = false
 	hit_area.monitoring = true
 
@@ -143,12 +145,12 @@ func _apply_hit(target: Node) -> void:
 		# Check for HealthComponent child
 		for child in (target as Node3D).get_children():
 			if child.has_method("take_damage"):
-				child.take_damage(DAMAGE, player)
+				child.take_damage(damage, player)
 				damaged = true
 				break
 
 	if not damaged and target.has_method("take_glob_hit"):
-		target.take_glob_hit(DAMAGE)
+		target.take_glob_hit(damage)
 
 	# Knockback
 	if player and target is Node3D:
@@ -156,9 +158,9 @@ func _apply_hit(target: Node) -> void:
 		dir.y = 0.3  # Slight upward knock
 		dir = dir.normalized()
 		if target is CharacterBody3D:
-			(target as CharacterBody3D).velocity += dir * KNOCKBACK_FORCE
+			(target as CharacterBody3D).velocity += dir * knockback_force
 		elif target is RigidBody3D:
-			(target as RigidBody3D).apply_central_impulse(dir * KNOCKBACK_FORCE)
+			(target as RigidBody3D).apply_central_impulse(dir * knockback_force)
 
 	# Screen shake
 	if player and "camera_shake_amount" in player:
@@ -170,9 +172,17 @@ func _apply_hit(target: Node) -> void:
 		if target.has_method("activate_switch"):
 			target.activate_switch()
 
-	wrench_hit.emit(target, DAMAGE)
+	wrench_hit.emit(target, damage)
+
+## Pull upgraded values — percussive maintenance just got an upgrade
+func refresh_upgrades() -> void:
+	var prog = get_node_or_null("/root/ProgressionManager")
+	if prog:
+		damage = int(prog.get_upgrade_value("wrench_damage"))
+		knockback_force = prog.get_upgrade_value("wrench_knockback")
+		attack_cooldown = prog.get_upgrade_value("wrench_speed")
 
 func get_cooldown_percent() -> float:
 	if cooldown_timer <= 0:
 		return 1.0
-	return 1.0 - (cooldown_timer / ATTACK_COOLDOWN)
+	return 1.0 - (cooldown_timer / attack_cooldown)

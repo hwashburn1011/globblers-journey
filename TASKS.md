@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** 4.1 Agent Spawn Ability — Created agent_spawn.gd (ability manager: 3 charges, 12s recharge, 3 max active agents, 3 task modes) and mini_agent.gd (CharacterBody3D sub-agents with CSG mini-Globbler model, state machine: Spawning/Idle/Moving/Working/Success/Failing/Dead). Sub-agents attempt FETCH (push GlobTargets toward player), DISTRACT (aggro enemies), or PRESS_BUTTON (activate hackables/switches). 65% fail chance with hilarious failure modes: wall bonking, confusion spinning, existential crisis. 15+ sarcastic failure reasons, spawn quips, insults, working quips, fail/success quips. Elastic pop-in spawn animation, waddle walk, victory spin, fade-out death. Wired into globbler.gd (G to spawn, V to cycle task), agent_spawn/fail/success SFX added to AudioManager. Controls shown in GameManager startup.
-- **Next task to do:** 4.2 Progression System
+- **Last task completed:** 4.2 Progression System — Created progression_manager.gd autoload with 11 upgrades across 5 categories (Glob, Wrench, Context, Agent, Movement), multi-tier costs (tokens + parameters), and glob pattern unlock system (5 pattern types unlocked per chapter). Created parameter_pickup.gd with glowing green crystal CSG visual, orbiting data ring, and sarcastic pickup quips. Created upgrade_menu.gd terminal-style UI (TAB to open, A/D categories, W/S select, Enter buy) with dark green-on-black aesthetic, live cost/value display, and purchase feedback. Converted ability constants to upgradeable vars in glob_command.gd (range/radius/cooldown), wrench_smash.gd (damage/knockback/speed), agent_spawn.gd (charges/recharge), globbler.gd (dash_cooldown). All abilities pull values via refresh_upgrades() on purchase. Wired into SaveSystem (save/load upgrade levels, pickups, patterns via upgrades dict). HUD shows parameter counter and [TAB] Upgrades hint. 3 parameter pickups placed in Chapter 1 level. Chapter completion triggers pattern unlocks via GameManager.
+- **Next task to do:** 4.3 Main Menu
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -150,10 +150,10 @@
 - [x] Limited uses, recharges over time — 3 charges, 12s recharge, 3 max active, 15s lifetime per agent
 
 ### 4.2 Progression System
-- [ ] Token currency from enemies and exploration
-- [ ] Parameter pickups: upgrade materials
-- [ ] Upgrade menu: improve glob range, wrench damage, context window size, ability cooldowns
-- [ ] New glob patterns unlocked per chapter (wildcards, recursion, regex)
+- [x] Token currency from enemies and exploration — memory tokens as spendable currency via ProgressionManager, GameManager tracks collection
+- [x] Parameter pickups: upgrade materials — parameter_pickup.gd with CSG crystal visual, 3 placed in Chapter 1 at hidden exploration spots
+- [x] Upgrade menu: improve glob range, wrench damage, context window size, ability cooldowns — upgrade_menu.gd terminal-style UI (TAB), 11 upgrades across 5 categories with multi-tier token+param costs
+- [x] New glob patterns unlocked per chapter (wildcards, recursion, regex) — 5 pattern types in progression_manager.gd, auto-unlock on chapter completion via GameManager.complete_level()
 
 ### 4.3 Main Menu
 - [ ] Title screen with Globbler model and green terminal aesthetic

@@ -15,7 +15,7 @@ const ROTATION_SPEED = 12.0
 # Dash — because walking is for deprecated programs
 const DASH_SPEED = 35.0
 const DASH_DURATION = 0.18
-const DASH_COOLDOWN = 0.8
+var dash_cooldown := 0.8  # Upgradeable via ProgressionManager
 
 # Wall slide — very speedrunner of me
 const WALL_SLIDE_GRAVITY = 2.0
@@ -63,6 +63,7 @@ var glob_command: Node3D  # The full glob command ability node
 var wrench_smash: Node3D  # Melee wrench attack
 var terminal_hack: Node3D  # Hacking interaction system
 var agent_spawn: Node3D   # Sub-agent deployment — for when you need tiny incompetent help
+var upgrade_menu: CanvasLayer  # The upgrade terminal — TAB to access
 
 # Landing impact
 var prev_velocity_y := 0.0
@@ -204,6 +205,18 @@ func _ready() -> void:
 	agent_spawn.set_script(AgentSpawnScript)
 	add_child(agent_spawn)
 
+	# Upgrade menu — the terminal-style shop for spending tokens
+	var UpgradeMenuScript = load("res://scenes/ui/upgrade_menu.gd")
+	upgrade_menu = CanvasLayer.new()
+	upgrade_menu.name = "UpgradeMenu"
+	upgrade_menu.set_script(UpgradeMenuScript)
+	add_child(upgrade_menu)
+
+	# Wire upgrade purchases to refresh abilities
+	var prog = get_node_or_null("/root/ProgressionManager")
+	if prog:
+		prog.upgrade_purchased.connect(_on_upgrade_purchased)
+
 	# Setup is deferred so camera_arm exists
 	call_deferred("_setup_glob_command")
 
@@ -219,6 +232,23 @@ func _setup_glob_command() -> void:
 		terminal_hack.setup(self)
 	if agent_spawn and agent_spawn.has_method("setup"):
 		agent_spawn.setup(self)
+	# Pull initial upgrade values
+	refresh_upgrades()
+
+## Refresh all ability stats from ProgressionManager — called after upgrades
+func refresh_upgrades() -> void:
+	var prog = get_node_or_null("/root/ProgressionManager")
+	if prog:
+		dash_cooldown = prog.get_upgrade_value("dash_cooldown")
+	if glob_command and glob_command.has_method("refresh_upgrades"):
+		glob_command.refresh_upgrades()
+	if wrench_smash and wrench_smash.has_method("refresh_upgrades"):
+		wrench_smash.refresh_upgrades()
+	if agent_spawn and agent_spawn.has_method("refresh_upgrades"):
+		agent_spawn.refresh_upgrades()
+
+func _on_upgrade_purchased(_id: String, _level: int) -> void:
+	refresh_upgrades()
 
 func _build_csg_model() -> void:
 	# Root node for the whole model so we can animate it
@@ -587,6 +617,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				# V to cycle sub-agent task mode
 				if agent_spawn and agent_spawn.has_method("cycle_task"):
 					agent_spawn.cycle_task()
+			elif key.keycode == KEY_TAB:
+				# TAB to toggle upgrade terminal — time to spend those tokens
+				if upgrade_menu and upgrade_menu.has_method("toggle"):
+					upgrade_menu.toggle()
 
 func _physics_process(delta: float) -> void:
 	_update_timers(delta)
@@ -709,7 +743,7 @@ func _handle_dash(delta: float) -> void:
 
 		is_dashing = true
 		dash_timer = DASH_DURATION
-		dash_cooldown_timer = DASH_COOLDOWN
+		dash_cooldown_timer = dash_cooldown
 		dash_particles.emitting = true
 		dash_started.emit()
 
@@ -1097,7 +1131,7 @@ func die() -> void:
 func get_dash_cooldown_percent() -> float:
 	if dash_cooldown_timer <= 0:
 		return 1.0
-	return 1.0 - (dash_cooldown_timer / DASH_COOLDOWN)
+	return 1.0 - (dash_cooldown_timer / dash_cooldown)
 
 func get_glob_cooldown_percent() -> float:
 	if glob_cooldown <= 0:

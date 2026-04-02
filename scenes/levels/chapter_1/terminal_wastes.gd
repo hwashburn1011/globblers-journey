@@ -91,6 +91,7 @@ func _ready() -> void:
 	_place_boss()
 	_place_enemies()
 	_place_tokens()
+	_place_parameter_pickups()
 	_place_checkpoints()
 	_spawn_player()
 	_spawn_hud()
@@ -920,6 +921,29 @@ func _place_tokens() -> void:
 		var token = token_scene.instantiate()
 		token.position = pos
 		add_child(token)
+
+
+# ============================================================
+# PARAMETER PICKUPS — rare upgrade materials hidden in exploration nooks
+# ============================================================
+
+func _place_parameter_pickups() -> void:
+	var PickupScript = load("res://scripts/parameter_pickup.gd")
+	# 3 parameter pickups hidden throughout Chapter 1 — reward exploration
+	var pickup_positions := [
+		# Hidden on top of a server rack in Command Hall — gotta jump for it
+		ROOMS["cmd_hall"]["pos"] + Vector3(8, 4.5, -6),
+		# Tucked behind platforms in Data River — exploration reward
+		ROOMS["data_river"]["pos"] + Vector3(-12, 3.0, 8),
+		# Deep in Server Graveyard — among the tombstones
+		ROOMS["graveyard"]["pos"] + Vector3(7, 2.0, -7),
+	]
+	for pos in pickup_positions:
+		var pickup = Area3D.new()
+		pickup.name = "ParameterPickup_%d" % randi()
+		pickup.set_script(PickupScript)
+		pickup.position = pos
+		add_child(pickup)
 
 
 # ============================================================

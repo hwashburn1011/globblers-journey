@@ -62,6 +62,7 @@ func _ready() -> void:
 	print("An Agentic Action Puzzle Platformer (Now Actually Fun)")
 	print("WASD to move | SPACE to jump | SHIFT to dash | E/LClick to Glob Attack")
 	print("F to Wrench | T to Hack | G to Spawn Agent | V to Cycle Agent Task")
+	print("TAB to open Upgrade Terminal | Spend tokens and parameters on upgrades")
 	print("Mouse to look | Scroll to zoom | ESC to free mouse")
 	print("Current Level: %s" % level_names.get(current_level, "Unknown"))
 	print("==============================")
@@ -88,8 +89,12 @@ func take_context_damage(amount: int) -> void:
 func collect_memory_token() -> void:
 	memory_tokens_collected += 1
 	memory_token_collected.emit(memory_tokens_collected)
-	# Restore some context
-	context_window = min(max_context_window, context_window + 5)
+	# Restore context — amount scales with upgrades
+	var regen_amount := 5
+	var prog = get_node_or_null("/root/ProgressionManager")
+	if prog:
+		regen_amount = int(prog.get_upgrade_value("context_regen"))
+	context_window = min(max_context_window, context_window + regen_amount)
 	context_changed.emit(context_window)
 
 func expand_context_window(amount: int) -> void:
@@ -124,6 +129,12 @@ func complete_level() -> void:
 		level_time, memory_tokens_collected, enemies_killed, max_combo
 	])
 	level_complete.emit(current_level)
+
+	# Unlock new glob patterns for this chapter
+	var prog = get_node_or_null("/root/ProgressionManager")
+	if prog:
+		prog.unlock_chapter_patterns(current_level)
+
 	current_level += 1
 
 func get_level_intro() -> String:

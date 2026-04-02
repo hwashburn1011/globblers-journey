@@ -98,6 +98,13 @@ func apply_loaded_data() -> void:
 		game_mgr.enemies_killed = int(gd.get("enemies_killed", 0))
 		game_mgr.context_changed.emit(game_mgr.context_window)
 
+	# Restore progression upgrades
+	var prog = get_node_or_null("/root/ProgressionManager")
+	if prog and prog.has_method("load_save_data"):
+		var upg_data = save_data.get("upgrades", {})
+		if not upg_data.is_empty():
+			prog.load_save_data(upg_data)
+
 ## Collect current game state into save_data
 func _collect_current_state() -> void:
 	# Player data
@@ -125,6 +132,11 @@ func _collect_current_state() -> void:
 	for puzzle in puzzles:
 		if puzzle.has_method("is_solved"):
 			save_data["puzzles"][str(puzzle.puzzle_id)] = puzzle.is_solved()
+
+	# Progression / upgrades
+	var prog = get_node_or_null("/root/ProgressionManager")
+	if prog and prog.has_method("get_save_data"):
+		save_data["upgrades"] = prog.get_save_data()
 
 ## Save at a checkpoint (called by checkpoint trigger)
 func checkpoint_save(checkpoint_id: String, position: Vector3) -> void:

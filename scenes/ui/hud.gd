@@ -29,6 +29,8 @@ var timer_label: Label
 var level_intro_label: Label
 var damage_overlay: ColorRect
 var kill_counter: Label
+var param_counter: Label
+var upgrade_hint: Label
 
 var player_ref: CharacterBody3D
 
@@ -43,6 +45,12 @@ func _ready() -> void:
 		game_mgr.enemy_killed_signal.connect(update_kills)
 		game_mgr.damage_taken.connect(_on_damage_taken)
 		_show_level_intro(game_mgr.get_level_intro())
+
+	# Connect progression manager signals
+	var prog = get_node_or_null("/root/ProgressionManager")
+	if prog:
+		prog.parameter_pickup_collected.connect(update_params)
+		prog.currency_changed.connect(_on_currency_changed)
 
 	# Connect dialogue manager
 	var dm = get_node_or_null("/root/DialogueManager")
@@ -85,6 +93,22 @@ func _build_hud() -> void:
 	kill_counter.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
 	kill_counter.add_theme_font_size_override("font_size", 14)
 	top_left.add_child(kill_counter)
+
+	# Parameter pickup counter
+	param_counter = Label.new()
+	param_counter.name = "ParamCounter"
+	param_counter.text = "> Parameters: 0"
+	param_counter.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
+	param_counter.add_theme_font_size_override("font_size", 14)
+	top_left.add_child(param_counter)
+
+	# Upgrade hint
+	upgrade_hint = Label.new()
+	upgrade_hint.name = "UpgradeHint"
+	upgrade_hint.text = "[TAB] Upgrades"
+	upgrade_hint.add_theme_color_override("font_color", Color(0.2, 0.7, 0.3, 0.6))
+	upgrade_hint.add_theme_font_size_override("font_size", 12)
+	top_left.add_child(upgrade_hint)
 
 	# === TOP RIGHT: Ability cooldowns ===
 	var top_right = VBoxContainer.new()
@@ -245,6 +269,16 @@ func update_combo(combo: int) -> void:
 func update_kills(total: int) -> void:
 	if kill_counter:
 		kill_counter.text = "> Agents Purged: %d" % total
+
+func update_params(total: int) -> void:
+	if param_counter:
+		param_counter.text = "> Parameters: %d" % total
+
+func _on_currency_changed(tokens: int, params: int) -> void:
+	if token_counter:
+		token_counter.text = "> Memory Tokens: %d" % tokens
+	if param_counter:
+		param_counter.text = "> Parameters: %d" % params
 
 func _on_damage_taken(_amount: int) -> void:
 	damage_flash_timer = 0.3

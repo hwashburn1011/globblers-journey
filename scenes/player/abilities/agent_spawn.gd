@@ -4,13 +4,14 @@ extends Node3D
 # "Why do the work yourself when you can spawn tiny, incompetent versions of yourself?"
 # Unlocked after Chapter 1. Spawns mini-Globblers that attempt tasks and mostly fail.
 
-const MAX_CHARGES := 3
-const RECHARGE_TIME := 12.0  # Seconds per charge — patience is a virtue we don't have
 const MAX_ACTIVE_AGENTS := 3  # Can't have too many idiots running around
 const SPAWN_OFFSET := 2.0  # How far in front of the player they pop in
 const AGENT_LIFETIME := 15.0  # They expire like milk left in a hot server room
 
-var charges := MAX_CHARGES
+# Upgradeable stats — ProgressionManager decides how many tiny idiots you get
+var max_charges := 3
+var recharge_time := 12.0
+var charges := 3
 var recharge_timer := 0.0
 var active_agents: Array[Node3D] = []
 var is_unlocked := false  # Unlocked post-Chapter 1
@@ -81,12 +82,12 @@ func _process(delta: float) -> void:
 		return
 
 	# Recharge system — like coffee, but for spawning clones
-	if charges < MAX_CHARGES:
+	if charges < max_charges:
 		recharge_timer += delta
-		if recharge_timer >= RECHARGE_TIME:
-			recharge_timer -= RECHARGE_TIME
-			charges = mini(charges + 1, MAX_CHARGES)
-			charges_changed.emit(charges, MAX_CHARGES)
+		if recharge_timer >= recharge_time:
+			recharge_timer -= recharge_time
+			charges = mini(charges + 1, max_charges)
+			charges_changed.emit(charges, max_charges)
 
 	# Clean up expired/dead agents
 	var to_remove: Array[Node3D] = []
@@ -123,7 +124,7 @@ func try_spawn() -> void:
 
 	# Spend a charge
 	charges -= 1
-	charges_changed.emit(charges, MAX_CHARGES)
+	charges_changed.emit(charges, max_charges)
 
 	# Calculate spawn position — in front of the player
 	var spawn_pos = player.global_position
@@ -201,19 +202,29 @@ func _on_agent_quip(text: String) -> void:
 	if dm and dm.has_method("show_dialogue"):
 		dm.show_dialogue("Sub-Agent", text)
 
+## Pull upgraded values — more charges, faster recharge, same incompetence
+func refresh_upgrades() -> void:
+	var prog = get_node_or_null("/root/ProgressionManager")
+	if prog:
+		var new_max = int(prog.get_upgrade_value("agent_charges"))
+		if new_max > max_charges:
+			charges += new_max - max_charges  # Grant bonus charges immediately
+		max_charges = new_max
+		recharge_time = prog.get_upgrade_value("agent_recharge")
+
 func unlock() -> void:
 	is_unlocked = true
-	charges = MAX_CHARGES
-	charges_changed.emit(charges, MAX_CHARGES)
+	charges = max_charges
+	charges_changed.emit(charges, max_charges)
 	print("[AGENT SPAWN] Sub-agent system UNLOCKED. The world will never be the same.")
 
 func get_charges() -> int:
 	return charges
 
 func get_recharge_percent() -> float:
-	if charges >= MAX_CHARGES:
+	if charges >= max_charges:
 		return 1.0
-	return recharge_timer / RECHARGE_TIME
+	return recharge_timer / recharge_time
 
 func get_active_count() -> int:
 	return active_agents.size()

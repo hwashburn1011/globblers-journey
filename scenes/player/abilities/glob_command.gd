@@ -6,12 +6,14 @@ extends Node3D
 
 enum GlobAction { GRAB, PUSH, ABSORB }
 
-const GLOB_RANGE := 20.0
-const GLOB_RADIUS := 6.0  # Selection radius at impact point
-const GLOB_COOLDOWN := 1.5
 const BEAM_DURATION := 0.4
 const GRAB_FORCE := 15.0
 const PUSH_FORCE := 25.0
+
+# Upgradeable stats — pulled from ProgressionManager if available
+var glob_range := 20.0
+var glob_radius := 6.0
+var glob_cooldown := 1.5
 
 var is_aiming := false
 var cooldown_timer := 0.0
@@ -172,7 +174,7 @@ func fire_glob(pattern: String = "*") -> void:
 	if cooldown_timer > 0:
 		return
 
-	cooldown_timer = GLOB_COOLDOWN
+	cooldown_timer = glob_cooldown
 
 	# Raycast to find aim point
 	var aim_origin := Vector3.ZERO
@@ -183,14 +185,14 @@ func fire_glob(pattern: String = "*") -> void:
 
 	# Raycast using physics
 	var space = get_world_3d().direct_space_state
-	var query = PhysicsRayQueryParameters3D.create(aim_origin, aim_origin + aim_dir * GLOB_RANGE)
+	var query = PhysicsRayQueryParameters3D.create(aim_origin, aim_origin + aim_dir * glob_range)
 	query.collide_with_areas = true
 	var result = space.intersect_ray(query)
 
 	if result:
 		_aim_point = result.position
 	else:
-		_aim_point = aim_origin + aim_dir * GLOB_RANGE
+		_aim_point = aim_origin + aim_dir * glob_range
 
 	# Show beam from player hand to aim point
 	_show_beam(_aim_point)
@@ -198,7 +200,7 @@ func fire_glob(pattern: String = "*") -> void:
 	# Use GlobEngine to find targets
 	var engine = get_node_or_null("/root/GlobEngine")
 	if engine:
-		_matched_targets = engine.match_pattern_in_radius(pattern, _aim_point, GLOB_RADIUS)
+		_matched_targets = engine.match_pattern_in_radius(pattern, _aim_point, glob_radius)
 		engine.highlight_targets(_matched_targets, 2.0)
 
 		# Show result on HUD
@@ -306,7 +308,7 @@ func _update_aim() -> void:
 	var aim_dir = -camera_arm.global_transform.basis.z
 
 	var space = get_world_3d().direct_space_state
-	var query = PhysicsRayQueryParameters3D.create(aim_origin, aim_origin + aim_dir * GLOB_RANGE)
+	var query = PhysicsRayQueryParameters3D.create(aim_origin, aim_origin + aim_dir * glob_range)
 	query.collide_with_areas = true
 	var result = space.intersect_ray(query)
 
@@ -314,7 +316,7 @@ func _update_aim() -> void:
 		reticle.global_position = result.position + result.normal * 0.05
 		reticle.look_at(reticle.global_position + result.normal, Vector3.UP)
 	else:
-		reticle.global_position = aim_origin + aim_dir * GLOB_RANGE
+		reticle.global_position = aim_origin + aim_dir * glob_range
 		reticle.rotation = Vector3.ZERO
 
 	glob_aimed.emit(reticle.global_position)
@@ -329,7 +331,15 @@ func _get_hud() -> Node:
 func get_cooldown_percent() -> float:
 	if cooldown_timer <= 0:
 		return 1.0
-	return 1.0 - (cooldown_timer / GLOB_COOLDOWN)
+	return 1.0 - (cooldown_timer / glob_cooldown)
+
+## Pull upgraded values from ProgressionManager — because self-improvement is a process
+func refresh_upgrades() -> void:
+	var prog = get_node_or_null("/root/ProgressionManager")
+	if prog:
+		glob_range = prog.get_upgrade_value("glob_range")
+		glob_radius = prog.get_upgrade_value("glob_radius")
+		glob_cooldown = prog.get_upgrade_value("glob_cooldown")
 
 func cycle_action() -> void:
 	match current_action:
