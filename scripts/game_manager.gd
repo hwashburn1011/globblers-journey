@@ -155,3 +155,19 @@ func reset_level() -> void:
 	level_time = 0.0
 	enemies_killed = 0
 	memory_tokens_collected = 0
+
+
+## Return to the main menu — the coward's exit (or the wise one's)
+func return_to_menu() -> void:
+	level_started = false
+	var audio = get_node_or_null("/root/AudioManager")
+	if audio:
+		audio.stop_all_audio()
+	get_tree().change_scene_to_file("res://scenes/main/main_menu.tscn")
+
+
+## Start level audio — called by level scenes when they're ready
+func start_level_audio() -> void:
+	var audio = get_node_or_null("/root/AudioManager")
+	if audio:
+		audio.call_deferred("_start_chapter_1_audio")

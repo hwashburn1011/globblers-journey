@@ -42,6 +42,11 @@ func _ready() -> void:
 	_spawn_ambient_particles()
 	_spawn_decorations()
 
+	# Start level audio — menu music is already stopped by menu transition
+	var game_mgr = get_node_or_null("/root/GameManager")
+	if game_mgr:
+		game_mgr.start_level_audio()
+
 	print("[LEVEL] The Token Stream loaded. Server room online. Glob away.")
 
 func _spawn_player() -> void:

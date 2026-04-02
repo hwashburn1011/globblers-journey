@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** 4.2 Progression System — Created progression_manager.gd autoload with 11 upgrades across 5 categories (Glob, Wrench, Context, Agent, Movement), multi-tier costs (tokens + parameters), and glob pattern unlock system (5 pattern types unlocked per chapter). Created parameter_pickup.gd with glowing green crystal CSG visual, orbiting data ring, and sarcastic pickup quips. Created upgrade_menu.gd terminal-style UI (TAB to open, A/D categories, W/S select, Enter buy) with dark green-on-black aesthetic, live cost/value display, and purchase feedback. Converted ability constants to upgradeable vars in glob_command.gd (range/radius/cooldown), wrench_smash.gd (damage/knockback/speed), agent_spawn.gd (charges/recharge), globbler.gd (dash_cooldown). All abilities pull values via refresh_upgrades() on purchase. Wired into SaveSystem (save/load upgrade levels, pickups, patterns via upgrades dict). HUD shows parameter counter and [TAB] Upgrades hint. 3 parameter pickups placed in Chapter 1 level. Chapter completion triggers pattern unlocks via GameManager.
-- **Next task to do:** 4.3 Main Menu
+- **Last task completed:** 4.3 Main Menu — Created main_menu.tscn/gd with full terminal-aesthetic green-on-dark UI. Title screen with ASCII Globbler art, blinking cursor subtitle, and periodic glitch effect on title text. Scanline overlay for CRT feel. 5 buttons: Continue (disabled if no save), New Game (resets save/progression), Chapter Select (5 chapters, lock/unlock based on save data), Settings, Quit. Settings panel with Music/SFX/Ambient volume sliders (wired to AudioManager), fullscreen toggle, and controls reference. Chapter Select shows chapter names/descriptions with locked chapters grayed out. Added menu music (90bpm dreamy synthwave with arpeggio), menu SFX (hover/select/back bleeps), and stop_all_audio() to AudioManager. Removed auto-start of chapter audio — levels now call GameManager.start_level_audio() explicitly. Added return_to_menu() to GameManager. Changed project.godot main scene to main_menu.tscn. Fade-to-black transition on scene change.
+- **Next task to do:** 4.4 Loading Screens
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -156,10 +156,10 @@
 - [x] New glob patterns unlocked per chapter (wildcards, recursion, regex) — 5 pattern types in progression_manager.gd, auto-unlock on chapter completion via GameManager.complete_level()
 
 ### 4.3 Main Menu
-- [ ] Title screen with Globbler model and green terminal aesthetic
-- [ ] New Game, Continue, Settings, Quit
-- [ ] Settings: volume, controls, display
-- [ ] Chapter select (unlocked chapters only)
+- [x] Title screen with Globbler model and green terminal aesthetic — ASCII Globbler art, glitch title, scanline overlay, blinking cursor subtitle
+- [x] New Game, Continue, Settings, Quit — 5 terminal-style buttons with hover/focus styles, Continue grayed if no save, New Game resets all progress
+- [x] Settings: volume, controls, display — Music/SFX/Ambient sliders wired to AudioManager, fullscreen toggle, controls reference text
+- [x] Chapter select (unlocked chapters only) — 5 chapters with lock/unlock based on save data, descriptions, fade-to-black scene transition
 
 ### 4.4 Loading Screens
 - [ ] Sarcastic loading tips (at least 20)

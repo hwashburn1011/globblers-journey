@@ -27,6 +27,7 @@ const SFX_POOL_SIZE = 8  # Enough concurrent bleeps for a chaotic firefight
 # --- Music state ---
 var _current_music := ""
 var _boss_fight_active := false
+var _menu_music_player: AudioStreamPlayer
 
 # --- Procedural generation constants ---
 const SAMPLE_RATE = 22050.0
@@ -74,6 +75,11 @@ var _sfx_defs := {
 	"agent_spawn": { "freq": 600.0, "duration": 0.35, "wave": "square", "env_attack": 0.02, "env_decay": 0.3, "pitch_slide": 300.0, "volume_db": -8.0 },
 	"agent_fail": { "freq": 200.0, "duration": 0.4, "wave": "saw", "env_attack": 0.01, "env_decay": 0.35, "pitch_slide": -120.0, "volume_db": -10.0 },
 	"agent_success": { "freq": 880.0, "duration": 0.3, "wave": "sine", "env_attack": 0.01, "env_decay": 0.25, "pitch_slide": 440.0, "volume_db": -8.0 },
+
+	# --- Menu SFX — satisfying terminal bleeps for navigation ---
+	"menu_hover": { "freq": 1200.0, "duration": 0.05, "wave": "sine", "env_attack": 0.0, "env_decay": 0.04, "volume_db": -16.0 },
+	"menu_select": { "freq": 800.0, "duration": 0.12, "wave": "square", "env_attack": 0.0, "env_decay": 0.1, "pitch_slide": 200.0, "volume_db": -12.0 },
+	"menu_back": { "freq": 600.0, "duration": 0.1, "wave": "square", "env_attack": 0.0, "env_decay": 0.08, "pitch_slide": -200.0, "volume_db": -12.0 },
 }
 
 # Cached generated audio streams — no need to regenerate every bleep
@@ -85,8 +91,8 @@ func _ready() -> void:
 	_create_players()
 	_precache_sfx()
 	_connect_global_signals()
-	# Start ambient and music after a short delay to let the level load
-	call_deferred("_start_chapter_1_audio")
+	# Don't auto-start chapter audio — let scenes call start methods
+	# Main menu will call start_menu_music(), levels call _start_chapter_1_audio()
 
 
 func _create_players() -> void:
@@ -107,6 +113,12 @@ func _create_players() -> void:
 	_ambient_player.name = "AmbientPlayer"
 	_ambient_player.volume_db = linear_to_db(ambient_volume) + BASE_VOLUME_DB - 4.0
 	add_child(_ambient_player)
+
+	# Menu music player — chill vibes for the title screen
+	_menu_music_player = AudioStreamPlayer.new()
+	_menu_music_player.name = "MenuMusicPlayer"
+	_menu_music_player.volume_db = linear_to_db(music_volume) + BASE_VOLUME_DB
+	add_child(_menu_music_player)
 
 	# SFX player pool — because explosions wait for nobody
 	for i in SFX_POOL_SIZE:
@@ -396,6 +408,98 @@ func stop_ambient() -> void:
 func _start_chapter_1_audio() -> void:
 	start_ambient()
 	start_music("chapter_1")
+
+
+## Menu music — mellow synthwave loop, less intense than gameplay
+func start_menu_music() -> void:
+	if _menu_music_player.playing:
+		return
+	_menu_music_player.stream = _generate_menu_music()
+	_menu_music_player.volume_db = linear_to_db(music_volume) + BASE_VOLUME_DB - 2.0
+	_menu_music_player.play()
+
+
+func stop_menu_music() -> void:
+	if not _menu_music_player.playing:
+		return
+	var tween = create_tween()
+	tween.tween_property(_menu_music_player, "volume_db", -40.0, 0.5)
+	tween.tween_callback(_menu_music_player.stop)
+
+
+func _generate_menu_music() -> AudioStreamWAV:
+	# Chill ambient synth — slower, dreamier than chapter music
+	# "Even the title screen has a vibe. We're professionals."
+	var bpm := 90.0
+	var beats_per_bar := 4
+	var bars := 8
+	var total_beats := beats_per_bar * bars
+	var beat_duration := 60.0 / bpm
+	var total_duration := total_beats * beat_duration
+	var num_samples := int(total_duration * SAMPLE_RATE)
+
+	# Dreamy minor key arpeggios
+	var bass_notes := [55.0, 55.0, 65.4, 55.0, 73.4, 65.4, 55.0, 55.0]
+	var pad_notes := [220.0, 196.0, 261.6, 220.0]  # A3 G3 C4 A3
+	var arp_notes := [440.0, 523.3, 659.3, 523.3, 440.0, 392.0, 523.3, 440.0]
+
+	var data := PackedByteArray()
+	data.resize(num_samples * 2)
+
+	var bass_phase := 0.0
+	var pad_phase := 0.0
+	var arp_phase := 0.0
+
+	for i in num_samples:
+		var t := float(i) / SAMPLE_RATE
+		var beat := t / beat_duration
+		var beat_index := int(beat) % bass_notes.size()
+		var bar_index := int(beat / beats_per_bar) % pad_notes.size()
+		var arp_index := int(beat * 2.0) % arp_notes.size()
+
+		# Soft bass — sine wave, gentle
+		var bass_freq := bass_notes[beat_index]
+		var bass_sample := sin(bass_phase * TAU) * 0.15
+		bass_phase += bass_freq / SAMPLE_RATE
+
+		# Warm pad — detuned sines with slow modulation
+		var pad_freq := pad_notes[bar_index]
+		var pad_mod := sin(t * 0.3 * TAU) * 0.02
+		var pad_sample := sin(pad_phase * TAU) * (0.08 + pad_mod)
+		pad_sample += sin(pad_phase * TAU * 1.005) * 0.05  # Detune
+		pad_phase += pad_freq / SAMPLE_RATE
+
+		# Gentle arpeggio — quiet sine plinks
+		var arp_freq := arp_notes[arp_index]
+		var arp_beat_frac := fmod(beat * 2.0, 1.0)
+		var arp_env := exp(-5.0 * arp_beat_frac) if arp_beat_frac < 0.5 else 0.0
+		var arp_sample := sin(arp_phase * TAU) * arp_env * 0.06
+		arp_phase += arp_freq / SAMPLE_RATE
+
+		var sample := bass_sample + pad_sample + arp_sample
+		var pcm := int(clampf(sample, -1.0, 1.0) * 32767.0)
+		data[i * 2] = pcm & 0xFF
+		data[i * 2 + 1] = (pcm >> 8) & 0xFF
+
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = int(SAMPLE_RATE)
+	stream.stereo = false
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	stream.loop_begin = 0
+	stream.loop_end = num_samples
+	stream.data = data
+	return stream
+
+
+## Stop everything — used when transitioning between menu and game
+func stop_all_audio() -> void:
+	_music_player.stop()
+	_boss_music_player.stop()
+	_menu_music_player.stop()
+	_ambient_player.stop()
+	_current_music = ""
+	_boss_fight_active = false
 
 
 # --- Signal connections ---
