@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** Phase 1.1 (Project Structure), 1.2 (Globbler Character), 1.3 (Core Glob Engine) — all autoloads, components, CSG model, and folder structure
-- **Next task to do:** 1.5 Basic Level Shell (test level with GlobTargets, lighting, spawn points)
+- **Last task completed:** Phase 1 complete (1.1-1.5): project structure, autoloads, CSG Globbler, HUD/UI, test level
+- **Next task to do:** Phase 2.1 Glob Command Ability (aim mode, beam visual, targeting, grab/push/absorb)
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -43,12 +43,12 @@
 - [x] Glob pattern input display — scenes/ui/glob_pattern_input.tscn: blinking cursor, match count
 
 ### 1.5 Basic Level Shell
-- [ ] Create a test level scene with ground plane, some walls, lighting
-- [ ] Dark moody lighting with green accent lights and volumetric fog if supported
-- [ ] Place Globbler spawn point
-- [ ] Place a few GlobTarget test objects
-- [ ] Place a test enemy (even just a capsule that moves)
-- [ ] Verify: player can move around, camera works, HUD displays
+- [x] Create a test level scene with ground plane, some walls, lighting — scenes/levels/chapter_1/test_level.tscn
+- [x] Dark moody lighting with green accent lights and fog
+- [x] Place Globbler spawn point (0, 2, 8)
+- [x] Place 5 GlobTarget test objects with different tags/types (enemy, txt, exe, hazard)
+- [x] Place a test enemy (Hallucinator with patrol)
+- [x] Verify: player, camera, HUD, GlobTargets, enemy all wired up
 
 ---
 
