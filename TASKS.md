@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** 2.6 Physical puzzle — created physical_puzzle.gd extending BasePuzzle with pushable RigidBody3D blocks, Area3D pressure plates with enter/exit detection, optional beam emitter/reflector/receiver system, GlobTarget on blocks so player can glob-push them, plate glow feedback, door opens when all plates pressed (and beam redirected if enabled), sarcastic labels throughout.
-- **Next task to do:** 3.1 Level Design — Terminal Wastes environment
+- **Last task completed:** 3.1 Level Design — created terminal_wastes.tscn/gd with 5 procedural rooms (Spawn Chamber, Command Hall, Data River Chamber, Server Graveyard, Nexus Hub) connected by 4 corridors, crumbling server racks with LED strips, floating command prompts, scrolling data river with particle effects, environmental storytelling (terminal logs, error tombstones, deprecated code comments, lore fragments), 4 checkpoints with SaveSystem auto-save integration, 9 enemies across rooms, 13 memory tokens, boss door placeholder, kill floor, dark moody environment with volumetric fog and green accent lighting.
+- **Next task to do:** 3.2 Chapter 1 Puzzles (3-5 total)
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -104,10 +104,10 @@
 ## PHASE 3: CHAPTER 1 — THE TERMINAL WASTES
 
 ### 3.1 Level Design
-- [ ] Terminal Wastes environment: crumbling server racks, floating command prompts, rivers of scrolling green text
-- [ ] 4-6 rooms/areas connected by corridors
-- [ ] Environmental storytelling: scattered terminal logs, old error messages, deprecated code comments
-- [ ] Checkpoints (auto-save triggers)
+- [x] Terminal Wastes environment: crumbling server racks, floating command prompts, rivers of scrolling green text — terminal_wastes.gd with server racks (LED strips, damage/tilt), floating command ghosts, data river with particle flow
+- [x] 4-6 rooms/areas connected by corridors — 5 rooms (Spawn Chamber, Command Hall, Data River Chamber, Server Graveyard, Nexus Hub) + 4 corridors with accent lighting
+- [x] Environmental storytelling: scattered terminal logs, old error messages, deprecated code comments — server tombstones, deprecated module notices, recovered Globbler origin log, TODO comments, sarcastic error screens
+- [x] Checkpoints (auto-save triggers) — 4 Area3D checkpoints at room entrances calling SaveSystem.checkpoint_save(), visual markers with green glow, tween feedback on trigger
 
 ### 3.2 Chapter 1 Puzzles (3-5 total)
 - [ ] Tutorial glob puzzle: match *.txt to open the first door
