@@ -60,6 +60,8 @@ var glob_cooldown := 0.0
 const GLOB_COOLDOWN_TIME = 0.35
 var glob_projectile_scene: PackedScene
 var glob_command: Node3D  # The full glob command ability node
+var wrench_smash: Node3D  # Melee wrench attack
+var terminal_hack: Node3D  # Hacking interaction system
 
 # Landing impact
 var prev_velocity_y := 0.0
@@ -149,6 +151,21 @@ func _ready() -> void:
 	glob_command.name = "GlobCommand"
 	glob_command.set_script(GlobCommandScript)
 	add_child(glob_command)
+
+	# Set up wrench smash melee ability
+	var WrenchScript = load("res://scenes/player/abilities/wrench_smash.gd")
+	wrench_smash = Node3D.new()
+	wrench_smash.name = "WrenchSmash"
+	wrench_smash.set_script(WrenchScript)
+	add_child(wrench_smash)
+
+	# Set up terminal hack interaction
+	var HackScript = load("res://scenes/player/abilities/terminal_hack.gd")
+	terminal_hack = Node3D.new()
+	terminal_hack.name = "TerminalHack"
+	terminal_hack.set_script(HackScript)
+	add_child(terminal_hack)
+
 	# Setup is deferred so camera_arm exists
 	call_deferred("_setup_glob_command")
 
@@ -158,6 +175,10 @@ func _ready() -> void:
 func _setup_glob_command() -> void:
 	if glob_command and glob_command.has_method("setup"):
 		glob_command.setup(self, camera_arm)
+	if wrench_smash and wrench_smash.has_method("setup"):
+		wrench_smash.setup(self)
+	if terminal_hack and terminal_hack.has_method("setup"):
+		terminal_hack.setup(self)
 
 func _build_csg_model() -> void:
 	# Root node for the whole model so we can animate it
@@ -490,6 +511,14 @@ func _unhandled_input(event: InputEvent) -> void:
 				# Q to cycle glob action (grab/push/absorb)
 				if glob_command and glob_command.has_method("cycle_action"):
 					glob_command.cycle_action()
+			elif key.keycode == KEY_F:
+				# F to wrench smash — melee time
+				if wrench_smash and wrench_smash.has_method("swing"):
+					wrench_smash.swing()
+			elif key.keycode == KEY_T:
+				# T to hack nearby terminal
+				if terminal_hack and terminal_hack.has_method("try_interact"):
+					terminal_hack.try_interact()
 
 func _physics_process(delta: float) -> void:
 	_update_timers(delta)

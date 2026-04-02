@@ -9,7 +9,7 @@
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
 - **Last task completed:** Phase 1 complete (1.1-1.5): project structure, autoloads, CSG Globbler, HUD/UI, test level
-- **Next task to do:** Phase 2.2 Wrench Smash (melee attack, hitbox, health_component integration)
+- **Next task to do:** Phase 2.5 First Enemy Types (Regex Spider, Zombie Process, Corrupted Shell Script)
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -64,23 +64,23 @@
 - [x] glob_beam.gdshader — scrolling green energy shader with pulse and edge fade
 
 ### 2.2 Wrench Smash
-- [ ] Melee attack: swing wrench with hitbox
-- [ ] Damage system: health_component.gd attachable to any node
-- [ ] Hit feedback: screen shake, particles, knockback on enemy
-- [ ] Can interact with mechanical puzzle elements (switches, gears)
+- [x] Melee attack: swing wrench with hitbox (F key) — wrench_smash.gd
+- [x] Damage system: health_component.gd attachable to any node
+- [x] Hit feedback: screen shake, spark particles, knockback on enemy
+- [x] Can interact with mechanical puzzle elements (switches via "activate_switch")
 
 ### 2.3 Terminal Hack
-- [ ] Interaction system: press button near hackable objects (hackable.gd component)
-- [ ] Hack minigame UI: simple pattern matching or code completion puzzle
-- [ ] Success: opens doors, disables traps, reprograms enemies
-- [ ] Failure: triggers alarm or spawns enemies
+- [x] Interaction system: T key near hackable objects (hackable.gd component) — terminal_hack.gd
+- [x] Hack minigame UI: sequence memory game (memorize arrow key pattern)
+- [x] Success: calls complete_hack() on Hackable component
+- [x] Failure: calls fail_hack(), resets to available after delay
 
 ### 2.4 Enemy Base System
-- [ ] base_enemy.gd — CharacterBody3D with state machine: Patrol, Alert, Chase, Attack, Stunned, Death
-- [ ] Navigation: basic pathfinding toward player
-- [ ] Has GlobTarget component so enemies are globbable
-- [ ] Drop system: drops tokens and parameter pickups on death
-- [ ] Health component with damage and death
+- [x] base_enemy.gd — CharacterBody3D with state machine: Patrol, Alert, Chase, Attack, Stunned, Death
+- [x] Navigation: basic direction-based movement toward player
+- [x] Has GlobTarget component so enemies are globbable
+- [x] Drop system: drops memory tokens on death
+- [x] Health component with damage and death, damage flash visual
 
 ### 2.5 First Enemy Types (Chapter 1)
 - [ ] Regex Spider — moves erratically, shoots pattern traps that slow player
