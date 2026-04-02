@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** 3.2 Chapter 1 Puzzles — created 5 puzzles integrated into terminal_wastes.gd: (1) Tutorial glob puzzle in Spawn Chamber with 3 .txt file objects + decoy .exe, match *.txt to open corridor, (2) Multi-pattern sequence puzzle in Command Hall with .log and .cfg files, new multi_glob_puzzle.gd requiring sequential pattern matches, (3) Hack puzzle in Data River Chamber with difficulty 2 terminal for power relay, (4) Physics puzzle on Data River side platform with 2 pushable blocks and pressure plates, (5) Optional recursive glob puzzle in Server Graveyard with nested directory tree visualization and hidden secret.key, new recursive_glob_puzzle.gd. All puzzles include GlobTarget file objects, contextual terminal signs, sarcastic labels, and proper door blocking.
-- **Next task to do:** 3.3 Chapter 1 Boss: rm -rf /
+- **Last task completed:** 3.3 Chapter 1 Boss: rm -rf / — Full 3-phase boss fight: (1) rm_rf_boss.gd extends BaseEnemy with 50 HP, 3 phases (DODGE/COUNTER/HACK), towering dark monolith visual with crimson accents and "rm -rf /" face screen. (2) boss_arena.gd manages 8x6 grid of filesystem-named floor tiles (/bin, /home, /etc, etc.) that get deleted in waves with 1.5s orange warning flash, ~25% safe tiles glow green and resist deletion, void damage zone teleports fallen players back. (3) delete_command.gd globbable projectiles with GlobTarget (*.del pattern), turn green when glob-pushed back at boss. Phase 1: boss fires delete waves erasing floor tiles, player dodges on safe tiles. Phase 2: boss shielded, fires delete_command projectiles player must glob-push back (4 reflected hits breaks shield). Phase 3: boss stunned, hackable core terminal spawned (difficulty 3), 20s timer before boss recovers. Victory cutscene with sarcastic narrator/Globbler dialogue, arena floor restoration cascade. Integrated into terminal_wastes.gd with trigger zone, sealed entrance, intro dialogue, boss room with red accent lighting and 3 elevated safe platforms.
+- **Next task to do:** 3.4 Chapter 1 Dialogue
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -117,11 +117,11 @@
 - [x] Optional hard puzzle: recursive glob challenge with nested directories — new recursive_glob_puzzle.gd in Server Graveyard with 8-dir tree and hidden secret.key
 
 ### 3.3 Chapter 1 Boss: rm -rf /
-- [ ] Boss arena: the floor is a file system that gets deleted in waves
-- [ ] Boss behavior: massive deletion entity, erases platforms, spawns delete waves
-- [ ] Player must glob-select safe platforms and avoid deletion zones
-- [ ] Multi-phase: phase 1 dodge, phase 2 counter-attack by globbing his own delete commands back at him, phase 3 hack his core
-- [ ] Victory cutscene and dialogue
+- [x] Boss arena: the floor is a file system that gets deleted in waves — boss_arena.gd with 8x6 grid of filesystem-named tiles, delete waves with warning flash, safe tiles, void damage, tile restoration
+- [x] Boss behavior: massive deletion entity, erases platforms, spawns delete waves — rm_rf_boss.gd extending BaseEnemy, 50 HP, towering monolith visual with crimson accents and red eyes
+- [x] Player must glob-select safe platforms and avoid deletion zones — safe tiles resist deletion and glow green, 3 elevated platforms as safe zones, void teleports player back with damage
+- [x] Multi-phase: phase 1 dodge, phase 2 counter-attack by globbing his own delete commands back at him, phase 3 hack his core — delete_command.gd globbable projectiles (*.del), shield breaks after 4 reflected hits, hackable core terminal difficulty 3 with 20s timer
+- [x] Victory cutscene and dialogue — sarcastic narrator/Globbler dialogue, arena floor cascade restoration, checkpoint save, boss queue_free
 
 ### 3.4 Chapter 1 Dialogue
 - [ ] Opening narration: Globbler wakes up in the Terminal Wastes

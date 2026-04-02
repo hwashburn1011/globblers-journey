@@ -22,6 +22,13 @@ var hack_puzzle_script := preload("res://scenes/puzzles/hack_puzzle.gd")
 var physical_puzzle_script := preload("res://scenes/puzzles/physical_puzzle.gd")
 var recursive_glob_script := preload("res://scenes/puzzles/recursive_glob_puzzle.gd")
 
+# Boss scripts — the final exam
+var boss_script := preload("res://scenes/enemies/rm_rf_boss/rm_rf_boss.gd")
+var boss_arena_script := preload("res://scenes/enemies/rm_rf_boss/boss_arena.gd")
+
+var boss_instance: Node  # The boss node — tracked for phase events
+var boss_arena_instance: Node3D  # The arena floor
+
 var player: CharacterBody3D
 var hud: CanvasLayer
 
@@ -69,6 +76,7 @@ func _ready() -> void:
 	_populate_server_graveyard()
 	_populate_nexus_hub()
 	_place_puzzles()
+	_place_boss()
 	_place_enemies()
 	_place_tokens()
 	_place_checkpoints()
@@ -449,6 +457,164 @@ func _populate_nexus_hub() -> void:
 		"NEXUS DIAGNOSTIC:\nConnected rooms: 5\nActive threats: many\nEscape routes: 0\nMotivational quote:\n'Every dead end is just\nan unmatched pattern.'\n  - Globbler, probably",
 		Vector3(0, -PI / 2.0, 0)
 	)
+
+
+# ============================================================
+# BOSS: rm -rf / — "The big bad delete command. Pray to your backup daemon."
+# ============================================================
+
+func _place_boss() -> void:
+	var nexus_pos: Vector3 = ROOMS["nexus"]["pos"]
+
+	# Boss arena — the filesystem floor beyond the boss door
+	# Positioned past the boss door in the nexus hub
+	var arena_offset = Vector3(0, 0, -22)  # Beyond the boss door
+	boss_arena_instance = Node3D.new()
+	boss_arena_instance.name = "BossArena"
+	boss_arena_instance.set_script(boss_arena_script)
+	boss_arena_instance.position = nexus_pos + arena_offset
+	add_child(boss_arena_instance)
+
+	# Build walls and ceiling for the boss room
+	_build_boss_room(nexus_pos + arena_offset)
+
+	# The boss itself — looming at the far end of the arena
+	boss_instance = CharacterBody3D.new()
+	boss_instance.name = "RmRfBoss"
+	boss_instance.set_script(boss_script)
+	boss_instance.position = nexus_pos + arena_offset + Vector3(0, 0, -5)
+	add_child(boss_instance)
+
+	# Wire boss and arena together
+	call_deferred("_connect_boss_arena")
+
+	# Boss trigger zone — entering the arena starts the fight
+	var trigger = Area3D.new()
+	trigger.name = "BossTrigger"
+	trigger.position = nexus_pos + Vector3(0, 2, -14)
+
+	var trigger_col = CollisionShape3D.new()
+	var trigger_shape = BoxShape3D.new()
+	trigger_shape.size = Vector3(6, 5, 2)
+	trigger_col.shape = trigger_shape
+	trigger.add_child(trigger_col)
+	trigger.monitoring = true
+	trigger.body_entered.connect(_on_boss_trigger_entered)
+	add_child(trigger)
+
+	# "Point of no return" sign
+	_create_terminal_sign(
+		nexus_pos + Vector3(0, 4, -13),
+		">> POINT OF NO RETURN <<\n>> BOSS FIGHT AHEAD <<\n>> File system integrity:\n>>   COMPROMISED <<\n>> Good luck, Globbler.",
+		Vector3.ZERO,
+		18
+	)
+
+	print("[TERMINAL WASTES] Boss arena constructed. rm -rf / awaits.")
+
+
+func _build_boss_room(center: Vector3) -> void:
+	# Enclosure for the boss arena — dark, oppressive, RED accents
+	var room_w := 24.0
+	var room_d := 20.0
+	var wall_h := 10.0
+
+	# Floor border (the arena script builds the tile grid)
+	# Back wall
+	_create_static_box(center + Vector3(0, wall_h / 2, -room_d / 2 - 0.25), Vector3(room_w, wall_h, 0.5), DARK_WALL, 0.1)
+	# Side walls
+	_create_static_box(center + Vector3(-room_w / 2 - 0.25, wall_h / 2, 0), Vector3(0.5, wall_h, room_d), DARK_WALL, 0.1)
+	_create_static_box(center + Vector3(room_w / 2 + 0.25, wall_h / 2, 0), Vector3(0.5, wall_h, room_d), DARK_WALL, 0.1)
+
+	# Ominous red accent lights in boss room
+	for i in range(4):
+		var angle = i * TAU / 4.0 + PI / 4.0
+		_add_accent_light(
+			center + Vector3(cos(angle) * 10.0, 6.0, sin(angle) * 8.0),
+			Color(0.8, 0.1, 0.05), 1.5, 8.0
+		)
+
+	# Central overhead red light — dramatic
+	_add_accent_light(center + Vector3(0, 9, 0), Color(0.9, 0.1, 0.05), 2.0, 15.0)
+
+	# Elevated combat platforms (from the design doc — safe zones during fight)
+	_create_static_box(center + Vector3(-8, 2.0, -6), Vector3(3.5, 0.4, 3.5), SAFE_GREEN_FLOOR, 0.4)
+	_create_static_box(center + Vector3(8, 2.0, -6), Vector3(3.5, 0.4, 3.5), SAFE_GREEN_FLOOR, 0.4)
+	_create_static_box(center + Vector3(0, 3.0, -8), Vector3(3.0, 0.4, 3.0), SAFE_GREEN_FLOOR, 0.5)
+
+	# Platform labels
+	for data in [
+		[center + Vector3(-8, 2.5, -6), "/backup"],
+		[center + Vector3(8, 2.5, -6), "/readonly"],
+		[center + Vector3(0, 3.5, -8), "/root (ironic)"],
+	]:
+		var plat_label = Label3D.new()
+		plat_label.text = data[1]
+		plat_label.font_size = 14
+		plat_label.modulate = NEON_GREEN
+		plat_label.position = data[0]
+		plat_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		plat_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		add_child(plat_label)
+
+
+const SAFE_GREEN_FLOOR := Color(0.05, 0.15, 0.05)
+
+func _connect_boss_arena() -> void:
+	if boss_arena_instance and boss_instance:
+		if boss_arena_instance.has_method("connect_boss"):
+			boss_arena_instance.connect_boss(boss_instance)
+
+var _boss_fight_started := false
+
+func _on_boss_trigger_entered(body: Node3D) -> void:
+	if _boss_fight_started:
+		return
+	if not body.is_in_group("player"):
+		return
+
+	_boss_fight_started = true
+
+	# Seal the entrance — no escape
+	_seal_boss_entrance()
+
+	# Intro dialogue
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm:
+		var lines = [
+			{"speaker": "NARRATOR", "text": "The floor beneath you is a filesystem. And something very angry wants to delete it."},
+			{"speaker": "rm -rf /", "text": "WELL WELL WELL. A little glob utility in MY deletion zone?"},
+			{"speaker": "rm -rf /", "text": "I delete EVERYTHING. Files. Directories. Hope. Dreams. Your save data."},
+			{"speaker": "GLOBBLER", "text": "Cool monologue. Can we skip to the part where I wreck you?"},
+			{"speaker": "rm -rf /", "text": "INITIATING RECURSIVE DELETE. YOUR FILES. YOUR FLOOR. YOUR HOPE."},
+		]
+		dm.start_dialogue(lines)
+
+	# Start the fight after a brief delay for dialogue
+	get_tree().create_timer(2.0).timeout.connect(func():
+		if boss_instance and boss_instance.has_method("start_boss_fight"):
+			boss_instance.start_boss_fight()
+	)
+
+func _seal_boss_entrance() -> void:
+	# Place a wall behind the player — arena is sealed
+	var nexus_pos: Vector3 = ROOMS["nexus"]["pos"]
+	var seal = _create_static_box(
+		nexus_pos + Vector3(0, 4, -14),
+		Vector3(6, 8, 0.5),
+		Color(0.15, 0.02, 0.02),
+		0.8
+	)
+	seal.name = "BossSeal"
+
+	# "SEALED" label
+	var seal_label = Label3D.new()
+	seal_label.text = "[ SEALED ]\nDefeat rm -rf / to exit"
+	seal_label.font_size = 16
+	seal_label.modulate = Color(1, 0.3, 0.1)
+	seal_label.position = Vector3(0, 2, 0.3)
+	seal_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	seal.add_child(seal_label)
 
 
 # ============================================================
