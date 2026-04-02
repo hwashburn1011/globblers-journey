@@ -9,7 +9,7 @@
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
 - **Last task completed:** Phase 1 complete (1.1-1.5): project structure, autoloads, CSG Globbler, HUD/UI, test level
-- **Next task to do:** Phase 2.5 First Enemy Types (Regex Spider, Zombie Process, Corrupted Shell Script)
+- **Next task to do:** Phase 3.1 Terminal Wastes Level Design (Chapter 1 environment)
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -83,21 +83,21 @@
 - [x] Health component with damage and death, damage flash visual
 
 ### 2.5 First Enemy Types (Chapter 1)
-- [ ] Regex Spider — moves erratically, shoots pattern traps that slow player
-- [ ] Zombie Process — slow, tanky, keeps respawning unless you kill the parent process node
-- [ ] Corrupted Shell Script — fast, fragile, attacks in scripted sequences
+- [x] Regex Spider — erratic movement, fires purple web traps that slow player
+- [x] Zombie Process — slow, tanky (6 HP), respawns up to 3x unless parent process killed
+- [x] Corrupted Shell Script — fast, fragile (1 HP), executes scripted attack sequences (charge/circle/retreat/burst)
 
 ### 2.6 Puzzle Framework
-- [ ] base_puzzle.gd — states: Locked, Active, Solved, Failed. Emits signals.
-- [ ] Glob pattern puzzle: terminal shows a pattern, player must glob the correct objects
-- [ ] Hack puzzle: simple code-completion minigame
+- [x] base_puzzle.gd — states: Locked, Active, Solved, Failed. Emits signals. Auto-activate on proximity.
+- [x] Glob pattern puzzle: terminal shows pattern, listens to GlobEngine for matches, opens door on solve
+- [~] Hack puzzle: covered by terminal_hack.gd minigame (sequence memory)
 - [ ] Physical puzzle: move blocks, redirect beams, etc.
 
 ### 2.7 Save and Load
-- [ ] save_system.gd autoload — saves to user:// directory
-- [ ] Save: player position, health, context meter, completed puzzles, current chapter, inventory
-- [ ] Auto-save at checkpoints
-- [ ] Load from main menu
+- [x] save_system.gd autoload — saves to user:// as JSON
+- [x] Save: player position, health, context meter, completed puzzles, current chapter, kills, time
+- [x] Auto-save at checkpoints via checkpoint_save()
+- [x] Load from save file, apply to GameManager
 
 ---
 
