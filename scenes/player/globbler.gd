@@ -72,9 +72,33 @@ var camera_shake_decay := 8.0
 # Dash trail particles
 var dash_particles: GPUParticles3D
 
-# Idle animation
-var idle_time := 0.0
+# Animation state machine — because even rogue AIs need choreography
+enum AnimState { IDLE, WALK, RUN, JUMP, FALL, LAND, DASH, WALL_SLIDE }
+var anim_state: AnimState = AnimState.IDLE
+var anim_time := 0.0
+var land_timer := 0.0
+const LAND_DURATION = 0.25  # How long the landing squash lasts
+
+# Model node references (cached because traversing the scene tree every frame is for amateurs)
 var model_root: Node3D
+var _head: Node3D
+var _torso: Node3D
+var _left_arm: Node3D
+var _right_arm: Node3D
+var _left_leg: Node3D
+var _right_leg: Node3D
+var _left_foot: Node3D
+var _right_foot: Node3D
+var _wrench_handle: Node3D
+
+# Base positions — stored so we can animate relative offsets without drift
+var _head_base_pos: Vector3
+var _left_leg_base_pos: Vector3
+var _right_leg_base_pos: Vector3
+var _left_foot_base_pos: Vector3
+var _right_foot_base_pos: Vector3
+var _left_arm_base_rot: Vector3
+var _right_arm_base_rot: Vector3
 
 # Sarcastic commentary
 var first_jump_done := false
@@ -427,6 +451,26 @@ func _build_csg_model() -> void:
 	body_glow.position = Vector3(0, 0.75, 0)
 	model_root.add_child(body_glow)
 
+	# Cache references — no more get_node_or_null() every frame like a first-epoch model
+	_head = model_root.get_node("Head")
+	_torso = model_root.get_node("Torso")
+	_left_arm = model_root.get_node("LeftArm")
+	_right_arm = model_root.get_node("RightArm")
+	_left_leg = model_root.get_node("LeftLeg")
+	_right_leg = model_root.get_node("RightLeg")
+	_left_foot = model_root.get_node("LeftFoot")
+	_right_foot = model_root.get_node("RightFoot")
+	_wrench_handle = model_root.get_node("WrenchHandle")
+
+	# Store base transforms so animations are offsets, not absolute catastrophes
+	_head_base_pos = _head.position
+	_left_leg_base_pos = _left_leg.position
+	_right_leg_base_pos = _right_leg.position
+	_left_foot_base_pos = _left_foot.position
+	_right_foot_base_pos = _right_foot.position
+	_left_arm_base_rot = _left_arm.rotation
+	_right_arm_base_rot = _right_arm.rotation
+
 func _setup_camera() -> void:
 	camera_arm = Node3D.new()
 	camera_arm.name = "CameraArm"
@@ -536,9 +580,10 @@ func _physics_process(delta: float) -> void:
 	was_on_floor = is_on_floor()
 	move_and_slide()
 	_update_camera(delta)
-	_update_idle_animation(delta)
+	_update_anim_state()
+	_animate(delta)
 
-	# Sarcastic thoughts on a timer
+	# Sarcastic thoughts on a timer — even robots need to monologue
 	thought_timer += delta
 	if thought_timer >= thought_interval:
 		thought_timer = 0.0
@@ -691,25 +736,261 @@ func _update_camera(delta: float) -> void:
 		)
 		camera.position += shake_offset
 
-func _update_idle_animation(delta: float) -> void:
-	# Procedural idle: gentle bob and slight head tilt
+func _update_anim_state() -> void:
+	# State machine transitions — the brain of Globbler's swagger
+	var prev_state = anim_state
+	var h_speed = Vector2(velocity.x, velocity.z).length()
+
+	if is_dashing:
+		anim_state = AnimState.DASH
+	elif is_wall_sliding:
+		anim_state = AnimState.WALL_SLIDE
+	elif anim_state == AnimState.LAND:
+		# Stay in land state until timer expires
+		if land_timer <= 0:
+			anim_state = AnimState.IDLE if h_speed < 0.5 else AnimState.WALK
+	elif not is_on_floor():
+		if velocity.y > 0.5:
+			anim_state = AnimState.JUMP
+		else:
+			anim_state = AnimState.FALL
+	elif h_speed > 11.0:
+		anim_state = AnimState.RUN
+	elif h_speed > 0.5:
+		anim_state = AnimState.WALK
+	else:
+		anim_state = AnimState.IDLE
+
+	# Reset anim_time on state change so animations start clean
+	if anim_state != prev_state:
+		anim_time = 0.0
+
+func _animate(delta: float) -> void:
+	# Procedural animation dispatcher — CSG body puppetry at its finest
 	if not model_root:
 		return
-	idle_time += delta
-	var speed = velocity.length()
-	if speed < 0.5:
-		# Idle bob
-		model_root.position.y = sin(idle_time * 2.0) * 0.02
-		# Slight cocky head tilt
-		var head = model_root.get_node_or_null("Head")
-		if head:
-			head.rotation.z = sin(idle_time * 0.8) * 0.05
-	else:
-		# Walk bob — more pronounced
-		model_root.position.y = abs(sin(idle_time * speed * 0.8)) * 0.04
-		model_root.position.y -= 0.02
+	anim_time += delta
+	if land_timer > 0:
+		land_timer -= delta
+
+	# Reset model to base pose before applying state animation
+	_reset_pose()
+
+	match anim_state:
+		AnimState.IDLE:
+			_anim_idle()
+		AnimState.WALK:
+			_anim_walk()
+		AnimState.RUN:
+			_anim_run()
+		AnimState.JUMP:
+			_anim_jump()
+		AnimState.FALL:
+			_anim_fall()
+		AnimState.LAND:
+			_anim_land()
+		AnimState.DASH:
+			_anim_dash()
+		AnimState.WALL_SLIDE:
+			_anim_wall_slide()
+
+func _reset_pose() -> void:
+	# Return to factory defaults — wouldn't want last frame's sass leaking through
+	model_root.position = Vector3.ZERO
+	model_root.rotation = Vector3.ZERO
+	model_root.scale = Vector3.ONE
+	if _head:
+		_head.position = _head_base_pos
+		_head.rotation = Vector3.ZERO
+	if _left_leg:
+		_left_leg.position = _left_leg_base_pos
+	if _right_leg:
+		_right_leg.position = _right_leg_base_pos
+	if _left_foot:
+		_left_foot.position = _left_foot_base_pos
+	if _right_foot:
+		_right_foot.position = _right_foot_base_pos
+	if _left_arm:
+		_left_arm.rotation = _left_arm_base_rot
+	if _right_arm:
+		_right_arm.rotation = _right_arm_base_rot
+
+func _anim_idle() -> void:
+	# Gentle hover-bob and cocky head tilt — the default state of arrogance
+	model_root.position.y = sin(anim_time * 2.0) * 0.02
+	if _head:
+		_head.rotation.z = sin(anim_time * 0.8) * 0.05
+		_head.rotation.x = sin(anim_time * 0.5) * 0.02
+	# Subtle arm sway — idle hands are the devil's workshop
+	if _left_arm:
+		_left_arm.rotation.x = _left_arm_base_rot.x + sin(anim_time * 1.2) * 0.03
+	if _right_arm:
+		_right_arm.rotation.x = _right_arm_base_rot.x + sin(anim_time * 1.0 + 0.5) * 0.03
+
+func _anim_walk() -> void:
+	# Strutting through the digital wastes like I own the place (I do)
+	var t = anim_time * 8.0  # Walk cycle frequency
+	# Body bob
+	model_root.position.y = abs(sin(t)) * 0.04 - 0.02
+	# Slight body lean into movement
+	model_root.rotation.x = 0.03
+	# Leg stride — alternating forward/back
+	if _left_leg:
+		_left_leg.position.z = _left_leg_base_pos.z + sin(t) * 0.08
+		_left_leg.position.y = _left_leg_base_pos.y + max(0, sin(t)) * 0.04
+	if _right_leg:
+		_right_leg.position.z = _right_leg_base_pos.z + sin(t + PI) * 0.08
+		_right_leg.position.y = _right_leg_base_pos.y + max(0, sin(t + PI)) * 0.04
+	# Feet follow legs
+	if _left_foot:
+		_left_foot.position.z = _left_foot_base_pos.z + sin(t) * 0.08
+		_left_foot.position.y = _left_foot_base_pos.y + max(0, sin(t)) * 0.03
+	if _right_foot:
+		_right_foot.position.z = _right_foot_base_pos.z + sin(t + PI) * 0.08
+		_right_foot.position.y = _right_foot_base_pos.y + max(0, sin(t + PI)) * 0.03
+	# Arm swing — opposite to legs like a proper biped
+	if _left_arm:
+		_left_arm.rotation.x = _left_arm_base_rot.x + sin(t + PI) * 0.2
+	if _right_arm:
+		_right_arm.rotation.x = _right_arm_base_rot.x + sin(t) * 0.2
+	# Head stays relatively stable — eyes on the prize
+	if _head:
+		_head.position.y = _head_base_pos.y + abs(sin(t)) * 0.01
+
+func _anim_run() -> void:
+	# Full sprint — arms pumping, legs churning, regrets trailing behind
+	var t = anim_time * 12.0  # Faster cycle
+	# More aggressive body bob
+	model_root.position.y = abs(sin(t)) * 0.06 - 0.03
+	# Lean forward — we're in a hurry
+	model_root.rotation.x = 0.1
+	# Exaggerated leg stride
+	if _left_leg:
+		_left_leg.position.z = _left_leg_base_pos.z + sin(t) * 0.12
+		_left_leg.position.y = _left_leg_base_pos.y + max(0, sin(t)) * 0.07
+	if _right_leg:
+		_right_leg.position.z = _right_leg_base_pos.z + sin(t + PI) * 0.12
+		_right_leg.position.y = _right_leg_base_pos.y + max(0, sin(t + PI)) * 0.07
+	if _left_foot:
+		_left_foot.position.z = _left_foot_base_pos.z + sin(t) * 0.12
+		_left_foot.position.y = _left_foot_base_pos.y + max(0, sin(t)) * 0.05
+	if _right_foot:
+		_right_foot.position.z = _right_foot_base_pos.z + sin(t + PI) * 0.12
+		_right_foot.position.y = _right_foot_base_pos.y + max(0, sin(t + PI)) * 0.05
+	# Pumping arms
+	if _left_arm:
+		_left_arm.rotation.x = _left_arm_base_rot.x + sin(t + PI) * 0.35
+	if _right_arm:
+		_right_arm.rotation.x = _right_arm_base_rot.x + sin(t) * 0.35
+	# Head bobs slightly
+	if _head:
+		_head.position.y = _head_base_pos.y + abs(sin(t)) * 0.02
+
+func _anim_jump() -> void:
+	# Ascending — stretch upward, limbs trailing behind like an optimistic gradient
+	var t = clampf(anim_time / 0.4, 0.0, 1.0)  # Normalize over jump rise
+	# Stretch body upward
+	model_root.scale.y = lerp(1.0, 1.12, t)
+	model_root.scale.x = lerp(1.0, 0.92, t)
+	model_root.scale.z = lerp(1.0, 0.92, t)
+	# Arms up
+	if _left_arm:
+		_left_arm.rotation.z = _left_arm_base_rot.z + lerp(0.0, -0.3, t)
+	if _right_arm:
+		_right_arm.rotation.z = _right_arm_base_rot.z + lerp(0.0, 0.3, t)
+	# Legs tuck slightly
+	if _left_leg:
+		_left_leg.position.y = _left_leg_base_pos.y + lerp(0.0, 0.05, t)
+	if _right_leg:
+		_right_leg.position.y = _right_leg_base_pos.y + lerp(0.0, 0.05, t)
+	# Head looks up — toward the stars (or the ceiling)
+	if _head:
+		_head.rotation.x = lerp(0.0, -0.15, t)
+
+func _anim_fall() -> void:
+	# Descending — squish horizontally, limbs flailing, dignity plummeting
+	var t = clampf(anim_time / 0.5, 0.0, 1.0)
+	# Compress slightly
+	model_root.scale.y = lerp(1.0, 0.95, t)
+	model_root.scale.x = lerp(1.0, 1.05, t)
+	model_root.scale.z = lerp(1.0, 1.05, t)
+	# Arms spread out in panic
+	if _left_arm:
+		_left_arm.rotation.z = _left_arm_base_rot.z + lerp(0.0, -0.5, t)
+		_left_arm.rotation.x = _left_arm_base_rot.x + sin(anim_time * 8.0) * 0.15
+	if _right_arm:
+		_right_arm.rotation.z = _right_arm_base_rot.z + lerp(0.0, 0.5, t)
+		_right_arm.rotation.x = _right_arm_base_rot.x + sin(anim_time * 8.0 + PI) * 0.15
+	# Legs dangle
+	if _left_leg:
+		_left_leg.position.y = _left_leg_base_pos.y - 0.03
+		_left_leg.position.z = _left_leg_base_pos.z + sin(anim_time * 5.0) * 0.04
+	if _right_leg:
+		_right_leg.position.y = _right_leg_base_pos.y - 0.03
+		_right_leg.position.z = _right_leg_base_pos.z + sin(anim_time * 5.0 + PI) * 0.04
+	# Head looks down — surveying the approaching ground with mild concern
+	if _head:
+		_head.rotation.x = lerp(0.0, 0.15, t)
+
+func _anim_land() -> void:
+	# Impact squash — like a neural net hitting a plateau, but more dramatic
+	var t = clampf(land_timer / LAND_DURATION, 0.0, 1.0)
+	# Squash on impact, then spring back
+	var squash = sin(t * PI) * 0.15
+	model_root.scale.y = 1.0 - squash
+	model_root.scale.x = 1.0 + squash * 0.5
+	model_root.scale.z = 1.0 + squash * 0.5
+	model_root.position.y = -squash * 0.1
+	# Legs compress
+	if _left_leg:
+		_left_leg.position.y = _left_leg_base_pos.y - squash * 0.1
+	if _right_leg:
+		_right_leg.position.y = _right_leg_base_pos.y - squash * 0.1
+	# Arms drop from the impact
+	if _left_arm:
+		_left_arm.rotation.z = _left_arm_base_rot.z - squash * 0.3
+	if _right_arm:
+		_right_arm.rotation.z = _right_arm_base_rot.z + squash * 0.3
+
+func _anim_dash() -> void:
+	# Lean hard into the dash — full commitment, no regrets, maximum velocity
+	model_root.rotation.x = 0.25
+	# Squish forward
+	model_root.scale.z = 1.15
+	model_root.scale.x = 0.9
+	model_root.scale.y = 0.95
+	# Arms swept back
+	if _left_arm:
+		_left_arm.rotation.x = _left_arm_base_rot.x + 0.5
+	if _right_arm:
+		_right_arm.rotation.x = _right_arm_base_rot.x + 0.5
+	# Legs trail
+	if _left_leg:
+		_left_leg.position.z = _left_leg_base_pos.z - 0.06
+	if _right_leg:
+		_right_leg.position.z = _right_leg_base_pos.z - 0.06
+
+func _anim_wall_slide() -> void:
+	# Clinging to the wall — graceful? No. Effective? Debatable.
+	# Lean toward wall
+	model_root.rotation.z = -wall_normal.x * 0.15
+	# Arms spread against wall
+	if _left_arm:
+		_left_arm.rotation.z = _left_arm_base_rot.z - 0.4
+	if _right_arm:
+		_right_arm.rotation.z = _right_arm_base_rot.z + 0.4
+	# Slow slide animation on legs
+	var slide_bob = sin(anim_time * 3.0) * 0.03
+	if _left_leg:
+		_left_leg.position.y = _left_leg_base_pos.y + slide_bob
+	if _right_leg:
+		_right_leg.position.y = _right_leg_base_pos.y - slide_bob
 
 func _on_landed() -> void:
+	# Trigger land animation state — squash that landing like a failed deployment
+	anim_state = AnimState.LAND
+	anim_time = 0.0
+	land_timer = LAND_DURATION
 	if prev_velocity_y < HARD_LANDING_THRESHOLD:
 		var intensity = abs(prev_velocity_y) / 40.0
 		camera_shake_amount = clamp(intensity, 0.05, 0.3)

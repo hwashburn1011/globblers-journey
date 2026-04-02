@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** Phase 1 complete (1.1-1.5): project structure, autoloads, CSG Globbler, HUD/UI, test level
-- **Next task to do:** Phase 3.1 Terminal Wastes Level Design (Chapter 1 environment)
+- **Last task completed:** 1.2 animation state machine — full procedural animation system with Idle, Walk, Run, Jump, Fall, Land, Dash, Wall Slide states
+- **Next task to do:** 1.3 GlobTarget test (place 5 objects, verify patterns)
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -26,7 +26,7 @@
 - [x] Create globbler.tscn — CharacterBody3D with CSG placeholder model: round torso, helmet/hood, green eyes, wrench, terminal screen, cables, boots. All dark gray + neon green.
 - [x] Create globbler.gd — movement (walk, run, jump, dash, wall-slide), gravity, 3rd person camera with smooth follow
 - [x] Idle animation or procedural idle (slight bob, head tilts) — procedural via _update_idle_animation()
-- [~] Basic animation state machine: Idle, Walk, Run, Jump, Fall, Land — procedural bob implemented, full state machine deferred
+- [x] Basic animation state machine: Idle, Walk, Run, Jump, Fall, Land — full procedural AnimState enum with per-state animations (+ Dash, Wall Slide bonus states)
 
 ### 1.3 Core Glob Engine
 - [x] glob_engine.gd — singleton that pattern matches against all nodes with GlobTarget component
