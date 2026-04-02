@@ -1,0 +1,154 @@
+extends PanelContainer
+
+# Dialogue Box - Terminal-style text display for story and quips
+# "Dark background, green text, typing animation. Peak hacker aesthetic."
+# Looks like a retro terminal window because Globbler refuses to use modern UI.
+
+const TYPING_SPEED := 0.03  # Seconds per character — fast enough to not be annoying
+const FAST_TYPING_SPEED := 0.005  # When player is mashing through
+
+var _full_text := ""
+var _displayed_chars := 0
+var _typing := false
+var _typing_timer := 0.0
+var _fast_mode := false
+
+@onready var speaker_label: Label = $VBox/SpeakerLabel
+@onready var text_label: RichTextLabel = $VBox/TextLabel
+@onready var advance_hint: Label = $VBox/AdvanceHint
+
+signal typing_finished()
+signal advanced()
+
+func _ready() -> void:
+	visible = false
+	_build_ui()
+
+func _build_ui() -> void:
+	# Terminal-style panel
+	var panel_style = StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.04, 0.04, 0.04, 0.95)
+	panel_style.border_color = Color(0.224, 1.0, 0.078, 0.7)
+	panel_style.border_width_left = 2
+	panel_style.border_width_top = 2
+	panel_style.border_width_right = 2
+	panel_style.border_width_bottom = 2
+	panel_style.corner_radius_top_left = 4
+	panel_style.corner_radius_top_right = 4
+	panel_style.corner_radius_bottom_left = 4
+	panel_style.corner_radius_bottom_right = 4
+	panel_style.content_margin_left = 16.0
+	panel_style.content_margin_top = 10.0
+	panel_style.content_margin_right = 16.0
+	panel_style.content_margin_bottom = 10.0
+	add_theme_stylebox_override("panel", panel_style)
+
+	# Anchoring at bottom center
+	anchors_preset = Control.PRESET_CENTER_BOTTOM
+	anchor_left = 0.1
+	anchor_top = 0.75
+	anchor_right = 0.9
+	anchor_bottom = 0.95
+	grow_horizontal = Control.GROW_DIRECTION_BOTH
+	grow_vertical = Control.GROW_DIRECTION_BEGIN
+
+	# VBox for layout
+	var vbox = VBoxContainer.new()
+	vbox.name = "VBox"
+	vbox.add_theme_constant_override("separation", 4)
+	add_child(vbox)
+
+	# Speaker name
+	speaker_label = Label.new()
+	speaker_label.name = "SpeakerLabel"
+	speaker_label.text = ""
+	speaker_label.add_theme_color_override("font_color", Color(0.224, 1.0, 0.078))
+	speaker_label.add_theme_font_size_override("font_size", 16)
+	vbox.add_child(speaker_label)
+
+	# Main text — RichTextLabel for typing effect
+	text_label = RichTextLabel.new()
+	text_label.name = "TextLabel"
+	text_label.bbcode_enabled = true
+	text_label.text = ""
+	text_label.add_theme_color_override("default_color", Color(0.3, 0.9, 0.3))
+	text_label.add_theme_font_size_override("normal_font_size", 18)
+	text_label.custom_minimum_size = Vector2(0, 60)
+	text_label.scroll_active = false
+	text_label.fit_content = true
+	vbox.add_child(text_label)
+
+	# "Click to continue" hint
+	advance_hint = Label.new()
+	advance_hint.name = "AdvanceHint"
+	advance_hint.text = "> click or press SPACE to continue..."
+	advance_hint.add_theme_color_override("font_color", Color(0.2, 0.6, 0.2, 0.6))
+	advance_hint.add_theme_font_size_override("font_size", 12)
+	advance_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	advance_hint.visible = false
+	vbox.add_child(advance_hint)
+
+func show_line(speaker: String, text: String) -> void:
+	visible = true
+	_full_text = text
+	_displayed_chars = 0
+	_typing = true
+	_typing_timer = 0.0
+	_fast_mode = false
+
+	if speaker_label:
+		speaker_label.text = "[%s]" % speaker if speaker != "" else ""
+	if text_label:
+		text_label.text = ""
+	if advance_hint:
+		advance_hint.visible = false
+
+func hide_box() -> void:
+	visible = false
+	_typing = false
+
+func _process(delta: float) -> void:
+	if not _typing:
+		return
+
+	var speed = FAST_TYPING_SPEED if _fast_mode else TYPING_SPEED
+	_typing_timer += delta
+	while _typing_timer >= speed and _displayed_chars < _full_text.length():
+		_typing_timer -= speed
+		_displayed_chars += 1
+		if text_label:
+			text_label.text = "> " + _full_text.substr(0, _displayed_chars)
+
+	if _displayed_chars >= _full_text.length():
+		_typing = false
+		if advance_hint:
+			advance_hint.visible = true
+		typing_finished.emit()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible:
+		return
+
+	var clicked = false
+	if event is InputEventMouseButton:
+		var mb = event as InputEventMouseButton
+		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+			clicked = true
+	if event is InputEventKey:
+		var key = event as InputEventKey
+		if key.pressed and (key.keycode == KEY_SPACE or key.keycode == KEY_ENTER):
+			clicked = true
+
+	if clicked:
+		if _typing:
+			# Skip typing animation
+			_fast_mode = true
+		else:
+			# Advance to next line
+			advanced.emit()
+			var dm = get_node_or_null("/root/DialogueManager")
+			if dm:
+				dm.advance()
+
+func is_typing() -> bool:
+	return _typing

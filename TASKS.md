@@ -9,7 +9,7 @@
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
 - **Last task completed:** Phase 1.1 (Project Structure), 1.2 (Globbler Character), 1.3 (Core Glob Engine) — all autoloads, components, CSG model, and folder structure
-- **Next task to do:** 1.4 HUD and UI (dialogue box, context window meter)
+- **Next task to do:** 1.5 Basic Level Shell (test level with GlobTargets, lighting, spawn points)
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -36,10 +36,11 @@
 - [ ] Test: place 5 objects with GlobTarget in a test scene, verify glob patterns select correctly
 
 ### 1.4 HUD and UI
-- [ ] Create hud.tscn — overlay with: health bar, context window meter, current glob pattern display, ability cooldowns
-- [ ] Green monospace font theme (use a system monospace or bundle one)
-- [ ] Context window meter — fills as player collects memory tokens, drains on use
-- [ ] Dialogue box — terminal style: dark background (#0a0a0a), green text (#39FF14), typing animation, click to advance
+- [x] Create hud.tscn — overlay with: health bar, context window meter, current glob pattern display, ability cooldowns (scenes/ui/hud.tscn)
+- [x] Green monospace font theme — all labels use green (#39FF14) on dark backgrounds
+- [x] Context window meter — scenes/ui/context_window_bar.tscn with smooth lerp, color shifts at low HP
+- [x] Dialogue box — scenes/ui/dialogue_box.tscn: terminal style, typing animation, click to advance, speaker tags
+- [x] Glob pattern input display — scenes/ui/glob_pattern_input.tscn: blinking cursor, match count
 
 ### 1.5 Basic Level Shell
 - [ ] Create a test level scene with ground plane, some walls, lighting

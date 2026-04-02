@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/context_window_bar.gd" id="1"]
+
+[node name="ContextWindowBar" type="VBoxContainer"]
+script = ExtResource("1")

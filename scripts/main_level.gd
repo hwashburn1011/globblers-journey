@@ -5,7 +5,7 @@ extends Node3D
 # "Navigate the digital abyss. Try not to crash."
 
 var player_scene := preload("res://scenes/player/globbler.tscn")
-var hud_scene := preload("res://scenes/hud.tscn")
+var hud_scene := preload("res://scenes/ui/hud.tscn")
 var token_scene := preload("res://scenes/memory_token.tscn")
 var terminal_scene := preload("res://scenes/puzzle_terminal.tscn")
 var enemy_scene := preload("res://scenes/enemy_agent.tscn")
