@@ -69,6 +69,11 @@ var _sfx_defs := {
 	"combo_hit": { "freq": 700.0, "duration": 0.12, "wave": "square", "env_attack": 0.0, "env_decay": 0.1, "volume_db": -12.0 },
 	"checkpoint": { "freq": 440.0, "duration": 0.4, "wave": "sine", "env_attack": 0.02, "env_decay": 0.3, "pitch_slide": 220.0, "volume_db": -8.0 },
 	"dialogue_advance": { "freq": 1000.0, "duration": 0.06, "wave": "sine", "env_attack": 0.0, "env_decay": 0.05, "volume_db": -14.0 },
+
+	# --- Agent Spawn SFX — sounds like a tiny robot booting up ---
+	"agent_spawn": { "freq": 600.0, "duration": 0.35, "wave": "square", "env_attack": 0.02, "env_decay": 0.3, "pitch_slide": 300.0, "volume_db": -8.0 },
+	"agent_fail": { "freq": 200.0, "duration": 0.4, "wave": "saw", "env_attack": 0.01, "env_decay": 0.35, "pitch_slide": -120.0, "volume_db": -10.0 },
+	"agent_success": { "freq": 880.0, "duration": 0.3, "wave": "sine", "env_attack": 0.01, "env_decay": 0.25, "pitch_slide": 440.0, "volume_db": -8.0 },
 }
 
 # Cached generated audio streams — no need to regenerate every bleep

@@ -61,6 +61,7 @@ func _ready() -> void:
 	print("=== THE GLOBBLER'S JOURNEY ===")
 	print("An Agentic Action Puzzle Platformer (Now Actually Fun)")
 	print("WASD to move | SPACE to jump | SHIFT to dash | E/LClick to Glob Attack")
+	print("F to Wrench | T to Hack | G to Spawn Agent | V to Cycle Agent Task")
 	print("Mouse to look | Scroll to zoom | ESC to free mouse")
 	print("Current Level: %s" % level_names.get(current_level, "Unknown"))
 	print("==============================")

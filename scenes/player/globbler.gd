@@ -62,6 +62,7 @@ var glob_projectile_scene: PackedScene
 var glob_command: Node3D  # The full glob command ability node
 var wrench_smash: Node3D  # Melee wrench attack
 var terminal_hack: Node3D  # Hacking interaction system
+var agent_spawn: Node3D   # Sub-agent deployment — for when you need tiny incompetent help
 
 # Landing impact
 var prev_velocity_y := 0.0
@@ -196,6 +197,13 @@ func _ready() -> void:
 	terminal_hack.set_script(HackScript)
 	add_child(terminal_hack)
 
+	# Set up agent spawn — tiny clones that mostly fail
+	var AgentSpawnScript = load("res://scenes/player/abilities/agent_spawn.gd")
+	agent_spawn = Node3D.new()
+	agent_spawn.name = "AgentSpawn"
+	agent_spawn.set_script(AgentSpawnScript)
+	add_child(agent_spawn)
+
 	# Setup is deferred so camera_arm exists
 	call_deferred("_setup_glob_command")
 
@@ -209,6 +217,8 @@ func _setup_glob_command() -> void:
 		wrench_smash.setup(self)
 	if terminal_hack and terminal_hack.has_method("setup"):
 		terminal_hack.setup(self)
+	if agent_spawn and agent_spawn.has_method("setup"):
+		agent_spawn.setup(self)
 
 func _build_csg_model() -> void:
 	# Root node for the whole model so we can animate it
@@ -569,6 +579,14 @@ func _unhandled_input(event: InputEvent) -> void:
 				# T to hack nearby terminal
 				if terminal_hack and terminal_hack.has_method("try_interact"):
 					terminal_hack.try_interact()
+			elif key.keycode == KEY_G:
+				# G to spawn a sub-agent — deploy the tiny idiots
+				if agent_spawn and agent_spawn.has_method("try_spawn"):
+					agent_spawn.try_spawn()
+			elif key.keycode == KEY_V:
+				# V to cycle sub-agent task mode
+				if agent_spawn and agent_spawn.has_method("cycle_task"):
+					agent_spawn.cycle_task()
 
 func _physics_process(delta: float) -> void:
 	_update_timers(delta)
