@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** 3.4 Chapter 1 Dialogue — Completed all dialogue wiring for Chapter 1. Pre-existing content verified complete: 7-line opening narration, 2 NPCs (man_page/sudo), 4 room-entry triggers, kill/token quips, boss intro/victory/ending dialogue. NEW wiring added: puzzle_solved/puzzle_failed signals connected to narrator quips (6s/4s cooldowns), first-glob event fires narrator line, player_died triggers narrator death commentary, context_changed monitors low-health (≤25%) with auto-reset, combo_updated at 5+ hits, boss_phase_changed narrator lines for phase 2/3 with timing delays. Added _wire_puzzle_signals_deferred() for post-init puzzle connections. New DialogueManager entries: boss_victory, chapter_1_complete narrator lines; dash, wall_slide, checkpoint Globbler quips; extra taking_damage quip.
-- **Next task to do:** 3.5 Chapter 1 Audio
+- **Last task completed:** 3.5 Chapter 1 Audio — Created AudioManager autoload (scripts/autoload/audio_manager.gd) with full procedural sound generation. Generates all SFX as AudioStreamWAV from synth patches (sine/square/saw/noise oscillators with envelopes and pitch slides). 25+ SFX definitions: player (footstep, jump, land, dash, glob_fire/match/fail, wrench_swing/hit, damage, death), enemy (alert, attack, death), puzzle (activate, success, fail), boss (phase, attack, defeated), UI (token_pickup, combo_hit, checkpoint, dialogue_advance). Procedural synthwave music loop (130bpm, minor key) and boss variant (155bpm, chromatic). Ambient server hum loop (60Hz hum + cooling fan + digital crackle). SFX player pool (8 concurrent). Signal auto-wiring to GameManager, GlobEngine, DialogueManager, and player signals. Direct audio calls added to: globbler.gd (jump, land, footsteps with walk/run intervals), base_enemy.gd (alert, attack), rm_rf_boss.gd (delete wave attacks), base_puzzle.gd (activate), terminal_wastes.gd (boss music on fight start, puzzle solved/failed SFX, boss phase/defeated SFX, checkpoint chime).
+- **Next task to do:** 4.1 Agent Spawn Ability
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -131,12 +131,12 @@
 - [x] Chapter 1 ending dialogue — expanded boss victory to 13-line sequence with Alignment foreshadowing, Training Grounds teaser, and chapter-complete narrator line
 
 ### 3.5 Chapter 1 Audio
-- [ ] Background music: synthwave/cyberpunk with glitchy elements
-- [ ] Ambient sounds: server hum, cooling fans, data processing
-- [ ] Globbler SFX: footsteps, jump, glob beam fire, wrench swing, damage taken
-- [ ] Enemy SFX: alert sound, attack, death
-- [ ] Puzzle SFX: success jingle, failure buzzer
-- [ ] Boss music: intense variant of chapter theme
+- [x] Background music: synthwave/cyberpunk with glitchy elements — procedural 130bpm synthwave loop (bass, pad, hi-hat, kick) with sidechain pump and detuned chorus, auto-starts via AudioManager
+- [x] Ambient sounds: server hum, cooling fans, data processing — procedural 8s loop: 60Hz hum + harmonic, modulated fan noise, random digital crackle
+- [x] Globbler SFX: footsteps, jump, glob beam fire, wrench swing, damage taken — all procedural synth patches, footsteps on walk/run timer, jump/land on state change, glob/wrench via signal wiring
+- [x] Enemy SFX: alert sound, attack, death — wired in base_enemy.gd state machine and via GameManager.enemy_killed_signal
+- [x] Puzzle SFX: success jingle, failure buzzer — wired in base_puzzle.gd activate/solve/fail and terminal_wastes.gd puzzle callbacks
+- [x] Boss music: intense variant of chapter theme — 155bpm procedural loop with chromatic bass, noise layer; crossfades from chapter music on boss trigger; stops on defeat
 
 ---
 

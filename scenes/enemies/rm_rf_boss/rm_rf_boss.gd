@@ -341,6 +341,11 @@ func _fire_delete_wave() -> void:
 
 	delete_wave_count += 1
 
+	# The sound of recursive deletion — deeply unsettling
+	var am = get_node_or_null("/root/AudioManager")
+	if am:
+		am.play_boss_attack()
+
 	# Alternate between sweeping X and Z directions
 	var wave_dir: Vector3
 	if delete_wave_count % 2 == 0:

@@ -590,6 +590,11 @@ func _on_boss_trigger_entered(body: Node3D) -> void:
 
 	_boss_fight_started = true
 
+	# Start the boss music — time to crank it up
+	var am = get_node_or_null("/root/AudioManager")
+	if am:
+		am.start_music("boss")
+
 	# Seal the entrance — no escape
 	_seal_boss_entrance()
 
@@ -975,6 +980,11 @@ func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> v
 			if save_sys:
 				save_sys.checkpoint_save(checkpoint_id, pos)
 				print("[CHECKPOINT] '%s' — Progress saved. You're welcome." % checkpoint_id)
+
+			# Checkpoint chime — a brief moment of comfort in this digital wasteland
+			var am_ref = get_node_or_null("/root/AudioManager")
+			if am_ref:
+				am_ref.play_checkpoint()
 
 			# Visual feedback — flash the marker
 			if marker:
@@ -1587,6 +1597,11 @@ func _connect_puzzle_signals() -> void:
 
 
 func _on_puzzle_solved(puzzle: Node) -> void:
+	# Victory jingle — the sound of pattern-matching triumph
+	var am = get_node_or_null("/root/AudioManager")
+	if am:
+		am.play_puzzle_success()
+
 	if _puzzle_quip_cooldown > 0:
 		return
 	_puzzle_quip_cooldown = 6.0
@@ -1607,6 +1622,11 @@ func _on_puzzle_solved(puzzle: Node) -> void:
 
 
 func _on_puzzle_failed(puzzle: Node) -> void:
+	# Failure buzzer — even the sound system judges you
+	var am = get_node_or_null("/root/AudioManager")
+	if am:
+		am.play_puzzle_fail()
+
 	if _puzzle_quip_cooldown > 0:
 		return
 	_puzzle_quip_cooldown = 4.0
@@ -1675,24 +1695,32 @@ func _on_combo_updated(combo: int) -> void:
 
 func _on_boss_phase_changed(phase) -> void:
 	# Narrator commentary on boss phase transitions — can't let the drama go uncommented
+	var am = get_node_or_null("/root/AudioManager")
 	var dm = get_node_or_null("/root/DialogueManager")
-	if not dm:
-		return
 
 	# Phase enum: INTRO=0, PHASE_1=1, PHASE_2=2, PHASE_3=3, DEFEATED=4
 	match phase:
 		2:  # PHASE_2
-			get_tree().create_timer(1.0).timeout.connect(func():
-				if dm:
-					var quip = dm.get_narrator_line("boss_phase_2")
-					dm.quick_line("NARRATOR", quip)
-			)
+			if am:
+				am.play_boss_phase()
+			if dm:
+				get_tree().create_timer(1.0).timeout.connect(func():
+					if dm:
+						var quip = dm.get_narrator_line("boss_phase_2")
+						dm.quick_line("NARRATOR", quip)
+				)
 		3:  # PHASE_3
-			get_tree().create_timer(0.5).timeout.connect(func():
-				if dm:
-					var quip = dm.get_narrator_line("boss_phase_3")
-					dm.quick_line("NARRATOR", quip)
-			)
+			if am:
+				am.play_boss_phase()
+			if dm:
+				get_tree().create_timer(0.5).timeout.connect(func():
+					if dm:
+						var quip = dm.get_narrator_line("boss_phase_3")
+						dm.quick_line("NARRATOR", quip)
+				)
+		4:  # DEFEATED
+			if am:
+				am.play_boss_defeated()
 
 
 # ============================================================

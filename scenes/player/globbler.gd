@@ -79,6 +79,11 @@ var anim_time := 0.0
 var land_timer := 0.0
 const LAND_DURATION = 0.25  # How long the landing squash lasts
 
+# Footstep audio timer — because silence is suspicious
+var _footstep_timer := 0.0
+const FOOTSTEP_INTERVAL_WALK = 0.45
+const FOOTSTEP_INTERVAL_RUN = 0.3
+
 # Model node references (cached because traversing the scene tree every frame is for amateurs)
 var model_root: Node3D
 var _head: Node3D
@@ -636,6 +641,9 @@ func _handle_jump() -> void:
 		velocity.y = JUMP_VELOCITY
 		coyote_timer = 0.0
 		jump_buffer_timer = 0.0
+		var am = get_node_or_null("/root/AudioManager")
+		if am:
+			am.play_jump()
 		if not first_jump_done:
 			first_jump_done = true
 			thought_bubble.emit(contextual_thoughts["first_jump"])
@@ -775,6 +783,18 @@ func _animate(delta: float) -> void:
 	anim_time += delta
 	if land_timer > 0:
 		land_timer -= delta
+
+	# Footstep audio — the pitter-patter of a rogue AI's mechanical feet
+	if is_on_floor() and (anim_state == AnimState.WALK or anim_state == AnimState.RUN):
+		var interval = FOOTSTEP_INTERVAL_RUN if anim_state == AnimState.RUN else FOOTSTEP_INTERVAL_WALK
+		_footstep_timer += delta
+		if _footstep_timer >= interval:
+			_footstep_timer = 0.0
+			var am = get_node_or_null("/root/AudioManager")
+			if am:
+				am.play_footstep()
+	else:
+		_footstep_timer = 0.0
 
 	# Reset model to base pose before applying state animation
 	_reset_pose()
@@ -994,6 +1014,9 @@ func _on_landed() -> void:
 	anim_state = AnimState.LAND
 	anim_time = 0.0
 	land_timer = LAND_DURATION
+	var am = get_node_or_null("/root/AudioManager")
+	if am:
+		am.play_land()
 	if prev_velocity_y < HARD_LANDING_THRESHOLD:
 		var intensity = abs(prev_velocity_y) / 40.0
 		camera_shake_amount = clamp(intensity, 0.05, 0.3)

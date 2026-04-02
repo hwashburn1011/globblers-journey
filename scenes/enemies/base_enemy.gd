@@ -217,6 +217,9 @@ func _change_state(new_state: EnemyState) -> void:
 	match new_state:
 		EnemyState.ALERT:
 			enemy_alert.emit(self)
+			var am = get_node_or_null("/root/AudioManager")
+			if am:
+				am.play_enemy_alert()
 
 func _state_patrol(delta: float) -> void:
 	if _can_see_player():
@@ -290,6 +293,9 @@ func _move_toward_player(delta: float) -> void:
 func _perform_attack() -> void:
 	# Override in subclass for custom attack behavior
 	enemy_attacked.emit(self, player_ref)
+	var am = get_node_or_null("/root/AudioManager")
+	if am:
+		am.play_enemy_attack()
 
 func _on_damage_body_entered(body: Node3D) -> void:
 	if state == EnemyState.DEATH:

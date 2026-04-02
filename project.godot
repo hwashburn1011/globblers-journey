@@ -21,6 +21,7 @@ GameManager="*res://scripts/game_manager.gd"
 GlobEngine="*res://scripts/autoload/glob_engine.gd"
 DialogueManager="*res://scripts/autoload/dialogue_manager.gd"
 SaveSystem="*res://scripts/autoload/save_system.gd"
+AudioManager="*res://scripts/autoload/audio_manager.gd"
 
 [display]
 

@@ -47,6 +47,9 @@ func activate() -> void:
 		return
 	state = PuzzleState.ACTIVE
 	puzzle_activated.emit(self)
+	var am = get_node_or_null("/root/AudioManager")
+	if am:
+		am.play_puzzle_activate()
 	_on_activated()
 	print("[PUZZLE] '%s' activated. Good luck, you'll need it." % puzzle_name)
 
