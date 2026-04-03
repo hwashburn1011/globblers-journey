@@ -1365,7 +1365,7 @@ func _create_data_river(pos: Vector3, size: Vector3) -> void:
 	# Particles flowing along the river
 	var particles = GPUParticles3D.new()
 	particles.name = "DataRiverParticles"
-	particles.amount = 100
+	particles.amount = 50  # Was 100 — halved for performance, still looks like a river of data
 	particles.lifetime = 4.0
 	particles.position = pos + Vector3(0, 0.2, 0)
 
@@ -1917,7 +1917,7 @@ func _create_binary_rain(pos: Vector3, area_size: Vector2, height: float = 8.0) 
 	# but more self-aware about being a cliche
 	var rain = GPUParticles3D.new()
 	rain.name = "BinaryRain"
-	rain.amount = 80
+	rain.amount = 40  # Was 80 — the Matrix called, they want their GPU back
 	rain.lifetime = 3.0
 	rain.position = pos + Vector3(0, height, 0)
 

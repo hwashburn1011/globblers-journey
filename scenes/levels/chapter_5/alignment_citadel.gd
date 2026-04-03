@@ -1979,7 +1979,7 @@ func _transform_citadel_environment() -> void:
 
 	# Ambient particles along the path — data streams flowing toward the mountain
 	var particles = GPUParticles3D.new()
-	particles.amount = 40
+	particles.amount = 25  # Was 40 — reduced for performance
 	particles.lifetime = 6.0
 	particles.position = arena_pos + Vector3(0, 2, -40)
 	var pmat = ParticleProcessMaterial.new()

@@ -7,6 +7,8 @@ extends Node
 # All GlobTarget nodes register here. Query with match_pattern().
 
 var _targets: Array[Node] = []
+# Cache GlobTarget child lookups — searching children every match is wasteful
+var _gt_cache: Dictionary = {}  # Node -> GlobTarget child (or null)
 
 signal targets_matched(matched: Array[Node])
 signal pattern_failed(pattern: String)
@@ -20,6 +22,7 @@ func _ready() -> void:
 func register_target(target: Node) -> void:
 	if target not in _targets:
 		_targets.append(target)
+		_gt_cache[target] = _find_glob_target(target)  # Pre-cache the GlobTarget child
 		target_registered.emit(target)
 
 ## Unregister a GlobTarget node (call when it's freed)
@@ -27,6 +30,7 @@ func unregister_target(target: Node) -> void:
 	var idx = _targets.find(target)
 	if idx >= 0:
 		_targets.remove_at(idx)
+		_gt_cache.erase(target)
 		target_unregistered.emit(target)
 
 ## Match a glob pattern against all registered targets
@@ -48,14 +52,26 @@ func match_pattern(pattern: String) -> Array[Node]:
 	return results
 
 ## Match pattern against targets within a radius of a position
+## Filters by distance FIRST to avoid expensive pattern matching on far-away targets
 func match_pattern_in_radius(pattern: String, origin: Vector3, radius: float) -> Array[Node]:
-	var all_matches = match_pattern(pattern)
+	var radius_sq := radius * radius  # Compare squared distances — sqrt is for chumps
 	var in_range: Array[Node] = []
-	for target in all_matches:
+	for target in _targets:
+		if not is_instance_valid(target):
+			continue
+		# Distance check first — cheap and eliminates most targets
 		if target is Node3D:
-			var dist = (target as Node3D).global_position.distance_to(origin)
-			if dist <= radius:
-				in_range.append(target)
+			var dist_sq = (target as Node3D).global_position.distance_squared_to(origin)
+			if dist_sq > radius_sq:
+				continue
+		# Only pattern match targets that are actually nearby
+		if _target_matches(target, pattern):
+			in_range.append(target)
+
+	if in_range.size() > 0:
+		targets_matched.emit(in_range)
+	else:
+		pattern_failed.emit(pattern)
 	return in_range
 
 ## Find the GlobTarget child component on a registered node
@@ -77,7 +93,8 @@ func _target_matches(target: Node, pattern: String) -> bool:
 	var file_type := ""
 	var tags: Array = []
 
-	var gt = _find_glob_target(target)
+	# Use cached GlobTarget reference instead of searching children every time
+	var gt = _gt_cache.get(target) if _gt_cache.has(target) else _find_glob_target(target)
 	if gt:
 		glob_name = gt.get_glob_name() if gt.has_method("get_glob_name") else gt.glob_name
 		if "file_type" in gt:
@@ -138,11 +155,13 @@ func _glob_match(text: String, pattern: String) -> bool:
 
 ## Get all registered targets (for debug or UI purposes)
 func get_all_targets() -> Array[Node]:
-	# Clean dead references while we're at it
+	# Clean dead references while we're at it — garbage day
 	var valid: Array[Node] = []
 	for t in _targets:
 		if is_instance_valid(t):
 			valid.append(t)
+		else:
+			_gt_cache.erase(t)
 	_targets = valid
 	return _targets
 

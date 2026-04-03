@@ -22,12 +22,23 @@ var _show_timer := 0.0
 var _input_phase := false
 var _hack_difficulty := 1
 
+# Performance: throttle hackable scanning — no need to search the entire tree 60 times a second
+var _scan_timer := 0.0
+const SCAN_INTERVAL := 0.2  # Scan 5x per second, not 60. You're welcome, CPU.
+var _cached_hackables: Array[Node] = []
+var _hackables_cache_dirty := true
+
 signal hack_started(target: Node)
 signal hack_completed(target: Node)
 signal hack_failed(target: Node)
 
 func _ready() -> void:
-	pass
+	# Refresh hackable cache when tree changes
+	get_tree().node_added.connect(_on_tree_changed)
+	get_tree().node_removed.connect(_on_tree_changed)
+
+func _on_tree_changed(_node: Node) -> void:
+	_hackables_cache_dirty = true
 
 func setup(p: CharacterBody3D) -> void:
 	player = p
@@ -37,35 +48,43 @@ func _process(delta: float) -> void:
 		_process_hack_minigame(delta)
 		return
 
-	# Scan for nearby hackables
-	_scan_for_hackables()
+	# Throttled scan — because polling the entire scene tree every frame is a war crime
+	_scan_timer += delta
+	if _scan_timer >= SCAN_INTERVAL:
+		_scan_timer = 0.0
+		_scan_for_hackables()
 
 func _scan_for_hackables() -> void:
 	if not player:
 		return
 
+	# Rebuild hackable cache only when the tree changed
+	if _hackables_cache_dirty:
+		_cached_hackables.clear()
+		_cached_hackables.append_array(get_tree().get_nodes_in_group("hackable"))
+		_cached_hackables.append_array(get_tree().get_nodes_in_group("hackable_objects"))
+		_hackables_cache_dirty = false
+
 	_nearby_hackable = null
 	var closest_dist := INTERACT_RANGE + 1.0
 
-	# Find all nodes with Hackable component
-	for node in get_tree().get_nodes_in_group("hackable"):
-		if node is Node3D:
-			var dist = player.global_position.distance_to((node as Node3D).global_position)
-			if dist < INTERACT_RANGE and dist < closest_dist:
-				# Check if it has a hackable component that's available
-				for child in node.get_children():
-					if child.has_method("is_hackable") and child.is_hackable():
-						_nearby_hackable = node
-						closest_dist = dist
-						break
-
-	# Also check parent nodes of Hackable scripts
-	for node in get_tree().get_nodes_in_group("hackable_objects"):
-		if node is Node3D:
-			var dist = player.global_position.distance_to((node as Node3D).global_position)
-			if dist < INTERACT_RANGE and dist < closest_dist:
-				_nearby_hackable = node
-				closest_dist = dist
+	for node in _cached_hackables:
+		if not is_instance_valid(node) or not node is Node3D:
+			continue
+		var dist = player.global_position.distance_to((node as Node3D).global_position)
+		if dist >= INTERACT_RANGE or dist >= closest_dist:
+			continue
+		# Check hackable group nodes for hackable component
+		if node.is_in_group("hackable"):
+			for child in node.get_children():
+				if child.has_method("is_hackable") and child.is_hackable():
+					_nearby_hackable = node
+					closest_dist = dist
+					break
+		else:
+			# hackable_objects group — node itself is the target
+			_nearby_hackable = node
+			closest_dist = dist
 
 func try_interact() -> void:
 	if _is_hacking:

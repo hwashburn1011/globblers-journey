@@ -1422,7 +1422,7 @@ func _place_data_dust() -> void:
 func _create_data_dust(pos: Vector3, area_size: Vector2, height: float = 6.0) -> void:
 	# Slowly falling dust/data particles — like an old museum with digital air
 	var particles = GPUParticles3D.new()
-	particles.amount = 40
+	particles.amount = 25  # Was 40 — reduced for performance
 	particles.lifetime = 8.0
 	particles.position = pos
 

@@ -35,6 +35,7 @@ var attack_timer := 0.0
 var damage_cooldown := 0.0
 var damage_flash_timer := 0.0
 var gravity_force := 20.0
+var _player_lookup_done := false  # Don't re-query the tree every frame like some kind of O(n) maniac
 
 # Visual
 var mesh_node: MeshInstance3D
@@ -179,11 +180,13 @@ func _physics_process(delta: float) -> void:
 	elif base_material:
 		base_material.emission_energy_multiplier = 2.0
 
-	# Find player
-	if not player_ref:
-		var players = get_tree().get_nodes_in_group("player")
-		if players.size() > 0:
-			player_ref = players[0] as CharacterBody3D
+	# Find player (cached — only look up once, not every frame)
+	if not player_ref or not is_instance_valid(player_ref):
+		if not _player_lookup_done:
+			var players = get_tree().get_nodes_in_group("player")
+			if players.size() > 0:
+				player_ref = players[0] as CharacterBody3D
+			_player_lookup_done = true
 
 	# State machine
 	match state:

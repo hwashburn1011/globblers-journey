@@ -1049,7 +1049,7 @@ func _place_bazaar_rain() -> void:
 func _create_prompt_rain(pos: Vector3, area_size: Vector2, height: float = 8.0) -> void:
 	var rain = GPUParticles3D.new()
 	rain.name = "PromptRain"
-	rain.amount = 50
+	rain.amount = 30  # Was 50 — reduced for performance
 	rain.lifetime = 4.0
 	rain.position = pos + Vector3(0, height, 0)
 

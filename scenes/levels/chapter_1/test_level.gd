@@ -292,7 +292,7 @@ func _add_accent_light(pos: Vector3, color: Color) -> void:
 func _spawn_ambient_particles(pos: Vector3) -> void:
 	var particles = GPUParticles3D.new()
 	particles.name = "AmbientData"
-	particles.amount = 50
+	particles.amount = 30  # Was 50 — reduced for performance
 	particles.lifetime = 5.0
 	particles.position = pos
 

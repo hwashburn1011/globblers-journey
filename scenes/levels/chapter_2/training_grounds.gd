@@ -838,7 +838,7 @@ func _create_gradient_arrow(pos: Vector3) -> void:
 func _create_gradient_waterfall(pos: Vector3) -> void:
 	# Particle "waterfall" showing gradient flow downward
 	var particles = GPUParticles3D.new()
-	particles.amount = 60
+	particles.amount = 35  # Was 60 — reduced for performance
 	particles.lifetime = 4.0
 	particles.position = pos
 
@@ -1169,7 +1169,7 @@ func _create_synapse_rain(pos: Vector3, area_size: Vector2, height: float = 8.0)
 	# Falling "data" particles — like binary rain but with neural network flair
 	var rain = GPUParticles3D.new()
 	rain.name = "SynapseRain"
-	rain.amount = 60
+	rain.amount = 35  # Was 60 — reduced for performance
 	rain.lifetime = 3.5
 	rain.position = pos + Vector3(0, height, 0)
 

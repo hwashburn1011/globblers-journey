@@ -41,6 +41,7 @@ var enforcement_interval := 10.0
 var warning_tiles: Array[int] = []
 var warning_timer := 0.0
 const WARNING_DURATION := 2.0
+var _cached_player: CharacterBody3D = null  # Cached player ref
 
 # Instruction fragments — the system prompt's rules
 const INSTRUCTIONS := [
@@ -545,7 +546,10 @@ func _get_safe_tile_position() -> Vector3:
 
 
 func _find_player() -> CharacterBody3D:
+	if _cached_player and is_instance_valid(_cached_player):
+		return _cached_player
 	var players = get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
-		return players[0] as CharacterBody3D
+		_cached_player = players[0] as CharacterBody3D
+		return _cached_player
 	return null

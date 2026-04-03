@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** Balance pass — Comprehensive rebalance across all 5 chapters. Boss HP now escalates properly (50→65→75→85→100), boss contact damage scales (15→16→18→20→22), boss hack difficulty scales (2→3→3→4→5), boss reflected hits scale (4→5→5→6→7), boss token drops scale (10→15→20→22→25). Fixed enemy outliers: Zombie Process contact 15→10, Overfitting Ogre slam 18→15 and contact 15→12, Vanishing Gradient Wisp bolt 14→10. Reduced punishing debuffs: RLHF Drone niceness per-stack 25%→20% dmg and 20%→15% speed, Safety Classifier ability block 6s→4s. Buffed Ch5 enemy HP: Safety Classifier 4→5, RLHF Drone 2→3. Aligner final boss gets difficulty 5 hack with 22s timer (up from 18s). System Prompt projectile interval tightened 2.5→2.2.
-- **Next task to do:** Performance optimization
+- **Last task completed:** Performance optimization — Cached player references in base_enemy.gd, enemy_agent.gd, aligner_arena.gd, system_prompt_arena.gd (eliminate per-frame get_nodes_in_group calls). Throttled terminal_hack.gd hackable scanning from 60Hz to 5Hz with node-change-driven cache invalidation. Optimized glob_engine.gd: cached GlobTarget child lookups on registration, reversed match_pattern_in_radius to filter by distance first using squared distance (skip expensive pattern matching on far-away targets). Replaced O(n) pop_front() in enemy_agent.gd overfitter path history with O(1) ring buffer. Reduced particle counts across all chapters (terminal_wastes river 100→50, binary rain 80→40, training_grounds 60→35 x2, prompt_bazaar 50→30, test_level 50→30, model_zoo 40→25, alignment_citadel 40→25). Cached HUD reference in glob_command.gd.
+- **Next task to do:** Controller support
 - **Known issues:** Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-5 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-5 music reuses chapter_1 track until dedicated music is implemented.
 
 ---
@@ -217,7 +217,7 @@
 ## PHASE 6: FINAL POLISH
 - [x] Full playthrough QA
 - [x] Balance pass: enemy health, damage values, puzzle difficulty
-- [ ] Performance optimization
+- [x] Performance optimization
 - [ ] Controller support
 - [ ] Credits sequence
 - [ ] Final build and export

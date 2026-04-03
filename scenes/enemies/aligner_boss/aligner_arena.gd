@@ -38,6 +38,7 @@ var _warning_tiles: Array = []  # Tiles about to be sanitized
 
 # Arena boundary — don't let player wander into the void
 var arena_walls: Array[StaticBody3D] = []
+var _cached_player: Node3D = null  # Cached player ref — no per-frame tree search needed
 
 
 func _ready() -> void:
@@ -374,7 +375,10 @@ func _get_tile_at(world_pos: Vector3) -> Vector2i:
 
 
 func _find_player() -> Node3D:
+	if _cached_player and is_instance_valid(_cached_player):
+		return _cached_player
 	var players = get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
-		return players[0]
+		_cached_player = players[0]
+		return _cached_player
 	return null
