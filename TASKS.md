@@ -8,9 +8,9 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** 5.2 Chapter 3: Dialogue and story beats — Added damage taken quips (_on_damage_taken_quip, 30% chance/10s cooldown, 7 bazaar-themed lines), hack success quips (_on_hack_completed_quip, 8s cooldown, 5 lines, wired via _connect_hack_signals), boss phase transition dialogue (_on_boss_phase_changed: Phase 2 REWRITE has 4-line narrator/boss/Globbler exchange with gameplay hint, Phase 3 OVERRIDE has 3-line urgent hack prompt, Phase 4 DEFEATED triggers audio). All signals wired in _wire_dialogue_events: player_damaged, boss_phase_changed, deferred hack_completed. Damage cooldown ticked in _process. Existing dialogue already in place: opening narration (7 lines), 2 NPCs (gpt_classic 8 lines, stable_diffusion 9 lines), 4 room-entry triggers (token_exchange, persona_row, black_prompt, auction_hall), enemy kill quips (7), token quips (5), first glob, death quips (5), low health (2), combo (3), puzzle solve/fail (3+3), boss intro (6 lines), boss victory cutscene (11 lines in boss script).
-- **Next task to do:** 5.3 Chapter 4: Digital safari of deprecated AI models
-- **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-3 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-3 music reuses chapter_1 track until dedicated music is implemented.
+- **Last task completed:** 5.3 Chapter 4: Digital safari of deprecated AI models — Created model_zoo.gd (scenes/levels/chapter_4/model_zoo.gd, ~1950 lines). 5 exhibit halls: Zoo Entrance (ticket booth, safari map, welcome arch, exhibit plaques), Fossil Wing (GPT-2 skeleton in glass case, ELMo/Word2Vec/RNN/LSTM side exhibits, archaeological dig site, rope barriers), Nightmare Gallery (8 DALL-E paintings with titles/descriptions, nightmare sculpture with eye, purple lighting, content warning), Office Ruins (6 cubicle ruins with BSoD monitors, giant paperclip Clippy monument, scattered papers, jammed printer, water cooler), Foundation Atrium (6 grand pillars with gold caps, holographic Foundation Model preview, 6 capability pillars with quality ratings "C-", boss gate with gold inlay, AI timeline display). 4 corridors with safari ropes and info plaques. 4 checkpoints at exhibit entrances. 16 tokens across all rooms. Ambient zones per room. Data dust particles. 2 NPCs: BERT (Fossil Wing, 8 lines, reveals boss weakness — force single-task focus), SD-v1 (Nightmare Gallery, 9 lines, explains DALL-E enemy weakness). Opening narration (7 lines). 4 room-entry dialogues. Full quip system: enemy kills (7), tokens (5), death (5), damage (7), combos (3), puzzles solve/fail (3+3), hack (5), low health, first glob. Boss phase dialogue stubs. Post-processing shader (cool teal vignette + chromatic aberration). Color palette: EXHIBIT_TEAL, FOSSIL_AMBER, NIGHTMARE_PURPLE, CLIPPY_BLUE, FOUNDATION_GOLD. Enemy/puzzle/boss placement stubs commented out for separate tasks.
+- **Next task to do:** 5.3 Chapter 4: Enemies — GPT-2 Fossils, DALL-E Nightmares, Clippy's Revenge
+- **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-4 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-4 music reuses chapter_1 track until dedicated music is implemented.
 
 ---
 
@@ -198,7 +198,7 @@
 - [x] Dialogue and story beats
 
 ### 5.3 Chapter 4: The Model Zoo
-- [ ] Digital safari of deprecated AI models
+- [x] Digital safari of deprecated AI models
 - [ ] Enemies: GPT-2 Fossils, DALL-E Nightmares, Clippy's Revenge
 - [ ] Puzzles: exploit each model's unique quirk
 - [ ] Boss: The Foundation Model — can do everything poorly
