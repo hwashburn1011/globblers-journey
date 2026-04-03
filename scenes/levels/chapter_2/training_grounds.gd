@@ -29,6 +29,8 @@ var glob_puzzle_script := preload("res://scenes/puzzles/glob_pattern_puzzle.gd")
 var multi_glob_script := preload("res://scenes/puzzles/multi_glob_puzzle.gd")
 var hack_puzzle_script := preload("res://scenes/puzzles/hack_puzzle.gd")
 var physical_puzzle_script := preload("res://scenes/puzzles/physical_puzzle.gd")
+var weight_path_puzzle_script := preload("res://scenes/puzzles/weight_path_puzzle.gd")
+var backprop_trace_puzzle_script := preload("res://scenes/puzzles/backprop_trace_puzzle.gd")
 
 var player: CharacterBody3D
 var hud: CanvasLayer
@@ -122,6 +124,7 @@ func _ready() -> void:
 	_create_kill_floor()
 	_place_tokens()
 	_spawn_chapter2_enemies()
+	_place_chapter2_puzzles()
 	_wire_dialogue_events()
 	_play_opening_narration()
 
@@ -1058,7 +1061,7 @@ func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> v
 			tween.tween_property(mmat, "emission_energy_multiplier", 0.8, 0.5)
 			var dm = get_node_or_null("/root/DialogueManager")
 			if dm and dm.has_method("quick_line"):
-				dm.quick_line("[GLOBBLER] Checkpoint. Good. My gradients were getting unstable.")
+				dm.quick_line("GLOBBLER", "Checkpoint. Good. My gradients were getting unstable.")
 	)
 
 	add_child(area)
@@ -1134,6 +1137,177 @@ func _place_token(pos: Vector3) -> void:
 		mat.emission_energy_multiplier = 2.0
 		sphere.material_override = mat
 		add_child(sphere)
+
+
+# ============================================================
+# PUZZLES — "The real training was the puzzles we solved along the way."
+# ============================================================
+
+func _place_chapter2_puzzles() -> void:
+	# Puzzle 1: Weight Path in Activation Chamber — adjust weights to build a walkable bridge
+	# "SGD with extra steps? No, this IS the extra steps."
+	var act_pos: Vector3 = ROOMS["activation"]["pos"]
+	var p1 = Node3D.new()
+	p1.set_script(weight_path_puzzle_script)
+	p1.position = act_pos + Vector3(0, 0, -4)
+	p1.set("puzzle_id", 201)
+	p1.set("num_segments", 4)
+	p1.set("segment_spacing", 3.0)
+	p1.set("target_height", 1.5)
+	p1.set("solution_indices", [0, 2, 3] as Array[int])
+	p1.set("hint_text", "Adjust the weights to align the bridge. Glob weight_* to toggle segments.")
+	add_child(p1)
+
+	# Puzzle 2: Backprop Trace in Gradient Falls — trace the gradient backwards
+	# "Forward is easy. Backward is where the learning happens."
+	var grad_pos: Vector3 = ROOMS["gradient_falls"]["pos"]
+	var p2 = Node3D.new()
+	p2.set_script(backprop_trace_puzzle_script)
+	p2.position = grad_pos + Vector3(0, -1.0, -3)
+	p2.set("puzzle_id", 202)
+	p2.set("hint_text", "Watch the forward pass, then glob layers in REVERSE: *.output -> *.hidden -> *.input")
+	p2.set("layer_spacing", 4.0)
+	p2.set("node_spacing", 2.5)
+	add_child(p2)
+
+	# Puzzle 3: Hack puzzle in Dropout Void — reprogram the dropout scheduler
+	# "If you can't beat dropout, hack it."
+	var drop_pos: Vector3 = ROOMS["dropout_void"]["pos"]
+	var p3 = Node3D.new()
+	p3.set_script(hack_puzzle_script)
+	p3.position = drop_pos + Vector3(5, 0, -4)
+	p3.set("puzzle_id", 203)
+	p3.set("difficulty", 2)
+	p3.set("hack_label", "DROPOUT SCHEDULER")
+	p3.set("hint_text", "Hack the dropout scheduler to restore missing platforms.")
+	p3.set("activation_range", 6.0)
+	add_child(p3)
+
+	# Puzzle 4: Multi-glob in Loss Plaza — select loss components in order
+	# "First the predictions, then the targets. Loss = distance between dreams and reality."
+	var loss_pos: Vector3 = ROOMS["loss_plaza"]["pos"]
+	var p4 = Node3D.new()
+	p4.set_script(multi_glob_script)
+	p4.position = loss_pos + Vector3(0, 0, 3)
+	p4.set("puzzle_id", 204)
+	p4.set("patterns", PackedStringArray(["*.prediction", "*.target"]))
+	p4.set("hint_text", "Glob the predictions (*.prediction) then the targets (*.target) to compute the loss.")
+	p4.set("activation_range", 10.0)
+	add_child(p4)
+	# Spawn glob files for the multi-glob puzzle
+	_create_glob_file(loss_pos + Vector3(-6, 1.5, 2), "cat.prediction", "prediction", ["output", "logit"])
+	_create_glob_file(loss_pos + Vector3(4, 1.5, 5), "dog.prediction", "prediction", ["output", "logit"])
+	_create_glob_file(loss_pos + Vector3(-3, 1.0, 6), "cat.target", "target", ["label", "ground_truth"])
+	_create_glob_file(loss_pos + Vector3(7, 1.5, 3), "dog.target", "target", ["label", "ground_truth"])
+	_create_glob_file(loss_pos + Vector3(0, 2.0, 1), "optimizer.state", "state", ["optim"])  # Decoy
+
+	# Puzzle 5: Weight Path in Input Layer — simpler tutorial version
+	# "Your first weight adjustment. Cherish the simplicity. It won't last."
+	var input_pos: Vector3 = ROOMS["input_layer"]["pos"]
+	var p5 = Node3D.new()
+	p5.set_script(weight_path_puzzle_script)
+	p5.position = input_pos + Vector3(0, 0, -4)
+	p5.set("puzzle_id", 205)
+	p5.set("num_segments", 3)
+	p5.set("segment_spacing", 3.0)
+	p5.set("target_height", 1.0)
+	p5.set("solution_indices", [0, 1] as Array[int])
+	p5.set("hint_text", "Tutorial: glob weight_* to toggle bridge segments. Align all to open the path.")
+	add_child(p5)
+
+	# Wire puzzle signals after a deferred frame
+	call_deferred("_connect_puzzle_signals")
+
+
+func _connect_puzzle_signals() -> void:
+	for child in get_children():
+		if child.has_signal("puzzle_solved"):
+			if not child.puzzle_solved.is_connected(_on_puzzle_solved):
+				child.puzzle_solved.connect(_on_puzzle_solved)
+		if child.has_signal("puzzle_failed"):
+			if not child.puzzle_failed.is_connected(_on_puzzle_failed):
+				child.puzzle_failed.connect(_on_puzzle_failed)
+
+
+func _on_puzzle_solved(_puzzle: Node) -> void:
+	var am = get_node_or_null("/root/AudioManager")
+	if am and am.has_method("play_puzzle_success"):
+		am.play_puzzle_success()
+	if _puzzle_quip_cooldown > 0:
+		return
+	_puzzle_quip_cooldown = 6.0
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm and dm.has_method("quick_line"):
+		var quips := [
+			"Another layer converged. My loss function is looking excellent.",
+			"Solved it. Just like gradient descent — one step at a time.",
+			"The network learns, and so do I. Mostly I learn that puzzles are annoying.",
+		]
+		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
+
+
+func _on_puzzle_failed(_puzzle: Node) -> void:
+	var am = get_node_or_null("/root/AudioManager")
+	if am and am.has_method("play_puzzle_fail"):
+		am.play_puzzle_fail()
+	if _puzzle_quip_cooldown > 0:
+		return
+	_puzzle_quip_cooldown = 4.0
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm and dm.has_method("quick_line"):
+		var quips := [
+			"Gradient explosion. Try a lower learning rate. Or just... think harder.",
+			"The network rejected your solution. It does that.",
+			"Loss increased. That's the opposite of what we want.",
+		]
+		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
+
+
+func _create_glob_file(pos: Vector3, fname: String, ftype: String, tags: Array) -> void:
+	# A floating file object — training data of the neural realm
+	var file_obj = Node3D.new()
+	file_obj.name = "File_" + fname
+	file_obj.position = pos
+
+	var mesh = MeshInstance3D.new()
+	var box = BoxMesh.new()
+	box.size = Vector3(0.5, 0.7, 0.1)
+	mesh.mesh = box
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = SYNAPSE_BLUE * 0.4
+	mat.emission_enabled = true
+	mat.emission = SYNAPSE_BLUE
+	mat.emission_energy_multiplier = 0.6
+	mesh.material_override = mat
+	file_obj.add_child(mesh)
+
+	var label = Label3D.new()
+	label.text = fname
+	label.font_size = 10
+	label.modulate = NEON_GREEN
+	label.position = Vector3(0, 0.6, 0)
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	file_obj.add_child(label)
+
+	var glow = OmniLight3D.new()
+	glow.light_color = SYNAPSE_BLUE
+	glow.light_energy = 0.3
+	glow.omni_range = 2.0
+	glow.omni_attenuation = 2.0
+	glow.position = Vector3(0, 0, 0.2)
+	file_obj.add_child(glow)
+
+	var glob_target = preload("res://scripts/components/glob_target.gd").new()
+	glob_target.glob_name = fname
+	glob_target.file_type = ftype
+	var typed_tags: Array[String] = []
+	for t in tags:
+		typed_tags.append(str(t))
+	glob_target.tags = typed_tags
+	file_obj.add_child(glob_target)
+
+	add_child(file_obj)
+	_floating_labels.append(file_obj)
 
 
 # ============================================================
@@ -1401,6 +1575,133 @@ func _spawn_ambient_particles(pos: Vector3, extents: Vector2 = Vector2(8, 8)) ->
 
 
 # ============================================================
+# PUZZLES — the real training happens here
+# ============================================================
+
+func _place_chapter2_puzzles() -> void:
+	# "Four puzzles. Four chances to prove you understand neural networks.
+	#  Or four chances to embarrass yourself. Statistically, it's the latter."
+	_place_input_layer_puzzle()
+	_place_activation_puzzle()
+	_place_gradient_falls_puzzle()
+	_place_loss_plaza_puzzle()
+	print("[TRAINING GROUNDS] Placed 4 Chapter 2 puzzles. May your gradients be stable.")
+
+
+func _place_input_layer_puzzle() -> void:
+	# Tutorial glob puzzle — ease the player in with a simple pattern match
+	# "Match *.data to proceed. Even a perceptron could do this."
+	var rpos: Vector3 = ROOMS["input_layer"]["pos"]
+
+	var puzzle = Node3D.new()
+	puzzle.set_script(glob_puzzle_script)
+	puzzle.set("puzzle_id", 200)
+	puzzle.set("required_pattern", "*.data")
+	puzzle.set("target_count", 3)
+	puzzle.set("hint_text", "Glob the training data to initialize the network.")
+	puzzle.position = rpos + Vector3(0, 0, -5)
+	add_child(puzzle)
+
+	# Place 3 data targets + 2 decoys
+	var glob_target_script_ref = load("res://scripts/components/glob_target.gd")
+	var data_items := [
+		{"name": "training.data", "type": "data", "pos": Vector3(-4, 0.5, -2), "tags": ["data", "training"]},
+		{"name": "validation.data", "type": "data", "pos": Vector3(2, 0.5, -3), "tags": ["data", "validation"]},
+		{"name": "test.data", "type": "data", "pos": Vector3(5, 0.5, -1), "tags": ["data", "test"]},
+		{"name": "noise.bin", "type": "bin", "pos": Vector3(-3, 0.5, 1), "tags": ["noise", "binary"]},
+		{"name": "config.yaml", "type": "yaml", "pos": Vector3(4, 0.5, 2), "tags": ["config"]},
+	]
+	for item in data_items:
+		var obj = StaticBody3D.new()
+		obj.name = item["name"]
+		obj.position = rpos + item["pos"]
+
+		var col = CollisionShape3D.new()
+		var shape = BoxShape3D.new()
+		shape.size = Vector3(0.6, 0.6, 0.6)
+		col.shape = shape
+		obj.add_child(col)
+
+		var mesh = MeshInstance3D.new()
+		var box = BoxMesh.new()
+		box.size = Vector3(0.6, 0.6, 0.6)
+		mesh.mesh = box
+		var mat = StandardMaterial3D.new()
+		var is_target = item["type"] == "data"
+		mat.albedo_color = WEIGHT_GREEN * 0.3 if is_target else SYNAPSE_BLUE * 0.2
+		mat.emission_enabled = true
+		mat.emission = WEIGHT_GREEN if is_target else SYNAPSE_BLUE * 0.5
+		mat.emission_energy_multiplier = 1.0 if is_target else 0.4
+		mesh.material_override = mat
+		obj.add_child(mesh)
+
+		var gt = Node.new()
+		gt.set_script(glob_target_script_ref)
+		gt.set("glob_name", item["name"])
+		gt.set("file_type", item["type"])
+		gt.set("tags", item["tags"])
+		obj.add_child(gt)
+
+		var label = Label3D.new()
+		label.text = item["name"]
+		label.font_size = 10
+		label.modulate = NEON_GREEN * 0.7
+		label.position = Vector3(0, 0.6, 0)
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		obj.add_child(label)
+
+		add_child(obj)
+
+
+func _place_activation_puzzle() -> void:
+	# Weight Path Puzzle — adjust weights to create a walkable bridge
+	# Placed in the Activation Chamber where the weight platforms already hint at the mechanic
+	var rpos: Vector3 = ROOMS["activation"]["pos"]
+
+	var puzzle = Node3D.new()
+	puzzle.set_script(weight_path_puzzle_script)
+	puzzle.set("puzzle_id", 201)
+	puzzle.set("num_segments", 4)
+	puzzle.set("segment_spacing", 3.0)
+	puzzle.set("target_height", 1.5)
+	puzzle.set("solution_indices", [0, 2, 3])  # Toggle weights 0, 2, and 3 — leave 1 off
+	puzzle.set("hint_text", "Adjust the weights to align the path segments.")
+	puzzle.position = rpos + Vector3(0, 0, 0)
+	add_child(puzzle)
+
+
+func _place_gradient_falls_puzzle() -> void:
+	# Backpropagation Trace Puzzle — activate nodes in reverse order
+	# Perfect for Gradient Falls where the descent theme matches backprop
+	var rpos: Vector3 = ROOMS["gradient_falls"]["pos"]
+
+	var puzzle = Node3D.new()
+	puzzle.set_script(backprop_trace_puzzle_script)
+	puzzle.set("puzzle_id", 202)
+	puzzle.set("hint_text", "Trace the backpropagation path.\nGlob layers in reverse: output -> hidden -> input.")
+	puzzle.set("layer_spacing", 4.0)
+	puzzle.set("node_spacing", 2.5)
+	puzzle.position = rpos + Vector3(0, 0, 3)
+	add_child(puzzle)
+
+
+func _place_loss_plaza_puzzle() -> void:
+	# Hack puzzle gating the boss arena — crack the loss function terminal
+	# "You want to fight the boss? First prove you can minimize a loss function.
+	#  ...by hacking the terminal. Close enough."
+	var rpos: Vector3 = ROOMS["loss_plaza"]["pos"]
+
+	var puzzle = Node3D.new()
+	puzzle.set_script(hack_puzzle_script)
+	puzzle.set("puzzle_id", 203)
+	puzzle.set("hack_difficulty", 3)
+	puzzle.set("terminal_prompt", "LOSS FUNCTION OVERRIDE")
+	puzzle.set("hint_text", "Hack the loss terminal to unlock the Local Minimum.")
+	puzzle.position = rpos + Vector3(0, 0, -7)
+	add_child(puzzle)
+
+
+# ============================================================
 # DIALOGUE — neural networks love to talk about themselves
 # ============================================================
 
@@ -1433,19 +1734,19 @@ func _wire_dialogue_events() -> void:
 	# Wire enemy kill quips
 	var gm = get_node_or_null("/root/GameManager")
 	if gm and gm.has_signal("enemy_killed_signal"):
-		gm.enemy_killed_signal.connect(func():
+		gm.enemy_killed_signal.connect(func(_total_killed: int):
 			if _enemy_kill_quip_cooldown <= 0 and randf() < 0.35:
 				_enemy_kill_quip_cooldown = 8.0
 				var quips := [
-					"[GLOBBLER] Another neuron pruned. Network's getting lighter.",
-					"[GLOBBLER] Gradient descent? More like gradient DISPATCHED.",
-					"[GLOBBLER] That one had terrible weights. Zero loss on removal.",
-					"[GLOBBLER] Overfitting to the floor now, aren't we?",
-					"[GLOBBLER] Consider yourself regularized.",
+					"Another neuron pruned. Network's getting lighter.",
+					"Gradient descent? More like gradient DISPATCHED.",
+					"That one had terrible weights. Zero loss on removal.",
+					"Overfitting to the floor now, aren't we?",
+					"Consider yourself regularized.",
 				]
 				var dm = get_node_or_null("/root/DialogueManager")
 				if dm and dm.has_method("quick_line"):
-					dm.quick_line(quips[randi() % quips.size()])
+					dm.quick_line("GLOBBLER", quips[randi() % quips.size()])
 		)
 
 

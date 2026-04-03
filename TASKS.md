@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** 5.1 Chapter 2 Enemies — Created 3 enemy types: Overfitting Ogre (overfitting_ogre.gd+.tscn, 5HP tank that memorizes player movement patterns, predicts interception, ground slam attack, gets confused/stunned when player changes tactics — catastrophic forgetting mechanic), Dropout Ghost (dropout_ghost.gd+.tscn, 2HP fragile ghost that periodically vanishes/teleports/reappears with lunge attack, invulnerable while dropped out, translucent blue with fade transitions), Vanishing Gradient Wisp (vanishing_gradient_wisp.gd+.tscn, 2HP ranged attacker anchored to spawn point, damage/speed/visibility diminish with distance from anchor, retreats when gradient too low, fires scaling gradient bolts). All wired into training_grounds.gd: 2 ogres in Activation Chamber, 3 wisps in Gradient Falls, 3 ghosts in Dropout Void, mixed gauntlet of all 3 in Loss Plaza (12 enemies total).
-- **Next task to do:** 5.1 Chapter 2: The Training Grounds — Puzzles: adjust weights to create paths, backpropagation trace puzzles
+- **Last task completed:** 5.1 Chapter 2 Puzzles — Created 4 puzzles: (1) Input Layer tutorial glob puzzle (glob *.data to match 3 training data objects among 2 decoys), (2) Weight Path Puzzle in Activation Chamber (weight_path_puzzle.gd — 4 bridge segments at wrong heights, glob weight nodes to toggle on/off, correct combination [0,2,3] aligns segments into walkable path, smooth lerp animation, door dissolves on solve), (3) Backpropagation Trace Puzzle in Gradient Falls (backprop_trace_puzzle.gd — 3-layer neural network visualization with 3-4-2 nodes and connection lines, animated forward pass lights nodes left-to-right, player must glob layers in reverse order *.output → *.hidden → *.input, wrong order triggers gradient explosion + reset), (4) Hack puzzle gating boss arena in Loss Plaza (difficulty 3, "LOSS FUNCTION OVERRIDE" terminal). All wired into training_grounds.gd via _place_chapter2_puzzles().
+- **Next task to do:** 5.1 Chapter 2: The Training Grounds — Boss: The Local Minimum — shrinking arena pit boss
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapter 2 uses AudioManager fallback ambient (ch2-specific ambient not yet added). Chapter 2 music reuses chapter_1 track until ch2 music is implemented.
 
 ---
@@ -186,7 +186,7 @@
 ### 5.1 Chapter 2: The Training Grounds
 - [x] Neural network landscape: walkable nodes, weight-connection bridges — 5 neuron-rooms (Input Layer, Activation Chamber, Gradient Falls, Dropout Void, Loss Plaza) connected by 4 weight bridges with synapse flow particles, pulsing neuron cores, stepped gradient terrain, dropout platforms, convergence rings, loss scoreboard, boss gate, per-room dialogue + narration
 - [x] Enemies: Overfitting Ogres, Dropout Ghosts, Vanishing Gradient Wisps — overfitting_ogre.gd (memorizes moves, predicts, confused by pattern breaks), dropout_ghost.gd (vanishes/teleports/lunge attacks, invulnerable while out), vanishing_gradient_wisp.gd (fades with distance from anchor, scaling damage/speed). 12 enemies placed across 4 rooms
-- [ ] Puzzles: adjust weights to create paths, backpropagation trace puzzles
+- [x] Puzzles: adjust weights to create paths, backpropagation trace puzzles
 - [ ] Boss: The Local Minimum — shrinking arena pit boss
 - [ ] Dialogue and story beats
 
