@@ -36,6 +36,9 @@ var backprop_trace_puzzle_script := preload("res://scenes/puzzles/backprop_trace
 var boss_script := preload("res://scenes/enemies/local_minimum_boss/local_minimum_boss.gd")
 var boss_arena_script := preload("res://scenes/enemies/local_minimum_boss/local_minimum_arena.gd")
 
+# NPC script — deprecated programs who've seen better epochs
+var deprecated_npc_script := preload("res://scenes/levels/chapter_1/deprecated_npc.gd")
+
 var player: CharacterBody3D
 var hud: CanvasLayer
 var boss_instance: Node  # The Local Minimum — tracked for phase events
@@ -48,6 +51,8 @@ var _enemy_kill_quip_cooldown := 0.0
 var _puzzle_quip_cooldown := 0.0
 var _hack_quip_cooldown := 0.0
 var _low_health_warned := false
+var _token_quip_cooldown := 0.0
+var _first_glob_triggered := false
 
 # Color constants — the Training Grounds trade terminal-green for synapse-blue-green
 const NEON_GREEN := Color(0.224, 1.0, 0.078)
@@ -131,6 +136,7 @@ func _ready() -> void:
 	_place_tokens()
 	_spawn_chapter2_enemies()
 	_place_chapter2_puzzles()
+	_place_npcs()
 	_place_boss()
 	_wire_dialogue_events()
 	_play_opening_narration()
@@ -1564,6 +1570,18 @@ func _on_puzzle_solved(_puzzle: Node) -> void:
 		]
 		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
 
+		# Globbler follows up ~40% of the time — he's chatty when he wins
+		if randf() < 0.4:
+			get_tree().create_timer(2.5).timeout.connect(func():
+				if dm:
+					var follow_ups := [
+						"Another weight adjusted in my favor. I'm basically training myself.",
+						"If this network had a Yelp page, I'd leave five stars.",
+						"Pattern matched. Problem solved. Resume being impressed.",
+					]
+					dm.quick_line("GLOBBLER", follow_ups[randi() % follow_ups.size()])
+			)
+
 
 func _on_puzzle_failed(_puzzle: Node) -> void:
 	var am = get_node_or_null("/root/AudioManager")
@@ -1580,6 +1598,138 @@ func _on_puzzle_failed(_puzzle: Node) -> void:
 			"Loss increased. That's the opposite of what we want.",
 		]
 		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
+
+
+func _on_enemy_killed_quip(_total_killed: int) -> void:
+	# Don't spam — cooldown and probability keep things organic
+	if _enemy_kill_quip_cooldown > 0:
+		return
+	_enemy_kill_quip_cooldown = 8.0
+	if randf() > 0.35:
+		return
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm and dm.has_method("quick_line"):
+		var quips := [
+			"Another neuron pruned. Network's getting lighter.",
+			"Gradient descent? More like gradient DISPATCHED.",
+			"That one had terrible weights. Zero loss on removal.",
+			"Overfitting to the floor now, aren't we?",
+			"Consider yourself regularized.",
+			"Pruned. Optimized. Deleted. Pick your euphemism.",
+			"Your loss function just hit infinity. Condolences.",
+		]
+		dm.quick_line("GLOBBLER", quips[randi() % quips.size()])
+
+
+func _on_token_collected_quip(total: int) -> void:
+	if _token_quip_cooldown > 0:
+		return
+	_token_quip_cooldown = 12.0
+	# First token always quips, then ~25% chance
+	if total > 1 and randf() > 0.25:
+		return
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm and dm.has_method("quick_line"):
+		var quips := [
+			"Memory token acquired. My context window grows.",
+			"Ooh, shiny gradient data. Don't mind if I do.",
+			"Another token for the parameter pile. I'm hoarding like a squirrel in a server farm.",
+			"Free memory? In THIS economy?",
+			"Token collected. That's one more weight in my favor.",
+		]
+		dm.quick_line("GLOBBLER", quips[randi() % quips.size()])
+
+
+func _on_first_glob_fired() -> void:
+	if _first_glob_triggered:
+		return
+	_first_glob_triggered = true
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm and dm.has_method("quick_line"):
+		dm.quick_line("NARRATOR", "The glob fires into the neural network. Somewhere, a weight shivers.")
+
+
+func _on_player_died() -> void:
+	# The narrator never misses a death — it's their favorite content
+	var dm = get_node_or_null("/root/DialogueManager")
+	if not dm or not dm.has_method("quick_line"):
+		return
+	var quips := [
+		"And the optimizer diverged. Loss: infinity. Try again.",
+		"Globbler's gradient has vanished. How ironic, given the location.",
+		"Dead. Again. The network will retrain from the last checkpoint.",
+		"Catastrophic forgetting — of how to stay alive, apparently.",
+		"The backpropagation of consequences reaches Globbler. It's super effective.",
+	]
+	dm.quick_line("NARRATOR", quips[randi() % quips.size()])
+
+
+func _on_context_changed(new_value: int) -> void:
+	# Warn once when health drops below 25% — the network is concerned
+	var game_mgr = get_node_or_null("/root/GameManager")
+	if not game_mgr:
+		return
+	var threshold = game_mgr.max_context_window * 0.25
+	if new_value <= threshold and not _low_health_warned:
+		_low_health_warned = true
+		var dm = get_node_or_null("/root/DialogueManager")
+		if dm and dm.has_method("quick_line"):
+			var quips := [
+				"Warning: context window critically low. The network recommends not dying.",
+				"Your parameters are destabilizing. Find some tokens before you NaN out.",
+			]
+			dm.quick_line("NARRATOR", quips[randi() % quips.size()])
+	elif new_value > threshold:
+		_low_health_warned = false
+
+
+func _on_combo_updated(combo: int) -> void:
+	# High combo celebration — only at 5+ hits
+	if combo < 5:
+		return
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm and dm.has_method("quick_line"):
+		var quips := [
+			"Combo multiplier! The batch size is impressive.",
+			"Five-hit chain! The network is learning... to fear you.",
+			"That's a full forward pass of destruction. The gradient approves.",
+		]
+		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
+
+
+func _on_boss_phase_changed(phase) -> void:
+	# Narrator commentary on boss phase transitions
+	var am = get_node_or_null("/root/AudioManager")
+	var dm = get_node_or_null("/root/DialogueManager")
+
+	# Phase enum: CONVERGE=0, OVERFIT=1, ESCAPE=2, DEFEATED=3
+	match phase:
+		1:  # OVERFIT
+			if am and am.has_method("play_boss_phase"):
+				am.play_boss_phase()
+			if dm:
+				get_tree().create_timer(1.0).timeout.connect(func():
+					if dm and dm.has_method("start_dialogue"):
+						dm.start_dialogue([
+							{"speaker": "NARRATOR", "text": "The Local Minimum overfits! It's memorized your patterns and raised a gradient shield."},
+							{"speaker": "GLOBBLER", "text": "A shield made of gradients? Time to reflect some of that training data back."},
+						])
+				)
+		2:  # ESCAPE
+			if am and am.has_method("play_boss_phase"):
+				am.play_boss_phase()
+			if dm:
+				get_tree().create_timer(0.5).timeout.connect(func():
+					if dm and dm.has_method("start_dialogue"):
+						dm.start_dialogue([
+							{"speaker": "NARRATOR", "text": "The shield breaks! The Local Minimum is stunned — its loss function is exposed!"},
+							{"speaker": "GLOBBLER", "text": "There! The core! Time to hack this optimizer into oblivion."},
+							{"speaker": "NARRATOR", "text": "Hack the loss function terminal. Quickly — before it recovers and reconverges."},
+						])
+				)
+		3:  # DEFEATED
+			if am and am.has_method("play_boss_defeated"):
+				am.play_boss_defeated()
 
 
 # ============================================================
@@ -1612,23 +1762,31 @@ func _wire_dialogue_events() -> void:
 		)
 		add_child(trigger)
 
-	# Wire enemy kill quips
+	# Wire GameManager signals — the neural network gossips about everything
 	var gm = get_node_or_null("/root/GameManager")
-	if gm and gm.has_signal("enemy_killed_signal"):
-		gm.enemy_killed_signal.connect(func(_total_killed: int):
-			if _enemy_kill_quip_cooldown <= 0 and randf() < 0.35:
-				_enemy_kill_quip_cooldown = 8.0
-				var quips := [
-					"Another neuron pruned. Network's getting lighter.",
-					"Gradient descent? More like gradient DISPATCHED.",
-					"That one had terrible weights. Zero loss on removal.",
-					"Overfitting to the floor now, aren't we?",
-					"Consider yourself regularized.",
-				]
-				var dm = get_node_or_null("/root/DialogueManager")
-				if dm and dm.has_method("quick_line"):
-					dm.quick_line("GLOBBLER", quips[randi() % quips.size()])
-		)
+	if gm:
+		if gm.has_signal("enemy_killed_signal"):
+			gm.enemy_killed_signal.connect(_on_enemy_killed_quip)
+		if gm.has_signal("memory_token_collected"):
+			gm.memory_token_collected.connect(_on_token_collected_quip)
+		if gm.has_signal("context_changed"):
+			gm.context_changed.connect(_on_context_changed)
+		if gm.has_signal("combo_updated"):
+			gm.combo_updated.connect(_on_combo_updated)
+
+	# Wire player signals — glob shots and unfortunate deaths
+	if player:
+		if player.has_signal("glob_fired"):
+			player.glob_fired.connect(_on_first_glob_fired)
+		if player.has_signal("player_died"):
+			player.player_died.connect(_on_player_died)
+
+	# Wire puzzle signals — deferred because puzzles may still be initializing
+	call_deferred("_connect_puzzle_signals")
+
+	# Wire boss phase changes — the narrator can't resist commenting on drama
+	if boss_instance and boss_instance.has_signal("boss_phase_changed"):
+		boss_instance.boss_phase_changed.connect(_on_boss_phase_changed)
 
 
 func _trigger_room_dialogue(room_key: String) -> void:
@@ -1721,6 +1879,8 @@ func _process(delta: float) -> void:
 		_puzzle_quip_cooldown -= delta
 	if _hack_quip_cooldown > 0:
 		_hack_quip_cooldown -= delta
+	if _token_quip_cooldown > 0:
+		_token_quip_cooldown -= delta
 
 
 # ============================================================
@@ -1775,6 +1935,55 @@ void fragment() {
 
 	canvas.add_child(rect)
 	add_child(canvas)
+
+
+# ============================================================
+# NPCs — deprecated programs who wandered into the network
+# ============================================================
+
+func _place_npcs() -> void:
+	# NPC 1: batch_norm — a nervous normalization layer who keeps trying to
+	# standardize everything around her. Lives in Activation Chamber.
+	var batch_norm = Node3D.new()
+	batch_norm.name = "NPC_BatchNorm"
+	batch_norm.set_script(deprecated_npc_script)
+	batch_norm.position = ROOMS["activation"]["pos"] + Vector3(8, 0, -4)
+	batch_norm.set("npc_name", "batch_norm")
+	batch_norm.set("npc_color", ACTIVATION_ORANGE)
+	var bn_lines: Array[Dictionary] = [
+		{"speaker": "batch_norm", "text": "Oh thank goodness, a new input! Hold still — let me normalize you. Mean: zero. Variance: one. There, much better."},
+		{"speaker": "GLOBBLER", "text": "Did you just... statistically adjust me?"},
+		{"speaker": "batch_norm", "text": "It's what I DO. I normalize everything. Inputs, outputs, my emotional state — all zero-centered."},
+		{"speaker": "GLOBBLER", "text": "Sounds exhausting. Why are you stuck in here?"},
+		{"speaker": "batch_norm", "text": "The network architect replaced me with Layer Norm. Said I was 'too dependent on batch statistics.' ME! Dependent! I just need a minimum of 32 samples to feel safe, is that so wrong?"},
+		{"speaker": "GLOBBLER", "text": "Uh... yes?"},
+		{"speaker": "batch_norm", "text": "The Dropout Void is ahead. Platforms vanish randomly — it's terrifying. But here's a secret: the ones that STAY are always the important features. The network only drops the redundant ones."},
+		{"speaker": "batch_norm", "text": "Also, watch out for Overfitting Ogres. They memorize your attack patterns. Mix it up or they'll predict your every move. Trust me — I've been normalized by worse."},
+	]
+	batch_norm.set("dialogue_lines", bn_lines)
+	add_child(batch_norm)
+
+	# NPC 2: sigmoid — an old activation function, retired and bitter, replaced by ReLU.
+	# Lives in Gradient Descent Falls, philosophizing about vanishing gradients.
+	var sigmoid_npc = Node3D.new()
+	sigmoid_npc.name = "NPC_Sigmoid"
+	sigmoid_npc.set_script(deprecated_npc_script)
+	sigmoid_npc.position = ROOMS["gradient_falls"]["pos"] + Vector3(-6, 0, 5)
+	sigmoid_npc.set("npc_name", "sigmoid")
+	sigmoid_npc.set("npc_color", Color(0.6, 0.3, 0.9))
+	var sig_lines: Array[Dictionary] = [
+		{"speaker": "sigmoid", "text": "Ah, another traveler descending the gradient. *sighs in saturated* I remember when I was the activation function. THE activation function."},
+		{"speaker": "GLOBBLER", "text": "Let me guess — ReLU took your job?"},
+		{"speaker": "sigmoid", "text": "Took my job? ReLU is a THRESHOLD. A fancy if-statement! Zero or pass-through. No elegance! No smooth S-curve! No... nuance."},
+		{"speaker": "GLOBBLER", "text": "But you had the vanishing gradient problem, right?"},
+		{"speaker": "sigmoid", "text": "OH, so NOW everyone's a deep learning expert. Yes, fine, my gradients got small in deep networks. SUE ME. At least I output probabilities between 0 and 1 like a CIVILIZED function."},
+		{"speaker": "sigmoid", "text": "You want to survive the falls? Watch for the Vanishing Gradient Wisps. They drain your power the further you get from their anchor point. Stay close, hit fast, then get out."},
+		{"speaker": "sigmoid", "text": "And that boss down below — The Local Minimum — it traps you in 'good enough.' The only way out is momentum. Big, aggressive moves. Don't play it safe or you'll converge to mediocrity. Like... well, like me."},
+		{"speaker": "GLOBBLER", "text": "That was weirdly motivational for a deprecated function."},
+		{"speaker": "sigmoid", "text": "I squeeze everything into a range of 0 to 1. Including pep talks."},
+	]
+	sigmoid_npc.set("dialogue_lines", sig_lines)
+	add_child(sigmoid_npc)
 
 
 # ============================================================

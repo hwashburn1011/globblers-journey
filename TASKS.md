@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** 5.1 Chapter 2 Boss: The Local Minimum — Created local_minimum_boss.gd (extends BaseEnemy, 60 HP, 3-phase fight): Phase 1 (CONVERGE) — orbits arena, fires gravity wells that pull player toward center pit, outer rings collapse every 12s via arena.start_shrinking(). Phase 2 (OVERFIT) — amber gradient shield blocks damage, spawns *.grad projectiles player must glob-match and reflect back (5 hits to break shield), faster orbit, faster ring collapse. Phase 3 (ESCAPE) — boss stunned 18s, loss function terminal exposed for hacking (difficulty 3), recovers with heal if too slow. Victory triggers arena restore, 9-line dialogue with chapter complete and Prompt Bazaar teaser, calls complete_level(2). Wired into training_grounds.gd via _place_boss() with arena instantiation, boss trigger zone, intro dialogue, entrance seal, octagonal boss room enclosure with red-gold accent lights.
-- **Next task to do:** 5.1 Chapter 2: The Training Grounds — Dialogue and story beats
+- **Last task completed:** 5.1 Chapter 2: Dialogue and story beats — Added 2 friendly NPCs (batch_norm in Activation Chamber, sigmoid in Gradient Falls) with full interactive dialogue via deprecated_npc.gd. Wired all missing dialogue signals: token collection quips (25% chance, 12s cooldown), player death narrator commentary (5 neural-net-themed lines), low health warning (25% threshold), combo celebration (5+ hits), first glob fired, boss phase change dialogue (OVERFIT phase: gradient shield commentary, ESCAPE phase: hack the core urgency). Added Globbler follow-up lines on puzzle solve (40% chance). Enemy kill quips refactored from inline lambda to proper callback with 2 extra lines. NPCs provide gameplay hints about Dropout Void, Overfitting Ogres, Vanishing Gradient Wisps, and boss strategy.
+- **Next task to do:** 5.2 Chapter 3: The Prompt Bazaar — Chaotic marketplace environment with NPC AI personas
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapter 2 uses AudioManager fallback ambient (ch2-specific ambient not yet added). Chapter 2 music reuses chapter_1 track until ch2 music is implemented.
 
 ---
@@ -188,7 +188,7 @@
 - [x] Enemies: Overfitting Ogres, Dropout Ghosts, Vanishing Gradient Wisps — overfitting_ogre.gd (memorizes moves, predicts, confused by pattern breaks), dropout_ghost.gd (vanishes/teleports/lunge attacks, invulnerable while out), vanishing_gradient_wisp.gd (fades with distance from anchor, scaling damage/speed). 12 enemies placed across 4 rooms
 - [x] Puzzles: adjust weights to create paths, backpropagation trace puzzles
 - [x] Boss: The Local Minimum — shrinking arena pit boss
-- [ ] Dialogue and story beats
+- [x] Dialogue and story beats
 
 ### 5.2 Chapter 3: The Prompt Bazaar
 - [ ] Chaotic marketplace environment with NPC AI personas
