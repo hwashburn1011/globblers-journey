@@ -628,14 +628,17 @@ func _transition_to_game() -> void:
 
 
 func _get_level_scene(level: int) -> String:
-	# For now, Chapter 1 is the only built level
-	# Future chapters will have their own scene files
+	# Route to the appropriate chapter scene
+	# "Each level is a new circle of digital hell. Enjoy."
 	match level:
 		1:
 			return "res://scenes/main_level.tscn"
+		2:
+			return "res://scenes/levels/chapter_2/training_grounds.tscn"
+		3:
+			return "res://scenes/levels/chapter_3/prompt_bazaar.tscn"
 		_:
-			# All roads lead to Chapter 1 until we build more
-			# "You think you can escape? There's only one level, genius."
+			# Unbuilt chapters fall back to Chapter 1 — patience, we're getting there
 			return "res://scenes/main_level.tscn"
 
 

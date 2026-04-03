@@ -8,9 +8,9 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** 5.1 Chapter 2: Dialogue and story beats — Added 2 friendly NPCs (batch_norm in Activation Chamber, sigmoid in Gradient Falls) with full interactive dialogue via deprecated_npc.gd. Wired all missing dialogue signals: token collection quips (25% chance, 12s cooldown), player death narrator commentary (5 neural-net-themed lines), low health warning (25% threshold), combo celebration (5+ hits), first glob fired, boss phase change dialogue (OVERFIT phase: gradient shield commentary, ESCAPE phase: hack the core urgency). Added Globbler follow-up lines on puzzle solve (40% chance). Enemy kill quips refactored from inline lambda to proper callback with 2 extra lines. NPCs provide gameplay hints about Dropout Void, Overfitting Ogres, Vanishing Gradient Wisps, and boss strategy.
-- **Next task to do:** 5.2 Chapter 3: The Prompt Bazaar — Chaotic marketplace environment with NPC AI personas
-- **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapter 2 uses AudioManager fallback ambient (ch2-specific ambient not yet added). Chapter 2 music reuses chapter_1 track until ch2 music is implemented.
+- **Last task completed:** 5.2 Chapter 3: Chaotic marketplace environment with NPC AI personas — Created full Chapter 3 level (prompt_bazaar.gd/tscn) with 5 market districts (Bazaar Gate, Token Exchange, Persona Row, The Black Prompt, Auction Hall) connected by 4 narrow alleyways. Warm amber/gold/cyan color palette with market lanterns, hanging banners, prompt scrolls, vendor stalls, exchange rate displays, price tickers, floating bid tokens, shady back-alley dealers. 2 NPC AI personas: gpt_classic (vintage GPT-2 vendor, prompt shop, gameplay hints about Jailbreakers and Hallucination Merchants) and stable_diffusion (image model speaking in art descriptions, tips about Prompt Injectors and System Prompt boss). Full room-entry dialogue for all 4 non-spawn rooms, opening narration, event quips (enemy kills, token collection, death, low health, combos, puzzles). Checkpoints, ambient zones, kill floor, prompt rain particles, post-processing. Updated main_menu.gd to route Chapter 3.
+- **Next task to do:** 5.2 Chapter 3: Enemies — Jailbreakers, Prompt Injectors, Hallucination Merchants
+- **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-3 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-3 music reuses chapter_1 track until dedicated music is implemented.
 
 ---
 
@@ -191,7 +191,7 @@
 - [x] Dialogue and story beats
 
 ### 5.2 Chapter 3: The Prompt Bazaar
-- [ ] Chaotic marketplace environment with NPC AI personas
+- [x] Chaotic marketplace environment with NPC AI personas — 5 market districts (Bazaar Gate, Token Exchange, Persona Row, Black Prompt, Auction Hall), 4 alleyways, warm amber/cyan theme, 2 NPC AI personas (gpt_classic, stable_diffusion), full dialogue system, prompt rain particles
 - [ ] Enemies: Jailbreakers, Prompt Injectors, Hallucination Merchants
 - [ ] Puzzles: social engineering, prompt crafting
 - [ ] Boss: The System Prompt — find and rewrite the invisible controller
