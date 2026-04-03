@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** Credits sequence — Created scenes/main/credits.tscn + credits.gd with full scrolling terminal-aesthetic credits. Features sarcastic department names (Glob Operations, Enemy Behavior Consultants, Boss Fight Choreography), Globbler's meta-commentary about skipping credits, role/name/quote/section formatting, scanline overlay, hold SPACE/A to fast-scroll, ESC to skip, green monospace theme. Modified alignment_citadel.gd _return_to_main_menu() to route through credits before main menu. Updated end screen prompt text.
-- **Next task to do:** Final build and export
+- **Last task completed:** Final build and export — Created export_presets.cfg with Windows Desktop and Linux presets (embedded PCK, file metadata, exclude dev files). Created export_game.ps1 (PowerShell) and export_game.sh (bash) build scripts supporting per-platform builds, debug/release modes, Godot path override via GODOT_PATH env var. Updated .gitignore to exclude build/ outputs and build_log_*.txt files.
+- **Next task to do:** ALL TASKS COMPLETE — Globbler's Journey is fully built!
 - **Known issues:** Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-5 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-5 music reuses chapter_1 track until dedicated music is implemented.
 
 ---
@@ -220,4 +220,4 @@
 - [x] Performance optimization
 - [x] Controller support
 - [x] Credits sequence
-- [ ] Final build and export
+- [x] Final build and export
