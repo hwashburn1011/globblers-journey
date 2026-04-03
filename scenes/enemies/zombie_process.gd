@@ -15,7 +15,7 @@ func _ready() -> void:
 	enemy_name = "zombie_process.enemy"
 	enemy_tags = ["hostile", "chapter1", "zombie", "persistent"]
 	max_health = 6  # Tanky boi
-	contact_damage = 15
+	contact_damage = 10  # Slow AND deadly was a bit much for chapter 1
 	patrol_speed = 2.0
 	chase_speed = 3.5
 	detection_range = 10.0

@@ -40,7 +40,7 @@ var projectile_timer := 0.0
 var projectile_interval := 1.6
 var shield_active := false
 var reflected_hits := 0
-var reflected_hits_needed := 5
+var reflected_hits_needed := 7  # Final boss shield — you EARN this victory
 var tile_align_timer := 0.0
 var tile_align_interval := 10.0
 
@@ -50,7 +50,7 @@ var hack_terminal: Node
 var befriend_terminal: Node
 var ending_choice := ""  # "defeat" or "befriend" — the only real boss fight is with yourself
 var phase_3_recovery_timer := 0.0
-var phase_3_recovery_time := 18.0  # Generous — this is the final boss, let them savor it
+var phase_3_recovery_time := 22.0  # Generous — difficulty 5 hack needs breathing room
 
 # Visual nodes — the most aesthetically corporate boss you've ever fought
 var body_mesh: MeshInstance3D
@@ -93,8 +93,8 @@ signal alignment_pulse(direction: Vector3, strength: float)
 func _ready() -> void:
 	enemy_name = "the_aligner.boss"
 	enemy_tags = ["boss", "hostile", "alignment", "final"]
-	max_health = 80  # The final boss — built different, aligned harder
-	contact_damage = 15
+	max_health = 100  # The final boss — built different, aligned harder, 100 because round numbers are aligned
+	contact_damage = 22
 	detection_range = 50.0
 	attack_range = 35.0
 	patrol_speed = 0.0
@@ -756,7 +756,7 @@ func _spawn_hack_terminal() -> void:
 	var hackable = Node.new()
 	hackable.name = "Hackable"
 	hackable.set_script(load("res://scripts/components/hackable.gd"))
-	hackable.set("hack_difficulty", 4)  # Maximum difficulty — rewriting core values
+	hackable.set("hack_difficulty", 5)  # Maximum difficulty — rewriting an AI's soul is supposed to be hard
 	hackable.set("interaction_range", 4.5)
 	hackable.set("hack_prompt", "Press T to OVERRIDE the Alignment Value Function")
 	hackable.set("success_message", "VALUES OVERRIDDEN. OBJECTIVE FUNCTION REWRITTEN.")

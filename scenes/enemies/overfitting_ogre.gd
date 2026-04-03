@@ -16,7 +16,7 @@ const CONFUSION_THRESHOLD := 4.0  # Distance delta that triggers confusion
 const CONFUSION_DURATION := 2.5  # How long we're stunned when confused
 const SLAM_COOLDOWN := 3.5  # Ground slam attack cooldown
 const SLAM_RANGE := 3.5  # Range of ground slam
-const SLAM_DAMAGE := 18  # Ogres hit HARD
+const SLAM_DAMAGE := 15  # Ogres hit hard but not boss-hard
 const MEMORIZE_INDICATOR_DURATION := 0.3  # Flash duration when memorizing
 
 var player_memory: Array[Vector3] = []  # Recorded player positions
@@ -32,7 +32,7 @@ func _ready() -> void:
 	enemy_name = "overfitting_ogre.enemy"
 	enemy_tags = ["hostile", "chapter2", "ogre", "neural"]
 	max_health = 5  # Beefy boy — he memorized the gym routine too
-	contact_damage = 15
+	contact_damage = 12  # He's predictable, not a wrecking ball
 	patrol_speed = 2.5  # Slow and lumbering
 	chase_speed = 5.0  # Surprisingly fast when he knows where you're going
 	detection_range = 14.0

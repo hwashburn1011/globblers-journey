@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** 6.0 Full playthrough QA — Systematic code review across all 5 chapters, player systems, enemies, bosses, puzzles, and UI. Fixed 3 bugs: (1) dropout_ghost.gd lines 163/273 used undefined `current_state` instead of `state` (crash on dropout timer), (2) terminal_hack.gd line 191 null reference when `_hack_ui` is null but code iterates its children, (3) rm_rf_boss.gd missing `complete_level()` call on defeat (Ch1 never marked complete for progression). Also fixed game_manager.gd `complete_level()` signature to accept optional chapter_id parameter (Ch2-5 bosses pass identifiers). Verified all 48+ scene paths are valid, all puzzle/enemy/boss scripts exist, level transitions work, main menu chapter select has all 5 chapters.
-- **Next task to do:** Balance pass: enemy health, damage values, puzzle difficulty
+- **Last task completed:** Balance pass — Comprehensive rebalance across all 5 chapters. Boss HP now escalates properly (50→65→75→85→100), boss contact damage scales (15→16→18→20→22), boss hack difficulty scales (2→3→3→4→5), boss reflected hits scale (4→5→5→6→7), boss token drops scale (10→15→20→22→25). Fixed enemy outliers: Zombie Process contact 15→10, Overfitting Ogre slam 18→15 and contact 15→12, Vanishing Gradient Wisp bolt 14→10. Reduced punishing debuffs: RLHF Drone niceness per-stack 25%→20% dmg and 20%→15% speed, Safety Classifier ability block 6s→4s. Buffed Ch5 enemy HP: Safety Classifier 4→5, RLHF Drone 2→3. Aligner final boss gets difficulty 5 hack with 22s timer (up from 18s). System Prompt projectile interval tightened 2.5→2.2.
+- **Next task to do:** Performance optimization
 - **Known issues:** Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-5 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-5 music reuses chapter_1 track until dedicated music is implemented.
 
 ---
@@ -216,7 +216,7 @@
 
 ## PHASE 6: FINAL POLISH
 - [x] Full playthrough QA
-- [ ] Balance pass: enemy health, damage values, puzzle difficulty
+- [x] Balance pass: enemy health, damage values, puzzle difficulty
 - [ ] Performance optimization
 - [ ] Controller support
 - [ ] Credits sequence

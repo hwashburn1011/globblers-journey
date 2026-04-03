@@ -73,8 +73,8 @@ func _ready() -> void:
 	# Override base enemy defaults — this boss IS the loss landscape
 	enemy_name = "local_minimum.boss"
 	enemy_tags = ["boss", "hostile", "optimization"]
-	max_health = 60
-	contact_damage = 15
+	max_health = 65  # Deeper minimum, more HP to dig out of
+	contact_damage = 16
 	detection_range = 50.0  # Always aware — omniscient loss surface
 	attack_range = 30.0
 	patrol_speed = 0.0

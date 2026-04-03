@@ -19,7 +19,7 @@ extends BaseEnemy
 const SCAN_DURATION := 1.5  # seconds to complete a classification
 const SCAN_RANGE := 14.0
 const SCAN_CONE_ANGLE := 25.0  # degrees — narrow beam, easy to dodge if you're fast
-const ABILITY_BLOCK_DURATION := 6.0  # how long the blocked ability stays UNSAFE
+const ABILITY_BLOCK_DURATION := 4.0  # how long the blocked ability stays UNSAFE — 6 was rage-quit territory
 const SCAN_COOLDOWN := 5.0
 const SCAN_DAMAGE_REDUCTION := 0.5  # 50% damage reduction while scanning
 
@@ -83,7 +83,7 @@ const BLOCK_MESSAGES := [
 
 
 func _init() -> void:
-	max_health = 4
+	max_health = 5  # Chapter 5 enemy gets a bit more bulk — bureaucracy is resilient
 	contact_damage = 8
 	detection_range = SCAN_RANGE
 	attack_range = SCAN_RANGE  # Scans from a distance — bureaucrats avoid physical confrontation

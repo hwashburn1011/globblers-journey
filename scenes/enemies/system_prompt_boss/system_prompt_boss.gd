@@ -40,10 +40,10 @@ var fragment_spawn_interval := 5.0  # Spawn instruction fragments to find boss
 
 # Phase 2 — tile rewriting and compliance projectiles
 var projectile_timer := 0.0
-var projectile_interval := 2.5
+var projectile_interval := 2.2  # Slightly faster than ch2 — the bazaar doesn't wait
 var shield_active := false
 var reflected_hits := 0
-var reflected_hits_needed := 6  # More than ch2 — escalating difficulty
+var reflected_hits_needed := 5  # Same as ch2 — invisible boss is already hard enough
 var flicker_timer := 0.0
 
 # Phase 3 — hack state
@@ -85,15 +85,15 @@ func _ready() -> void:
 	# Override base enemy defaults — this boss IS the rules
 	enemy_name = "system_prompt.boss"
 	enemy_tags = ["boss", "hostile", "system", "prompt"]
-	max_health = 65
-	contact_damage = 15
+	max_health = 75  # Hidden instructions run deep — lots of layers to peel back
+	contact_damage = 18
 	detection_range = 50.0  # Knows where you are — it's the system prompt
 	attack_range = 30.0
 	patrol_speed = 0.0
 	chase_speed = 0.0  # Doesn't chase — teleports
 	stun_duration = 0.5
 	attack_cooldown = 2.0
-	token_drop_count = 18
+	token_drop_count = 20  # The bazaar is generous with its severance packages
 
 	super._ready()
 	_resize_collision()

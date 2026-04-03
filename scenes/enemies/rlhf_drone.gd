@@ -19,8 +19,8 @@ const REWARD_BEAM_RANGE := 12.0
 const REWARD_BEAM_DAMAGE := 5
 const REWARD_BEAM_COOLDOWN := 2.5
 const NICENESS_DEBUFF_DURATION := 5.0  # per stack
-const NICENESS_DAMAGE_REDUCTION := 0.25  # 25% damage reduction per stack on PLAYER
-const NICENESS_SPEED_REDUCTION := 0.2  # 20% speed reduction per stack on PLAYER
+const NICENESS_DAMAGE_REDUCTION := 0.20  # 20% damage reduction per stack — annoying, not crippling
+const NICENESS_SPEED_REDUCTION := 0.15  # 15% speed reduction per stack — sluggish, not frozen
 const MAX_NICENESS_STACKS := 3  # Full alignment = paralysis
 const PARALYSIS_DURATION := 2.0
 
@@ -68,7 +68,7 @@ const PARALYSIS_MESSAGES := [
 
 
 func _init() -> void:
-	max_health = 2  # Fragile — one good wrench swing and they're scrap
+	max_health = 3  # Slightly tougher in Ch5 — corporate drones are harder to kill than you'd think
 	contact_damage = 5
 	detection_range = REWARD_BEAM_RANGE
 	attack_range = REWARD_BEAM_RANGE

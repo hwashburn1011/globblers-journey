@@ -83,15 +83,15 @@ signal corruption_wave(direction: Vector3, width: float)
 func _ready() -> void:
 	enemy_name = "foundation_model.boss"
 	enemy_tags = ["boss", "hostile", "foundation", "multimodal"]
-	max_health = 70  # The biggest yet — layers upon layers of parameters
-	contact_damage = 18
+	max_health = 85  # Billions of parameters means billions of HP (approximately)
+	contact_damage = 20
 	detection_range = 50.0
 	attack_range = 30.0
 	patrol_speed = 0.0
 	chase_speed = 3.5
 	stun_duration = 0.5
 	attack_cooldown = 2.0
-	token_drop_count = 18
+	token_drop_count = 22  # Severance package for a model this big? Generous
 
 	super._ready()
 	_resize_collision()

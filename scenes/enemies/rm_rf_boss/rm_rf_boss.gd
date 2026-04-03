@@ -59,15 +59,15 @@ func _ready() -> void:
 	# Override base enemy defaults — this isn't your average corrupted process
 	enemy_name = "rm_rf.boss"
 	enemy_tags = ["boss", "hostile", "deletion"]
-	max_health = 50
-	contact_damage = 20
+	max_health = 50  # Chapter 1 boss — the appetizer, not the entrée
+	contact_damage = 15
 	detection_range = 50.0  # Always aware of the player in the arena
 	attack_range = 30.0
 	patrol_speed = 0.0  # Bosses don't patrol — they loom
 	chase_speed = 3.0
 	stun_duration = 0.5  # Hard to stun
 	attack_cooldown = 2.0
-	token_drop_count = 10
+	token_drop_count = 10  # First boss payday — humble beginnings
 
 	super._ready()
 
@@ -468,7 +468,7 @@ func _spawn_hack_terminal() -> void:
 	var hackable = Node.new()
 	hackable.name = "Hackable"
 	hackable.set_script(load("res://scripts/components/hackable.gd"))
-	hackable.set("hack_difficulty", 3)
+	hackable.set("hack_difficulty", 2)  # Baby's first boss hack — go easy on 'em
 	hackable.set("interaction_range", 4.0)
 	hackable.set("hack_prompt", "Press T to hack rm -rf core")
 	hackable.set("success_message", "CORE OVERWRITTEN. rm -rf / HAS BEEN... rm'd.")
