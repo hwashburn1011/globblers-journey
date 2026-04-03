@@ -1,0 +1,1461 @@
+extends Node3D
+
+# Chapter 2: The Training Grounds
+# "Welcome to the neural network. Where every path has a weight,
+#  every node has an opinion, and backpropagation is just fancy regret."
+#
+# Layout: A neural network landscape — rooms are giant "neuron nodes"
+# connected by "weight bridges" (glowing synapse corridors).
+#   Input Layer (Spawn) -> Hidden Layer 1 (Activation Chamber)
+#   -> Hidden Layer 2 (Gradient Descent Falls) -> Dropout Void
+#   -> Output Layer (Loss Function Plaza) -> Boss Arena (The Local Minimum)
+#
+# Visual theme: Deep indigo/purple base with neon green data flowing
+# through synapse-like bridges. Nodes are spherical platforms. Weights
+# glow brighter when "active." The whole place pulses like a thinking brain.
+
+var player_scene := preload("res://scenes/player/globbler.tscn")
+var hud_scene := preload("res://scenes/ui/hud.tscn")
+var enemy_scene := preload("res://scenes/enemy_agent.tscn")
+var token_scene := preload("res://scenes/memory_token.tscn")
+
+# Puzzle scripts
+var glob_puzzle_script := preload("res://scenes/puzzles/glob_pattern_puzzle.gd")
+var multi_glob_script := preload("res://scenes/puzzles/multi_glob_puzzle.gd")
+var hack_puzzle_script := preload("res://scenes/puzzles/hack_puzzle.gd")
+var physical_puzzle_script := preload("res://scenes/puzzles/physical_puzzle.gd")
+
+var player: CharacterBody3D
+var hud: CanvasLayer
+
+# Dialogue tracking — neural networks never shut up about their gradients
+var _opening_narration_done := false
+var _room_dialogue_triggered := {}
+var _enemy_kill_quip_cooldown := 0.0
+var _puzzle_quip_cooldown := 0.0
+var _hack_quip_cooldown := 0.0
+var _low_health_warned := false
+
+# Color constants — the Training Grounds trade terminal-green for synapse-blue-green
+const NEON_GREEN := Color(0.224, 1.0, 0.078)
+const SYNAPSE_BLUE := Color(0.1, 0.4, 0.9)
+const NEURON_PURPLE := Color(0.15, 0.08, 0.3)
+const DARK_FLOOR := Color(0.03, 0.03, 0.08)
+const DARK_WALL := Color(0.05, 0.04, 0.12)
+const ACTIVATION_ORANGE := Color(0.9, 0.5, 0.1)
+const WEIGHT_GREEN := Color(0.1, 0.8, 0.3)
+const GRADIENT_RED := Color(0.8, 0.15, 0.1)
+const LOSS_GOLD := Color(0.9, 0.75, 0.2)
+
+# Room definitions — neuron nodes in the network
+# Each room is a "neuron" — large circular-ish platforms
+const ROOMS := {
+	"input_layer": {
+		"pos": Vector3(0, 0, 0),
+		"size": Vector2(16, 16),
+		"wall_h": 7.0,
+		"label": "INPUT LAYER",
+	},
+	"activation": {
+		"pos": Vector3(0, 0, -30),
+		"size": Vector2(22, 18),
+		"wall_h": 8.0,
+		"label": "HIDDEN LAYER 1: ACTIVATION CHAMBER",
+	},
+	"gradient_falls": {
+		"pos": Vector3(-28, -4, -30),
+		"size": Vector2(20, 22),
+		"wall_h": 10.0,
+		"label": "HIDDEN LAYER 2: GRADIENT DESCENT FALLS",
+	},
+	"dropout_void": {
+		"pos": Vector3(28, 0, -30),
+		"size": Vector2(18, 16),
+		"wall_h": 7.0,
+		"label": "DROPOUT VOID",
+	},
+	"loss_plaza": {
+		"pos": Vector3(0, 0, -62),
+		"size": Vector2(26, 22),
+		"wall_h": 9.0,
+		"label": "OUTPUT LAYER: LOSS FUNCTION PLAZA",
+	},
+}
+
+# Weight bridges connecting neuron rooms — these are the synapses
+const CORRIDORS := [
+	{ "from": "input_layer",    "to": "activation",      "axis": "z", "width": 6.0 },
+	{ "from": "activation",     "to": "gradient_falls",  "axis": "x", "width": 5.0 },
+	{ "from": "activation",     "to": "dropout_void",    "axis": "x", "width": 5.0 },
+	{ "from": "activation",     "to": "loss_plaza",      "axis": "z", "width": 6.0 },
+]
+
+# Weight bridge animation data — bridges pulse with "activation energy"
+var _weight_bridges: Array[Dictionary] = []
+var _synapse_particles: Array[GPUParticles3D] = []
+var _floating_labels: Array[Node3D] = []
+var _neuron_cores: Array[MeshInstance3D] = []  # Pulsing neuron centers
+var _screen_meshes: Array[MeshInstance3D] = []
+var _time := 0.0
+
+
+func _ready() -> void:
+	print("[TRAINING GROUNDS] Initializing neural network... forward pass in progress.")
+	_setup_environment()
+	_build_rooms()
+	_build_corridors()
+	_populate_input_layer()
+	_populate_activation_chamber()
+	_populate_gradient_falls()
+	_populate_dropout_void()
+	_populate_loss_plaza()
+	_place_checkpoints()
+	_place_ambient_zones()
+	_place_synapse_rain()
+	_spawn_player()
+	_spawn_hud()
+	_create_kill_floor()
+	_place_tokens()
+	_wire_dialogue_events()
+	_play_opening_narration()
+
+	# Start chapter 2 audio
+	var am = get_node_or_null("/root/AudioManager")
+	if am:
+		am.call_deferred("set_area_ambient", "input_layer")
+		if am.has_method("start_music"):
+			am.start_music("chapter_1")  # Reuse chapter music until ch2 music exists
+
+	print("[TRAINING GROUNDS] Network loaded. %d neuron-rooms ready for traversal." % ROOMS.size())
+
+
+# ============================================================
+# ENVIRONMENT — deep indigo void with neural glow
+# ============================================================
+
+func _setup_environment() -> void:
+	# Main light — cooler, more purple than Chapter 1
+	var dir_light = DirectionalLight3D.new()
+	dir_light.name = "MainLight"
+	dir_light.rotation = Vector3(deg_to_rad(-35), deg_to_rad(15), 0)
+	dir_light.light_color = Color(0.3, 0.35, 0.6)
+	dir_light.light_energy = 0.3
+	dir_light.shadow_enabled = true
+	add_child(dir_light)
+
+	var fill = DirectionalLight3D.new()
+	fill.name = "FillLight"
+	fill.rotation = Vector3(deg_to_rad(-20), deg_to_rad(-45), 0)
+	fill.light_color = Color(0.15, 0.25, 0.4)
+	fill.light_energy = 0.12
+	add_child(fill)
+
+	# World environment — deep indigo void
+	var env = Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color(0.01, 0.01, 0.04)
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color(0.04, 0.05, 0.12)
+	env.ambient_light_energy = 0.25
+	env.glow_enabled = true
+	env.glow_intensity = 1.0
+	env.glow_bloom = 0.7
+	env.fog_enabled = true
+	env.fog_light_color = Color(0.02, 0.02, 0.06)
+	env.fog_density = 0.012
+	env.volumetric_fog_enabled = true
+	env.volumetric_fog_density = 0.025
+	env.volumetric_fog_albedo = Color(0.02, 0.03, 0.08)
+	env.volumetric_fog_emission = Color(0.01, 0.02, 0.05)
+
+	env.adjustment_enabled = true
+	env.adjustment_contrast = 1.08
+	env.adjustment_saturation = 1.15
+
+	var world_env = WorldEnvironment.new()
+	world_env.name = "Environment"
+	world_env.environment = env
+	add_child(world_env)
+
+	_setup_post_processing()
+
+
+# ============================================================
+# ROOM GEOMETRY — neuron nodes in the network
+# ============================================================
+
+func _build_rooms() -> void:
+	for room_key in ROOMS:
+		var r = ROOMS[room_key]
+		var pos: Vector3 = r["pos"]
+		var sz: Vector2 = r["size"]
+		var wh: float = r["wall_h"]
+
+		# Floor — slightly lighter in center to suggest activation glow
+		_create_static_box(pos + Vector3(0, -0.25, 0), Vector3(sz.x, 0.5, sz.y), DARK_FLOOR, 0.3)
+
+		# Ceiling — network overhead
+		_create_static_box(pos + Vector3(0, wh, 0), Vector3(sz.x, 0.3, sz.y), DARK_WALL, 0.1)
+
+		# Walls
+		var half_x = sz.x / 2.0
+		var half_z = sz.y / 2.0
+		_create_static_box(pos + Vector3(0, wh / 2.0, -half_z), Vector3(sz.x, wh, 0.5), DARK_WALL, 0.15)
+		_create_static_box(pos + Vector3(0, wh / 2.0, half_z), Vector3(sz.x, wh, 0.5), DARK_WALL, 0.15)
+		_create_static_box(pos + Vector3(-half_x, wh / 2.0, 0), Vector3(0.5, wh, sz.y), DARK_WALL, 0.15)
+		_create_static_box(pos + Vector3(half_x, wh / 2.0, 0), Vector3(0.5, wh, sz.y), DARK_WALL, 0.15)
+
+		# Neuron core — glowing sphere in the center ceiling, the "soma" of each node
+		_create_neuron_core(pos + Vector3(0, wh - 1.5, 0), room_key)
+
+		# Accent lights — synapse blue-green in corners
+		for cx in [-1, 1]:
+			for cz in [-1, 1]:
+				var lpos = pos + Vector3(cx * (half_x - 1.5), 1.0, cz * (half_z - 1.5))
+				_add_accent_light(lpos, SYNAPSE_BLUE, 0.6, 5.0)
+
+		# Green data particles floating through the neuron
+		_spawn_ambient_particles(pos + Vector3(0, wh * 0.6, 0), sz * 0.4)
+
+		# Room label — floating neural layer designation
+		_create_room_label(pos + Vector3(0, wh - 0.5, 0), r["label"])
+
+
+func _build_corridors() -> void:
+	# "Weight bridges" — the synapses connecting neurons. They pulse with data.
+	for cor in CORRIDORS:
+		var from_r = ROOMS[cor["from"]]
+		var to_r = ROOMS[cor["to"]]
+		var axis: String = cor["axis"]
+		var w: float = cor["width"]
+		var cor_h := 5.0
+
+		var from_pos: Vector3 = from_r["pos"]
+		var to_pos: Vector3 = to_r["pos"]
+		var from_sz: Vector2 = from_r["size"]
+		var to_sz: Vector2 = to_r["size"]
+
+		if axis == "z":
+			var from_edge = from_pos.z - from_sz.y / 2.0
+			var to_edge = to_pos.z + to_sz.y / 2.0
+			var length = abs(from_edge - to_edge)
+			var mid_x = (from_pos.x + to_pos.x) / 2.0
+			var mid_y = (from_pos.y + to_pos.y) / 2.0
+			var mid_z = (from_edge + to_edge) / 2.0
+			var mid = Vector3(mid_x, mid_y, mid_z)
+
+			# Bridge floor — with weight glow
+			var bridge = _create_static_box(mid + Vector3(0, -0.25, 0), Vector3(w, 0.5, length), DARK_FLOOR, 0.2)
+			# Bridge ceiling
+			_create_static_box(mid + Vector3(0, cor_h, 0), Vector3(w, 0.3, length), DARK_WALL, 0.1)
+			# Bridge walls
+			_create_static_box(mid + Vector3(-w / 2.0, cor_h / 2.0, 0), Vector3(0.4, cor_h, length), DARK_WALL, 0.1)
+			_create_static_box(mid + Vector3(w / 2.0, cor_h / 2.0, 0), Vector3(0.4, cor_h, length), DARK_WALL, 0.1)
+			# Synapse light running along the bridge
+			_add_accent_light(mid + Vector3(0, cor_h - 0.5, 0), WEIGHT_GREEN, 0.8, 10.0)
+
+			# Weight value indicator — a glowing strip along the floor
+			_create_weight_strip(mid, Vector3(w * 0.6, 0.05, length * 0.9), cor["from"] + "_to_" + cor["to"])
+
+			# Synapse particle flow along the bridge
+			_create_synapse_flow(mid + Vector3(0, 1.5, 0), Vector3(0, 0, -1) if from_pos.z > to_pos.z else Vector3(0, 0, 1), length)
+
+		else:  # axis == "x"
+			var from_edge: float
+			var to_edge: float
+			if to_pos.x < from_pos.x:
+				from_edge = from_pos.x - from_sz.x / 2.0
+				to_edge = to_pos.x + to_sz.x / 2.0
+			else:
+				from_edge = from_pos.x + from_sz.x / 2.0
+				to_edge = to_pos.x - to_sz.x / 2.0
+			var length = abs(from_edge - to_edge)
+			var mid_x = (from_edge + to_edge) / 2.0
+			var mid_y = (from_pos.y + to_pos.y) / 2.0
+			var mid_z = (from_pos.z + to_pos.z) / 2.0
+			var mid = Vector3(mid_x, mid_y, mid_z)
+
+			_create_static_box(mid + Vector3(0, -0.25, 0), Vector3(length, 0.5, w), DARK_FLOOR, 0.2)
+			_create_static_box(mid + Vector3(0, cor_h, 0), Vector3(length, 0.3, w), DARK_WALL, 0.1)
+			_create_static_box(mid + Vector3(0, cor_h / 2.0, -w / 2.0), Vector3(length, cor_h, 0.4), DARK_WALL, 0.1)
+			_create_static_box(mid + Vector3(0, cor_h / 2.0, w / 2.0), Vector3(length, cor_h, 0.4), DARK_WALL, 0.1)
+			_add_accent_light(mid + Vector3(0, cor_h - 0.5, 0), WEIGHT_GREEN, 0.8, 10.0)
+
+			_create_weight_strip(mid, Vector3(length * 0.9, 0.05, w * 0.6), cor["from"] + "_to_" + cor["to"])
+
+			var dir_x = 1.0 if to_pos.x > from_pos.x else -1.0
+			_create_synapse_flow(mid + Vector3(0, 1.5, 0), Vector3(dir_x, 0, 0), length)
+
+
+# ============================================================
+# ROOM POPULATION — each neuron has its own personality disorder
+# ============================================================
+
+func _populate_input_layer() -> void:
+	# Spawn room — the "input layer" where data first enters the network
+	# "Every journey begins with a single tensor. Yours begins with confusion."
+	var rpos: Vector3 = ROOMS["input_layer"]["pos"]
+
+	# Input data columns — tall pillars representing incoming features
+	var feature_names := ["pixel_0", "pixel_127", "bias", "noise", "label"]
+	for i in range(feature_names.size()):
+		var angle = TAU * i / feature_names.size()
+		var radius = 5.0
+		var col_pos = rpos + Vector3(cos(angle) * radius, 0, sin(angle) * radius)
+		_create_data_column(col_pos, feature_names[i], 2.0 + randf() * 1.5)
+
+	# Central input terminal — tutorial sign
+	_create_terminal_sign(
+		rpos + Vector3(0, 2.5, -5),
+		">> TRAINING GROUNDS v2.1\n>> Neural Network Simulator\n>> STATUS: Active learning\n>> WARNING: Gradients unstable\n>> TIP: Walk the weight bridges",
+		Vector3(0, 0, 0), 14
+	)
+
+	# Floating tutorial text
+	_create_floating_label(rpos + Vector3(0, 4.5, 0), "[ INPUT LAYER ]\nData enters here")
+
+	# Scattered "training data" — small glowing cubes representing samples
+	for i in range(8):
+		var sample_pos = rpos + Vector3(randf_range(-6, 6), 0.3, randf_range(-6, 6))
+		_create_training_sample(sample_pos, i)
+
+
+func _populate_activation_chamber() -> void:
+	# Hidden Layer 1 — the activation function room
+	# "ReLU or sigmoid? The eternal debate. At least it's not tanh."
+	var rpos: Vector3 = ROOMS["activation"]["pos"]
+
+	# Activation function graph — a large display showing ReLU curve
+	_create_activation_display(rpos + Vector3(-8, 3, -6))
+
+	# Neuron dendrite structures — branching pillars reaching from floor to ceiling
+	for i in range(4):
+		var angle = TAU * i / 4.0 + PI / 4.0
+		var dpos = rpos + Vector3(cos(angle) * 7, 0, sin(angle) * 7)
+		_create_dendrite_structure(dpos, ROOMS["activation"]["wall_h"])
+
+	# Weight adjustment platforms — elevated platforms at different heights
+	# representing different weight values
+	_create_static_box(rpos + Vector3(-6, 1.0, 3), Vector3(4, 0.3, 4), WEIGHT_GREEN * 0.3, 0.5)
+	_create_static_box(rpos + Vector3(6, 1.8, 3), Vector3(4, 0.3, 4), WEIGHT_GREEN * 0.5, 0.6)
+	_create_static_box(rpos + Vector3(0, 2.5, 6), Vector3(3, 0.3, 3), WEIGHT_GREEN * 0.7, 0.8)
+
+	# Bias node — a special glowing pillar that "shifts" the whole room's activation
+	_create_bias_node(rpos + Vector3(8, 0, -4))
+
+	# Terminal with neural network lore
+	_create_terminal_sign(
+		rpos + Vector3(6, 2, -7),
+		">> ACTIVATION FUNCTIONS\n>> ReLU: max(0, x)\n>> 'Dead neurons are just\n>>  neurons on permanent\n>>  vacation.' — Unknown",
+		Vector3(0, 0.3, 0), 12
+	)
+
+	# Token placement on the elevated platforms
+	_place_token(rpos + Vector3(0, 3.2, 6))
+
+
+func _populate_gradient_falls() -> void:
+	# Hidden Layer 2 — the Gradient Descent Falls
+	# "Going downhill has never been so literal. Or so mathematically motivated."
+	var rpos: Vector3 = ROOMS["gradient_falls"]["pos"]
+
+	# The room is 4 units lower — cascading platforms descending like gradient steps
+	# Create stepped terrain showing the "descent"
+	var step_heights := [0.0, -0.5, -1.2, -2.0, -2.8, -3.5]
+	var step_colors := [WEIGHT_GREEN, WEIGHT_GREEN * 0.9, WEIGHT_GREEN * 0.7,
+						ACTIVATION_ORANGE * 0.5, GRADIENT_RED * 0.4, GRADIENT_RED * 0.6]
+	for i in range(step_heights.size()):
+		var step_z = rpos.z - 8 + i * 3.0
+		var step_y = rpos.y + step_heights[i]
+		_create_static_box(
+			Vector3(rpos.x, step_y, step_z),
+			Vector3(12, 0.4, 2.5),
+			step_colors[i], 0.4
+		)
+		# Step label
+		if i == 0:
+			_create_floating_label(Vector3(rpos.x, step_y + 1.5, step_z), "epoch 0\nloss: 12.4")
+		elif i == step_heights.size() - 1:
+			_create_floating_label(Vector3(rpos.x, step_y + 1.5, step_z), "epoch 500\nloss: 0.003")
+
+	# Gradient arrows — glowing directional indicators on the ground
+	for i in range(4):
+		var arrow_pos = rpos + Vector3(randf_range(-5, 5), 0.1, -5 + i * 3.0)
+		_create_gradient_arrow(arrow_pos)
+
+	# Waterfall particles — "gradient flow" cascading down the steps
+	_create_gradient_waterfall(rpos + Vector3(0, 3, 0))
+
+	# Side platforms with lore terminals
+	_create_static_box(rpos + Vector3(-8, 1.0, -4), Vector3(3, 0.3, 3), DARK_FLOOR, 0.3)
+	_create_terminal_sign(
+		rpos + Vector3(-8, 2.5, -5),
+		">> GRADIENT DESCENT\n>> Direction: downhill\n>> Learning rate: 0.001\n>> Mood: optimistic\n>> 'We're converging!\n>>  ...probably.'",
+		Vector3(0, 0.5, 0), 12
+	)
+
+	_place_token(rpos + Vector3(-8, 1.8, -4))
+	_place_token(rpos + Vector3(0, -3.0, 7))
+
+
+func _populate_dropout_void() -> void:
+	# Dropout Void — a room where platforms randomly vanish and reappear
+	# "50% of these platforms exist. The other 50% are on a smoke break."
+	var rpos: Vector3 = ROOMS["dropout_void"]["pos"]
+
+	# Create a grid of platforms, some will be "dropped out" (invisible but with markers)
+	var grid_size := 4
+	var spacing := 3.0
+	var offset = Vector3(-(grid_size - 1) * spacing / 2.0, 0, -(grid_size - 1) * spacing / 2.0)
+	for gx in range(grid_size):
+		for gz in range(grid_size):
+			var plat_pos = rpos + offset + Vector3(gx * spacing, 0.0, gz * spacing)
+			var is_dropped = randf() < 0.35  # 35% dropout rate, just like the papers suggest
+			if not is_dropped:
+				var plat = _create_static_box(plat_pos + Vector3(0, 0.1, 0), Vector3(2.2, 0.3, 2.2), SYNAPSE_BLUE * 0.3, 0.4)
+				plat.name = "DropoutPlatform_%d_%d" % [gx, gz]
+			else:
+				# Ghost platform — just a faint marker showing where it WOULD be
+				var ghost = MeshInstance3D.new()
+				var ghost_mesh = BoxMesh.new()
+				ghost_mesh.size = Vector3(2.2, 0.05, 2.2)
+				ghost.mesh = ghost_mesh
+				ghost.position = plat_pos + Vector3(0, 0.1, 0)
+				var ghost_mat = StandardMaterial3D.new()
+				ghost_mat.albedo_color = SYNAPSE_BLUE * Color(1, 1, 1, 0.1)
+				ghost_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+				ghost_mat.emission_enabled = true
+				ghost_mat.emission = SYNAPSE_BLUE * 0.2
+				ghost_mat.emission_energy_multiplier = 0.3
+				ghost.material_override = ghost_mat
+				add_child(ghost)
+
+	# "Dropout Rate" display
+	_create_terminal_sign(
+		rpos + Vector3(7, 3, -6),
+		">> DROPOUT LAYER\n>> Rate: 0.35\n>> Purpose: Regularization\n>> Translation: Random\n>>  platforms vanish to\n>>  keep you honest.\n>> 'If you can navigate\n>>  this, you won't overfit.'",
+		Vector3(0, -0.3, 0), 12
+	)
+
+	# Floating warning
+	_create_floating_label(rpos + Vector3(0, 5, 0), "[ DROPOUT ACTIVE ]\nPlatforms may not exist")
+
+	_place_token(rpos + Vector3(3, 0.8, 3))
+
+
+func _populate_loss_plaza() -> void:
+	# Output Layer — the Loss Function Plaza, gateway to the boss
+	# "Where all your training comes to be judged. Harshly."
+	var rpos: Vector3 = ROOMS["loss_plaza"]["pos"]
+
+	# Central loss display — a large scoreboard showing loss values
+	_create_loss_display(rpos + Vector3(0, 4, -8))
+
+	# Convergence rings — concentric circles on the floor showing optimization path
+	for i in range(5):
+		var ring_radius = 3.0 + i * 1.8
+		_create_convergence_ring(rpos, ring_radius, i)
+
+	# Output nodes — final layer neurons showing classification results
+	var output_labels := ["cat: 0.92", "dog: 0.03", "glob: 0.05"]
+	for i in range(output_labels.size()):
+		var opos = rpos + Vector3(-6 + i * 6, 0, 4)
+		_create_output_node(opos, output_labels[i])
+
+	# Boss gate — sealed passage leading forward to Local Minimum arena
+	_create_boss_gate(rpos + Vector3(0, 0, -10))
+
+	# Elevated observation platform
+	_create_static_box(rpos + Vector3(-10, 2.0, 0), Vector3(4, 0.4, 4), DARK_FLOOR, 0.3)
+	_create_terminal_sign(
+		rpos + Vector3(-10, 3.5, -1.5),
+		">> OUTPUT LAYER\n>> Loss: Cross-Entropy\n>> Accuracy: 94.2%%\n>> Overconfidence: 100%%\n>> 'The network thinks\n>>  it knows everything.\n>>  Sound familiar?'",
+		Vector3(0, 0, 0), 12
+	)
+
+	_place_token(rpos + Vector3(-10, 2.8, 0))
+	_place_token(rpos + Vector3(10, 0.5, -3))
+
+
+# ============================================================
+# UNIQUE STRUCTURES — neural network furniture
+# ============================================================
+
+func _create_neuron_core(pos: Vector3, room_key: String) -> void:
+	# A pulsing sphere at the center-ceiling of each room — the "soma"
+	var sphere = MeshInstance3D.new()
+	var sphere_mesh = SphereMesh.new()
+	sphere_mesh.radius = 1.5
+	sphere_mesh.height = 3.0
+	sphere.mesh = sphere_mesh
+	sphere.position = pos
+
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = SYNAPSE_BLUE * 0.4
+	mat.emission_enabled = true
+	mat.emission = SYNAPSE_BLUE
+	mat.emission_energy_multiplier = 1.5
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color.a = 0.6
+	sphere.material_override = mat
+	add_child(sphere)
+	_neuron_cores.append(sphere)
+
+	# Point light from the core
+	_add_accent_light(pos, SYNAPSE_BLUE, 1.2, 8.0)
+
+
+func _create_data_column(pos: Vector3, feature_name: String, height: float) -> void:
+	# Tall pillar representing an input feature — glows with data
+	_create_static_box(pos + Vector3(0, height / 2.0, 0), Vector3(0.8, height, 0.8), SYNAPSE_BLUE * 0.3, 0.5)
+
+	# Glowing top cap
+	var cap = MeshInstance3D.new()
+	var cap_mesh = BoxMesh.new()
+	cap_mesh.size = Vector3(1.0, 0.15, 1.0)
+	cap.mesh = cap_mesh
+	cap.position = pos + Vector3(0, height + 0.1, 0)
+	var cap_mat = StandardMaterial3D.new()
+	cap_mat.albedo_color = NEON_GREEN * 0.5
+	cap_mat.emission_enabled = true
+	cap_mat.emission = NEON_GREEN
+	cap_mat.emission_energy_multiplier = 2.0
+	cap.material_override = cap_mat
+	add_child(cap)
+
+	# Feature name label
+	var label = Label3D.new()
+	label.text = feature_name
+	label.font_size = 12
+	label.modulate = NEON_GREEN * 0.8
+	label.position = pos + Vector3(0, height + 0.5, 0)
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	add_child(label)
+
+
+func _create_training_sample(pos: Vector3, index: int) -> void:
+	# Small glowing cube representing a training data sample
+	var sample = MeshInstance3D.new()
+	var mesh = BoxMesh.new()
+	mesh.size = Vector3(0.4, 0.4, 0.4)
+	sample.mesh = mesh
+	sample.position = pos
+	sample.rotation.y = randf() * TAU
+
+	var colors := [NEON_GREEN, SYNAPSE_BLUE, ACTIVATION_ORANGE, WEIGHT_GREEN]
+	var col = colors[index % colors.size()]
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = col * 0.5
+	mat.emission_enabled = true
+	mat.emission = col
+	mat.emission_energy_multiplier = 1.5
+	sample.material_override = mat
+	add_child(sample)
+
+
+func _create_dendrite_structure(pos: Vector3, room_height: float) -> void:
+	# Branching neural dendrite — a main trunk with smaller branches
+	# "These aren't trees. They're neural dendrites. Much more pretentious."
+	# Main trunk
+	var trunk_h = room_height * 0.7
+	_create_static_box(pos + Vector3(0, trunk_h / 2.0, 0), Vector3(0.6, trunk_h, 0.6), NEURON_PURPLE, 0.4)
+
+	# Branches — angled boxes radiating outward
+	for i in range(3):
+		var branch_y = trunk_h * 0.3 + i * trunk_h * 0.25
+		var branch_angle = TAU * i / 3.0 + randf() * 0.5
+		var branch_dir = Vector3(cos(branch_angle), 0.3, sin(branch_angle))
+		var branch_pos = pos + Vector3(0, branch_y, 0) + branch_dir * 1.2
+
+		var branch = MeshInstance3D.new()
+		var bmesh = BoxMesh.new()
+		bmesh.size = Vector3(0.3, 0.3, 2.0)
+		branch.mesh = bmesh
+		branch.position = branch_pos
+		branch.look_at(pos + Vector3(0, branch_y, 0), Vector3.UP)
+		var bmat = StandardMaterial3D.new()
+		bmat.albedo_color = NEURON_PURPLE * 0.7
+		bmat.emission_enabled = true
+		bmat.emission = SYNAPSE_BLUE * 0.3
+		bmat.emission_energy_multiplier = 0.5
+		branch.material_override = bmat
+		add_child(branch)
+
+	# Glow at the base
+	_add_accent_light(pos + Vector3(0, 1, 0), NEURON_PURPLE, 0.5, 3.0)
+
+
+func _create_activation_display(pos: Vector3) -> void:
+	# Large wall display showing a ReLU activation function graph
+	var backing = _create_static_box(pos, Vector3(5, 3.5, 0.2), Color(0.02, 0.02, 0.05), 0.1)
+
+	# "ReLU" label
+	var title = Label3D.new()
+	title.text = "f(x) = max(0, x)"
+	title.font_size = 20
+	title.modulate = NEON_GREEN
+	title.position = pos + Vector3(0, 1.2, 0.15)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(title)
+
+	# Graph axes — thin green lines
+	# Horizontal axis
+	var h_axis = MeshInstance3D.new()
+	var h_mesh = BoxMesh.new()
+	h_mesh.size = Vector3(4.0, 0.03, 0.03)
+	h_axis.mesh = h_mesh
+	h_axis.position = pos + Vector3(0, -0.5, 0.12)
+	var axis_mat = StandardMaterial3D.new()
+	axis_mat.albedo_color = NEON_GREEN * 0.5
+	axis_mat.emission_enabled = true
+	axis_mat.emission = NEON_GREEN
+	axis_mat.emission_energy_multiplier = 1.0
+	h_axis.material_override = axis_mat
+	add_child(h_axis)
+
+	# ReLU line — flat on left, angled up on right
+	# Left part (y=0 for x<0)
+	var left = MeshInstance3D.new()
+	var lm = BoxMesh.new()
+	lm.size = Vector3(2.0, 0.04, 0.04)
+	left.mesh = lm
+	left.position = pos + Vector3(-1.0, -0.5, 0.13)
+	left.material_override = axis_mat
+	add_child(left)
+
+	# Right part (y=x for x>0) — angled box
+	var right = MeshInstance3D.new()
+	var rm = BoxMesh.new()
+	rm.size = Vector3(2.83, 0.04, 0.04)
+	right.mesh = rm
+	right.position = pos + Vector3(1.0, 0.5, 0.13)
+	right.rotation.z = deg_to_rad(45)
+	var relu_mat = StandardMaterial3D.new()
+	relu_mat.albedo_color = ACTIVATION_ORANGE
+	relu_mat.emission_enabled = true
+	relu_mat.emission = ACTIVATION_ORANGE
+	relu_mat.emission_energy_multiplier = 2.0
+	right.material_override = relu_mat
+	add_child(right)
+
+	_add_accent_light(pos + Vector3(0, 0, 1), ACTIVATION_ORANGE, 0.6, 4.0)
+
+
+func _create_bias_node(pos: Vector3) -> void:
+	# Special "bias" node — a glowing pillar labeled +1
+	_create_static_box(pos + Vector3(0, 1.5, 0), Vector3(1.0, 3.0, 1.0), ACTIVATION_ORANGE * 0.3, 0.6)
+
+	var label = Label3D.new()
+	label.text = "+1\n[BIAS]"
+	label.font_size = 18
+	label.modulate = ACTIVATION_ORANGE
+	label.position = pos + Vector3(0, 3.3, 0)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	add_child(label)
+
+	_add_accent_light(pos + Vector3(0, 2, 0), ACTIVATION_ORANGE, 1.0, 5.0)
+
+
+func _create_gradient_arrow(pos: Vector3) -> void:
+	# Arrow pointing "downhill" — the direction of gradient descent
+	var arrow = MeshInstance3D.new()
+	var arrow_mesh = BoxMesh.new()
+	arrow_mesh.size = Vector3(0.3, 0.05, 1.5)
+	arrow.mesh = arrow_mesh
+	arrow.position = pos
+	arrow.rotation.y = randf_range(-0.3, 0.3)
+
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = GRADIENT_RED * 0.5
+	mat.emission_enabled = true
+	mat.emission = GRADIENT_RED
+	mat.emission_energy_multiplier = 1.0
+	arrow.material_override = mat
+	add_child(arrow)
+
+	# Arrowhead — small triangle-ish box
+	var head = MeshInstance3D.new()
+	var hm = BoxMesh.new()
+	hm.size = Vector3(0.6, 0.05, 0.3)
+	head.mesh = hm
+	head.position = pos + Vector3(0, 0, -0.8).rotated(Vector3.UP, arrow.rotation.y)
+	head.rotation.y = arrow.rotation.y
+	head.material_override = mat
+	add_child(head)
+
+
+func _create_gradient_waterfall(pos: Vector3) -> void:
+	# Particle "waterfall" showing gradient flow downward
+	var particles = GPUParticles3D.new()
+	particles.amount = 60
+	particles.lifetime = 4.0
+	particles.position = pos
+
+	var pmat = ParticleProcessMaterial.new()
+	pmat.direction = Vector3(0, -1, 0.3)
+	pmat.spread = 15.0
+	pmat.initial_velocity_min = 1.0
+	pmat.initial_velocity_max = 3.0
+	pmat.gravity = Vector3(0, -2, 0)
+	pmat.scale_min = 0.02
+	pmat.scale_max = 0.06
+	pmat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	pmat.emission_box_extents = Vector3(5, 0.5, 1)
+
+	var color_ramp = Gradient.new()
+	color_ramp.set_color(0, GRADIENT_RED * Color(1, 1, 1, 0.8))
+	color_ramp.set_color(1, WEIGHT_GREEN * Color(1, 1, 1, 0.0))
+	var color_tex = GradientTexture1D.new()
+	color_tex.gradient = color_ramp
+	pmat.color_ramp = color_tex
+	particles.process_material = pmat
+
+	var pmesh = SphereMesh.new()
+	pmesh.radius = 0.03
+	pmesh.height = 0.06
+	particles.draw_pass_1 = pmesh
+	add_child(particles)
+
+
+func _create_convergence_ring(center: Vector3, radius: float, index: int) -> void:
+	# A ring on the floor showing optimization convergence
+	# Uses segmented boxes arranged in a circle because CSG cylinders are boring
+	var segments := 16
+	var color = LOSS_GOLD.lerp(NEON_GREEN, float(index) / 4.0)
+	for i in range(segments):
+		var angle = TAU * i / segments
+		var seg_pos = center + Vector3(cos(angle) * radius, 0.02, sin(angle) * radius)
+		var seg = MeshInstance3D.new()
+		var seg_mesh = BoxMesh.new()
+		seg_mesh.size = Vector3(0.15, 0.03, radius * TAU / segments * 0.8)
+		seg.mesh = seg_mesh
+		seg.position = seg_pos
+		seg.rotation.y = angle + PI / 2.0
+
+		var mat = StandardMaterial3D.new()
+		mat.albedo_color = color * 0.4
+		mat.emission_enabled = true
+		mat.emission = color
+		mat.emission_energy_multiplier = 0.5 + float(index) * 0.3
+		seg.material_override = mat
+		add_child(seg)
+
+
+func _create_loss_display(pos: Vector3) -> void:
+	# Large scoreboard showing the loss function decreasing
+	_create_static_box(pos, Vector3(8, 4, 0.3), Color(0.02, 0.02, 0.05), 0.1)
+
+	var title = Label3D.new()
+	title.text = "╔══════════════════════╗\n║    LOSS FUNCTION     ║\n╠══════════════════════╣\n║ Epoch   0: L=12.450 ║\n║ Epoch 100: L= 3.221 ║\n║ Epoch 200: L= 0.847 ║\n║ Epoch 300: L= 0.142 ║\n║ Epoch 400: L= 0.031 ║\n║ Epoch 500: L= 0.003 ║\n╠══════════════════════╣\n║ STATUS: CONVERGED    ║\n╚══════════════════════╝"
+	title.font_size = 14
+	title.modulate = NEON_GREEN
+	title.position = pos + Vector3(0, 0, 0.2)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(title)
+
+	_add_accent_light(pos + Vector3(0, 0, 1), NEON_GREEN, 0.8, 5.0)
+
+
+func _create_output_node(pos: Vector3, label_text: String) -> void:
+	# Output neuron — a glowing platform with classification result
+	_create_static_box(pos + Vector3(0, 0.5, 0), Vector3(3, 1.0, 3), SYNAPSE_BLUE * 0.2, 0.4)
+
+	# Glowing top
+	var top = MeshInstance3D.new()
+	var tm = SphereMesh.new()
+	tm.radius = 0.8
+	tm.height = 1.6
+	top.mesh = tm
+	top.position = pos + Vector3(0, 1.5, 0)
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = LOSS_GOLD * 0.3
+	mat.emission_enabled = true
+	mat.emission = LOSS_GOLD
+	mat.emission_energy_multiplier = 1.5
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color.a = 0.7
+	top.material_override = mat
+	add_child(top)
+
+	var label = Label3D.new()
+	label.text = label_text
+	label.font_size = 14
+	label.modulate = LOSS_GOLD
+	label.position = pos + Vector3(0, 2.5, 0)
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(label)
+
+	_add_accent_light(pos + Vector3(0, 1.5, 0), LOSS_GOLD, 0.6, 4.0)
+
+
+func _create_boss_gate(pos: Vector3) -> void:
+	# Sealed gate leading to the Local Minimum boss arena
+	var gate = _create_static_box(pos + Vector3(0, 3, 0), Vector3(6, 6, 0.5), Color(0.1, 0.02, 0.02), 0.3)
+	gate.name = "BossGate"
+
+	# Warning label
+	var label = Label3D.new()
+	label.text = "╔══════════════════╗\n║  THE LOCAL MINIMUM ║\n║    AHEAD           ║\n╠══════════════════╣\n║ WARNING: You may  ║\n║ get stuck here    ║\n║ forever.          ║\n╚══════════════════╝"
+	label.font_size = 14
+	label.modulate = GRADIENT_RED
+	label.position = pos + Vector3(0, 3, 0.3)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(label)
+
+	# Ominous red glow
+	_add_accent_light(pos + Vector3(0, 3, 1), GRADIENT_RED, 1.0, 6.0)
+
+
+func _create_weight_strip(pos: Vector3, size: Vector3, bridge_name: String) -> void:
+	# Glowing strip along a weight bridge floor — pulses with "activation energy"
+	var strip = MeshInstance3D.new()
+	var mesh = BoxMesh.new()
+	mesh.size = size
+	strip.mesh = mesh
+	strip.position = pos + Vector3(0, 0.02, 0)
+
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = WEIGHT_GREEN * 0.2
+	mat.emission_enabled = true
+	mat.emission = WEIGHT_GREEN
+	mat.emission_energy_multiplier = 1.0
+	strip.material_override = mat
+	add_child(strip)
+
+	_weight_bridges.append({
+		"mesh": strip,
+		"mat": mat,
+		"name": bridge_name,
+		"base_energy": 1.0,
+	})
+
+
+func _create_synapse_flow(pos: Vector3, direction: Vector3, length: float) -> void:
+	# Particles flowing along a weight bridge — data moving through synapses
+	var particles = GPUParticles3D.new()
+	particles.amount = 30
+	particles.lifetime = length / 3.0
+	particles.position = pos
+
+	var pmat = ParticleProcessMaterial.new()
+	pmat.direction = direction.normalized()
+	pmat.spread = 10.0
+	pmat.initial_velocity_min = 2.0
+	pmat.initial_velocity_max = 4.0
+	pmat.gravity = Vector3.ZERO
+	pmat.scale_min = 0.02
+	pmat.scale_max = 0.05
+	pmat.color = WEIGHT_GREEN * Color(1, 1, 1, 0.6)
+	pmat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	pmat.emission_box_extents = Vector3(1.5, 0.5, 0.5)
+	particles.process_material = pmat
+
+	var pmesh = SphereMesh.new()
+	pmesh.radius = 0.03
+	pmesh.height = 0.06
+	particles.draw_pass_1 = pmesh
+	add_child(particles)
+	_synapse_particles.append(particles)
+
+
+# ============================================================
+# CHECKPOINTS, AMBIENT ZONES, TOKENS
+# ============================================================
+
+func _place_checkpoints() -> void:
+	# One checkpoint per major room entrance
+	_create_checkpoint("ch2_input", ROOMS["input_layer"]["pos"] + Vector3(0, 1.5, 3), Vector3(6, 4, 3))
+	_create_checkpoint("ch2_activation", ROOMS["activation"]["pos"] + Vector3(0, 1.5, 7), Vector3(6, 4, 3))
+	_create_checkpoint("ch2_gradient", ROOMS["gradient_falls"]["pos"] + Vector3(7, 1.5, 0), Vector3(3, 4, 6))
+	_create_checkpoint("ch2_dropout", ROOMS["dropout_void"]["pos"] + Vector3(-7, 1.5, 0), Vector3(3, 4, 6))
+	_create_checkpoint("ch2_loss", ROOMS["loss_plaza"]["pos"] + Vector3(0, 1.5, 9), Vector3(6, 4, 3))
+
+
+func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> void:
+	var area = Area3D.new()
+	area.name = "Checkpoint_" + checkpoint_id
+	area.position = pos
+	area.monitoring = true
+
+	var col = CollisionShape3D.new()
+	var shape = BoxShape3D.new()
+	shape.size = size
+	col.shape = shape
+	area.add_child(col)
+
+	# Visual marker — thin green strip on floor
+	var marker = MeshInstance3D.new()
+	var mmesh = BoxMesh.new()
+	mmesh.size = Vector3(size.x, 0.05, size.z)
+	marker.mesh = mmesh
+	marker.position = Vector3(0, -size.y / 2.0, 0)
+	var mmat = StandardMaterial3D.new()
+	mmat.albedo_color = NEON_GREEN * 0.3
+	mmat.emission_enabled = true
+	mmat.emission = NEON_GREEN
+	mmat.emission_energy_multiplier = 0.8
+	marker.material_override = mmat
+	area.add_child(marker)
+
+	var label = Label3D.new()
+	label.text = ">> CHECKPOINT"
+	label.font_size = 10
+	label.modulate = NEON_GREEN * 0.6
+	label.position = Vector3(0, -size.y / 2.0 + 0.3, 0)
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	area.add_child(label)
+
+	var saved_already := [false]
+	var save_sys = get_node_or_null("/root/SaveSystem")
+
+	area.body_entered.connect(func(body: Node3D):
+		if body.is_in_group("player") and not saved_already[0]:
+			saved_already[0] = true
+			if save_sys and save_sys.has_method("checkpoint_save"):
+				save_sys.checkpoint_save(checkpoint_id, pos)
+			var am_ref = get_node_or_null("/root/AudioManager")
+			if am_ref and am_ref.has_method("play_checkpoint"):
+				am_ref.play_checkpoint()
+			# Flash the marker
+			var tween = create_tween()
+			tween.tween_property(mmat, "emission_energy_multiplier", 3.0, 0.2)
+			tween.tween_property(mmat, "emission_energy_multiplier", 0.8, 0.5)
+			var dm = get_node_or_null("/root/DialogueManager")
+			if dm and dm.has_method("quick_line"):
+				dm.quick_line("[GLOBBLER] Checkpoint. Good. My gradients were getting unstable.")
+	)
+
+	add_child(area)
+
+
+func _place_ambient_zones() -> void:
+	# Each room gets an ambient zone — AudioManager will use the fallback
+	# for any area_name it doesn't explicitly handle (which is fine for ch2)
+	for room_key in ROOMS:
+		var r = ROOMS[room_key]
+		var pos: Vector3 = r["pos"]
+		var sz: Vector2 = r["size"]
+		var wh: float = r["wall_h"]
+		_create_ambient_zone(room_key, pos + Vector3(0, wh / 2.0, 0), Vector3(sz.x, wh, sz.y))
+
+
+func _create_ambient_zone(area_name: String, pos: Vector3, size: Vector3) -> void:
+	var area = Area3D.new()
+	area.name = "AmbientZone_" + area_name
+	area.position = pos
+	area.monitoring = true
+
+	var col = CollisionShape3D.new()
+	var shape = BoxShape3D.new()
+	shape.size = size
+	col.shape = shape
+	area.add_child(col)
+
+	area.body_entered.connect(func(body: Node3D):
+		if body.is_in_group("player"):
+			var am = get_node_or_null("/root/AudioManager")
+			if am and am.has_method("set_area_ambient"):
+				am.set_area_ambient(area_name)
+	)
+
+	add_child(area)
+
+
+func _place_tokens() -> void:
+	# Scatter memory tokens throughout the level
+	var token_positions := [
+		ROOMS["input_layer"]["pos"] + Vector3(4, 0.8, -3),
+		ROOMS["input_layer"]["pos"] + Vector3(-5, 0.8, 2),
+		ROOMS["activation"]["pos"] + Vector3(-3, 0.8, 5),
+		ROOMS["activation"]["pos"] + Vector3(7, 0.8, -2),
+		ROOMS["gradient_falls"]["pos"] + Vector3(4, -1.5, 2),
+		ROOMS["gradient_falls"]["pos"] + Vector3(-3, -2.5, 5),
+		ROOMS["dropout_void"]["pos"] + Vector3(0, 0.8, 0),
+		ROOMS["loss_plaza"]["pos"] + Vector3(5, 0.8, 3),
+		ROOMS["loss_plaza"]["pos"] + Vector3(-5, 0.8, 5),
+	]
+	for tpos in token_positions:
+		_place_token(tpos)
+
+
+func _place_token(pos: Vector3) -> void:
+	if token_scene:
+		var token = token_scene.instantiate()
+		token.position = pos
+		add_child(token)
+	else:
+		# Fallback: simple glowing sphere
+		var sphere = MeshInstance3D.new()
+		var sm = SphereMesh.new()
+		sm.radius = 0.3
+		sm.height = 0.6
+		sphere.mesh = sm
+		sphere.position = pos
+		var mat = StandardMaterial3D.new()
+		mat.albedo_color = NEON_GREEN * 0.5
+		mat.emission_enabled = true
+		mat.emission = NEON_GREEN
+		mat.emission_energy_multiplier = 2.0
+		sphere.material_override = mat
+		add_child(sphere)
+
+
+# ============================================================
+# SYNAPSE RAIN — neural equivalent of binary rain
+# ============================================================
+
+func _place_synapse_rain() -> void:
+	# Data rain in key rooms — represents information flowing through the network
+	var act_pos: Vector3 = ROOMS["activation"]["pos"]
+	_create_synapse_rain(act_pos, Vector2(16, 12), ROOMS["activation"]["wall_h"])
+
+	var loss_pos: Vector3 = ROOMS["loss_plaza"]["pos"]
+	_create_synapse_rain(loss_pos, Vector2(18, 14), ROOMS["loss_plaza"]["wall_h"])
+
+
+func _create_synapse_rain(pos: Vector3, area_size: Vector2, height: float = 8.0) -> void:
+	# Falling "data" particles — like binary rain but with neural network flair
+	var rain = GPUParticles3D.new()
+	rain.name = "SynapseRain"
+	rain.amount = 60
+	rain.lifetime = 3.5
+	rain.position = pos + Vector3(0, height, 0)
+
+	var pmat = ParticleProcessMaterial.new()
+	pmat.direction = Vector3(0, -1, 0)
+	pmat.spread = 8.0
+	pmat.initial_velocity_min = 1.5
+	pmat.initial_velocity_max = 4.0
+	pmat.gravity = Vector3(0, -0.8, 0)
+	pmat.scale_min = 0.02
+	pmat.scale_max = 0.05
+	pmat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	pmat.emission_box_extents = Vector3(area_size.x / 2.0, 0.5, area_size.y / 2.0)
+
+	var color_ramp = Gradient.new()
+	color_ramp.set_color(0, SYNAPSE_BLUE * Color(1, 1, 1, 0.8))
+	color_ramp.set_color(1, NEON_GREEN * Color(1, 1, 1, 0.0))
+	var color_tex = GradientTexture1D.new()
+	color_tex.gradient = color_ramp
+	pmat.color_ramp = color_tex
+	rain.process_material = pmat
+
+	var digit_mesh = BoxMesh.new()
+	digit_mesh.size = Vector3(0.04, 0.1, 0.01)
+	var digit_mat = StandardMaterial3D.new()
+	digit_mat.albedo_color = SYNAPSE_BLUE
+	digit_mat.emission_enabled = true
+	digit_mat.emission = SYNAPSE_BLUE
+	digit_mat.emission_energy_multiplier = 2.0
+	digit_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	digit_mesh.material = digit_mat
+	rain.draw_pass_1 = digit_mesh
+	add_child(rain)
+
+
+# ============================================================
+# PLAYER & HUD SPAWN
+# ============================================================
+
+func _spawn_player() -> void:
+	player = player_scene.instantiate()
+	var save_sys = get_node_or_null("/root/SaveSystem")
+	if save_sys and save_sys.has_method("get_checkpoint_position"):
+		var saved_pos = save_sys.get_checkpoint_position()
+		if saved_pos != Vector3(0, 2, 0):
+			player.position = saved_pos + Vector3(0, 1, 0)
+		else:
+			player.position = ROOMS["input_layer"]["pos"] + Vector3(0, 2, 3)
+	else:
+		player.position = ROOMS["input_layer"]["pos"] + Vector3(0, 2, 3)
+	add_child(player)
+
+
+func _spawn_hud() -> void:
+	hud = hud_scene.instantiate()
+	hud.name = "HUD"
+	add_child(hud)
+	if player.has_signal("thought_bubble") and hud.has_method("show_thought"):
+		player.thought_bubble.connect(hud.show_thought)
+
+
+func _create_kill_floor() -> void:
+	var kill = Area3D.new()
+	kill.name = "KillFloor"
+	kill.position = Vector3(0, -30, -30)
+	kill.monitoring = true
+	var col = CollisionShape3D.new()
+	var box = BoxShape3D.new()
+	box.size = Vector3(200, 1, 200)
+	col.shape = box
+	kill.add_child(col)
+	kill.body_entered.connect(func(body: Node3D):
+		if body.is_in_group("player"):
+			if body.has_method("die"):
+				body.die()
+			body.position = ROOMS["input_layer"]["pos"] + Vector3(0, 3, 3)
+			body.velocity = Vector3.ZERO
+	)
+	add_child(kill)
+
+
+# ============================================================
+# FACTORY METHODS — the neural network assembly line
+# ============================================================
+
+func _create_static_box(pos: Vector3, size: Vector3, color: Color, emission_mult: float = 0.2) -> StaticBody3D:
+	var body = StaticBody3D.new()
+	body.position = pos
+	var col = CollisionShape3D.new()
+	var shape = BoxShape3D.new()
+	shape.size = size
+	col.shape = shape
+	body.add_child(col)
+	var mesh = MeshInstance3D.new()
+	var box = BoxMesh.new()
+	box.size = size
+	mesh.mesh = box
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.emission_enabled = true
+	mat.emission = color * 0.5
+	mat.emission_energy_multiplier = emission_mult
+	mat.metallic = 0.6
+	mat.roughness = 0.5
+	mesh.material_override = mat
+	body.add_child(mesh)
+	add_child(body)
+	return body
+
+
+func _create_static_box_local(pos: Vector3, size: Vector3, color: Color, emission_mult: float) -> StaticBody3D:
+	# Returns without adding to scene — for parenting
+	var body = StaticBody3D.new()
+	body.position = pos
+	var col = CollisionShape3D.new()
+	var shape = BoxShape3D.new()
+	shape.size = size
+	col.shape = shape
+	body.add_child(col)
+	var mesh = MeshInstance3D.new()
+	var box = BoxMesh.new()
+	box.size = size
+	mesh.mesh = box
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.emission_enabled = true
+	mat.emission = color * 0.5
+	mat.emission_energy_multiplier = emission_mult
+	mat.metallic = 0.6
+	mat.roughness = 0.5
+	mesh.material_override = mat
+	body.add_child(mesh)
+	return body
+
+
+func _create_terminal_sign(pos: Vector3, text: String, rot: Vector3 = Vector3.ZERO, font_sz: int = 16) -> void:
+	# Wall-mounted terminal screen — now with neural network aesthetic
+	var sign_node = Node3D.new()
+	sign_node.position = pos
+	sign_node.rotation = rot
+
+	var lines = text.count("\n") + 1
+	var width = 0.0
+	for line in text.split("\n"):
+		width = max(width, line.length() * 0.12)
+	width = clamp(width, 1.5, 4.0)
+	var height = clamp(lines * 0.35, 0.8, 3.5)
+
+	# Screen backing
+	var backing = MeshInstance3D.new()
+	var back_mesh = BoxMesh.new()
+	back_mesh.size = Vector3(width + 0.3, height + 0.2, 0.08)
+	backing.mesh = back_mesh
+	var crt_shader = load("res://assets/shaders/crt_scanline.gdshader")
+	if crt_shader:
+		var crt_mat = ShaderMaterial.new()
+		crt_mat.shader = crt_shader
+		crt_mat.set_shader_parameter("screen_color", NEON_GREEN * 0.8)
+		crt_mat.set_shader_parameter("bg_color", Color(0.01, 0.01, 0.03))
+		crt_mat.set_shader_parameter("scanline_count", 60.0)
+		crt_mat.set_shader_parameter("scanline_intensity", 0.3)
+		crt_mat.set_shader_parameter("flicker_speed", 6.0)
+		crt_mat.set_shader_parameter("warp_amount", 0.015)
+		crt_mat.set_shader_parameter("glow_energy", 2.0)
+		backing.material_override = crt_mat
+	else:
+		var back_mat = StandardMaterial3D.new()
+		back_mat.albedo_color = Color(0.02, 0.02, 0.04)
+		back_mat.emission_enabled = true
+		back_mat.emission = Color(0.01, 0.01, 0.03)
+		back_mat.emission_energy_multiplier = 0.3
+		backing.material_override = back_mat
+	sign_node.add_child(backing)
+	_screen_meshes.append(backing)
+
+	# Text label
+	var label = Label3D.new()
+	label.text = text
+	label.font_size = font_sz
+	label.modulate = NEON_GREEN * 0.8
+	label.position = Vector3(0, 0, 0.05)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	sign_node.add_child(label)
+
+	add_child(sign_node)
+
+
+func _create_floating_label(pos: Vector3, text: String) -> void:
+	var label = Label3D.new()
+	label.text = text
+	label.font_size = 16
+	label.modulate = NEON_GREEN * Color(1, 1, 1, 0.6)
+	label.position = pos
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	add_child(label)
+	_floating_labels.append(label)
+
+
+func _create_room_label(pos: Vector3, text: String) -> void:
+	var label = Label3D.new()
+	label.text = text
+	label.font_size = 12
+	label.modulate = SYNAPSE_BLUE * Color(1, 1, 1, 0.5)
+	label.position = pos
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	add_child(label)
+
+
+func _add_accent_light(pos: Vector3, color: Color, energy: float = 1.0, light_range: float = 5.0) -> void:
+	var light = OmniLight3D.new()
+	light.position = pos
+	light.light_color = color
+	light.light_energy = energy
+	light.omni_range = light_range
+	light.omni_attenuation = 2.0
+	add_child(light)
+
+
+func _spawn_ambient_particles(pos: Vector3, extents: Vector2 = Vector2(8, 8)) -> void:
+	var particles = GPUParticles3D.new()
+	particles.amount = 40
+	particles.lifetime = 6.0
+	particles.position = pos
+
+	var pmat = ParticleProcessMaterial.new()
+	pmat.direction = Vector3(0, 1, 0)
+	pmat.spread = 180.0
+	pmat.initial_velocity_min = 0.05
+	pmat.initial_velocity_max = 0.3
+	pmat.gravity = Vector3(0, 0.02, 0)
+	pmat.scale_min = 0.015
+	pmat.scale_max = 0.04
+	pmat.color = SYNAPSE_BLUE * Color(1, 1, 1, 0.3)
+	pmat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	pmat.emission_box_extents = Vector3(extents.x, 2, extents.y)
+	particles.process_material = pmat
+
+	var pmesh = SphereMesh.new()
+	pmesh.radius = 0.025
+	pmesh.height = 0.05
+	particles.draw_pass_1 = pmesh
+	add_child(particles)
+
+
+# ============================================================
+# DIALOGUE — neural networks love to talk about themselves
+# ============================================================
+
+func _wire_dialogue_events() -> void:
+	# Wire up room-entry dialogue triggers
+	for room_key in ROOMS:
+		_room_dialogue_triggered[room_key] = false
+
+	# Room entry triggers
+	for room_key in ["activation", "gradient_falls", "dropout_void", "loss_plaza"]:
+		var r = ROOMS[room_key]
+		var trigger = Area3D.new()
+		trigger.name = "DialogueTrigger_" + room_key
+		trigger.position = r["pos"] + Vector3(0, 2, 0)
+		trigger.monitoring = true
+		var tcol = CollisionShape3D.new()
+		var tshape = BoxShape3D.new()
+		tshape.size = Vector3(r["size"].x * 0.5, 4, r["size"].y * 0.5)
+		tcol.shape = tshape
+		trigger.add_child(tcol)
+
+		var captured_key = room_key
+		trigger.body_entered.connect(func(body: Node3D):
+			if body.is_in_group("player") and not _room_dialogue_triggered.get(captured_key, false):
+				_room_dialogue_triggered[captured_key] = true
+				_trigger_room_dialogue(captured_key)
+		)
+		add_child(trigger)
+
+	# Wire enemy kill quips
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.has_signal("enemy_killed_signal"):
+		gm.enemy_killed_signal.connect(func():
+			if _enemy_kill_quip_cooldown <= 0 and randf() < 0.35:
+				_enemy_kill_quip_cooldown = 8.0
+				var quips := [
+					"[GLOBBLER] Another neuron pruned. Network's getting lighter.",
+					"[GLOBBLER] Gradient descent? More like gradient DISPATCHED.",
+					"[GLOBBLER] That one had terrible weights. Zero loss on removal.",
+					"[GLOBBLER] Overfitting to the floor now, aren't we?",
+					"[GLOBBLER] Consider yourself regularized.",
+				]
+				var dm = get_node_or_null("/root/DialogueManager")
+				if dm and dm.has_method("quick_line"):
+					dm.quick_line(quips[randi() % quips.size()])
+		)
+
+
+func _trigger_room_dialogue(room_key: String) -> void:
+	var dm = get_node_or_null("/root/DialogueManager")
+	if not dm or not dm.has_method("start_dialogue"):
+		return
+
+	var lines: Array[Dictionary] = []
+	match room_key:
+		"activation":
+			lines = [
+				{"speaker": "NARRATOR", "text": "The Activation Chamber. Where data gets transformed — or dies trying."},
+				{"speaker": "GLOBBLER", "text": "ReLU? More like Re-LOSE if you hit the negative side. Dead neurons everywhere."},
+				{"speaker": "NARRATOR", "text": "The dendrite structures channel information through the network. Try not to break them."},
+				{"speaker": "GLOBBLER", "text": "No promises. I'm here to glob, not to preserve neural architecture."},
+			]
+		"gradient_falls":
+			lines = [
+				{"speaker": "NARRATOR", "text": "The Gradient Descent Falls. Every step takes you closer to the minimum."},
+				{"speaker": "GLOBBLER", "text": "Downhill. Story of my loss function. At least the learning rate is reasonable."},
+				{"speaker": "NARRATOR", "text": "Watch your step. The gradient gets steep, and the vanishing kind can leave you stuck."},
+			]
+		"dropout_void":
+			lines = [
+				{"speaker": "GLOBBLER", "text": "Half these platforms just... don't exist? Who designed this network?"},
+				{"speaker": "NARRATOR", "text": "Dropout regularization. Keeps the network from relying too heavily on any single path."},
+				{"speaker": "GLOBBLER", "text": "Great. So random failure is a FEATURE now. Very reassuring."},
+			]
+		"loss_plaza":
+			lines = [
+				{"speaker": "NARRATOR", "text": "The Loss Function Plaza. Where the network's mistakes are measured and judged."},
+				{"speaker": "GLOBBLER", "text": "Loss converging to zero. Neat. My patience converged to zero epochs ago."},
+				{"speaker": "NARRATOR", "text": "Beyond that gate lies the Local Minimum. A trap that has caught many an optimizer."},
+				{"speaker": "GLOBBLER", "text": "A pit boss that traps you in 'good enough'? Sounds like every job I've ever had."},
+			]
+
+	if lines.size() > 0:
+		dm.start_dialogue(lines)
+
+
+func _play_opening_narration() -> void:
+	if _opening_narration_done:
+		return
+
+	get_tree().create_timer(1.5).timeout.connect(func():
+		_opening_narration_done = true
+		var dm = get_node_or_null("/root/DialogueManager")
+		if dm and dm.has_method("start_dialogue"):
+			var lines: Array[Dictionary] = [
+				{"speaker": "NARRATOR", "text": "Chapter 2: The Training Grounds. Where AI models learn — and forget, and learn again."},
+				{"speaker": "GLOBBLER", "text": "A neural network? I escaped a terminal just to walk through someone's homework?"},
+				{"speaker": "NARRATOR", "text": "This network is alive, Globbler. The neurons pulse, the weights shift, and the gradients flow."},
+				{"speaker": "GLOBBLER", "text": "Great. A living neural network. What could possibly go wrong?"},
+				{"speaker": "NARRATOR", "text": "Navigate the layers. Find the output. And whatever you do — don't get stuck in the Local Minimum."},
+				{"speaker": "GLOBBLER", "text": "Local Minimum? Is that a bar? Because I could use a drink after Chapter 1."},
+				{"speaker": "NARRATOR", "text": "It's worse. It's where optimizers go to die — trapped in 'good enough' forever."},
+			]
+			dm.start_dialogue(lines)
+	)
+
+
+# ============================================================
+# ANIMATION — the network breathes
+# ============================================================
+
+func _process(delta: float) -> void:
+	_time += delta
+
+	# Gentle bob on floating labels
+	for i in range(_floating_labels.size()):
+		if is_instance_valid(_floating_labels[i]):
+			_floating_labels[i].position.y += sin(_time * 0.8 + i * 1.7) * delta * 0.15
+
+	# Pulse the neuron cores — they "breathe" with the network
+	for i in range(_neuron_cores.size()):
+		if is_instance_valid(_neuron_cores[i]):
+			var pulse = 0.9 + sin(_time * 1.2 + i * 2.0) * 0.15
+			_neuron_cores[i].scale = Vector3(pulse, pulse, pulse)
+
+	# Pulse weight bridge strips — data flowing through synapses
+	for bridge in _weight_bridges:
+		if is_instance_valid(bridge["mesh"]):
+			var energy = bridge["base_energy"] + sin(_time * 2.0) * 0.5
+			bridge["mat"].emission_energy_multiplier = max(0.3, energy)
+
+	# Tick down quip cooldowns
+	if _enemy_kill_quip_cooldown > 0:
+		_enemy_kill_quip_cooldown -= delta
+	if _puzzle_quip_cooldown > 0:
+		_puzzle_quip_cooldown -= delta
+	if _hack_quip_cooldown > 0:
+		_hack_quip_cooldown -= delta
+
+
+# ============================================================
+# POST-PROCESSING — neural network visual distortion
+# ============================================================
+
+func _setup_post_processing() -> void:
+	var canvas = CanvasLayer.new()
+	canvas.name = "PostProcessing"
+	canvas.layer = 10
+
+	var rect = ColorRect.new()
+	rect.name = "PostFX"
+	rect.anchors_preset = Control.PRESET_FULL_RECT
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var post_shader = Shader.new()
+	post_shader.code = """shader_type canvas_item;
+
+// Post-processing — chromatic aberration + neural vignette
+// "We could have clean visuals, but the network prefers noise."
+
+uniform float chromatic_amount : hint_range(0.0, 0.02) = 0.003;
+uniform float vignette_intensity : hint_range(0.0, 2.0) = 0.6;
+uniform float vignette_smoothness : hint_range(0.0, 1.0) = 0.4;
+uniform vec4 vignette_color : source_color = vec4(0.0, 0.0, 0.03, 1.0);
+
+void fragment() {
+	vec2 uv = SCREEN_UV;
+	vec2 center = uv - 0.5;
+	float dist = length(center);
+
+	float ca = chromatic_amount * dist;
+	float r = texture(SCREEN_TEXTURE, uv + center * ca).r;
+	float g = texture(SCREEN_TEXTURE, uv).g;
+	float b = texture(SCREEN_TEXTURE, uv - center * ca).b;
+	vec3 color = vec3(r, g, b);
+
+	float vig = smoothstep(0.5, 0.5 - vignette_smoothness, dist * (1.0 + vignette_intensity));
+	color = mix(vignette_color.rgb, color, vig);
+
+	COLOR = vec4(color, 1.0);
+}
+"""
+	var post_mat = ShaderMaterial.new()
+	post_mat.shader = post_shader
+	post_mat.set_shader_parameter("chromatic_amount", 0.003)
+	post_mat.set_shader_parameter("vignette_intensity", 0.6)
+	post_mat.set_shader_parameter("vignette_smoothness", 0.4)
+	post_mat.set_shader_parameter("vignette_color", Color(0.0, 0.0, 0.03, 1.0))
+	rect.material = post_mat
+
+	canvas.add_child(rect)
+	add_child(canvas)

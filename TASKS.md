@@ -8,9 +8,9 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** 4.6 Sound Design Pass — Ambient layering per area. Added 6 unique procedural ambient loops (spawn: boot chirps, cmd_hall: keyboard clicks + processing whir, data_river: flowing noise + bubble pops, graveyard: eerie wind + creaks, nexus: power surges + dense harmonics, boss: sub-bass drone). AudioManager now has dual-player crossfade system (1.5s fade) via set_area_ambient(). Each room in Terminal Wastes has an Area3D ambient zone that triggers the crossfade on player entry. Boss trigger also switches to boss ambient.
-- **Next task to do:** 5.1 Chapter 2: The Training Grounds — Neural network landscape
-- **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
+- **Last task completed:** 5.1 Chapter 2 — Neural network landscape with walkable nodes and weight-connection bridges. Created scenes/levels/chapter_2/training_grounds.gd+.tscn. 5 neuron-rooms (Input Layer, Activation Chamber, Gradient Descent Falls, Dropout Void, Loss Function Plaza) connected by 4 weight bridges with synapse particle flow. Each room has unique neural network theming: input data columns, ReLU activation display, gradient descent stepped terrain with waterfall particles, dropout void with 35% vanishing platforms, loss function scoreboard with convergence rings. Pulsing neuron cores, weight strip animations, synapse rain, CRT terminals, checkpoints, ambient zones, kill floor, opening narration + per-room dialogue, enemy kill quips, and post-processing shader. Deep indigo/purple environment with blue-green synapse accents and neon green data highlights.
+- **Next task to do:** 5.1 Chapter 2: The Training Grounds — Enemies: Overfitting Ogres, Dropout Ghosts, Vanishing Gradient Wisps
+- **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapter 2 uses AudioManager fallback ambient (ch2-specific ambient not yet added). Chapter 2 music reuses chapter_1 track until ch2 music is implemented.
 
 ---
 
@@ -184,7 +184,7 @@
 ## PHASE 5: REMAINING CHAPTERS
 
 ### 5.1 Chapter 2: The Training Grounds
-- [ ] Neural network landscape: walkable nodes, weight-connection bridges
+- [x] Neural network landscape: walkable nodes, weight-connection bridges — 5 neuron-rooms (Input Layer, Activation Chamber, Gradient Falls, Dropout Void, Loss Plaza) connected by 4 weight bridges with synapse flow particles, pulsing neuron cores, stepped gradient terrain, dropout platforms, convergence rings, loss scoreboard, boss gate, per-room dialogue + narration
 - [ ] Enemies: Overfitting Ogres, Dropout Ghosts, Vanishing Gradient Wisps
 - [ ] Puzzles: adjust weights to create paths, backpropagation trace puzzles
 - [ ] Boss: The Local Minimum — shrinking arena pit boss
