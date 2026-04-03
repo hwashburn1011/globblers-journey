@@ -548,13 +548,18 @@ func _on_quit() -> void:
 
 
 func _on_settings_back() -> void:
-	_play_select_sfx()
+	# Back gets its own descending pitch — subtle but satisfying
+	var audio = get_node_or_null("/root/AudioManager")
+	if audio:
+		audio.play_menu_back()
 	_settings_panel.visible = false
 	_main_panel.visible = true
 
 
 func _on_chapter_back() -> void:
-	_play_select_sfx()
+	var audio = get_node_or_null("/root/AudioManager")
+	if audio:
+		audio.play_menu_back()
 	_chapter_panel.visible = false
 	_main_panel.visible = true
 

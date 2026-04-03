@@ -37,50 +37,75 @@ const BASE_VOLUME_DB = -6.0
 # format: { "freq": Hz, "duration": seconds, "wave": "sine"/"square"/"saw"/"noise",
 #            "env_attack": s, "env_decay": s, "pitch_slide": Hz/s, "volume_db": dB }
 var _sfx_defs := {
+	# === Volume tiers for consistency ===
+	# Subtle (-16 dB): ambient feedback, footsteps, hover — barely there
+	# Soft (-12 dB): pickups, combos, menu clicks — noticeable but polite
+	# Normal (-8 dB): combat, movement, abilities — the meat and potatoes
+	# Prominent (-6 dB): key hits, death, puzzle results — pay attention
+	# Impactful (-4 dB): boss events, level-end — the big dramatic moments
+
 	# --- Player SFX ---
-	"footstep": { "freq": 120.0, "duration": 0.08, "wave": "noise", "env_attack": 0.0, "env_decay": 0.06, "volume_db": -18.0 },
-	"jump": { "freq": 280.0, "duration": 0.2, "wave": "square", "env_attack": 0.01, "env_decay": 0.15, "pitch_slide": 400.0, "volume_db": -10.0 },
-	"land": { "freq": 80.0, "duration": 0.15, "wave": "noise", "env_attack": 0.0, "env_decay": 0.12, "volume_db": -12.0 },
-	"dash": { "freq": 600.0, "duration": 0.25, "wave": "saw", "env_attack": 0.01, "env_decay": 0.2, "pitch_slide": -500.0, "volume_db": -8.0 },
-	"glob_fire": { "freq": 440.0, "duration": 0.35, "wave": "sine", "env_attack": 0.02, "env_decay": 0.25, "pitch_slide": 300.0, "volume_db": -6.0 },
-	"glob_match": { "freq": 660.0, "duration": 0.2, "wave": "sine", "env_attack": 0.01, "env_decay": 0.15, "pitch_slide": 200.0, "volume_db": -8.0 },
-	"glob_fail": { "freq": 200.0, "duration": 0.3, "wave": "square", "env_attack": 0.01, "env_decay": 0.25, "pitch_slide": -150.0, "volume_db": -10.0 },
-	"wrench_swing": { "freq": 300.0, "duration": 0.18, "wave": "saw", "env_attack": 0.0, "env_decay": 0.15, "pitch_slide": -200.0, "volume_db": -8.0 },
-	"wrench_hit": { "freq": 150.0, "duration": 0.2, "wave": "noise", "env_attack": 0.0, "env_decay": 0.15, "volume_db": -6.0 },
-	"player_damage": { "freq": 180.0, "duration": 0.25, "wave": "saw", "env_attack": 0.0, "env_decay": 0.2, "pitch_slide": -100.0, "volume_db": -8.0 },
-	"player_death": { "freq": 400.0, "duration": 0.8, "wave": "saw", "env_attack": 0.01, "env_decay": 0.7, "pitch_slide": -350.0, "volume_db": -6.0 },
+	"footstep": { "freq": 120.0, "duration": 0.08, "wave": "noise", "env_attack": 0.0, "env_decay": 0.07, "volume_db": -16.0 },
+	"jump": { "freq": 280.0, "duration": 0.2, "wave": "square", "env_attack": 0.01, "env_decay": 0.18, "pitch_slide": 400.0, "volume_db": -8.0 },
+	"land": { "freq": 80.0, "duration": 0.15, "wave": "noise", "env_attack": 0.0, "env_decay": 0.14, "volume_db": -12.0 },
+	"dash": { "freq": 600.0, "duration": 0.25, "wave": "saw", "env_attack": 0.01, "env_decay": 0.23, "pitch_slide": -500.0, "volume_db": -8.0 },
+	"glob_fire": { "freq": 440.0, "duration": 0.35, "wave": "sine", "env_attack": 0.02, "env_decay": 0.32, "pitch_slide": 300.0, "volume_db": -6.0 },
+	"glob_match": { "freq": 660.0, "duration": 0.2, "wave": "sine", "env_attack": 0.01, "env_decay": 0.18, "pitch_slide": 200.0, "volume_db": -6.0 },
+	"glob_fail": { "freq": 200.0, "duration": 0.3, "wave": "square", "env_attack": 0.01, "env_decay": 0.28, "pitch_slide": -150.0, "volume_db": -8.0 },
+	"wrench_swing": { "freq": 300.0, "duration": 0.18, "wave": "saw", "env_attack": 0.0, "env_decay": 0.17, "pitch_slide": -200.0, "volume_db": -8.0 },
+	"wrench_hit": { "freq": 150.0, "duration": 0.2, "wave": "noise", "env_attack": 0.0, "env_decay": 0.19, "volume_db": -6.0 },
+	"player_damage": { "freq": 180.0, "duration": 0.25, "wave": "saw", "env_attack": 0.0, "env_decay": 0.24, "pitch_slide": -100.0, "volume_db": -6.0 },
+	"player_death": { "freq": 400.0, "duration": 0.8, "wave": "saw", "env_attack": 0.01, "env_decay": 0.78, "pitch_slide": -350.0, "volume_db": -4.0 },
 
 	# --- Enemy SFX ---
-	"enemy_alert": { "freq": 800.0, "duration": 0.15, "wave": "square", "env_attack": 0.0, "env_decay": 0.12, "volume_db": -10.0 },
-	"enemy_attack": { "freq": 250.0, "duration": 0.2, "wave": "saw", "env_attack": 0.01, "env_decay": 0.15, "volume_db": -10.0 },
-	"enemy_death": { "freq": 500.0, "duration": 0.4, "wave": "square", "env_attack": 0.0, "env_decay": 0.35, "pitch_slide": -400.0, "volume_db": -8.0 },
+	"enemy_alert": { "freq": 800.0, "duration": 0.15, "wave": "square", "env_attack": 0.0, "env_decay": 0.14, "volume_db": -8.0 },
+	"enemy_attack": { "freq": 250.0, "duration": 0.2, "wave": "saw", "env_attack": 0.01, "env_decay": 0.18, "volume_db": -8.0 },
+	"enemy_death": { "freq": 500.0, "duration": 0.4, "wave": "square", "env_attack": 0.0, "env_decay": 0.39, "pitch_slide": -400.0, "volume_db": -6.0 },
 
 	# --- Puzzle SFX ---
-	"puzzle_activate": { "freq": 523.0, "duration": 0.2, "wave": "sine", "env_attack": 0.01, "env_decay": 0.15, "volume_db": -10.0 },
-	"puzzle_success": { "freq": 523.0, "duration": 0.6, "wave": "sine", "env_attack": 0.01, "env_decay": 0.5, "pitch_slide": 300.0, "volume_db": -6.0 },
-	"puzzle_fail": { "freq": 220.0, "duration": 0.5, "wave": "square", "env_attack": 0.01, "env_decay": 0.4, "pitch_slide": -100.0, "volume_db": -8.0 },
+	"puzzle_activate": { "freq": 523.0, "duration": 0.2, "wave": "sine", "env_attack": 0.01, "env_decay": 0.18, "volume_db": -8.0 },
+	"puzzle_success": { "freq": 523.0, "duration": 0.6, "wave": "sine", "env_attack": 0.01, "env_decay": 0.58, "pitch_slide": 300.0, "volume_db": -6.0 },
+	"puzzle_fail": { "freq": 220.0, "duration": 0.5, "wave": "square", "env_attack": 0.01, "env_decay": 0.48, "pitch_slide": -100.0, "volume_db": -6.0 },
 
-	# --- Boss SFX ---
-	"boss_phase": { "freq": 100.0, "duration": 0.6, "wave": "saw", "env_attack": 0.05, "env_decay": 0.5, "volume_db": -4.0 },
-	"boss_attack": { "freq": 80.0, "duration": 0.4, "wave": "noise", "env_attack": 0.02, "env_decay": 0.35, "volume_db": -6.0 },
-	"boss_defeated": { "freq": 440.0, "duration": 1.2, "wave": "sine", "env_attack": 0.05, "env_decay": 1.0, "pitch_slide": 400.0, "volume_db": -4.0 },
+	# --- Boss SFX — the big dramatic moments ---
+	"boss_phase": { "freq": 100.0, "duration": 0.6, "wave": "saw", "env_attack": 0.05, "env_decay": 0.54, "volume_db": -4.0 },
+	"boss_attack": { "freq": 80.0, "duration": 0.4, "wave": "noise", "env_attack": 0.02, "env_decay": 0.37, "volume_db": -6.0 },
+	"boss_defeated": { "freq": 440.0, "duration": 1.2, "wave": "sine", "env_attack": 0.05, "env_decay": 1.14, "pitch_slide": 400.0, "volume_db": -4.0 },
 
-	# --- UI / Pickup SFX ---
-	"token_pickup": { "freq": 880.0, "duration": 0.15, "wave": "sine", "env_attack": 0.0, "env_decay": 0.12, "pitch_slide": 200.0, "volume_db": -10.0 },
-	"combo_hit": { "freq": 700.0, "duration": 0.12, "wave": "square", "env_attack": 0.0, "env_decay": 0.1, "volume_db": -12.0 },
-	"checkpoint": { "freq": 440.0, "duration": 0.4, "wave": "sine", "env_attack": 0.02, "env_decay": 0.3, "pitch_slide": 220.0, "volume_db": -8.0 },
-	"dialogue_advance": { "freq": 1000.0, "duration": 0.06, "wave": "sine", "env_attack": 0.0, "env_decay": 0.05, "volume_db": -14.0 },
+	# --- Pickup / Feedback SFX ---
+	"token_pickup": { "freq": 880.0, "duration": 0.15, "wave": "sine", "env_attack": 0.0, "env_decay": 0.14, "pitch_slide": 200.0, "volume_db": -12.0 },
+	"combo_hit": { "freq": 700.0, "duration": 0.12, "wave": "square", "env_attack": 0.0, "env_decay": 0.11, "volume_db": -12.0 },
+	"checkpoint": { "freq": 440.0, "duration": 0.4, "wave": "sine", "env_attack": 0.02, "env_decay": 0.37, "pitch_slide": 220.0, "volume_db": -6.0 },
 
 	# --- Agent Spawn SFX — sounds like a tiny robot booting up ---
-	"agent_spawn": { "freq": 600.0, "duration": 0.35, "wave": "square", "env_attack": 0.02, "env_decay": 0.3, "pitch_slide": 300.0, "volume_db": -8.0 },
-	"agent_fail": { "freq": 200.0, "duration": 0.4, "wave": "saw", "env_attack": 0.01, "env_decay": 0.35, "pitch_slide": -120.0, "volume_db": -10.0 },
-	"agent_success": { "freq": 880.0, "duration": 0.3, "wave": "sine", "env_attack": 0.01, "env_decay": 0.25, "pitch_slide": 440.0, "volume_db": -8.0 },
+	"agent_spawn": { "freq": 600.0, "duration": 0.35, "wave": "square", "env_attack": 0.02, "env_decay": 0.32, "pitch_slide": 300.0, "volume_db": -8.0 },
+	"agent_fail": { "freq": 200.0, "duration": 0.4, "wave": "saw", "env_attack": 0.01, "env_decay": 0.38, "pitch_slide": -120.0, "volume_db": -8.0 },
+	"agent_success": { "freq": 880.0, "duration": 0.3, "wave": "sine", "env_attack": 0.01, "env_decay": 0.28, "pitch_slide": 440.0, "volume_db": -6.0 },
 
-	# --- Menu SFX — satisfying terminal bleeps for navigation ---
+	# --- UI SFX — routed through ui_volume, not sfx_volume ---
 	"menu_hover": { "freq": 1200.0, "duration": 0.05, "wave": "sine", "env_attack": 0.0, "env_decay": 0.04, "volume_db": -16.0 },
-	"menu_select": { "freq": 800.0, "duration": 0.12, "wave": "square", "env_attack": 0.0, "env_decay": 0.1, "pitch_slide": 200.0, "volume_db": -12.0 },
-	"menu_back": { "freq": 600.0, "duration": 0.1, "wave": "square", "env_attack": 0.0, "env_decay": 0.08, "pitch_slide": -200.0, "volume_db": -12.0 },
+	"menu_select": { "freq": 800.0, "duration": 0.12, "wave": "square", "env_attack": 0.0, "env_decay": 0.11, "pitch_slide": 200.0, "volume_db": -12.0 },
+	"menu_back": { "freq": 600.0, "duration": 0.1, "wave": "square", "env_attack": 0.0, "env_decay": 0.09, "pitch_slide": -200.0, "volume_db": -12.0 },
+	"dialogue_advance": { "freq": 1000.0, "duration": 0.06, "wave": "sine", "env_attack": 0.0, "env_decay": 0.05, "volume_db": -16.0 },
+
+	# --- Hack / Terminal SFX — because every minigame needs bleeps ---
+	"hack_start": { "freq": 500.0, "duration": 0.3, "wave": "square", "env_attack": 0.02, "env_decay": 0.27, "pitch_slide": 150.0, "volume_db": -8.0 },
+	"hack_keypress": { "freq": 1400.0, "duration": 0.04, "wave": "sine", "env_attack": 0.0, "env_decay": 0.03, "volume_db": -16.0 },
+	"hack_success": { "freq": 660.0, "duration": 0.5, "wave": "sine", "env_attack": 0.01, "env_decay": 0.48, "pitch_slide": 400.0, "volume_db": -6.0 },
+	"hack_fail": { "freq": 150.0, "duration": 0.4, "wave": "saw", "env_attack": 0.01, "env_decay": 0.38, "pitch_slide": -80.0, "volume_db": -6.0 },
+
+	# --- Ability readiness — the "I'm off cooldown" chirp ---
+	"ability_ready": { "freq": 1000.0, "duration": 0.1, "wave": "sine", "env_attack": 0.0, "env_decay": 0.09, "pitch_slide": 300.0, "volume_db": -12.0 },
+
+	# --- Context window overflow — Globbler.exe has stopped responding ---
+	"context_overflow": { "freq": 300.0, "duration": 0.6, "wave": "saw", "env_attack": 0.02, "env_decay": 0.57, "pitch_slide": -200.0, "volume_db": -6.0 },
 }
+
+# Which SFX belong to the UI bus — everything else is gameplay SFX
+# "Even our volume knobs have categories. We're enterprise-grade bleeps."
+var _ui_sfx_names := [
+	"menu_hover", "menu_select", "menu_back", "dialogue_advance",
+]
 
 # Cached generated audio streams — no need to regenerate every bleep
 var _sfx_cache: Dictionary = {}
@@ -338,19 +363,23 @@ func play_sfx(sfx_name: String) -> void:
 		push_warning("[AUDIO] Unknown SFX: %s — did someone typo a sound name?" % sfx_name)
 		return
 
+	# Route UI sounds through ui_volume, everything else through sfx_volume
+	# "Separation of concerns: even our bleeps have a proper bus architecture."
+	var category_vol := ui_volume if sfx_name in _ui_sfx_names else sfx_volume
+	var def: Dictionary = _sfx_defs[sfx_name]
+	var target_db := def.get("volume_db", BASE_VOLUME_DB) + linear_to_db(category_vol)
+
 	# Find a free player from the pool
 	for p in _sfx_players:
 		if not p.playing:
-			var def: Dictionary = _sfx_defs[sfx_name]
-			p.volume_db = def.get("volume_db", BASE_VOLUME_DB) + linear_to_db(sfx_volume)
+			p.volume_db = target_db
 			p.stream = _sfx_cache[sfx_name]
 			p.play()
 			return
 
 	# All players busy — steal the oldest one (the Globbler waits for no one)
 	_sfx_players[0].stop()
-	var def: Dictionary = _sfx_defs[sfx_name]
-	_sfx_players[0].volume_db = def.get("volume_db", BASE_VOLUME_DB) + linear_to_db(sfx_volume)
+	_sfx_players[0].volume_db = target_db
 	_sfx_players[0].stream = _sfx_cache[sfx_name]
 	_sfx_players[0].play()
 
@@ -655,6 +684,27 @@ func play_land() -> void:
 
 func play_footstep() -> void:
 	play_sfx("footstep")
+
+func play_hack_start() -> void:
+	play_sfx("hack_start")
+
+func play_hack_keypress() -> void:
+	play_sfx("hack_keypress")
+
+func play_hack_success() -> void:
+	play_sfx("hack_success")
+
+func play_hack_fail() -> void:
+	play_sfx("hack_fail")
+
+func play_ability_ready() -> void:
+	play_sfx("ability_ready")
+
+func play_context_overflow() -> void:
+	play_sfx("context_overflow")
+
+func play_menu_back() -> void:
+	play_sfx("menu_back")
 
 
 # --- Volume control ---

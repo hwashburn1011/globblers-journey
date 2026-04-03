@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** 4.5 Visual Polish — Created 3 new shaders: green_glow.gdshader (pulsing fresnel-rim glow for GlobTarget highlights), crt_scanline.gdshader (barrel distortion, scanlines, flicker, noise for in-world terminal screens), glitch.gdshader (vertex displacement, color band corruption, RGB split for corrupted enemies). GlobTarget now spawns additive glow overlay mesh on highlight. Corrupted Shell Script enemy uses glitch shader instead of flat material. All terminal_wastes.gd screen backings use CRT shader. Added binary rain particles (falling green box columns) in Command Hall, Nexus Hub, and Data River chambers. Added fullscreen post-processing CanvasLayer with chromatic aberration (RGB channel offset) and green-tinted vignette. Environment now has adjustment_contrast 1.05 and adjustment_saturation 1.1.
-- **Next task to do:** 4.6 Sound Design Pass
+- **Last task completed:** 4.6 Sound Design Pass (Review SFX consistency) — Fixed UI volume routing so menu/dialogue sounds use ui_volume instead of sfx_volume. Normalized all 40+ SFX volume levels into 5 consistent tiers (Subtle -16dB, Soft -12dB, Normal -8dB, Prominent -6dB, Impactful -4dB). Fixed envelope timing so attack+decay fits within duration for all patches. Added 6 new SFX: hack_start, hack_keypress, hack_success, hack_fail, ability_ready, context_overflow. Wired hack SFX into terminal_hack.gd (start, keypress, success/fail). Fixed main menu back buttons to use menu_back SFX instead of menu_select.
+- **Next task to do:** 4.6 Sound Design Pass — Add UI sounds: menu navigation, button clicks, dialogue advance
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -174,7 +174,7 @@
 - [x] Post-processing: bloom on green elements, subtle chromatic aberration, vignette — bloom already in Environment; added fullscreen CanvasLayer with chromatic aberration + green vignette shader, plus contrast/saturation adjustment
 
 ### 4.6 Sound Design Pass
-- [ ] Review all SFX for consistency
+- [x] Review all SFX for consistency
 - [ ] Add UI sounds: menu navigation, button clicks, dialogue advance
 - [ ] Glob command: satisfying whoosh-lock on match, error buzzer on no match
 - [ ] Ambient layering per area

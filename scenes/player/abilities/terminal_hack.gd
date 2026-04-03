@@ -90,6 +90,10 @@ func try_interact() -> void:
 	hackable_comp.start_hack()
 	_start_minigame()
 	hack_started.emit(_nearby_hackable)
+	# "Initiating hack sequence. Try not to drool on the keyboard."
+	var audio = get_node_or_null("/root/AudioManager")
+	if audio:
+		audio.play_hack_start()
 
 func _start_minigame() -> void:
 	_is_hacking = true
@@ -223,6 +227,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 		if input_dir >= 0:
 			_player_input.append(input_dir)
+			# Every keypress gets a tiny bleep — satisfying terminal feedback
+			var audio = get_node_or_null("/root/AudioManager")
+			if audio:
+				audio.play_hack_keypress()
 
 			if input_dir != _sequence[_current_step]:
 				# Wrong input — hack failed!
@@ -238,6 +246,14 @@ func _unhandled_input(event: InputEvent) -> void:
 func _end_hack(success: bool) -> void:
 	_is_hacking = false
 	_input_phase = false
+
+	# Sound feedback — you'll know if you passed or failed before reading the text
+	var audio = get_node_or_null("/root/AudioManager")
+	if audio:
+		if success:
+			audio.play_hack_success()
+		else:
+			audio.play_hack_fail()
 
 	# Find hackable component and notify
 	if _nearby_hackable:
