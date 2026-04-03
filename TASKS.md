@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** 5.2 Chapter 3: Puzzles — social engineering, prompt crafting — Created 2 new puzzle types and placed 4 puzzles across Chapter 3 districts. prompt_crafting_puzzle.gd: glob correct prompt fragments (tagged: polite, technical, aggressive, creative, nonsense) and drop them at a vendor AI terminal; fragments dissolve on accept, bounce on reject, with per-tag persona responses. social_engineering_puzzle.gd: 3-phase dialogue-tree jailbreak — glob the right response card from 3 options per phase to advance, wrong answer resets phase with AI rejection quips, phase indicators track progress. Token Exchange: prompt crafting puzzle (requires polite+technical fragments, 7 fragments scattered). Persona Row: social engineering puzzle (3-phase SAFETY_FILTER_v3 persuasion). Black Prompt: hack puzzle (injection terminal, difficulty 3). Auction Hall: multi-glob puzzle (auction bid sequence with 6 GlobTarget bid objects, match *.bid then opening_bid then final_bid). All wired into prompt_bazaar.gd via _place_puzzles() with preloads and per-room placement functions.
-- **Next task to do:** 5.2 Chapter 3: Boss — The System Prompt — find and rewrite the invisible controller
+- **Last task completed:** 5.2 Chapter 3: Boss — The System Prompt — Created system_prompt_boss.gd (extends BaseEnemy, 65 HP, 3-phase fight) and system_prompt_arena.gd (8x6 instruction tile grid with rewrite mechanics). Phase 1 (INVISIBLE): Boss teleports around arena invisible, fires rule enforcement beams, spawns globbable instruction fragments (*.frag) — absorb them near the boss to reveal it temporarily (3.5s). Phase 2 (REWRITE): Boss partially visible with flickering, arena tiles unlock as globbable *.prompt targets — rewrite tiles to shift control from magenta to green. Fires compliance projectiles (COMPLY.prompt) player can reflect; shield breaks after 6 hits. Arena has enforcement waves that attempt to revert rewritten tiles unless player defends them. Phase 3 (OVERRIDE): Boss stunned, core terminal exposed — hack difficulty 3 with 16s timer to rewrite the core instruction. Boss recovers to Phase 2 if timer expires. Victory cutscene: 11-line dialogue, arena tiles cascade to green, complete_level(3). Wired into prompt_bazaar.gd with _place_boss(), _build_boss_room(), _connect_boss_arena(), _on_boss_trigger_entered() (music/seal/dialogue/fight start), boss gate in Auction Hall.
+- **Next task to do:** 5.2 Chapter 3: Dialogue and story beats
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-3 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-3 music reuses chapter_1 track until dedicated music is implemented.
 
 ---
@@ -194,7 +194,7 @@
 - [x] Chaotic marketplace environment with NPC AI personas — 5 market districts (Bazaar Gate, Token Exchange, Persona Row, Black Prompt, Auction Hall), 4 alleyways, warm amber/cyan theme, 2 NPC AI personas (gpt_classic, stable_diffusion), full dialogue system, prompt rain particles
 - [x] Enemies: Jailbreakers, Prompt Injectors, Hallucination Merchants — 3 enemy types with unique mechanics (rush+scramble, ranged injection+kiting, clones+fake attacks+teleport), 15 placed across 4 rooms
 - [x] Puzzles: social engineering, prompt crafting
-- [ ] Boss: The System Prompt — find and rewrite the invisible controller
+- [x] Boss: The System Prompt — find and rewrite the invisible controller
 - [ ] Dialogue and story beats
 
 ### 5.3 Chapter 4: The Model Zoo

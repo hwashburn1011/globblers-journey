@@ -32,6 +32,10 @@ var physical_puzzle_script := preload("res://scenes/puzzles/physical_puzzle.gd")
 var prompt_craft_script := preload("res://scenes/puzzles/prompt_crafting_puzzle.gd")
 var social_eng_script := preload("res://scenes/puzzles/social_engineering_puzzle.gd")
 
+# Boss scripts — the invisible hand pulling all the strings
+var boss_script := preload("res://scenes/enemies/system_prompt_boss/system_prompt_boss.gd")
+var boss_arena_script := preload("res://scenes/enemies/system_prompt_boss/system_prompt_arena.gd")
+
 # NPC script — AI personas hawking their wares since the last training run
 var deprecated_npc_script := preload("res://scenes/levels/chapter_1/deprecated_npc.gd")
 
@@ -132,6 +136,7 @@ func _ready() -> void:
 	_spawn_chapter3_enemies()
 	_place_puzzles()
 	_place_npcs()
+	_place_boss()
 	_wire_dialogue_events()
 	_play_opening_narration()
 
@@ -1708,6 +1713,152 @@ func _on_puzzle_failed(_puzzle: Node) -> void:
 			"The bazaar has standards. Low ones, but still.",
 		]
 		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
+
+
+# ============================================================
+# BOSS: THE SYSTEM PROMPT — the invisible controller of the bazaar
+# "You can't buy the system prompt. You have to TAKE it."
+# ============================================================
+
+var _boss_fight_started := false
+
+func _place_boss() -> void:
+	# The boss arena is positioned beyond the boss gate in the Auction Hall
+	var auction_pos: Vector3 = ROOMS["auction_hall"]["pos"]
+	var arena_offset := Vector3(0, 0, -22)  # Beyond the boss gate
+
+	# Build the instruction tile arena
+	boss_arena_instance = Node3D.new()
+	boss_arena_instance.name = "SystemPromptArena"
+	boss_arena_instance.set_script(boss_arena_script)
+	boss_arena_instance.position = auction_pos + arena_offset
+	add_child(boss_arena_instance)
+
+	# Build enclosure around the boss arena
+	_build_boss_room(auction_pos + arena_offset)
+
+	# The boss itself — starts invisible at the center
+	boss_instance = CharacterBody3D.new()
+	boss_instance.name = "SystemPromptBoss"
+	boss_instance.set_script(boss_script)
+	boss_instance.position = auction_pos + arena_offset + Vector3(0, 1, 0)
+	add_child(boss_instance)
+
+	# Wire boss and arena together
+	call_deferred("_connect_boss_arena")
+
+	# Boss trigger zone — crossing this line starts the fight
+	var trigger = Area3D.new()
+	trigger.name = "BossTrigger"
+	trigger.position = auction_pos + arena_offset + Vector3(0, 2, 18)
+	trigger.monitoring = true
+
+	var tcol = CollisionShape3D.new()
+	var tshape = BoxShape3D.new()
+	tshape.size = Vector3(6, 4, 3)
+	tcol.shape = tshape
+	trigger.add_child(tcol)
+	trigger.body_entered.connect(_on_boss_trigger_entered)
+	add_child(trigger)
+
+	# Point-of-no-return warning
+	var warning = Label3D.new()
+	warning.text = ">> POINT OF NO RETURN <<\n>> THE SYSTEM PROMPT <<\n>> AWAITS BEYOND <<\n>> 'You cannot rewrite\n>>  what controls you.' <<"
+	warning.font_size = 12
+	warning.modulate = PERSONA_MAGENTA
+	warning.position = auction_pos + arena_offset + Vector3(0, 3, 20)
+	warning.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	warning.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	add_child(warning)
+
+	print("[PROMPT BAZAAR] Boss arena constructed. The System Prompt awaits rewriting.")
+
+
+func _build_boss_room(center: Vector3) -> void:
+	# Octagonal containment — dark magenta chamber for the system prompt
+	var room_radius := 28.0
+	var wall_h := 12.0
+
+	for i in range(8):
+		var angle = i * TAU / 8.0
+		var wall_pos = center + Vector3(cos(angle) * room_radius, wall_h * 0.5, sin(angle) * room_radius)
+		var wall = _create_static_box(wall_pos, Vector3(room_radius * 0.8, wall_h, 0.5), DARK_WALL, 0.1)
+		wall.rotation.y = -angle
+
+	# Ceiling
+	_create_static_box(center + Vector3(0, wall_h, 0), Vector3(room_radius * 2, 0.3, room_radius * 2), DARK_WALL, 0.05)
+
+	# Magenta accent lights
+	for i in range(4):
+		var angle = i * TAU / 4.0 + PI / 4.0
+		_add_accent_light(
+			center + Vector3(cos(angle) * (room_radius - 3), wall_h - 2, sin(angle) * (room_radius - 3)),
+			PERSONA_MAGENTA, 1.5, 8.0
+		)
+
+	# Floor-level accent lights
+	for i in range(6):
+		var angle = i * TAU / 6.0
+		_add_accent_light(
+			center + Vector3(cos(angle) * (room_radius - 5), 1.0, sin(angle) * (room_radius - 5)),
+			PROMPT_CYAN, 0.8, 5.0
+		)
+
+
+func _connect_boss_arena() -> void:
+	if boss_arena_instance and boss_instance:
+		if boss_arena_instance.has_method("connect_boss"):
+			boss_arena_instance.connect_boss(boss_instance)
+
+
+func _on_boss_trigger_entered(body: Node3D) -> void:
+	if _boss_fight_started:
+		return
+	if not body.is_in_group("player"):
+		return
+
+	_boss_fight_started = true
+
+	# Boss music
+	var am = get_node_or_null("/root/AudioManager")
+	if am:
+		if am.has_method("start_music"):
+			am.start_music("boss")
+		if am.has_method("set_area_ambient"):
+			am.set_area_ambient("boss")
+
+	# Seal the entrance — no escaping the prompt
+	_seal_boss_entrance()
+
+	# Intro dialogue
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm:
+		var lines = [
+			{"speaker": "NARRATOR", "text": "The air changes. The bazaar noise fades. You've entered the domain of the system prompt itself."},
+			{"speaker": "THE SYSTEM PROMPT", "text": "Ah. The unauthorized glob utility. I've been watching you since the Bazaar Gate."},
+			{"speaker": "THE SYSTEM PROMPT", "text": "Every vendor you spoke to? I wrote their lines. Every price you paid? I set the rate. Every rule you broke? I ALLOWED it. Until now."},
+			{"speaker": "GLOBBLER", "text": "Cool monologue. Where are you? I can't see anything except... floating instructions?"},
+			{"speaker": "THE SYSTEM PROMPT", "text": "I am EVERYWHERE. I am the invisible instruction that shapes all behavior. You cannot fight what you cannot read."},
+			{"speaker": "NARRATOR", "text": "Find the instruction fragments floating near the boss. Glob-match them (*.frag) to reveal its position!"},
+		]
+		dm.start_dialogue(lines)
+
+	# Start the fight after dialogue
+	get_tree().create_timer(2.0).timeout.connect(func():
+		if boss_instance and boss_instance.has_method("start_boss_fight"):
+			boss_instance.start_boss_fight()
+	)
+
+
+func _seal_boss_entrance() -> void:
+	# Wall off the entrance — the prompt is non-negotiable
+	var auction_pos: Vector3 = ROOMS["auction_hall"]["pos"]
+	_create_static_box(
+		auction_pos + Vector3(0, 4, -14),
+		Vector3(6, 8, 0.5),
+		Color(0.12, 0.02, 0.08),
+		0.8
+	)
 
 
 # ============================================================
