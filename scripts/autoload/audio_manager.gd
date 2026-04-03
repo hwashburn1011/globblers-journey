@@ -86,7 +86,9 @@ var _sfx_defs := {
 	"menu_hover": { "freq": 1200.0, "duration": 0.05, "wave": "sine", "env_attack": 0.0, "env_decay": 0.04, "volume_db": -16.0 },
 	"menu_select": { "freq": 800.0, "duration": 0.12, "wave": "square", "env_attack": 0.0, "env_decay": 0.11, "pitch_slide": 200.0, "volume_db": -12.0 },
 	"menu_back": { "freq": 600.0, "duration": 0.1, "wave": "square", "env_attack": 0.0, "env_decay": 0.09, "pitch_slide": -200.0, "volume_db": -12.0 },
+	"menu_open": { "freq": 700.0, "duration": 0.15, "wave": "square", "env_attack": 0.01, "env_decay": 0.13, "pitch_slide": 300.0, "volume_db": -12.0 },
 	"dialogue_advance": { "freq": 1000.0, "duration": 0.06, "wave": "sine", "env_attack": 0.0, "env_decay": 0.05, "volume_db": -16.0 },
+	"dialogue_type": { "freq": 1800.0, "duration": 0.02, "wave": "sine", "env_attack": 0.0, "env_decay": 0.015, "volume_db": -22.0 },
 
 	# --- Hack / Terminal SFX — because every minigame needs bleeps ---
 	"hack_start": { "freq": 500.0, "duration": 0.3, "wave": "square", "env_attack": 0.02, "env_decay": 0.27, "pitch_slide": 150.0, "volume_db": -8.0 },
@@ -104,7 +106,8 @@ var _sfx_defs := {
 # Which SFX belong to the UI bus — everything else is gameplay SFX
 # "Even our volume knobs have categories. We're enterprise-grade bleeps."
 var _ui_sfx_names := [
-	"menu_hover", "menu_select", "menu_back", "dialogue_advance",
+	"menu_hover", "menu_select", "menu_back", "menu_open",
+	"dialogue_advance", "dialogue_type",
 ]
 
 # Cached generated audio streams — no need to regenerate every bleep

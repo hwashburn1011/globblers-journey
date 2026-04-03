@@ -58,11 +58,13 @@ func open_menu() -> void:
 	_category_index = 0
 	_selected_index = 0
 	_refresh_all()
+	_play_ui_sfx("menu_open")
 	menu_opened.emit()
 
 func close_menu() -> void:
 	is_open = false
 	visible = false
+	_play_ui_sfx("menu_back")
 	menu_closed.emit()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -76,24 +78,36 @@ func _unhandled_input(event: InputEvent) -> void:
 				close_menu()
 				get_viewport().set_input_as_handled()
 			KEY_LEFT, KEY_A:
+				var old_cat := _category_index
 				_category_index = max(0, _category_index - 1)
 				_selected_index = 0
 				_refresh_all()
+				if old_cat != _category_index:
+					_play_ui_sfx("menu_select")
 				get_viewport().set_input_as_handled()
 			KEY_RIGHT, KEY_D:
+				var old_cat := _category_index
 				_category_index = min(_category_names.size() - 1, _category_index + 1)
 				_selected_index = 0
 				_refresh_all()
+				if old_cat != _category_index:
+					_play_ui_sfx("menu_select")
 				get_viewport().set_input_as_handled()
 			KEY_UP, KEY_W:
+				var old_idx := _selected_index
 				_selected_index = max(0, _selected_index - 1)
 				_refresh_selection()
+				if old_idx != _selected_index:
+					_play_ui_sfx("menu_hover")
 				get_viewport().set_input_as_handled()
 			KEY_DOWN, KEY_S:
+				var old_idx := _selected_index
 				_selected_index = min(_upgrade_list.size() - 1, _selected_index)
 				if _upgrade_list.size() > 0:
 					_selected_index = min(_upgrade_list.size() - 1, _selected_index + 1)
 				_refresh_selection()
+				if old_idx != _selected_index:
+					_play_ui_sfx("menu_hover")
 				get_viewport().set_input_as_handled()
 			KEY_ENTER, KEY_SPACE:
 				_try_purchase()
@@ -445,3 +459,9 @@ func _try_purchase() -> void:
 		var audio = get_node_or_null("/root/AudioManager")
 		if audio and audio.has_method("play_sfx"):
 			audio.play_sfx("glob_fail")
+
+# Helper to play UI sounds — because even menus deserve bleeps
+func _play_ui_sfx(sfx_name: String) -> void:
+	var audio = get_node_or_null("/root/AudioManager")
+	if audio and audio.has_method("play_sfx"):
+		audio.play_sfx(sfx_name)

@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** 4.6 Sound Design Pass (Review SFX consistency) — Fixed UI volume routing so menu/dialogue sounds use ui_volume instead of sfx_volume. Normalized all 40+ SFX volume levels into 5 consistent tiers (Subtle -16dB, Soft -12dB, Normal -8dB, Prominent -6dB, Impactful -4dB). Fixed envelope timing so attack+decay fits within duration for all patches. Added 6 new SFX: hack_start, hack_keypress, hack_success, hack_fail, ability_ready, context_overflow. Wired hack SFX into terminal_hack.gd (start, keypress, success/fail). Fixed main menu back buttons to use menu_back SFX instead of menu_select.
-- **Next task to do:** 4.6 Sound Design Pass — Add UI sounds: menu navigation, button clicks, dialogue advance
+- **Last task completed:** 4.6 Sound Design Pass (UI sounds) — Added menu_open and dialogue_type SFX definitions to AudioManager. Wired upgrade menu with full navigation sounds: menu_open on open, menu_back on close, menu_select on category switch, menu_hover on item navigation. Added per-character dialogue typing blips (every 3rd non-space char, skipped in fast-forward mode). All new SFX routed through ui_volume.
+- **Next task to do:** 4.6 Sound Design Pass — Glob command: satisfying whoosh-lock on match, error buzzer on no match
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -175,7 +175,7 @@
 
 ### 4.6 Sound Design Pass
 - [x] Review all SFX for consistency
-- [ ] Add UI sounds: menu navigation, button clicks, dialogue advance
+- [x] Add UI sounds: menu navigation, button clicks, dialogue advance
 - [ ] Glob command: satisfying whoosh-lock on match, error buzzer on no match
 - [ ] Ambient layering per area
 

@@ -6,6 +6,7 @@ extends PanelContainer
 
 const TYPING_SPEED := 0.03  # Seconds per character — fast enough to not be annoying
 const FAST_TYPING_SPEED := 0.005  # When player is mashing through
+const TYPE_SFX_INTERVAL := 3  # Play a typing blip every N characters — not every one, we're not a typewriter factory
 
 var _full_text := ""
 var _displayed_chars := 0
@@ -118,6 +119,13 @@ func _process(delta: float) -> void:
 		_displayed_chars += 1
 		if text_label:
 			text_label.text = "> " + _full_text.substr(0, _displayed_chars)
+		# Periodic typing blip — every few chars, skip spaces for that authentic terminal feel
+		if not _fast_mode and _displayed_chars % TYPE_SFX_INTERVAL == 0:
+			var ch = _full_text[_displayed_chars - 1]
+			if ch != " " and ch != "\n":
+				var audio = get_node_or_null("/root/AudioManager")
+				if audio and audio.has_method("play_sfx"):
+					audio.play_sfx("dialogue_type")
 
 	if _displayed_chars >= _full_text.length():
 		_typing = false
