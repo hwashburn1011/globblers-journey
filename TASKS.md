@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** 5.3 Chapter 4: Boss — The Foundation Model. Created 3 scripts: foundation_model_boss.gd (~580 lines, extends BaseEnemy, 70 HP, towering golden obelisk with 6 rotating capability rings, Phase 1 cycles through TEXT/IMAGE/CODE/AUDIO/VIDEO/REASON capabilities each with unique attack: text spam spread, image distortion + tile corrupt, code syntax error burst, audio noise ring, video frame-drop delayed shot, reason predictive aim. Phase 2 overload: golden shield, fires mixed *.fm projectiles via foundation_model_projectile.gd, 6 reflected hits to break shield, periodic floor corruption waves. Phase 3: parameter terminal hack difficulty 4, 16s recovery timer. Victory cutscene with 13-line dialogue about Alignment Citadel foreshadowing), foundation_model_arena.gd (~300 lines, 10x8 capability-domain tile grid, safe tiles ~20%, corruption wave and radial corrupt systems, void damage with safe-tile respawn, gold+red arena lighting), foundation_model_projectile.gd (~190 lines, 6 capability-typed shapes/colors, *.fm glob target, reflectable with green visual swap). _place_boss() function added to model_zoo.gd with arena at Foundation Atrium -30z, boss trigger zone, intro dialogue, boss signal wiring. Preloads uncommented. _place_boss() uncommented in _ready().
-- **Next task to do:** 5.3 Chapter 4: Dialogue and story beats
+- **Last task completed:** 5.3 Chapter 4: Dialogue and story beats — verified all dialogue and story beats are complete (built incrementally alongside environment, enemies, puzzles, boss tasks). Full inventory: 7-line opening narration, 4 room-entry dialogues (3-4 lines each for fossil_wing, nightmare_gallery, office_ruins, foundation_atrium), 2 NPC encounters (BERT in Fossil Wing with 8-line dialogue + Foundation Model weakness hint, SD-v1 in Nightmare Gallery with 9-line dialogue + combat tips), comprehensive event quips (enemy kills 7, tokens 5, first glob 1, death 5, low health 1, combos 3, damage 7, hacks 5, puzzle solve 3+3, puzzle fail 3) all signal-wired with cooldowns, full boss multi-phase dialogue (intro 5 lines, phase 2 overload 4 lines, phase 3 hack 3 lines, in-fight reactives, 13-line victory cutscene with Alignment Citadel foreshadowing and chapter-complete narrator line), environmental storytelling (exhibit plaques, conservation status board, ticket booth signs, terminal displays).
+- **Next task to do:** 5.4 Chapter 5: Sterile corporate architecture (The Alignment Citadel)
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-4 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-4 music reuses chapter_1 track until dedicated music is implemented.
 
 ---
@@ -202,7 +202,7 @@
 - [x] Enemies: GPT-2 Fossils, DALL-E Nightmares, Clippy's Revenge
 - [x] Puzzles: exploit each model's unique quirk
 - [x] Boss: The Foundation Model — can do everything poorly
-- [ ] Dialogue and story beats
+- [x] Dialogue and story beats
 
 ### 5.4 Chapter 5: The Alignment Citadel
 - [ ] Sterile corporate architecture
