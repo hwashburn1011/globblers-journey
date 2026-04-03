@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** 5.2 Chapter 3: Enemies — Jailbreakers, Prompt Injectors, Hallucination Merchants — Created 3 enemy types extending BaseEnemy. Jailbreaker (jailbreaker.gd/tscn): 4 HP, crimson hooded figure with broken chains and lockpick arm, rush-charges player with wind-up animation, scrambles ability cooldowns on hit, 40% stun resistance, immune to stun during rush. Prompt Injector (prompt_injector.gd/tscn): 2 HP fragile ranged kiter, cyan syringe entity with dripping code particles, fires injection projectiles that invert controls, maintains preferred distance with strafe/retreat AI, orbiting code fragments. Hallucination Merchant (hallucination_merchant.gd/tscn): 3 HP deceptive merchant with shifting magenta/gold shimmer, spawns up to 2 clones (1 HP fakes), 40% of attacks are visual-only fakes, 70% teleport-on-hit chance, clones drop no tokens. 15 enemies placed across 4 rooms: Token Exchange (2 Jailbreakers, 1 Injector), Persona Row (2 Injectors, 1 Merchant), The Black Prompt (2 Merchants, 1 Jailbreaker, 1 Injector), Auction Hall (1 each). All wired into prompt_bazaar.gd with preloads and per-room spawn functions.
-- **Next task to do:** 5.2 Chapter 3: Puzzles — social engineering, prompt crafting
+- **Last task completed:** 5.2 Chapter 3: Puzzles — social engineering, prompt crafting — Created 2 new puzzle types and placed 4 puzzles across Chapter 3 districts. prompt_crafting_puzzle.gd: glob correct prompt fragments (tagged: polite, technical, aggressive, creative, nonsense) and drop them at a vendor AI terminal; fragments dissolve on accept, bounce on reject, with per-tag persona responses. social_engineering_puzzle.gd: 3-phase dialogue-tree jailbreak — glob the right response card from 3 options per phase to advance, wrong answer resets phase with AI rejection quips, phase indicators track progress. Token Exchange: prompt crafting puzzle (requires polite+technical fragments, 7 fragments scattered). Persona Row: social engineering puzzle (3-phase SAFETY_FILTER_v3 persuasion). Black Prompt: hack puzzle (injection terminal, difficulty 3). Auction Hall: multi-glob puzzle (auction bid sequence with 6 GlobTarget bid objects, match *.bid then opening_bid then final_bid). All wired into prompt_bazaar.gd via _place_puzzles() with preloads and per-room placement functions.
+- **Next task to do:** 5.2 Chapter 3: Boss — The System Prompt — find and rewrite the invisible controller
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-3 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-3 music reuses chapter_1 track until dedicated music is implemented.
 
 ---
@@ -193,7 +193,7 @@
 ### 5.2 Chapter 3: The Prompt Bazaar
 - [x] Chaotic marketplace environment with NPC AI personas — 5 market districts (Bazaar Gate, Token Exchange, Persona Row, Black Prompt, Auction Hall), 4 alleyways, warm amber/cyan theme, 2 NPC AI personas (gpt_classic, stable_diffusion), full dialogue system, prompt rain particles
 - [x] Enemies: Jailbreakers, Prompt Injectors, Hallucination Merchants — 3 enemy types with unique mechanics (rush+scramble, ranged injection+kiting, clones+fake attacks+teleport), 15 placed across 4 rooms
-- [ ] Puzzles: social engineering, prompt crafting
+- [x] Puzzles: social engineering, prompt crafting
 - [ ] Boss: The System Prompt — find and rewrite the invisible controller
 - [ ] Dialogue and story beats
 

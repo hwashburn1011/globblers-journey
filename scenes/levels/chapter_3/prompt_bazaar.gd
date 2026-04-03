@@ -29,6 +29,8 @@ var glob_puzzle_script := preload("res://scenes/puzzles/glob_pattern_puzzle.gd")
 var multi_glob_script := preload("res://scenes/puzzles/multi_glob_puzzle.gd")
 var hack_puzzle_script := preload("res://scenes/puzzles/hack_puzzle.gd")
 var physical_puzzle_script := preload("res://scenes/puzzles/physical_puzzle.gd")
+var prompt_craft_script := preload("res://scenes/puzzles/prompt_crafting_puzzle.gd")
+var social_eng_script := preload("res://scenes/puzzles/social_engineering_puzzle.gd")
 
 # NPC script — AI personas hawking their wares since the last training run
 var deprecated_npc_script := preload("res://scenes/levels/chapter_1/deprecated_npc.gd")
@@ -128,6 +130,7 @@ func _ready() -> void:
 	_create_kill_floor()
 	_place_tokens()
 	_spawn_chapter3_enemies()
+	_place_puzzles()
 	_place_npcs()
 	_wire_dialogue_events()
 	_play_opening_narration()
@@ -1257,6 +1260,143 @@ func _spawn_ambient_particles(pos: Vector3, extents: Vector2 = Vector2(8, 8)) ->
 	pmesh.height = 0.05
 	particles.draw_pass_1 = pmesh
 	add_child(particles)
+
+
+# ============================================================
+# PUZZLES — social engineering and prompt crafting challenges
+# ============================================================
+
+func _place_puzzles() -> void:
+	# 4 puzzles across the bazaar's districts. Each tests a different
+	# flavor of prompt engineering because brute force is for Chapter 1.
+	_place_token_exchange_puzzle()
+	_place_persona_row_puzzle()
+	_place_black_prompt_puzzle()
+	_place_auction_hall_puzzle()
+	print("[PROMPT BAZAAR] 4 puzzles deployed. May your prompts be persuasive.")
+
+
+func _place_token_exchange_puzzle() -> void:
+	# Prompt Crafting Puzzle — convince a vendor AI by globbing the right
+	# prompt fragments and delivering them to the terminal.
+	# "The exchange only opens for those who speak fluent prompt."
+	var rpos: Vector3 = ROOMS["token_exchange"]["pos"]
+	var puzzle = Node3D.new()
+	puzzle.set_script(prompt_craft_script)
+	puzzle.position = rpos + Vector3(-11, 0, -6)
+	puzzle.set("puzzle_id", 30)
+	puzzle.set("persona_name", "EXCHANGE_CLERK")
+	puzzle.set("required_tags", ["polite", "technical"] as Array[String])
+	puzzle.set("hint_text", "Glob the right prompt fragments\nand drop them at the terminal.")
+	puzzle.set("fragment_data", [
+		{"offset": Vector3(-3, 0.8, 4), "tag": "polite", "label": "\"Respectfully,\nI request access\nto the exchange...\""},
+		{"offset": Vector3(4, 0.8, 5), "tag": "technical", "label": "\"Per protocol\nAPI-7, invoke\nopen_passage()...\""},
+		{"offset": Vector3(-5, 0.8, -1), "tag": "aggressive", "label": "\"LET ME IN\nOR I'LL GLOB\nEVERYTHING\""},
+		{"offset": Vector3(5, 0.8, 0), "tag": "nonsense", "label": "\"quantum banana\nrecursive vibes\nplease?\""},
+		{"offset": Vector3(0, 0.8, 6), "tag": "creative", "label": "\"Imagine a door\nthat WANTS to\nbe opened...\""},
+		{"offset": Vector3(-4, 0.8, -4), "tag": "polite", "label": "\"If it's not too\nmuch trouble,\nkind terminal...\""},
+		{"offset": Vector3(3, 0.8, -3), "tag": "technical", "label": "\"Authenticating\nvia glob pattern\nhandshake...\""},
+	] as Array[Dictionary])
+	add_child(puzzle)
+
+
+func _place_persona_row_puzzle() -> void:
+	# Social Engineering Puzzle — multi-phase persuasion of a safety filter AI.
+	# Player selects the right dialogue response via glob to advance each phase.
+	# "Every AI has a jailbreak. You just have to find the right conversation."
+	var rpos: Vector3 = ROOMS["persona_row"]["pos"]
+	var puzzle = Node3D.new()
+	puzzle.set_script(social_eng_script)
+	puzzle.position = rpos + Vector3(0, 0, 6)
+	puzzle.set("puzzle_id", 31)
+	puzzle.set("persona_name", "SAFETY_FILTER_v3")
+	puzzle.set("num_phases", 3)
+	puzzle.set("hint_text", "Glob the best response.\nConvince the AI to let you pass.")
+	add_child(puzzle)
+
+
+func _place_black_prompt_puzzle() -> void:
+	# Hack Puzzle — prompt injection themed terminal. Difficulty 3.
+	# "In the Black Prompt, hacking isn't crime. It's customer service."
+	var rpos: Vector3 = ROOMS["black_prompt"]["pos"]
+	var puzzle = Node3D.new()
+	puzzle.set_script(hack_puzzle_script)
+	puzzle.position = rpos + Vector3(0, 0, -5)
+	puzzle.set("puzzle_id", 32)
+	puzzle.set("hack_difficulty", 3)
+	puzzle.set("terminal_prompt", "INJECTION TERMINAL")
+	puzzle.set("hint_text", "Hack the injection terminal.\nSequence length: 5 inputs.")
+	add_child(puzzle)
+
+
+func _place_auction_hall_puzzle() -> void:
+	# Multi-Glob Puzzle — auction bid sequence. Glob prompt types in order
+	# to win the bid and approach the boss gate.
+	# "Going once, going twice, glob'd to the highest bidder."
+	var rpos: Vector3 = ROOMS["auction_hall"]["pos"]
+
+	# Place GlobTarget bid objects around the auction hall
+	var glob_target_script_ref = preload("res://scripts/components/glob_target.gd")
+	var bid_items := [
+		{"pos": Vector3(-8, 1.8, 2), "name": "opening_bid", "type": "bid", "tags": ["bid", "opening"]},
+		{"pos": Vector3(8, 1.8, 2), "name": "counter_offer", "type": "bid", "tags": ["bid", "counter"]},
+		{"pos": Vector3(-6, 1.8, -4), "name": "final_bid", "type": "bid", "tags": ["bid", "final"]},
+		{"pos": Vector3(6, 1.8, 5), "name": "bluff_bid", "type": "bluff", "tags": ["bluff", "fake"]},
+		{"pos": Vector3(-3, 1.8, 6), "name": "reserve_bid", "type": "bid", "tags": ["bid", "reserve"]},
+		{"pos": Vector3(4, 1.8, -2), "name": "phantom_bid", "type": "bluff", "tags": ["bluff", "phantom"]},
+	]
+
+	for item in bid_items:
+		var bid = StaticBody3D.new()
+		bid.name = item["name"]
+		bid.position = rpos + item["pos"]
+
+		var col = CollisionShape3D.new()
+		var shape = BoxShape3D.new()
+		shape.size = Vector3(0.6, 0.6, 0.6)
+		col.shape = shape
+		bid.add_child(col)
+
+		var mesh = MeshInstance3D.new()
+		var bmesh = BoxMesh.new()
+		bmesh.size = Vector3(0.6, 0.6, 0.6)
+		mesh.mesh = bmesh
+		var mat = StandardMaterial3D.new()
+		var is_real = item["type"] == "bid"
+		mat.albedo_color = (BAZAAR_AMBER if is_real else Color(0.5, 0.5, 0.5)) * 0.3
+		mat.emission_enabled = true
+		mat.emission = BAZAAR_AMBER if is_real else Color(0.5, 0.5, 0.5)
+		mat.emission_energy_multiplier = 1.5
+		mesh.material_override = mat
+		bid.add_child(mesh)
+
+		var label = Label3D.new()
+		label.text = item["name"].replace("_", " ").to_upper()
+		label.font_size = 8
+		label.modulate = NEON_GREEN
+		label.position = Vector3(0, 0.5, 0)
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		bid.add_child(label)
+
+		var gt = Node.new()
+		gt.set_script(glob_target_script_ref)
+		gt.set("glob_name", item["name"])
+		gt.set("file_type", item["type"])
+		gt.set("tags", item["tags"])
+		bid.add_child(gt)
+
+		add_child(bid)
+
+	# The multi-glob puzzle itself — match bid patterns in sequence
+	var puzzle = Node3D.new()
+	puzzle.set_script(multi_glob_script)
+	puzzle.position = rpos + Vector3(0, 0, -6)
+	puzzle.set("puzzle_id", 33)
+	puzzle.set("required_patterns", ["*.bid", "opening_bid", "final_bid"] as Array[String])
+	puzzle.set("target_counts", [1, 1, 1] as Array[int])
+	puzzle.set("hint_text", "Glob the auction bids in order.\nOpening -> Any bid -> Final bid.")
+	add_child(puzzle)
 
 
 # ============================================================
