@@ -93,6 +93,7 @@ func _ready() -> void:
 	_place_tokens()
 	_place_parameter_pickups()
 	_place_checkpoints()
+	_place_binary_rain()
 	_spawn_player()
 	_spawn_hud()
 	_create_kill_floor()
@@ -141,10 +142,19 @@ func _setup_environment() -> void:
 	env.volumetric_fog_albedo = Color(0.02, 0.08, 0.03)
 	env.volumetric_fog_emission = Color(0.01, 0.04, 0.01)
 
+	# Post-processing — the finishing touches on our digital dystopia
+	env.adjustment_enabled = true
+	env.adjustment_contrast = 1.05
+	env.adjustment_saturation = 1.1
+
 	var world_env = WorldEnvironment.new()
 	world_env.name = "Environment"
 	world_env.environment = env
 	add_child(world_env)
+
+	# Chromatic aberration + vignette via fullscreen quad — the engine doesn't
+	# have these built in so we fake it with a post-process shader overlay
+	_setup_post_processing()
 
 
 # ============================================================
@@ -1025,6 +1035,21 @@ func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> v
 	add_child(area)
 
 
+func _place_binary_rain() -> void:
+	# Binary rain in key atmospheric areas — falling green "data" columns
+	# Command Hall ceiling — raining deprecated commands
+	var cmd_pos: Vector3 = ROOMS["cmd_hall"]["pos"]
+	_create_binary_rain(cmd_pos, Vector2(16, 12), ROOMS["cmd_hall"]["wall_h"])
+
+	# Nexus Hub — the digital storm at the center
+	var nexus_pos: Vector3 = ROOMS["nexus"]["pos"]
+	_create_binary_rain(nexus_pos, Vector2(18, 14), ROOMS["nexus"]["wall_h"])
+
+	# Data River chamber — lighter rain to complement the river particles
+	var river_pos: Vector3 = ROOMS["data_river"]["pos"]
+	_create_binary_rain(river_pos + Vector3(8, 0, 0), Vector2(8, 12), ROOMS["data_river"]["wall_h"])
+
+
 # ============================================================
 # PLAYER & HUD SPAWN
 # ============================================================
@@ -1188,7 +1213,7 @@ func _create_terminal_sign(pos: Vector3, text: String, rot: Vector3 = Vector3.ZE
 	sign_node.position = pos
 	sign_node.rotation = rot
 
-	# Screen backing (dark panel)
+	# Screen backing (dark panel) — now with CRT shader for that authentic terminal feel
 	var backing = MeshInstance3D.new()
 	var back_mesh = BoxMesh.new()
 	var lines = text.count("\n") + 1
@@ -1199,12 +1224,25 @@ func _create_terminal_sign(pos: Vector3, text: String, rot: Vector3 = Vector3.ZE
 	var height = clamp(lines * 0.35, 0.8, 3.5)
 	back_mesh.size = Vector3(width + 0.3, height + 0.2, 0.08)
 	backing.mesh = back_mesh
-	var back_mat = StandardMaterial3D.new()
-	back_mat.albedo_color = Color(0.02, 0.03, 0.02)
-	back_mat.emission_enabled = true
-	back_mat.emission = Color(0.01, 0.03, 0.01)
-	back_mat.emission_energy_multiplier = 0.3
-	backing.material_override = back_mat
+	var crt_shader = load("res://assets/shaders/crt_scanline.gdshader")
+	if crt_shader:
+		var crt_mat = ShaderMaterial.new()
+		crt_mat.shader = crt_shader
+		crt_mat.set_shader_parameter("screen_color", SCREEN_GREEN)
+		crt_mat.set_shader_parameter("bg_color", Color(0.01, 0.03, 0.01))
+		crt_mat.set_shader_parameter("scanline_count", 60.0)
+		crt_mat.set_shader_parameter("scanline_intensity", 0.3)
+		crt_mat.set_shader_parameter("flicker_speed", 6.0)
+		crt_mat.set_shader_parameter("warp_amount", 0.015)
+		crt_mat.set_shader_parameter("glow_energy", 2.0)
+		backing.material_override = crt_mat
+	else:
+		var back_mat = StandardMaterial3D.new()
+		back_mat.albedo_color = Color(0.02, 0.03, 0.02)
+		back_mat.emission_enabled = true
+		back_mat.emission = Color(0.01, 0.03, 0.01)
+		back_mat.emission_energy_multiplier = 0.3
+		backing.material_override = back_mat
 	sign_node.add_child(backing)
 	_screen_meshes.append(backing)
 
@@ -1767,3 +1805,107 @@ func _process(delta: float) -> void:
 		_puzzle_quip_cooldown -= delta
 	if _hack_quip_cooldown > 0:
 		_hack_quip_cooldown -= delta
+
+
+# ============================================================
+# VISUAL POLISH — Post-processing and binary rain
+# ============================================================
+
+func _setup_post_processing() -> void:
+	# Fullscreen quad with chromatic aberration + vignette shader
+	# Because nothing says "you're inside a computer" like distorted edges
+	var canvas = CanvasLayer.new()
+	canvas.name = "PostProcessing"
+	canvas.layer = 10  # On top of everything
+
+	var rect = ColorRect.new()
+	rect.name = "PostFX"
+	rect.anchors_preset = Control.PRESET_FULL_RECT
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var post_shader = Shader.new()
+	post_shader.code = """shader_type canvas_item;
+
+// Post-processing — chromatic aberration + vignette
+// "We could have clean visuals, but where's the fun in that?"
+
+uniform float chromatic_amount : hint_range(0.0, 0.02) = 0.003;
+uniform float vignette_intensity : hint_range(0.0, 2.0) = 0.6;
+uniform float vignette_smoothness : hint_range(0.0, 1.0) = 0.4;
+uniform vec4 vignette_color : source_color = vec4(0.0, 0.02, 0.0, 1.0);
+
+void fragment() {
+	vec2 uv = SCREEN_UV;
+	vec2 center = uv - 0.5;
+	float dist = length(center);
+
+	// Chromatic aberration — RGB channels slightly offset from center
+	float ca = chromatic_amount * dist;
+	float r = texture(SCREEN_TEXTURE, uv + center * ca).r;
+	float g = texture(SCREEN_TEXTURE, uv).g;
+	float b = texture(SCREEN_TEXTURE, uv - center * ca).b;
+	vec3 color = vec3(r, g, b);
+
+	// Vignette — darken edges with a slight green tint
+	float vig = smoothstep(0.5, 0.5 - vignette_smoothness, dist * (1.0 + vignette_intensity));
+	color = mix(vignette_color.rgb, color, vig);
+
+	COLOR = vec4(color, 1.0);
+}
+"""
+	var post_mat = ShaderMaterial.new()
+	post_mat.shader = post_shader
+	post_mat.set_shader_parameter("chromatic_amount", 0.003)
+	post_mat.set_shader_parameter("vignette_intensity", 0.6)
+	post_mat.set_shader_parameter("vignette_smoothness", 0.4)
+	post_mat.set_shader_parameter("vignette_color", Color(0.0, 0.02, 0.0, 1.0))
+	rect.material = post_mat
+
+	canvas.add_child(rect)
+	add_child(canvas)
+
+
+func _create_binary_rain(pos: Vector3, area_size: Vector2, height: float = 8.0) -> void:
+	# Binary rain — columns of falling green characters like the matrix
+	# but more self-aware about being a cliche
+	var rain = GPUParticles3D.new()
+	rain.name = "BinaryRain"
+	rain.amount = 80
+	rain.lifetime = 3.0
+	rain.position = pos + Vector3(0, height, 0)
+
+	var pmat = ParticleProcessMaterial.new()
+	pmat.direction = Vector3(0, -1, 0)
+	pmat.spread = 5.0
+	pmat.initial_velocity_min = 2.0
+	pmat.initial_velocity_max = 5.0
+	pmat.gravity = Vector3(0, -1.0, 0)
+	pmat.scale_min = 0.02
+	pmat.scale_max = 0.06
+	pmat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	pmat.emission_box_extents = Vector3(area_size.x / 2.0, 0.5, area_size.y / 2.0)
+
+	# Green with slight alpha variation — some digits brighter than others
+	var color_ramp = Gradient.new()
+	color_ramp.set_color(0, Color(0.1, 0.8, 0.05, 0.9))
+	color_ramp.set_color(1, Color(0.05, 0.3, 0.02, 0.0))
+	var color_tex = GradientTexture1D.new()
+	color_tex.gradient = color_ramp
+	pmat.color_ramp = color_tex
+
+	rain.process_material = pmat
+
+	# Use small boxes to look like falling characters
+	var digit_mesh = BoxMesh.new()
+	digit_mesh.size = Vector3(0.04, 0.12, 0.01)
+
+	var digit_mat = StandardMaterial3D.new()
+	digit_mat.albedo_color = NEON_GREEN
+	digit_mat.emission_enabled = true
+	digit_mat.emission = NEON_GREEN
+	digit_mat.emission_energy_multiplier = 2.0
+	digit_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	digit_mesh.material = digit_mat
+
+	rain.draw_pass_1 = digit_mesh
+	add_child(rain)

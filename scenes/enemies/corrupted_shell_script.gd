@@ -49,14 +49,30 @@ func _create_visual() -> void:
 	cyl.height = 1.0
 	mesh_node.mesh = cyl
 
-	base_material = StandardMaterial3D.new()
-	base_material.albedo_color = Color(0.2, 0.8, 0.9)
-	base_material.emission_enabled = true
-	base_material.emission = Color(0.1, 0.6, 0.8)
-	base_material.emission_energy_multiplier = 3.0
-	base_material.metallic = 0.8
-	base_material.roughness = 0.2
-	mesh_node.material_override = base_material
+	# Glitch shader — because this script was corrupted long before we got here
+	var glitch_shader = load("res://assets/shaders/glitch.gdshader")
+	if glitch_shader:
+		var glitch_mat = ShaderMaterial.new()
+		glitch_mat.shader = glitch_shader
+		glitch_mat.set_shader_parameter("base_color", Color(0.2, 0.8, 0.9))
+		glitch_mat.set_shader_parameter("glitch_color", Color(0.9, 0.1, 0.3))
+		glitch_mat.set_shader_parameter("glitch_intensity", 0.4)
+		glitch_mat.set_shader_parameter("glitch_speed", 4.0)
+		glitch_mat.set_shader_parameter("vertex_displacement", 0.15)
+		glitch_mat.set_shader_parameter("emission_energy", 3.0)
+		glitch_mat.set_shader_parameter("metallic_value", 0.8)
+		glitch_mat.set_shader_parameter("roughness_value", 0.2)
+		mesh_node.material_override = glitch_mat
+	else:
+		# Fallback — if shaders are on vacation
+		base_material = StandardMaterial3D.new()
+		base_material.albedo_color = Color(0.2, 0.8, 0.9)
+		base_material.emission_enabled = true
+		base_material.emission = Color(0.1, 0.6, 0.8)
+		base_material.emission_energy_multiplier = 3.0
+		base_material.metallic = 0.8
+		base_material.roughness = 0.2
+		mesh_node.material_override = base_material
 	add_child(mesh_node)
 
 	# "Script" text scrolling on the body

@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** 4.4 Loading Screens — Created loading_screen.tscn/gd with full terminal-aesthetic loading screen. 28 sarcastic loading tips rotating every 3s. Green progress bar with ReferenceRect border and percentage counter in terminal style ([  0%] to [100%]). 4-frame ASCII Globbler idle animation (standing, foot tap, head tilt, terminal tap). Scanline CRT overlay. Blinking cursor on "LOADING..." title. Uses ResourceLoader.load_threaded_request() for real background loading with fake-smooth progress curve (exponential approach to 80%, then fills to 100% when ready). Minimum 2.5s display time so tips are actually readable. Fade-out transition on completion. Wired into main_menu.gd _transition_to_game() and game_manager.gd return_to_menu() — both now route through the loading screen instead of direct scene changes.
-- **Next task to do:** 4.5 Visual Polish
+- **Last task completed:** 4.5 Visual Polish — Created 3 new shaders: green_glow.gdshader (pulsing fresnel-rim glow for GlobTarget highlights), crt_scanline.gdshader (barrel distortion, scanlines, flicker, noise for in-world terminal screens), glitch.gdshader (vertex displacement, color band corruption, RGB split for corrupted enemies). GlobTarget now spawns additive glow overlay mesh on highlight. Corrupted Shell Script enemy uses glitch shader instead of flat material. All terminal_wastes.gd screen backings use CRT shader. Added binary rain particles (falling green box columns) in Command Hall, Nexus Hub, and Data River chambers. Added fullscreen post-processing CanvasLayer with chromatic aberration (RGB channel offset) and green-tinted vignette. Environment now has adjustment_contrast 1.05 and adjustment_saturation 1.1.
+- **Next task to do:** 4.6 Sound Design Pass
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -167,11 +167,11 @@
 - [x] Random Globbler idle animations or art — 4-frame ASCII Globbler animation cycling at 0.6s (standing, foot tap, head tilt, terminal tap)
 
 ### 4.5 Visual Polish
-- [ ] Green glow shader on all Globbler elements and interactive objects
-- [ ] CRT/scanline shader on terminal screens in-world
-- [ ] Glitch shader on corrupted enemies
-- [ ] Particle effects: green data particles in air, sparks from wrench, binary rain
-- [ ] Post-processing: bloom on green elements, subtle chromatic aberration, vignette
+- [x] Green glow shader on all Globbler elements and interactive objects — green_glow.gdshader with fresnel rim + pulse, wired into GlobTarget as additive overlay mesh
+- [x] CRT/scanline shader on terminal screens in-world — crt_scanline.gdshader with barrel warp, scanlines, flicker, noise, vignette; applied to all terminal_wastes screen backings
+- [x] Glitch shader on corrupted enemies — glitch.gdshader with vertex displacement, color band corruption, RGB split; applied to corrupted_shell_script.gd
+- [x] Particle effects: green data particles in air, sparks from wrench, binary rain — binary rain added to Command Hall, Nexus Hub, Data River (ambient particles and wrench sparks already existed)
+- [x] Post-processing: bloom on green elements, subtle chromatic aberration, vignette — bloom already in Environment; added fullscreen CanvasLayer with chromatic aberration + green vignette shader, plus contrast/saturation adjustment
 
 ### 4.6 Sound Design Pass
 - [ ] Review all SFX for consistency
