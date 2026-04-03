@@ -29,6 +29,9 @@ var glob_puzzle_script := preload("res://scenes/puzzles/glob_pattern_puzzle.gd")
 var multi_glob_script := preload("res://scenes/puzzles/multi_glob_puzzle.gd")
 var hack_puzzle_script := preload("res://scenes/puzzles/hack_puzzle.gd")
 var physical_puzzle_script := preload("res://scenes/puzzles/physical_puzzle.gd")
+var fossil_exhibit_script := preload("res://scenes/puzzles/fossil_exhibit_puzzle.gd")
+var nightmare_gallery_script := preload("res://scenes/puzzles/nightmare_gallery_puzzle.gd")
+var clippy_help_script := preload("res://scenes/puzzles/clippy_help_puzzle.gd")
 
 # Boss scripts — loaded when created
 # var boss_script := preload("res://scenes/enemies/foundation_model_boss/foundation_model_boss.gd")
@@ -135,7 +138,7 @@ func _ready() -> void:
 	_create_kill_floor()
 	_place_tokens()
 	_spawn_chapter4_enemies()
-	# _place_puzzles()           # Puzzles task is separate
+	_place_puzzles()
 	_place_npcs()
 	# _place_boss()              # Boss task is separate
 	_wire_dialogue_events()
@@ -2080,6 +2083,51 @@ func _on_combo_updated(combo: int) -> void:
 				"That's %d models deprecated in a row! Who needs conservation?!" % combo,
 			]
 			dm.quick_line("GLOBBLER", quips[randi() % quips.size()])
+
+
+func _place_puzzles() -> void:
+	# 3 puzzles — one per exhibit wing, each exploiting the resident model's quirk.
+	# "Every model has a vulnerability. You just have to know what file type it is."
+	_place_fossil_wing_puzzle()
+	_place_nightmare_gallery_puzzle()
+	_place_office_ruins_puzzle()
+	print("[MODEL ZOO] 3 exhibit puzzles deployed. Exploit the quirks to proceed.")
+
+
+func _place_fossil_wing_puzzle() -> void:
+	# Fossil Repetition Exploit — wait for GPT-2 output to loop, glob the pattern
+	# "Old models repeat themselves. Exploit that before they recover."
+	var rpos: Vector3 = ROOMS["fossil_wing"]["pos"]
+	var puzzle = Node3D.new()
+	puzzle.set_script(fossil_exhibit_script)
+	puzzle.position = rpos + Vector3(0, 0, 8)
+	puzzle.set("puzzle_id", 40)
+	puzzle.set("hint_text", "Wait for the fossil output to repeat 3x.\nGlob the loop pattern to capture it.\nFill all 3 collectors to proceed.")
+	add_child(puzzle)
+
+
+func _place_nightmare_gallery_puzzle() -> void:
+	# Nightmare Sorting Exhibit — match morphing paintings to type-specific pedestals
+	# "Art is just pattern matching with extra steps. And extra nightmares."
+	var rpos: Vector3 = ROOMS["nightmare_gallery"]["pos"]
+	var puzzle = Node3D.new()
+	puzzle.set_script(nightmare_gallery_script)
+	puzzle.position = rpos + Vector3(0, 0, 0)
+	puzzle.set("puzzle_id", 41)
+	puzzle.set("hint_text", "Each painting morphs between file types.\nGlob when the form matches its pedestal.\n*.png → A   *.svg → B   *.webp → C")
+	add_child(puzzle)
+
+
+func _place_office_ruins_puzzle() -> void:
+	# Clippy's Help Desk — pop the popup shields, then hack the terminals
+	# "It looks like you're trying to solve a puzzle! Would you like to suffer?"
+	var rpos: Vector3 = ROOMS["office_ruins"]["pos"]
+	var puzzle = Node3D.new()
+	puzzle.set_script(clippy_help_script)
+	puzzle.position = rpos + Vector3(0, 1, 0)
+	puzzle.set("puzzle_id", 42)
+	puzzle.set("hint_text", "Each terminal is shielded by a Help Popup.\nGlob *.popup to dismiss the shield.\nThen hack the terminal before it recharges.")
+	add_child(puzzle)
 
 
 func _connect_puzzle_signals() -> void:
