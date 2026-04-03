@@ -7,9 +7,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** 5.1 Chapter 2 Puzzles — Created 4 puzzles: (1) Input Layer tutorial glob puzzle (glob *.data to match 3 training data objects among 2 decoys), (2) Weight Path Puzzle in Activation Chamber (weight_path_puzzle.gd — 4 bridge segments at wrong heights, glob weight nodes to toggle on/off, correct combination [0,2,3] aligns segments into walkable path, smooth lerp animation, door dissolves on solve), (3) Backpropagation Trace Puzzle in Gradient Falls (backprop_trace_puzzle.gd — 3-layer neural network visualization with 3-4-2 nodes and connection lines, animated forward pass lights nodes left-to-right, player must glob layers in reverse order *.output → *.hidden → *.input, wrong order triggers gradient explosion + reset), (4) Hack puzzle gating boss arena in Loss Plaza (difficulty 3, "LOSS FUNCTION OVERRIDE" terminal). All wired into training_grounds.gd via _place_chapter2_puzzles().
-- **Next task to do:** 5.1 Chapter 2: The Training Grounds — Boss: The Local Minimum — shrinking arena pit boss
+- **Last updated by:** Claude Opus — 2026-04-03
+- **Last task completed:** 5.1 Chapter 2 Boss: The Local Minimum — Created local_minimum_boss.gd (extends BaseEnemy, 60 HP, 3-phase fight): Phase 1 (CONVERGE) — orbits arena, fires gravity wells that pull player toward center pit, outer rings collapse every 12s via arena.start_shrinking(). Phase 2 (OVERFIT) — amber gradient shield blocks damage, spawns *.grad projectiles player must glob-match and reflect back (5 hits to break shield), faster orbit, faster ring collapse. Phase 3 (ESCAPE) — boss stunned 18s, loss function terminal exposed for hacking (difficulty 3), recovers with heal if too slow. Victory triggers arena restore, 9-line dialogue with chapter complete and Prompt Bazaar teaser, calls complete_level(2). Wired into training_grounds.gd via _place_boss() with arena instantiation, boss trigger zone, intro dialogue, entrance seal, octagonal boss room enclosure with red-gold accent lights.
+- **Next task to do:** 5.1 Chapter 2: The Training Grounds — Dialogue and story beats
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapter 2 uses AudioManager fallback ambient (ch2-specific ambient not yet added). Chapter 2 music reuses chapter_1 track until ch2 music is implemented.
 
 ---
@@ -187,7 +187,7 @@
 - [x] Neural network landscape: walkable nodes, weight-connection bridges — 5 neuron-rooms (Input Layer, Activation Chamber, Gradient Falls, Dropout Void, Loss Plaza) connected by 4 weight bridges with synapse flow particles, pulsing neuron cores, stepped gradient terrain, dropout platforms, convergence rings, loss scoreboard, boss gate, per-room dialogue + narration
 - [x] Enemies: Overfitting Ogres, Dropout Ghosts, Vanishing Gradient Wisps — overfitting_ogre.gd (memorizes moves, predicts, confused by pattern breaks), dropout_ghost.gd (vanishes/teleports/lunge attacks, invulnerable while out), vanishing_gradient_wisp.gd (fades with distance from anchor, scaling damage/speed). 12 enemies placed across 4 rooms
 - [x] Puzzles: adjust weights to create paths, backpropagation trace puzzles
-- [ ] Boss: The Local Minimum — shrinking arena pit boss
+- [x] Boss: The Local Minimum — shrinking arena pit boss
 - [ ] Dialogue and story beats
 
 ### 5.2 Chapter 3: The Prompt Bazaar

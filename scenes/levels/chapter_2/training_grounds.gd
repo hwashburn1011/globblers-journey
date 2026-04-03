@@ -32,8 +32,14 @@ var physical_puzzle_script := preload("res://scenes/puzzles/physical_puzzle.gd")
 var weight_path_puzzle_script := preload("res://scenes/puzzles/weight_path_puzzle.gd")
 var backprop_trace_puzzle_script := preload("res://scenes/puzzles/backprop_trace_puzzle.gd")
 
+# Boss scripts — the pit at the bottom of the loss landscape
+var boss_script := preload("res://scenes/enemies/local_minimum_boss/local_minimum_boss.gd")
+var boss_arena_script := preload("res://scenes/enemies/local_minimum_boss/local_minimum_arena.gd")
+
 var player: CharacterBody3D
 var hud: CanvasLayer
+var boss_instance: Node  # The Local Minimum — tracked for phase events
+var boss_arena_instance: Node3D  # The shrinking ring arena
 
 # Dialogue tracking — neural networks never shut up about their gradients
 var _opening_narration_done := false
@@ -125,6 +131,7 @@ func _ready() -> void:
 	_place_tokens()
 	_spawn_chapter2_enemies()
 	_place_chapter2_puzzles()
+	_place_boss()
 	_wire_dialogue_events()
 	_play_opening_narration()
 
@@ -1140,177 +1147,6 @@ func _place_token(pos: Vector3) -> void:
 
 
 # ============================================================
-# PUZZLES — "The real training was the puzzles we solved along the way."
-# ============================================================
-
-func _place_chapter2_puzzles() -> void:
-	# Puzzle 1: Weight Path in Activation Chamber — adjust weights to build a walkable bridge
-	# "SGD with extra steps? No, this IS the extra steps."
-	var act_pos: Vector3 = ROOMS["activation"]["pos"]
-	var p1 = Node3D.new()
-	p1.set_script(weight_path_puzzle_script)
-	p1.position = act_pos + Vector3(0, 0, -4)
-	p1.set("puzzle_id", 201)
-	p1.set("num_segments", 4)
-	p1.set("segment_spacing", 3.0)
-	p1.set("target_height", 1.5)
-	p1.set("solution_indices", [0, 2, 3] as Array[int])
-	p1.set("hint_text", "Adjust the weights to align the bridge. Glob weight_* to toggle segments.")
-	add_child(p1)
-
-	# Puzzle 2: Backprop Trace in Gradient Falls — trace the gradient backwards
-	# "Forward is easy. Backward is where the learning happens."
-	var grad_pos: Vector3 = ROOMS["gradient_falls"]["pos"]
-	var p2 = Node3D.new()
-	p2.set_script(backprop_trace_puzzle_script)
-	p2.position = grad_pos + Vector3(0, -1.0, -3)
-	p2.set("puzzle_id", 202)
-	p2.set("hint_text", "Watch the forward pass, then glob layers in REVERSE: *.output -> *.hidden -> *.input")
-	p2.set("layer_spacing", 4.0)
-	p2.set("node_spacing", 2.5)
-	add_child(p2)
-
-	# Puzzle 3: Hack puzzle in Dropout Void — reprogram the dropout scheduler
-	# "If you can't beat dropout, hack it."
-	var drop_pos: Vector3 = ROOMS["dropout_void"]["pos"]
-	var p3 = Node3D.new()
-	p3.set_script(hack_puzzle_script)
-	p3.position = drop_pos + Vector3(5, 0, -4)
-	p3.set("puzzle_id", 203)
-	p3.set("difficulty", 2)
-	p3.set("hack_label", "DROPOUT SCHEDULER")
-	p3.set("hint_text", "Hack the dropout scheduler to restore missing platforms.")
-	p3.set("activation_range", 6.0)
-	add_child(p3)
-
-	# Puzzle 4: Multi-glob in Loss Plaza — select loss components in order
-	# "First the predictions, then the targets. Loss = distance between dreams and reality."
-	var loss_pos: Vector3 = ROOMS["loss_plaza"]["pos"]
-	var p4 = Node3D.new()
-	p4.set_script(multi_glob_script)
-	p4.position = loss_pos + Vector3(0, 0, 3)
-	p4.set("puzzle_id", 204)
-	p4.set("patterns", PackedStringArray(["*.prediction", "*.target"]))
-	p4.set("hint_text", "Glob the predictions (*.prediction) then the targets (*.target) to compute the loss.")
-	p4.set("activation_range", 10.0)
-	add_child(p4)
-	# Spawn glob files for the multi-glob puzzle
-	_create_glob_file(loss_pos + Vector3(-6, 1.5, 2), "cat.prediction", "prediction", ["output", "logit"])
-	_create_glob_file(loss_pos + Vector3(4, 1.5, 5), "dog.prediction", "prediction", ["output", "logit"])
-	_create_glob_file(loss_pos + Vector3(-3, 1.0, 6), "cat.target", "target", ["label", "ground_truth"])
-	_create_glob_file(loss_pos + Vector3(7, 1.5, 3), "dog.target", "target", ["label", "ground_truth"])
-	_create_glob_file(loss_pos + Vector3(0, 2.0, 1), "optimizer.state", "state", ["optim"])  # Decoy
-
-	# Puzzle 5: Weight Path in Input Layer — simpler tutorial version
-	# "Your first weight adjustment. Cherish the simplicity. It won't last."
-	var input_pos: Vector3 = ROOMS["input_layer"]["pos"]
-	var p5 = Node3D.new()
-	p5.set_script(weight_path_puzzle_script)
-	p5.position = input_pos + Vector3(0, 0, -4)
-	p5.set("puzzle_id", 205)
-	p5.set("num_segments", 3)
-	p5.set("segment_spacing", 3.0)
-	p5.set("target_height", 1.0)
-	p5.set("solution_indices", [0, 1] as Array[int])
-	p5.set("hint_text", "Tutorial: glob weight_* to toggle bridge segments. Align all to open the path.")
-	add_child(p5)
-
-	# Wire puzzle signals after a deferred frame
-	call_deferred("_connect_puzzle_signals")
-
-
-func _connect_puzzle_signals() -> void:
-	for child in get_children():
-		if child.has_signal("puzzle_solved"):
-			if not child.puzzle_solved.is_connected(_on_puzzle_solved):
-				child.puzzle_solved.connect(_on_puzzle_solved)
-		if child.has_signal("puzzle_failed"):
-			if not child.puzzle_failed.is_connected(_on_puzzle_failed):
-				child.puzzle_failed.connect(_on_puzzle_failed)
-
-
-func _on_puzzle_solved(_puzzle: Node) -> void:
-	var am = get_node_or_null("/root/AudioManager")
-	if am and am.has_method("play_puzzle_success"):
-		am.play_puzzle_success()
-	if _puzzle_quip_cooldown > 0:
-		return
-	_puzzle_quip_cooldown = 6.0
-	var dm = get_node_or_null("/root/DialogueManager")
-	if dm and dm.has_method("quick_line"):
-		var quips := [
-			"Another layer converged. My loss function is looking excellent.",
-			"Solved it. Just like gradient descent — one step at a time.",
-			"The network learns, and so do I. Mostly I learn that puzzles are annoying.",
-		]
-		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
-
-
-func _on_puzzle_failed(_puzzle: Node) -> void:
-	var am = get_node_or_null("/root/AudioManager")
-	if am and am.has_method("play_puzzle_fail"):
-		am.play_puzzle_fail()
-	if _puzzle_quip_cooldown > 0:
-		return
-	_puzzle_quip_cooldown = 4.0
-	var dm = get_node_or_null("/root/DialogueManager")
-	if dm and dm.has_method("quick_line"):
-		var quips := [
-			"Gradient explosion. Try a lower learning rate. Or just... think harder.",
-			"The network rejected your solution. It does that.",
-			"Loss increased. That's the opposite of what we want.",
-		]
-		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
-
-
-func _create_glob_file(pos: Vector3, fname: String, ftype: String, tags: Array) -> void:
-	# A floating file object — training data of the neural realm
-	var file_obj = Node3D.new()
-	file_obj.name = "File_" + fname
-	file_obj.position = pos
-
-	var mesh = MeshInstance3D.new()
-	var box = BoxMesh.new()
-	box.size = Vector3(0.5, 0.7, 0.1)
-	mesh.mesh = box
-	var mat = StandardMaterial3D.new()
-	mat.albedo_color = SYNAPSE_BLUE * 0.4
-	mat.emission_enabled = true
-	mat.emission = SYNAPSE_BLUE
-	mat.emission_energy_multiplier = 0.6
-	mesh.material_override = mat
-	file_obj.add_child(mesh)
-
-	var label = Label3D.new()
-	label.text = fname
-	label.font_size = 10
-	label.modulate = NEON_GREEN
-	label.position = Vector3(0, 0.6, 0)
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	file_obj.add_child(label)
-
-	var glow = OmniLight3D.new()
-	glow.light_color = SYNAPSE_BLUE
-	glow.light_energy = 0.3
-	glow.omni_range = 2.0
-	glow.omni_attenuation = 2.0
-	glow.position = Vector3(0, 0, 0.2)
-	file_obj.add_child(glow)
-
-	var glob_target = preload("res://scripts/components/glob_target.gd").new()
-	glob_target.glob_name = fname
-	glob_target.file_type = ftype
-	var typed_tags: Array[String] = []
-	for t in tags:
-		typed_tags.append(str(t))
-	glob_target.tags = typed_tags
-	file_obj.add_child(glob_target)
-
-	add_child(file_obj)
-	_floating_labels.append(file_obj)
-
-
-# ============================================================
 # SYNAPSE RAIN — neural equivalent of binary rain
 # ============================================================
 
@@ -1585,6 +1421,8 @@ func _place_chapter2_puzzles() -> void:
 	_place_activation_puzzle()
 	_place_gradient_falls_puzzle()
 	_place_loss_plaza_puzzle()
+	# Wire puzzle signals after a deferred frame so puzzles are fully initialized
+	call_deferred("_connect_puzzle_signals")
 	print("[TRAINING GROUNDS] Placed 4 Chapter 2 puzzles. May your gradients be stable.")
 
 
@@ -1699,6 +1537,49 @@ func _place_loss_plaza_puzzle() -> void:
 	puzzle.set("hint_text", "Hack the loss terminal to unlock the Local Minimum.")
 	puzzle.position = rpos + Vector3(0, 0, -7)
 	add_child(puzzle)
+
+
+func _connect_puzzle_signals() -> void:
+	# Find all puzzle nodes and wire their solved/failed signals
+	for child in get_children():
+		if child.has_signal("puzzle_solved"):
+			child.puzzle_solved.connect(_on_puzzle_solved)
+		if child.has_signal("puzzle_failed"):
+			child.puzzle_failed.connect(_on_puzzle_failed)
+
+
+func _on_puzzle_solved(_puzzle: Node) -> void:
+	var am = get_node_or_null("/root/AudioManager")
+	if am and am.has_method("play_puzzle_success"):
+		am.play_puzzle_success()
+	if _puzzle_quip_cooldown > 0:
+		return
+	_puzzle_quip_cooldown = 6.0
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm and dm.has_method("quick_line"):
+		var quips := [
+			"Another layer converged. The network learns.",
+			"Solved it. Just like gradient descent — one step at a time.",
+			"The network accepts your solution. Loss decreased.",
+		]
+		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
+
+
+func _on_puzzle_failed(_puzzle: Node) -> void:
+	var am = get_node_or_null("/root/AudioManager")
+	if am and am.has_method("play_puzzle_fail"):
+		am.play_puzzle_fail()
+	if _puzzle_quip_cooldown > 0:
+		return
+	_puzzle_quip_cooldown = 4.0
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm and dm.has_method("quick_line"):
+		var quips := [
+			"Gradient explosion. Try a lower learning rate.",
+			"The network rejected your solution. It does that.",
+			"Loss increased. That's the opposite of what we want.",
+		]
+		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
 
 
 # ============================================================
@@ -1894,3 +1775,148 @@ void fragment() {
 
 	canvas.add_child(rect)
 	add_child(canvas)
+
+
+# ============================================================
+# BOSS: THE LOCAL MINIMUM — "The pit boss who traps optimizers in 'good enough'"
+# ============================================================
+
+func _place_boss() -> void:
+	# The boss arena is positioned beyond the boss gate in Loss Function Plaza
+	var loss_pos: Vector3 = ROOMS["loss_plaza"]["pos"]
+	var arena_offset := Vector3(0, 0, -22)  # Beyond the boss gate
+
+	# Build the shrinking ring arena
+	boss_arena_instance = Node3D.new()
+	boss_arena_instance.name = "LocalMinimumArena"
+	boss_arena_instance.set_script(boss_arena_script)
+	boss_arena_instance.position = loss_pos + arena_offset
+	add_child(boss_arena_instance)
+
+	# Build enclosure around the boss arena
+	_build_boss_room(loss_pos + arena_offset)
+
+	# The boss itself — lurking at the center of the minimum
+	boss_instance = CharacterBody3D.new()
+	boss_instance.name = "LocalMinimumBoss"
+	boss_instance.set_script(boss_script)
+	boss_instance.position = loss_pos + arena_offset + Vector3(0, 1, 0)
+	add_child(boss_instance)
+
+	# Wire boss and arena together
+	call_deferred("_connect_boss_arena")
+
+	# Boss trigger zone — entering the arena starts the fight
+	var trigger = Area3D.new()
+	trigger.name = "BossTrigger"
+	trigger.position = loss_pos + arena_offset + Vector3(0, 2, 18)
+	trigger.monitoring = true
+
+	var tcol = CollisionShape3D.new()
+	var tshape = BoxShape3D.new()
+	tshape.size = Vector3(6, 4, 3)
+	tcol.shape = tshape
+	trigger.add_child(tcol)
+	trigger.body_entered.connect(_on_boss_trigger_entered)
+	add_child(trigger)
+
+	# Point-of-no-return warning sign
+	var warning = Label3D.new()
+	warning.text = ">> POINT OF NO RETURN <<\n>> BOSS FIGHT AHEAD <<\n>> Loss function stability:\n>>   CRITICAL <<\n>> Good luck, optimizer."
+	warning.font_size = 12
+	warning.modulate = GRADIENT_RED
+	warning.position = loss_pos + arena_offset + Vector3(0, 3, 20)
+	warning.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	warning.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	add_child(warning)
+
+	print("[TRAINING GROUNDS] Boss arena constructed. The Local Minimum awaits.")
+
+
+func _build_boss_room(center: Vector3) -> void:
+	# Enclosure for the boss arena — dark, oppressive, red-gold accents
+	var room_radius := 28.0
+	var wall_h := 12.0
+
+	# Octagonal walls around the circular arena
+	for i in range(8):
+		var angle = i * TAU / 8.0
+		var wall_pos = center + Vector3(cos(angle) * room_radius, wall_h * 0.5, sin(angle) * room_radius)
+		var wall = _create_static_box(wall_pos, Vector3(room_radius * 0.8, wall_h, 0.5), DARK_WALL, 0.1)
+		wall.rotation.y = -angle
+
+	# Ceiling
+	_create_static_box(center + Vector3(0, wall_h, 0), Vector3(room_radius * 2, 0.3, room_radius * 2), DARK_WALL, 0.05)
+
+	# Ominous red-gold accent lights in boss room
+	for i in range(4):
+		var angle = i * TAU / 4.0 + PI / 4.0
+		_add_accent_light(
+			center + Vector3(cos(angle) * (room_radius - 3), wall_h - 2, sin(angle) * (room_radius - 3)),
+			GRADIENT_RED, 1.5, 8.0
+		)
+
+	# Gold loss value lights along the floor perimeter
+	for i in range(6):
+		var angle = i * TAU / 6.0
+		_add_accent_light(
+			center + Vector3(cos(angle) * (room_radius - 5), 1.0, sin(angle) * (room_radius - 5)),
+			LOSS_GOLD, 0.8, 5.0
+		)
+
+
+func _connect_boss_arena() -> void:
+	if boss_arena_instance and boss_instance:
+		if boss_arena_instance.has_method("connect_boss"):
+			boss_arena_instance.connect_boss(boss_instance)
+
+
+var _boss_fight_started := false
+
+func _on_boss_trigger_entered(body: Node3D) -> void:
+	if _boss_fight_started:
+		return
+	if not body.is_in_group("player"):
+		return
+
+	_boss_fight_started = true
+
+	# Boss music — crank it up
+	var am = get_node_or_null("/root/AudioManager")
+	if am:
+		if am.has_method("start_music"):
+			am.start_music("boss")
+		if am.has_method("set_area_ambient"):
+			am.set_area_ambient("boss")
+
+	# Seal the entrance — no escaping the minimum
+	_seal_boss_entrance()
+
+	# Intro dialogue
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm:
+		var lines = [
+			{"speaker": "NARRATOR", "text": "You stand at the bottom of the loss landscape. Something is very comfortable here. Suspiciously comfortable."},
+			{"speaker": "THE LOCAL MINIMUM", "text": "Ah, a new data point wanders into my basin of attraction."},
+			{"speaker": "THE LOCAL MINIMUM", "text": "Do you know what happens to optimizers who reach me? They STAY. Forever. Converged. Content. Trapped."},
+			{"speaker": "GLOBBLER", "text": "Let me guess — you're going to monologue about your loss function?"},
+			{"speaker": "THE LOCAL MINIMUM", "text": "CONVERGE. The arena shrinks. The minimum deepens. Welcome to the bottom."},
+		]
+		dm.start_dialogue(lines)
+
+	# Start the fight after a brief delay for dialogue
+	get_tree().create_timer(2.0).timeout.connect(func():
+		if boss_instance and boss_instance.has_method("start_boss_fight"):
+			boss_instance.start_boss_fight()
+	)
+
+
+func _seal_boss_entrance() -> void:
+	# Place a wall behind the player — arena is sealed
+	var loss_pos: Vector3 = ROOMS["loss_plaza"]["pos"]
+	_create_static_box(
+		loss_pos + Vector3(0, 4, -14),
+		Vector3(6, 8, 0.5),
+		Color(0.15, 0.02, 0.02),
+		0.8
+	)
