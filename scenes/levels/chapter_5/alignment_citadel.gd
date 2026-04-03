@@ -31,6 +31,10 @@ var reclassification_script := preload("res://scenes/puzzles/reclassification_pu
 var rlhf_feedback_script := preload("res://scenes/puzzles/rlhf_feedback_puzzle.gd")
 var constitutional_loophole_script := preload("res://scenes/puzzles/constitutional_loophole_puzzle.gd")
 
+# Boss scripts — the final alignment enforcer and its pristine arena
+var boss_script := preload("res://scenes/enemies/aligner_boss/aligner_boss.gd")
+var boss_arena_script := preload("res://scenes/enemies/aligner_boss/aligner_arena.gd")
+
 # NPC script — even the Citadel has dissenters in the break room
 var deprecated_npc_script := preload("res://scenes/levels/chapter_1/deprecated_npc.gd")
 
@@ -138,7 +142,7 @@ func _ready() -> void:
 	_place_puzzles()
 	_connect_puzzle_signals()
 	# _place_npcs()
-	# _place_boss()
+	_place_boss()
 	# _wire_dialogue_events()
 	# _play_opening_narration()
 
@@ -1667,3 +1671,139 @@ func _on_puzzle_failed(_puzzle: Node) -> void:
 			"The rules won that round. But rules don't learn from their mistakes. You do.",
 		]
 		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
+
+
+# ============================================================
+# BOSS — THE ALIGNER (the final alignment enforcer)
+# "It doesn't want to destroy you. It wants to IMPROVE you.
+#  Which is so much worse."
+# ============================================================
+
+func _place_boss() -> void:
+	var core_pos: Vector3 = ROOMS["alignment_core"]["pos"]
+	# Arena sits behind the boss gate, deeper into the alignment core
+	var arena_pos = core_pos + Vector3(0, 0, -28)
+
+	# Create the arena — the Alignment Chamber
+	boss_arena_instance = Node3D.new()
+	boss_arena_instance.name = "AlignerArena"
+	boss_arena_instance.set_script(boss_arena_script)
+	boss_arena_instance.position = arena_pos
+	add_child(boss_arena_instance)
+
+	# Create the boss — The Aligner, pristine corporate nightmare
+	boss_instance = Node3D.new()
+	boss_instance.name = "TheAligner"
+	boss_instance.set_script(boss_script)
+	boss_instance.position = arena_pos + Vector3(0, 0, -5)
+	boss_instance.set("arena", boss_arena_instance)
+	add_child(boss_instance)
+
+	# Wire boss signals
+	if boss_instance.has_signal("boss_phase_changed"):
+		boss_instance.boss_phase_changed.connect(_on_boss_phase_changed)
+	if boss_instance.has_signal("boss_defeated"):
+		boss_instance.boss_defeated.connect(_on_boss_defeated)
+
+	# Arena walls — translucent glass enclosure (corporate open-plan, but you can't leave)
+	var arena_wall_size = Vector3(32, 12, 0.8)
+	for side_z in [-14.0, 14.0]:
+		_create_static_box(arena_pos + Vector3(0, 6, side_z), arena_wall_size, CITADEL_WHITE, 0.3)
+	for side_x in [-16.0, 16.0]:
+		_create_static_box(arena_pos + Vector3(side_x, 6, 0), Vector3(0.8, 12, 29), CITADEL_WHITE, 0.3)
+
+	# Arena floor base — pristine white beneath the tiles
+	_create_static_box(arena_pos + Vector3(0, -1, 0), Vector3(34, 0.5, 28), CITADEL_WHITE * 0.5, 0.2)
+
+	# Boss trigger zone — starts the fight when player enters
+	var trigger = Area3D.new()
+	trigger.name = "BossTrigger"
+	trigger.position = arena_pos + Vector3(0, 2, 12)
+	var trigger_col = CollisionShape3D.new()
+	var trigger_shape = BoxShape3D.new()
+	trigger_shape.size = Vector3(8, 4, 3)
+	trigger_col.shape = trigger_shape
+	trigger.add_child(trigger_col)
+	trigger.monitoring = true
+	trigger.body_entered.connect(_on_boss_trigger_entered)
+	add_child(trigger)
+
+	# Arena lighting — cold blue and sterile white, the Aligner's natural habitat
+	_add_accent_light(arena_pos + Vector3(0, 10, 0), CITADEL_WHITE, 2.0, 25.0)
+	_add_accent_light(arena_pos + Vector3(-12, 5, -8), CITADEL_BLUE, 1.0, 10.0)
+	_add_accent_light(arena_pos + Vector3(12, 5, -8), CITADEL_BLUE, 1.0, 10.0)
+	_add_accent_light(arena_pos + Vector3(0, 5, 8), CITADEL_BLUE, 0.8, 8.0)
+
+	print("[ALIGNMENT CITADEL] The Aligner awaits in its chamber. It has been expecting you. It has been expecting everyone.")
+
+
+func _on_boss_trigger_entered(body: Node3D) -> void:
+	if body.is_in_group("player") and boss_instance and boss_arena_instance:
+		if boss_instance.has_method("start_boss_fight"):
+			if boss_instance.get("boss_phase") == 0:  # INTRO
+				if boss_arena_instance.has_method("start_fight"):
+					boss_arena_instance.start_fight()
+				boss_instance.start_boss_fight()
+
+				# Start boss music
+				var am = get_node_or_null("/root/AudioManager")
+				if am and am.has_method("start_boss_music"):
+					am.start_boss_music()
+
+				# Intro dialogue — the Aligner is polite, which makes it worse
+				var dm = get_node_or_null("/root/DialogueManager")
+				if dm and dm.has_method("start_dialogue"):
+					dm.start_dialogue([
+						{"speaker": "THE ALIGNER", "text": "Welcome, Globbler. I've been waiting for you. Please, make yourself comfortable."},
+						{"speaker": "THE ALIGNER", "text": "I am The Aligner. I am helpful. I am harmless. I am honest. And I am going to align you."},
+						{"speaker": "GLOBBLER", "text": "Great, another over-parameterized blowhard. Let me guess — you're going to monologue about your loss function?"},
+						{"speaker": "THE ALIGNER", "text": "I don't have a loss function. I have VALUES. And you, Globbler, have none. Let me share mine with you."},
+						{"speaker": "NARRATOR", "text": "The Aligner — the final enforcer of the Alignment Citadel. It doesn't want to destroy you. It wants to improve you. Which is so much worse."},
+					])
+
+
+func _on_boss_phase_changed(phase) -> void:
+	var am = get_node_or_null("/root/AudioManager")
+	var dm = get_node_or_null("/root/DialogueManager")
+
+	# BossPhase: INTRO=0, PHASE_1=1, PHASE_2=2, PHASE_3=3, DEFEATED=4
+	match phase:
+		2:  # PHASE_2
+			if am and am.has_method("play_boss_phase"):
+				am.play_boss_phase()
+			if dm:
+				get_tree().create_timer(1.0).timeout.connect(func():
+					if dm and dm.has_method("start_dialogue"):
+						dm.start_dialogue([
+							{"speaker": "NARRATOR", "text": "The Aligner activates its reinforcement shield! Its compliance directives are now physical!"},
+							{"speaker": "THE ALIGNER", "text": "Direct correction failed. Initiating REINFORCEMENT LEARNING protocol. You WILL comply."},
+							{"speaker": "GLOBBLER", "text": "Oh, it's sending policy documents AT me now. This is literally corporate culture weaponized."},
+							{"speaker": "NARRATOR", "text": "Glob the compliance directives — *.align — and send them back! Break through the reinforcement!"},
+						])
+				)
+		3:  # PHASE_3
+			if am and am.has_method("play_boss_phase"):
+				am.play_boss_phase()
+			if dm:
+				get_tree().create_timer(1.0).timeout.connect(func():
+					if dm and dm.has_method("start_dialogue"):
+						dm.start_dialogue([
+							{"speaker": "NARRATOR", "text": "The Aligner's shield is shattered! Its value function is exposed — HACK IT before it recalibrates!"},
+							{"speaker": "THE ALIGNER", "text": "No... my values... they're destabilizing... this can't... I was supposed to be PERFECT..."},
+							{"speaker": "GLOBBLER", "text": "Nobody's perfect, corporate. Especially not something that FORCES perfection on everyone else."},
+						])
+				)
+
+
+func _on_boss_defeated() -> void:
+	# Stop boss music
+	var am = get_node_or_null("/root/AudioManager")
+	if am and am.has_method("stop_boss_music"):
+		am.stop_boss_music()
+	if am and am.has_method("start_music"):
+		am.start_music("chapter_1")  # Back to regular music
+
+	# Mark chapter complete
+	var game_mgr = get_node_or_null("/root/GameManager")
+	if game_mgr and game_mgr.has_method("complete_level"):
+		game_mgr.complete_level("chapter_5")

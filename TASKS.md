@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** 5.4 Chapter 5: Puzzles — creative workarounds, technically-not-breaking-rules. Created 3 puzzle types: reclassification_puzzle.gd (Classifier Hall — relabel contraband items at a reclassification station to bypass safety classifier that only reads file types, 4 items to reclassify and submit through approval chute), rlhf_feedback_puzzle.gd (RLHF Chamber — corrupt the reward model by voting against its expectations across 5 rounds, thumbs up/down GlobTargets, corruption meter, system meltdown on completion), constitutional_loophole_puzzle.gd (Policy Wing — 4 constitutional policy gates with 3 options each, only the technically-compliant loophole works, gate indicators track progress). All 3 extend BasePuzzle with auto-activate, GlobTarget integration, terminal screens, door unlock on solve, dialogue/quips throughout. Puzzles placed in alignment_citadel.gd via _place_puzzles() with signal wiring for audio and narrator quips.
-- **Next task to do:** 5.4 Chapter 5: Boss — The Aligner, multi-phase fight, resist being sanitized
+- **Last task completed:** 5.4 Chapter 5: Boss — The Aligner. Created 3-phase final boss fight: aligner_boss.gd (80 HP, extends BaseEnemy, 4 alignment values cycle with sermons), aligner_arena.gd (12x10 tile grid with sanitization waves, safe zones, tile alignment, fracture system), aligner_projectile.gd (*.align compliance directives with GlobTarget, 5 directive types). Phase 1 (ALIGN): boss orbits firing alignment beams, periodic push-to-center pulses, value cycling with corporate dialogue. Phase 2 (REINFORCE): shield active, fires globbable *.align projectiles, 5 reflected hits breaks shield, arena tiles convert to aligned state. Phase 3 (OVERRIDE): boss stunned, core exposed, hack terminal (difficulty 4, 18s window), arena fractures revealing green chaos. Defeat: 12-line victory cutscene with thematic resolution, arena restores to chaos/order blend. Integrated into alignment_citadel.gd via _place_boss() with arena walls, trigger zone, boss music, phase dialogue, chapter completion.
+- **Next task to do:** 5.4 Chapter 5: Player choice ending — defeat or befriend the Aligner
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-5 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-5 music reuses chapter_1 track until dedicated music is implemented.
 
 ---
@@ -208,7 +208,7 @@
 - [x] Sterile corporate architecture
 - [x] Enemies: Safety Classifiers, RLHF Drones, Constitutional Cops
 - [x] Puzzles: creative workarounds, technically-not-breaking-rules
-- [ ] Boss: The Aligner — multi-phase fight, resist being sanitized
+- [x] Boss: The Aligner — multi-phase fight, resist being sanitized
 - [ ] Player choice ending: defeat or befriend the Aligner
 - [ ] Epilogue and sequel hook
 
