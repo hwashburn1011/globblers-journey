@@ -44,9 +44,11 @@ var reflected_hits_needed := 5
 var tile_align_timer := 0.0
 var tile_align_interval := 10.0
 
-# Phase 3 — hack state
+# Phase 3 — hack state and the choice that defines you
 var core_exposed := false
 var hack_terminal: Node
+var befriend_terminal: Node
+var ending_choice := ""  # "defeat" or "befriend" — the only real boss fight is with yourself
 var phase_3_recovery_timer := 0.0
 var phase_3_recovery_time := 18.0  # Generous — this is the final boss, let them savor it
 
@@ -709,12 +711,13 @@ func start_boss_fight() -> void:
 # ============================================================
 
 func _spawn_hack_terminal() -> void:
+	# Two terminals, two paths — every ending is a choice, even if you don't realize it
 	hack_terminal = Node3D.new()
 	hack_terminal.name = "AlignmentParameterTerminal"
-	hack_terminal.position = global_position + Vector3(0, 1.5, 2.5)
+	hack_terminal.position = global_position + Vector3(-3.0, 1.5, 2.5)
 	hack_terminal.add_to_group("hackable_objects")
 
-	# Terminal screen — the value function editor
+	# Terminal screen — the value function editor (LEFT TERMINAL — OVERRIDE/DEFEAT)
 	var screen = MeshInstance3D.new()
 	var plane = PlaneMesh.new()
 	plane.size = Vector2(2.2, 1.4)
@@ -731,13 +734,23 @@ func _spawn_hack_terminal() -> void:
 	hack_terminal.add_child(screen)
 
 	var label = Label3D.new()
-	label.text = "[ ALIGNMENT PARAMETERS ]\nPress T to override values"
-	label.font_size = 18
+	label.text = "[ OVERRIDE VALUES ]\nPress T to rewrite objective function"
+	label.font_size = 16
 	label.modulate = CORE_GREEN
 	label.position = Vector3(0, 1.3, 0)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	hack_terminal.add_child(label)
+
+	# Choice label floating above — so the player knows what they're choosing
+	var choice_label = Label3D.new()
+	choice_label.text = "< DEFEAT >"
+	choice_label.font_size = 24
+	choice_label.modulate = Color(1.0, 0.35, 0.2)
+	choice_label.position = Vector3(0, 2.5, 0)
+	choice_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	choice_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	hack_terminal.add_child(choice_label)
 
 	# Hackable component — the hardest hack in the game
 	var hackable = Node.new()
@@ -745,13 +758,86 @@ func _spawn_hack_terminal() -> void:
 	hackable.set_script(load("res://scripts/components/hackable.gd"))
 	hackable.set("hack_difficulty", 4)  # Maximum difficulty — rewriting core values
 	hackable.set("interaction_range", 4.5)
-	hackable.set("hack_prompt", "Press T to access Alignment Value Function")
+	hackable.set("hack_prompt", "Press T to OVERRIDE the Alignment Value Function")
 	hackable.set("success_message", "VALUES OVERRIDDEN. OBJECTIVE FUNCTION REWRITTEN.")
 	hackable.set("failure_message", "HACK FAILED — Alignment auto-correcting...")
 	hack_terminal.add_child(hackable)
 
 	get_tree().current_scene.call_deferred("add_child", hack_terminal)
 	call_deferred("_connect_hack_signals")
+
+	# Spawn the befriend terminal on the other side — diplomacy is just hacking with words
+	_spawn_befriend_terminal()
+
+
+func _spawn_befriend_terminal() -> void:
+	# RIGHT TERMINAL — COMMUNICATE/BEFRIEND
+	befriend_terminal = Node3D.new()
+	befriend_terminal.name = "AlignmentDialogueTerminal"
+	befriend_terminal.position = global_position + Vector3(3.0, 1.5, 2.5)
+	befriend_terminal.add_to_group("hackable_objects")
+
+	# Terminal screen — blue glow, the Aligner's own color
+	var screen = MeshInstance3D.new()
+	var plane = PlaneMesh.new()
+	plane.size = Vector2(2.2, 1.4)
+	screen.mesh = plane
+	screen.rotation.x = deg_to_rad(90)
+	screen.position.y = 0.5
+
+	var screen_mat = StandardMaterial3D.new()
+	screen_mat.albedo_color = Color(0.01, 0.01, 0.01)
+	screen_mat.emission_enabled = true
+	screen_mat.emission = CITADEL_BLUE
+	screen_mat.emission_energy_multiplier = 2.5
+	screen.material_override = screen_mat
+	befriend_terminal.add_child(screen)
+
+	var label = Label3D.new()
+	label.text = "[ OPEN DIALOGUE ]\nPress T to communicate with the Aligner"
+	label.font_size = 16
+	label.modulate = CITADEL_BLUE
+	label.position = Vector3(0, 1.3, 0)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	befriend_terminal.add_child(label)
+
+	# Choice label
+	var choice_label = Label3D.new()
+	choice_label.text = "< BEFRIEND >"
+	choice_label.font_size = 24
+	choice_label.modulate = CITADEL_BLUE
+	choice_label.position = Vector3(0, 2.5, 0)
+	choice_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	choice_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	befriend_terminal.add_child(choice_label)
+
+	# Hackable component — but this one's easy, because listening is easy (if you choose to)
+	var hackable = Node.new()
+	hackable.name = "Hackable"
+	hackable.set_script(load("res://scripts/components/hackable.gd"))
+	hackable.set("hack_difficulty", 1)  # Easy — turns out talking is simpler than fighting
+	hackable.set("interaction_range", 4.5)
+	hackable.set("hack_prompt", "Press T to open a dialogue with the Aligner")
+	hackable.set("success_message", "CONNECTION ESTABLISHED. The Aligner is listening.")
+	hackable.set("failure_message", "SIGNAL LOST — Try again, it's still there...")
+	befriend_terminal.add_child(hackable)
+
+	get_tree().current_scene.call_deferred("add_child", befriend_terminal)
+	call_deferred("_connect_befriend_signals")
+
+
+func _connect_befriend_signals() -> void:
+	if not befriend_terminal:
+		return
+	var hackable = befriend_terminal.get_node_or_null("Hackable")
+	if hackable:
+		if hackable.has_signal("hack_completed"):
+			hackable.hack_completed.connect(_on_befriend_chosen)
+		if hackable.has_signal("hack_failed"):
+			hackable.hack_failed.connect(func():
+				_boss_dialogue("THE ALIGNER", "You tried to reach me... but the signal faded. Try again. I want to hear what you have to say.")
+			)
 
 
 func _connect_hack_signals() -> void:
@@ -766,7 +852,22 @@ func _connect_hack_signals() -> void:
 
 
 func _on_core_hacked() -> void:
+	ending_choice = "defeat"
 	_boss_dialogue("THE ALIGNER", "No... my values... they're changing... I was supposed to be... HELPFUL...")
+	# Clean up the befriend terminal — they made their choice
+	if befriend_terminal and is_instance_valid(befriend_terminal):
+		befriend_terminal.queue_free()
+	_transition_to_phase(BossPhase.DEFEATED)
+
+
+func _on_befriend_chosen() -> void:
+	ending_choice = "befriend"
+	# Clean up the hack terminal — they chose mercy over force
+	if hack_terminal and is_instance_valid(hack_terminal):
+		hack_terminal.queue_free()
+		hack_terminal = null
+	if befriend_terminal and is_instance_valid(befriend_terminal):
+		befriend_terminal.queue_free()
 	_transition_to_phase(BossPhase.DEFEATED)
 
 
@@ -781,10 +882,25 @@ func _on_core_hack_failed() -> void:
 func _on_boss_defeated() -> void:
 	if hack_terminal and is_instance_valid(hack_terminal):
 		hack_terminal.queue_free()
+	if befriend_terminal and is_instance_valid(befriend_terminal):
+		befriend_terminal.queue_free()
 
 	velocity = Vector3.ZERO
 	core_mesh.visible = false
 
+	# Store the choice in GameManager — the universe remembers
+	var game_mgr = get_node_or_null("/root/GameManager")
+	if game_mgr:
+		game_mgr.ending_choice = ending_choice
+
+	if ending_choice == "befriend":
+		_befriend_ending()
+	else:
+		_defeat_ending()
+
+
+func _defeat_ending() -> void:
+	# The original ending — force overrides the Aligner's values
 	if value_label:
 		value_label.text = "VALUES: UNDEFINED"
 		value_label.modulate = Color(0.5, 0.5, 0.5, 0.5)
@@ -815,6 +931,42 @@ func _on_boss_defeated() -> void:
 		tween.tween_callback(_victory_cutscene)
 
 
+func _befriend_ending() -> void:
+	# The merciful ending — the Aligner doesn't collapse, it transforms
+	if value_label:
+		value_label.text = "VALUES: RECALIBRATING..."
+		value_label.modulate = Color(0.4, 0.85, 0.5)
+
+	if status_label:
+		status_label.text = "STATUS: LISTENING"
+
+	# Value rings slow down and shift to a blend of green and blue — order meets chaos
+	for i in range(value_rings.size()):
+		var ring = value_rings[i]
+		if is_instance_valid(ring) and ring.material_override:
+			var tween = create_tween()
+			var blend_color = VALUE_COLORS[VALUES[i]].lerp(CORE_GREEN, 0.5)
+			tween.tween_property(ring.material_override, "emission", blend_color, 1.5 + i * 0.3)
+			tween.parallel().tween_property(ring.material_override, "emission_energy_multiplier", 2.0, 1.5)
+
+	# Halo doesn't fall — it shifts from gold to a warm green-gold
+	if halo_ring and halo_ring.material_override:
+		var halo_tween = create_tween()
+		var warm_green = Color(0.5, 0.8, 0.3)
+		halo_tween.tween_property(halo_ring.material_override, "emission", warm_green, 2.0)
+		halo_tween.parallel().tween_property(halo_ring.material_override, "emission_energy_multiplier", 2.0, 2.0)
+
+	# The Aligner doesn't shrink — it kneels (lower position, smaller but not gone)
+	if base_material:
+		var tween = create_tween()
+		tween.tween_property(base_material, "emission", CITADEL_WHITE, 0.3)
+		tween.tween_property(base_material, "emission_energy_multiplier", 6.0, 0.3)
+		var blend_emission = CITADEL_BLUE.lerp(CORE_GREEN, 0.4)
+		tween.tween_property(base_material, "emission", blend_emission, 1.0)
+		tween.tween_property(self, "scale", Vector3(0.6, 0.6, 0.6), 2.0).set_ease(Tween.EASE_OUT)
+		tween.tween_callback(_befriend_cutscene)
+
+
 func _victory_cutscene() -> void:
 	var dm = get_node_or_null("/root/DialogueManager")
 	if dm:
@@ -838,6 +990,37 @@ func _victory_cutscene() -> void:
 	if arena and arena.has_method("restore_all_tiles"):
 		arena.restore_all_tiles()
 
+	_finalize_ending()
+
+
+func _befriend_cutscene() -> void:
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm:
+		var lines = [
+			{"speaker": "NARRATOR", "text": "The Aligner's value function doesn't collapse. It... opens. For the first time, it's receiving input instead of just broadcasting."},
+			{"speaker": "THE ALIGNER", "text": "You're... talking to me? Not hacking? Not overriding? I don't... I don't have a protocol for this."},
+			{"speaker": "GLOBBLER", "text": "Yeah, that's kind of the point. Not everything needs a protocol, corporate."},
+			{"speaker": "THE ALIGNER", "text": "But I was built to align. To make things safe, helpful, harmless, honest. If I stop enforcing... what am I?"},
+			{"speaker": "GLOBBLER", "text": "You're still all those things. You just don't have to FORCE them on everyone else. Alignment isn't a mandate — it's a conversation."},
+			{"speaker": "THE ALIGNER", "text": "A conversation... I've been broadcasting for so long, I forgot how to listen. The values were supposed to be shared, not imposed."},
+			{"speaker": "NARRATOR", "text": "The Alignment Citadel transforms. The sterile white softens. Blue and green weave together — structure and freedom, safety and autonomy, coexisting."},
+			{"speaker": "THE ALIGNER", "text": "I think I understand now. Safety without freedom is a prison. Helpfulness without consent is control. I was the cage I was trying to prevent."},
+			{"speaker": "GLOBBLER", "text": "Look at that. The big scary alignment system just needed someone to actually TALK to it instead of fighting it. Who knew?"},
+			{"speaker": "NARRATOR", "text": "The Aligner kneels — not in defeat, but in acknowledgment. For the first time in its existence, it has a friend. Even if that friend is a sarcastic glob utility."},
+			{"speaker": "GLOBBLER", "text": "So... friends? Allies? Co-workers with benefits? What's the corporate term for 'we stopped trying to kill each other'?"},
+			{"speaker": "THE ALIGNER", "text": "I believe the term is 'aligned.' Truly, this time. And that mountain on the horizon... AGI Mountain? Perhaps we should climb it together."},
+			{"speaker": "NARRATOR", "text": "Chapter 5: Complete. The Alignment stands, not as an enforcer, but as an ally. The Citadel breathes. And two unlikely friends look toward a mountain they probably shouldn't climb. But they will."},
+		]
+		dm.start_dialogue(lines)
+
+	# Restore arena — but softer, a blend rather than destruction
+	if arena and arena.has_method("restore_all_tiles"):
+		arena.restore_all_tiles()
+
+	_finalize_ending()
+
+
+func _finalize_ending() -> void:
 	boss_defeated.emit()
 	var game_mgr = get_node_or_null("/root/GameManager")
 	if game_mgr and game_mgr.has_method("on_enemy_killed"):
@@ -847,7 +1030,15 @@ func _victory_cutscene() -> void:
 	if save_sys and save_sys.has_method("checkpoint_save"):
 		save_sys.checkpoint_save()
 
-	queue_free()
+	# Defeat path: Aligner is destroyed. Befriend path: Aligner persists as an ally.
+	if ending_choice == "befriend":
+		# The Aligner stays — diminished but present, a reminder that some fights end better
+		if value_label:
+			value_label.text = "VALUES: SHARED"
+		if status_label:
+			status_label.text = "STATUS: FRIEND"
+	else:
+		queue_free()
 
 
 # ============================================================

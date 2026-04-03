@@ -27,6 +27,9 @@ var level_started := false
 # Level completion
 var level_goal_reached := false
 
+# Ending choice — "defeat" or "befriend" (the Aligner remembers, even if you don't)
+var ending_choice := ""
+
 var level_names := {
 	1: "The Token Stream - Tutorial",
 	2: "Hallucination Halls",

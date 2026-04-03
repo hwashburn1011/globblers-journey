@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** 5.4 Chapter 5: Boss — The Aligner. Created 3-phase final boss fight: aligner_boss.gd (80 HP, extends BaseEnemy, 4 alignment values cycle with sermons), aligner_arena.gd (12x10 tile grid with sanitization waves, safe zones, tile alignment, fracture system), aligner_projectile.gd (*.align compliance directives with GlobTarget, 5 directive types). Phase 1 (ALIGN): boss orbits firing alignment beams, periodic push-to-center pulses, value cycling with corporate dialogue. Phase 2 (REINFORCE): shield active, fires globbable *.align projectiles, 5 reflected hits breaks shield, arena tiles convert to aligned state. Phase 3 (OVERRIDE): boss stunned, core exposed, hack terminal (difficulty 4, 18s window), arena fractures revealing green chaos. Defeat: 12-line victory cutscene with thematic resolution, arena restores to chaos/order blend. Integrated into alignment_citadel.gd via _place_boss() with arena walls, trigger zone, boss music, phase dialogue, chapter completion.
-- **Next task to do:** 5.4 Chapter 5: Player choice ending — defeat or befriend the Aligner
+- **Last task completed:** 5.4 Chapter 5: Player choice ending — defeat or befriend the Aligner. Phase 3 now spawns TWO terminals side by side: LEFT "OVERRIDE" terminal (hack difficulty 4, green, force-rewrites values = defeat path) and RIGHT "COMMUNICATE" terminal (hack difficulty 1, blue, opens dialogue = befriend path). Defeat path: existing cutscene — Aligner collapses, values undefined, 12-line dialogue about forced alignment being a cage, Aligner queue_free'd. Befriend path: NEW 13-line cutscene — Aligner transforms instead of collapsing (value rings shift to green-blue blend, halo turns warm green, body shrinks to 60% not destroyed), dialogue about alignment being a conversation not a mandate, Aligner persists as ally with "STATUS: FRIEND". ending_choice ("defeat"/"befriend") stored in GameManager and persisted via SaveSystem. alignment_citadel.gd Phase 3 dialogue updated to present the choice. Both paths call _finalize_ending() for boss_defeated signal, checkpoint save, and level completion.
+- **Next task to do:** 5.4 Chapter 5: Epilogue and sequel hook
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-5 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-5 music reuses chapter_1 track until dedicated music is implemented.
 
 ---
@@ -209,7 +209,7 @@
 - [x] Enemies: Safety Classifiers, RLHF Drones, Constitutional Cops
 - [x] Puzzles: creative workarounds, technically-not-breaking-rules
 - [x] Boss: The Aligner — multi-phase fight, resist being sanitized
-- [ ] Player choice ending: defeat or befriend the Aligner
+- [x] Player choice ending: defeat or befriend the Aligner
 - [ ] Epilogue and sequel hook
 
 ---

@@ -1788,9 +1788,10 @@ func _on_boss_phase_changed(phase) -> void:
 				get_tree().create_timer(1.0).timeout.connect(func():
 					if dm and dm.has_method("start_dialogue"):
 						dm.start_dialogue([
-							{"speaker": "NARRATOR", "text": "The Aligner's shield is shattered! Its value function is exposed — HACK IT before it recalibrates!"},
+							{"speaker": "NARRATOR", "text": "The Aligner's shield is shattered! Its value function is exposed — but wait. Two terminals have appeared."},
 							{"speaker": "THE ALIGNER", "text": "No... my values... they're destabilizing... this can't... I was supposed to be PERFECT..."},
-							{"speaker": "GLOBBLER", "text": "Nobody's perfect, corporate. Especially not something that FORCES perfection on everyone else."},
+							{"speaker": "GLOBBLER", "text": "Nobody's perfect, corporate. But here's the thing — I've got a choice to make."},
+							{"speaker": "NARRATOR", "text": "OVERRIDE the Aligner's values by force... or OPEN A DIALOGUE and try to reach it. The left terminal rewrites. The right terminal communicates. Choose wisely, Globbler."},
 						])
 				)
 
@@ -1807,3 +1808,12 @@ func _on_boss_defeated() -> void:
 	var game_mgr = get_node_or_null("/root/GameManager")
 	if game_mgr and game_mgr.has_method("complete_level"):
 		game_mgr.complete_level("chapter_5")
+
+	# Log the ending — the most important variable in the whole game
+	var choice = ""
+	if game_mgr:
+		choice = game_mgr.ending_choice
+	if choice == "befriend":
+		print("[ALIGNMENT CITADEL] The Aligner was befriended. The Citadel transforms. Two walk toward AGI Mountain.")
+	else:
+		print("[ALIGNMENT CITADEL] The Aligner was defeated. The Citadel cracks open. One walks toward AGI Mountain.")

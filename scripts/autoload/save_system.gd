@@ -29,6 +29,7 @@ var save_data := {
 	"chapters_completed": [],
 	"upgrades": {},
 	"checkpoints": {},  # level_id: { position, etc }
+	"ending_choice": "",  # "defeat" or "befriend" — the only choice that truly matters
 }
 
 signal save_completed(path: String)
@@ -97,6 +98,7 @@ func apply_loaded_data() -> void:
 		game_mgr.memory_tokens_collected = int(gd.get("memory_tokens", 0))
 		game_mgr.enemies_killed = int(gd.get("enemies_killed", 0))
 		game_mgr.context_changed.emit(game_mgr.context_window)
+		game_mgr.ending_choice = str(save_data.get("ending_choice", ""))
 
 	# Restore progression upgrades
 	var prog = get_node_or_null("/root/ProgressionManager")
@@ -126,6 +128,7 @@ func _collect_current_state() -> void:
 		save_data["game"]["memory_tokens"] = game_mgr.memory_tokens_collected
 		save_data["game"]["enemies_killed"] = game_mgr.enemies_killed
 		save_data["game"]["level_time"] = game_mgr.level_time
+		save_data["ending_choice"] = game_mgr.ending_choice
 
 	# Puzzle completion
 	var puzzles = get_tree().get_nodes_in_group("puzzles")
