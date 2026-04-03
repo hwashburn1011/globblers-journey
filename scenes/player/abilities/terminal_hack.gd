@@ -1,0 +1,294 @@
+extends Node3D
+
+# Terminal Hack - Globbler's arm-mounted terminal interfaces with hackable objects
+# "sudo rm -rf /problems — if only it were that easy."
+#
+# Press interact near a hackable object to start a minigame.
+# Success: opens doors, disables traps, reprograms enemies.
+# Failure: triggers alarm or spawns enemies.
+
+const INTERACT_RANGE := 3.5
+
+var player: CharacterBody3D
+var _nearby_hackable: Node = null
+var _is_hacking := false
+var _hack_ui: Control = null
+
+# Minigame state
+var _sequence: Array[int] = []
+var _player_input: Array[int] = []
+var _current_step := 0
+var _show_timer := 0.0
+var _input_phase := false
+var _hack_difficulty := 1
+
+# Performance: throttle hackable scanning — no need to search the entire tree 60 times a second
+var _scan_timer := 0.0
+const SCAN_INTERVAL := 0.2  # Scan 5x per second, not 60. You're welcome, CPU.
+var _cached_hackables: Array[Node] = []
+var _hackables_cache_dirty := true
+
+signal hack_started(target: Node)
+signal hack_completed(target: Node)
+signal hack_failed(target: Node)
+
+func _ready() -> void:
+	# Refresh hackable cache when tree changes
+	get_tree().node_added.connect(_on_tree_changed)
+	get_tree().node_removed.connect(_on_tree_changed)
+
+func _on_tree_changed(_node: Node) -> void:
+	_hackables_cache_dirty = true
+
+func setup(p: CharacterBody3D) -> void:
+	player = p
+
+func _process(delta: float) -> void:
+	if _is_hacking:
+		_process_hack_minigame(delta)
+		return
+
+	# Throttled scan — because polling the entire scene tree every frame is a war crime
+	_scan_timer += delta
+	if _scan_timer >= SCAN_INTERVAL:
+		_scan_timer = 0.0
+		_scan_for_hackables()
+
+func _scan_for_hackables() -> void:
+	if not player:
+		return
+
+	# Rebuild hackable cache only when the tree changed
+	if _hackables_cache_dirty:
+		_cached_hackables.clear()
+		_cached_hackables.append_array(get_tree().get_nodes_in_group("hackable"))
+		_cached_hackables.append_array(get_tree().get_nodes_in_group("hackable_objects"))
+		_hackables_cache_dirty = false
+
+	_nearby_hackable = null
+	var closest_dist := INTERACT_RANGE + 1.0
+
+	for node in _cached_hackables:
+		if not is_instance_valid(node) or not node is Node3D:
+			continue
+		var dist = player.global_position.distance_to((node as Node3D).global_position)
+		if dist >= INTERACT_RANGE or dist >= closest_dist:
+			continue
+		# Check hackable group nodes for hackable component
+		if node.is_in_group("hackable"):
+			for child in node.get_children():
+				if child.has_method("is_hackable") and child.is_hackable():
+					_nearby_hackable = node
+					closest_dist = dist
+					break
+		else:
+			# hackable_objects group — node itself is the target
+			_nearby_hackable = node
+			closest_dist = dist
+
+func try_interact() -> void:
+	if _is_hacking:
+		return
+	if not _nearby_hackable:
+		return
+
+	# Find the Hackable component
+	var hackable_comp: Node = null
+	for child in _nearby_hackable.get_children():
+		if child.has_method("start_hack"):
+			hackable_comp = child
+			break
+
+	if not hackable_comp:
+		return
+
+	# Get difficulty
+	if "hack_difficulty" in hackable_comp:
+		_hack_difficulty = hackable_comp.hack_difficulty
+
+	hackable_comp.start_hack()
+	_start_minigame()
+	hack_started.emit(_nearby_hackable)
+	# "Initiating hack sequence. Try not to drool on the keyboard."
+	var audio = get_node_or_null("/root/AudioManager")
+	if audio:
+		audio.play_hack_start()
+
+func _start_minigame() -> void:
+	_is_hacking = true
+
+	# Generate sequence based on difficulty (3-7 steps)
+	var seq_length = 3 + _hack_difficulty
+	_sequence.clear()
+	for i in range(seq_length):
+		_sequence.append(randi() % 4)  # 0=UP, 1=RIGHT, 2=DOWN, 3=LEFT
+
+	_player_input.clear()
+	_current_step = 0
+	_show_timer = 0.0
+	_input_phase = false
+
+	# Show the hack UI
+	_create_hack_ui()
+
+func _create_hack_ui() -> void:
+	if _hack_ui:
+		_hack_ui.queue_free()
+
+	_hack_ui = PanelContainer.new()
+	_hack_ui.name = "HackUI"
+
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.02, 0.02, 0.02, 0.95)
+	style.border_color = Color(0.224, 1.0, 0.078, 0.8)
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
+	style.corner_radius_bottom_left = 6
+	style.corner_radius_bottom_right = 6
+	style.content_margin_left = 20.0
+	style.content_margin_top = 15.0
+	style.content_margin_right = 20.0
+	style.content_margin_bottom = 15.0
+	_hack_ui.add_theme_stylebox_override("panel", style)
+
+	_hack_ui.anchor_left = 0.25
+	_hack_ui.anchor_top = 0.3
+	_hack_ui.anchor_right = 0.75
+	_hack_ui.anchor_bottom = 0.7
+
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 10)
+	_hack_ui.add_child(vbox)
+
+	var title = Label.new()
+	title.name = "Title"
+	title.text = "[ TERMINAL HACK - SEQUENCE MEMORY ]"
+	title.add_theme_color_override("font_color", Color(0.224, 1.0, 0.078))
+	title.add_theme_font_size_override("font_size", 20)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(title)
+
+	var seq_label = Label.new()
+	seq_label.name = "SequenceLabel"
+	seq_label.text = "Memorize the sequence..."
+	seq_label.add_theme_color_override("font_color", Color(0.3, 0.9, 0.3))
+	seq_label.add_theme_font_size_override("font_size", 24)
+	seq_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(seq_label)
+
+	var hint = Label.new()
+	hint.name = "HintLabel"
+	hint.text = "Arrow keys / D-pad: UP DOWN LEFT RIGHT | ESC/B to abort"
+	hint.add_theme_color_override("font_color", Color(0.2, 0.6, 0.2, 0.7))
+	hint.add_theme_font_size_override("font_size", 14)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(hint)
+
+	# Add to canvas layer so it renders on top
+	var canvas = CanvasLayer.new()
+	canvas.name = "HackCanvas"
+	canvas.layer = 10
+	canvas.add_child(_hack_ui)
+	add_child(canvas)
+
+func _process_hack_minigame(delta: float) -> void:
+	if not _input_phase:
+		# Show sequence phase
+		_show_timer += delta
+		var step_duration = 0.8
+		var total_show_time = _sequence.size() * step_duration + 0.5
+
+		# Update display
+		var current_show = int(_show_timer / step_duration)
+		var seq_label = _hack_ui.get_node_or_null("VBoxContainer/SequenceLabel") if _hack_ui else null
+		if not seq_label and _hack_ui:
+			# Try alternate path — UI nodes love to hide from us
+			for child in _hack_ui.get_children():
+				if child is VBoxContainer:
+					for sub in child.get_children():
+						if sub.name == "SequenceLabel":
+							seq_label = sub
+
+		if seq_label:
+			if current_show < _sequence.size():
+				var dir_names = ["UP", "RIGHT", "DOWN", "LEFT"]
+				seq_label.text = ">>> %s <<<" % dir_names[_sequence[current_show]]
+			else:
+				seq_label.text = "YOUR TURN! Repeat the sequence."
+				_input_phase = true
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not _is_hacking or not _input_phase:
+		return
+
+	# Abort hack: ESC / Start / B button
+	if event.is_action_pressed("pause") or event.is_action_pressed("ui_cancel"):
+		_end_hack(false)
+		return
+
+	# Directional input: Arrow keys / D-pad / Left stick — works with keyboard AND controller
+	var input_dir := -1
+	if event.is_action_pressed("hack_up"):
+		input_dir = 0
+	elif event.is_action_pressed("hack_right"):
+		input_dir = 1
+	elif event.is_action_pressed("hack_down"):
+		input_dir = 2
+	elif event.is_action_pressed("hack_left"):
+		input_dir = 3
+
+	if input_dir >= 0:
+		_player_input.append(input_dir)
+		# Every keypress gets a tiny bleep — satisfying terminal feedback
+		var audio = get_node_or_null("/root/AudioManager")
+		if audio:
+			audio.play_hack_keypress()
+
+		if input_dir != _sequence[_current_step]:
+			# Wrong input — hack failed!
+			_end_hack(false)
+			return
+
+		_current_step += 1
+
+		if _current_step >= _sequence.size():
+			# All correct — hack succeeded!
+			_end_hack(true)
+
+func _end_hack(success: bool) -> void:
+	_is_hacking = false
+	_input_phase = false
+
+	# Sound feedback — you'll know if you passed or failed before reading the text
+	var audio = get_node_or_null("/root/AudioManager")
+	if audio:
+		if success:
+			audio.play_hack_success()
+		else:
+			audio.play_hack_fail()
+
+	# Find hackable component and notify
+	if _nearby_hackable:
+		for child in _nearby_hackable.get_children():
+			if success and child.has_method("complete_hack"):
+				child.complete_hack()
+				hack_completed.emit(_nearby_hackable)
+			elif not success and child.has_method("fail_hack"):
+				child.fail_hack()
+				hack_failed.emit(_nearby_hackable)
+
+	# Clean up UI
+	var canvas = get_node_or_null("HackCanvas")
+	if canvas:
+		canvas.queue_free()
+	_hack_ui = null
+
+func has_nearby_hackable() -> bool:
+	return _nearby_hackable != null
+
+func is_hacking() -> bool:
+	return _is_hacking

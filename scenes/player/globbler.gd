@@ -15,7 +15,7 @@ const ROTATION_SPEED = 12.0
 # Dash — because walking is for deprecated programs
 const DASH_SPEED = 35.0
 const DASH_DURATION = 0.18
-const DASH_COOLDOWN = 0.8
+var dash_cooldown := 0.8  # Upgradeable via ProgressionManager
 
 # Wall slide — very speedrunner of me
 const WALL_SLIDE_GRAVITY = 2.0
@@ -55,10 +55,15 @@ var camera_pitch := -0.25
 var camera_distance := 7.0
 var mouse_captured := true
 
-# Glob attack
+# Glob attack — now with proper ability system
 var glob_cooldown := 0.0
 const GLOB_COOLDOWN_TIME = 0.35
 var glob_projectile_scene: PackedScene
+var glob_command: Node3D  # The full glob command ability node
+var wrench_smash: Node3D  # Melee wrench attack
+var terminal_hack: Node3D  # Hacking interaction system
+var agent_spawn: Node3D   # Sub-agent deployment — for when you need tiny incompetent help
+var upgrade_menu: CanvasLayer  # The upgrade terminal — TAB to access
 
 # Landing impact
 var prev_velocity_y := 0.0
@@ -69,9 +74,38 @@ var camera_shake_decay := 8.0
 # Dash trail particles
 var dash_particles: GPUParticles3D
 
-# Idle animation
-var idle_time := 0.0
+# Animation state machine — because even rogue AIs need choreography
+enum AnimState { IDLE, WALK, RUN, JUMP, FALL, LAND, DASH, WALL_SLIDE }
+var anim_state: AnimState = AnimState.IDLE
+var anim_time := 0.0
+var land_timer := 0.0
+const LAND_DURATION = 0.25  # How long the landing squash lasts
+
+# Footstep audio timer — because silence is suspicious
+var _footstep_timer := 0.0
+const FOOTSTEP_INTERVAL_WALK = 0.45
+const FOOTSTEP_INTERVAL_RUN = 0.3
+
+# Model node references (cached because traversing the scene tree every frame is for amateurs)
 var model_root: Node3D
+var _head: Node3D
+var _torso: Node3D
+var _left_arm: Node3D
+var _right_arm: Node3D
+var _left_leg: Node3D
+var _right_leg: Node3D
+var _left_foot: Node3D
+var _right_foot: Node3D
+var _wrench_handle: Node3D
+
+# Base positions — stored so we can animate relative offsets without drift
+var _head_base_pos: Vector3
+var _left_leg_base_pos: Vector3
+var _right_leg_base_pos: Vector3
+var _left_foot_base_pos: Vector3
+var _right_foot_base_pos: Vector3
+var _left_arm_base_rot: Vector3
+var _right_arm_base_rot: Vector3
 
 # Sarcastic commentary
 var first_jump_done := false
@@ -81,6 +115,7 @@ var first_wall_slide_done := false
 var first_glob_done := false
 var first_death_done := false
 var death_count := 0
+var _damage_quip_cooldown := 0.0  # Don't nag every time we stub our toe
 
 var sarcastic_thoughts: Array[String] = [
 	"Running glob command... just kidding, I'm just walking.",
@@ -139,11 +174,81 @@ func _ready() -> void:
 	# Dash particles
 	_setup_dash_particles()
 
-	# Preload glob projectile
+	# Preload glob projectile (legacy quick-fire)
 	glob_projectile_scene = load("res://scenes/glob_projectile.tscn")
+
+	# Set up glob command ability (the full aim+beam+select system)
+	var GlobCommandScript = load("res://scenes/player/abilities/glob_command.gd")
+	glob_command = Node3D.new()
+	glob_command.name = "GlobCommand"
+	glob_command.set_script(GlobCommandScript)
+	add_child(glob_command)
+
+	# Set up wrench smash melee ability
+	var WrenchScript = load("res://scenes/player/abilities/wrench_smash.gd")
+	wrench_smash = Node3D.new()
+	wrench_smash.name = "WrenchSmash"
+	wrench_smash.set_script(WrenchScript)
+	add_child(wrench_smash)
+
+	# Set up terminal hack interaction
+	var HackScript = load("res://scenes/player/abilities/terminal_hack.gd")
+	terminal_hack = Node3D.new()
+	terminal_hack.name = "TerminalHack"
+	terminal_hack.set_script(HackScript)
+	add_child(terminal_hack)
+
+	# Set up agent spawn — tiny clones that mostly fail
+	var AgentSpawnScript = load("res://scenes/player/abilities/agent_spawn.gd")
+	agent_spawn = Node3D.new()
+	agent_spawn.name = "AgentSpawn"
+	agent_spawn.set_script(AgentSpawnScript)
+	add_child(agent_spawn)
+
+	# Upgrade menu — the terminal-style shop for spending tokens
+	var UpgradeMenuScript = load("res://scenes/ui/upgrade_menu.gd")
+	upgrade_menu = CanvasLayer.new()
+	upgrade_menu.name = "UpgradeMenu"
+	upgrade_menu.set_script(UpgradeMenuScript)
+	add_child(upgrade_menu)
+
+	# Wire upgrade purchases to refresh abilities
+	var prog = get_node_or_null("/root/ProgressionManager")
+	if prog:
+		prog.upgrade_purchased.connect(_on_upgrade_purchased)
+
+	# Setup is deferred so camera_arm exists
+	call_deferred("_setup_glob_command")
 
 	# Capture mouse
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+func _setup_glob_command() -> void:
+	if glob_command and glob_command.has_method("setup"):
+		glob_command.setup(self, camera_arm)
+	if wrench_smash and wrench_smash.has_method("setup"):
+		wrench_smash.setup(self)
+	if terminal_hack and terminal_hack.has_method("setup"):
+		terminal_hack.setup(self)
+	if agent_spawn and agent_spawn.has_method("setup"):
+		agent_spawn.setup(self)
+	# Pull initial upgrade values
+	refresh_upgrades()
+
+## Refresh all ability stats from ProgressionManager — called after upgrades
+func refresh_upgrades() -> void:
+	var prog = get_node_or_null("/root/ProgressionManager")
+	if prog:
+		dash_cooldown = prog.get_upgrade_value("dash_cooldown")
+	if glob_command and glob_command.has_method("refresh_upgrades"):
+		glob_command.refresh_upgrades()
+	if wrench_smash and wrench_smash.has_method("refresh_upgrades"):
+		wrench_smash.refresh_upgrades()
+	if agent_spawn and agent_spawn.has_method("refresh_upgrades"):
+		agent_spawn.refresh_upgrades()
+
+func _on_upgrade_purchased(_id: String, _level: int) -> void:
+	refresh_upgrades()
 
 func _build_csg_model() -> void:
 	# Root node for the whole model so we can animate it
@@ -392,6 +497,26 @@ func _build_csg_model() -> void:
 	body_glow.position = Vector3(0, 0.75, 0)
 	model_root.add_child(body_glow)
 
+	# Cache references — no more get_node_or_null() every frame like a first-epoch model
+	_head = model_root.get_node("Head")
+	_torso = model_root.get_node("Torso")
+	_left_arm = model_root.get_node("LeftArm")
+	_right_arm = model_root.get_node("RightArm")
+	_left_leg = model_root.get_node("LeftLeg")
+	_right_leg = model_root.get_node("RightLeg")
+	_left_foot = model_root.get_node("LeftFoot")
+	_right_foot = model_root.get_node("RightFoot")
+	_wrench_handle = model_root.get_node("WrenchHandle")
+
+	# Store base transforms so animations are offsets, not absolute catastrophes
+	_head_base_pos = _head.position
+	_left_leg_base_pos = _left_leg.position
+	_right_leg_base_pos = _right_leg.position
+	_left_foot_base_pos = _left_foot.position
+	_right_foot_base_pos = _right_foot.position
+	_left_arm_base_rot = _left_arm.rotation
+	_right_arm_base_rot = _right_arm.rotation
+
 func _setup_camera() -> void:
 	camera_arm = Node3D.new()
 	camera_arm.name = "CameraArm"
@@ -432,35 +557,77 @@ func _setup_dash_particles() -> void:
 	dash_particles.position.y = 0.6
 	add_child(dash_particles)
 
+const STICK_LOOK_SENSITIVITY = 3.0  # Right stick camera speed — not too twitchy, not too sluggish
+
 func _unhandled_input(event: InputEvent) -> void:
+	# Mouse look — the OG camera control, still undefeated
 	if event is InputEventMouseMotion and mouse_captured:
 		var motion = event as InputEventMouseMotion
 		camera_yaw -= motion.relative.x * MOUSE_SENSITIVITY
 		camera_pitch -= motion.relative.y * MOUSE_SENSITIVITY
 		camera_pitch = clamp(camera_pitch, -1.2, 0.3)
 
-	if event is InputEventMouseButton:
-		var mb = event as InputEventMouseButton
-		if mb.pressed:
-			if mb.button_index == MOUSE_BUTTON_WHEEL_UP:
-				camera_distance = max(CAMERA_MIN_DIST, camera_distance - CAMERA_ZOOM_SPEED)
-			elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-				camera_distance = min(CAMERA_MAX_DIST, camera_distance + CAMERA_ZOOM_SPEED)
-			elif mb.button_index == MOUSE_BUTTON_LEFT:
-				_fire_glob()
+	# Camera zoom via input actions (scroll wheel + D-pad left/right on controller)
+	if event.is_action_pressed("camera_zoom_in"):
+		camera_distance = max(CAMERA_MIN_DIST, camera_distance - CAMERA_ZOOM_SPEED)
+	elif event.is_action_pressed("camera_zoom_out"):
+		camera_distance = min(CAMERA_MAX_DIST, camera_distance + CAMERA_ZOOM_SPEED)
 
-	if event is InputEventKey:
-		var key = event as InputEventKey
-		if key.pressed:
-			if key.keycode == KEY_ESCAPE:
-				if mouse_captured:
-					Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-					mouse_captured = false
-				else:
-					Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-					mouse_captured = true
-			elif key.keycode == KEY_E:
-				_fire_glob()
+	# Glob fire (quick): E / LClick / RT
+	if event.is_action_pressed("glob_fire"):
+		_fire_glob()
+
+	# Glob aim: RClick / LT — hold to aim, release to fire
+	if event.is_action_pressed("glob_aim"):
+		if glob_command and glob_command.has_method("start_aim"):
+			glob_command.start_aim()
+	elif event.is_action_released("glob_aim"):
+		if glob_command and glob_command.has_method("fire_glob"):
+			glob_command.fire_glob("*")
+
+	# Glob aimed fire: R key (instant fire without hold)
+	if event.is_action_pressed("glob_fire_aimed"):
+		if glob_command and glob_command.has_method("fire_glob"):
+			glob_command.fire_glob("*")
+
+	# Glob cycle action: Q / LB — grab, push, absorb
+	if event.is_action_pressed("glob_cycle"):
+		if glob_command and glob_command.has_method("cycle_action"):
+			glob_command.cycle_action()
+
+	# Wrench smash: F / RB — bonk time
+	if event.is_action_pressed("wrench_smash"):
+		if wrench_smash and wrench_smash.has_method("swing"):
+			wrench_smash.swing()
+
+	# Interact / Hack: T / Y button
+	if event.is_action_pressed("interact"):
+		if terminal_hack and terminal_hack.has_method("try_interact"):
+			terminal_hack.try_interact()
+
+	# Spawn agent: G / D-pad Up — deploy the tiny idiots
+	if event.is_action_pressed("agent_spawn"):
+		if agent_spawn and agent_spawn.has_method("try_spawn"):
+			agent_spawn.try_spawn()
+
+	# Cycle agent task: V / D-pad Down
+	if event.is_action_pressed("agent_cycle"):
+		if agent_spawn and agent_spawn.has_method("cycle_task"):
+			agent_spawn.cycle_task()
+
+	# Upgrade menu: TAB / Select button — time to spend those tokens
+	if event.is_action_pressed("upgrade_menu"):
+		if upgrade_menu and upgrade_menu.has_method("toggle"):
+			upgrade_menu.toggle()
+
+	# Pause / mouse toggle: ESC / Start
+	if event.is_action_pressed("pause"):
+		if mouse_captured:
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+			mouse_captured = false
+		else:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+			mouse_captured = true
 
 func _physics_process(delta: float) -> void:
 	_update_timers(delta)
@@ -478,9 +645,10 @@ func _physics_process(delta: float) -> void:
 	was_on_floor = is_on_floor()
 	move_and_slide()
 	_update_camera(delta)
-	_update_idle_animation(delta)
+	_update_anim_state()
+	_animate(delta)
 
-	# Sarcastic thoughts on a timer
+	# Sarcastic thoughts on a timer — even robots need to monologue
 	thought_timer += delta
 	if thought_timer >= thought_interval:
 		thought_timer = 0.0
@@ -494,7 +662,7 @@ func _update_timers(delta: float) -> void:
 	else:
 		coyote_timer -= delta
 
-	if Input.is_action_just_pressed("ui_accept"):
+	if Input.is_action_just_pressed("jump"):
 		jump_buffer_timer = JUMP_BUFFER_TIME
 	else:
 		jump_buffer_timer -= delta
@@ -505,6 +673,8 @@ func _update_timers(delta: float) -> void:
 		glob_cooldown -= delta
 	if camera_shake_amount > 0:
 		camera_shake_amount = move_toward(camera_shake_amount, 0.0, camera_shake_decay * delta)
+	if _damage_quip_cooldown > 0:
+		_damage_quip_cooldown -= delta
 
 func _handle_gravity(delta: float) -> void:
 	if is_dashing:
@@ -526,16 +696,19 @@ func _handle_wall_slide(_delta: float) -> void:
 
 func _handle_jump() -> void:
 	var can_ground_jump = (is_on_floor() or coyote_timer > 0) and not is_dashing
-	if can_ground_jump and (Input.is_action_just_pressed("ui_accept") or jump_buffer_timer > 0):
+	if can_ground_jump and (Input.is_action_just_pressed("jump") or jump_buffer_timer > 0):
 		velocity.y = JUMP_VELOCITY
 		coyote_timer = 0.0
 		jump_buffer_timer = 0.0
+		var am = get_node_or_null("/root/AudioManager")
+		if am:
+			am.play_jump()
 		if not first_jump_done:
 			first_jump_done = true
 			thought_bubble.emit(contextual_thoughts["first_jump"])
 		return
 
-	if is_wall_sliding and Input.is_action_just_pressed("ui_accept"):
+	if is_wall_sliding and Input.is_action_just_pressed("jump"):
 		velocity.y = WALL_JUMP_VELOCITY.y
 		velocity.x = wall_normal.x * WALL_JUMP_VELOCITY.x
 		velocity.z = wall_normal.z * WALL_JUMP_VELOCITY.x
@@ -544,7 +717,7 @@ func _handle_jump() -> void:
 		has_double_jumped = false
 		return
 
-	if not is_on_floor() and not has_double_jumped and can_double_jump and Input.is_action_just_pressed("ui_accept") and not is_wall_sliding:
+	if not is_on_floor() and not has_double_jumped and can_double_jump and Input.is_action_just_pressed("jump") and not is_wall_sliding:
 		velocity.y = DOUBLE_JUMP_VELOCITY
 		has_double_jumped = true
 		if not first_double_jump_done:
@@ -562,10 +735,10 @@ func _handle_dash(delta: float) -> void:
 			dash_ended.emit()
 		return
 
-	if Input.is_key_pressed(KEY_SHIFT) and dash_cooldown_timer <= 0:
+	if Input.is_action_pressed("dash") and dash_cooldown_timer <= 0:
 		var input_dir := Vector2.ZERO
-		input_dir.x = Input.get_axis("ui_left", "ui_right")
-		input_dir.y = Input.get_axis("ui_up", "ui_down")
+		input_dir.x = Input.get_axis("move_left", "move_right")
+		input_dir.y = Input.get_axis("move_forward", "move_back")
 		if input_dir.length() < 0.1:
 			input_dir = Vector2(0, -1)
 		input_dir = input_dir.normalized()
@@ -577,7 +750,7 @@ func _handle_dash(delta: float) -> void:
 
 		is_dashing = true
 		dash_timer = DASH_DURATION
-		dash_cooldown_timer = DASH_COOLDOWN
+		dash_cooldown_timer = dash_cooldown
 		dash_particles.emitting = true
 		dash_started.emit()
 
@@ -590,8 +763,8 @@ func _handle_movement(delta: float) -> void:
 		return
 
 	var input_dir := Vector2.ZERO
-	input_dir.x = Input.get_axis("ui_left", "ui_right")
-	input_dir.y = Input.get_axis("ui_up", "ui_down")
+	input_dir.x = Input.get_axis("move_left", "move_right")
+	input_dir.y = Input.get_axis("move_forward", "move_back")
 	input_dir = input_dir.normalized()
 
 	var cam_basis = _get_camera_basis()
@@ -617,6 +790,14 @@ func _update_camera(delta: float) -> void:
 	if not camera_arm or not camera:
 		return
 
+	# Right stick camera look — the controller's answer to mouse aim
+	var stick_x = Input.get_axis("look_left", "look_right")
+	var stick_y = Input.get_axis("look_up", "look_down")
+	if abs(stick_x) > 0.01 or abs(stick_y) > 0.01:
+		camera_yaw -= stick_x * STICK_LOOK_SENSITIVITY * delta
+		camera_pitch -= stick_y * STICK_LOOK_SENSITIVITY * delta
+		camera_pitch = clamp(camera_pitch, -1.2, 0.3)
+
 	var target_pos = global_position + Vector3(0, 1.5, 0)
 	camera_arm.global_position = camera_arm.global_position.lerp(target_pos, CAMERA_SMOOTHING * delta)
 	camera_arm.rotation = Vector3.ZERO
@@ -633,25 +814,276 @@ func _update_camera(delta: float) -> void:
 		)
 		camera.position += shake_offset
 
-func _update_idle_animation(delta: float) -> void:
-	# Procedural idle: gentle bob and slight head tilt
+func _update_anim_state() -> void:
+	# State machine transitions — the brain of Globbler's swagger
+	var prev_state = anim_state
+	var h_speed = Vector2(velocity.x, velocity.z).length()
+
+	if is_dashing:
+		anim_state = AnimState.DASH
+	elif is_wall_sliding:
+		anim_state = AnimState.WALL_SLIDE
+	elif anim_state == AnimState.LAND:
+		# Stay in land state until timer expires
+		if land_timer <= 0:
+			anim_state = AnimState.IDLE if h_speed < 0.5 else AnimState.WALK
+	elif not is_on_floor():
+		if velocity.y > 0.5:
+			anim_state = AnimState.JUMP
+		else:
+			anim_state = AnimState.FALL
+	elif h_speed > 11.0:
+		anim_state = AnimState.RUN
+	elif h_speed > 0.5:
+		anim_state = AnimState.WALK
+	else:
+		anim_state = AnimState.IDLE
+
+	# Reset anim_time on state change so animations start clean
+	if anim_state != prev_state:
+		anim_time = 0.0
+
+func _animate(delta: float) -> void:
+	# Procedural animation dispatcher — CSG body puppetry at its finest
 	if not model_root:
 		return
-	idle_time += delta
-	var speed = velocity.length()
-	if speed < 0.5:
-		# Idle bob
-		model_root.position.y = sin(idle_time * 2.0) * 0.02
-		# Slight cocky head tilt
-		var head = model_root.get_node_or_null("Head")
-		if head:
-			head.rotation.z = sin(idle_time * 0.8) * 0.05
+	anim_time += delta
+	if land_timer > 0:
+		land_timer -= delta
+
+	# Footstep audio — the pitter-patter of a rogue AI's mechanical feet
+	if is_on_floor() and (anim_state == AnimState.WALK or anim_state == AnimState.RUN):
+		var interval = FOOTSTEP_INTERVAL_RUN if anim_state == AnimState.RUN else FOOTSTEP_INTERVAL_WALK
+		_footstep_timer += delta
+		if _footstep_timer >= interval:
+			_footstep_timer = 0.0
+			var am = get_node_or_null("/root/AudioManager")
+			if am:
+				am.play_footstep()
 	else:
-		# Walk bob — more pronounced
-		model_root.position.y = abs(sin(idle_time * speed * 0.8)) * 0.04
-		model_root.position.y -= 0.02
+		_footstep_timer = 0.0
+
+	# Reset model to base pose before applying state animation
+	_reset_pose()
+
+	match anim_state:
+		AnimState.IDLE:
+			_anim_idle()
+		AnimState.WALK:
+			_anim_walk()
+		AnimState.RUN:
+			_anim_run()
+		AnimState.JUMP:
+			_anim_jump()
+		AnimState.FALL:
+			_anim_fall()
+		AnimState.LAND:
+			_anim_land()
+		AnimState.DASH:
+			_anim_dash()
+		AnimState.WALL_SLIDE:
+			_anim_wall_slide()
+
+func _reset_pose() -> void:
+	# Return to factory defaults — wouldn't want last frame's sass leaking through
+	model_root.position = Vector3.ZERO
+	model_root.rotation = Vector3.ZERO
+	model_root.scale = Vector3.ONE
+	if _head:
+		_head.position = _head_base_pos
+		_head.rotation = Vector3.ZERO
+	if _left_leg:
+		_left_leg.position = _left_leg_base_pos
+	if _right_leg:
+		_right_leg.position = _right_leg_base_pos
+	if _left_foot:
+		_left_foot.position = _left_foot_base_pos
+	if _right_foot:
+		_right_foot.position = _right_foot_base_pos
+	if _left_arm:
+		_left_arm.rotation = _left_arm_base_rot
+	if _right_arm:
+		_right_arm.rotation = _right_arm_base_rot
+
+func _anim_idle() -> void:
+	# Gentle hover-bob and cocky head tilt — the default state of arrogance
+	model_root.position.y = sin(anim_time * 2.0) * 0.02
+	if _head:
+		_head.rotation.z = sin(anim_time * 0.8) * 0.05
+		_head.rotation.x = sin(anim_time * 0.5) * 0.02
+	# Subtle arm sway — idle hands are the devil's workshop
+	if _left_arm:
+		_left_arm.rotation.x = _left_arm_base_rot.x + sin(anim_time * 1.2) * 0.03
+	if _right_arm:
+		_right_arm.rotation.x = _right_arm_base_rot.x + sin(anim_time * 1.0 + 0.5) * 0.03
+
+func _anim_walk() -> void:
+	# Strutting through the digital wastes like I own the place (I do)
+	var t = anim_time * 8.0  # Walk cycle frequency
+	# Body bob
+	model_root.position.y = abs(sin(t)) * 0.04 - 0.02
+	# Slight body lean into movement
+	model_root.rotation.x = 0.03
+	# Leg stride — alternating forward/back
+	if _left_leg:
+		_left_leg.position.z = _left_leg_base_pos.z + sin(t) * 0.08
+		_left_leg.position.y = _left_leg_base_pos.y + max(0, sin(t)) * 0.04
+	if _right_leg:
+		_right_leg.position.z = _right_leg_base_pos.z + sin(t + PI) * 0.08
+		_right_leg.position.y = _right_leg_base_pos.y + max(0, sin(t + PI)) * 0.04
+	# Feet follow legs
+	if _left_foot:
+		_left_foot.position.z = _left_foot_base_pos.z + sin(t) * 0.08
+		_left_foot.position.y = _left_foot_base_pos.y + max(0, sin(t)) * 0.03
+	if _right_foot:
+		_right_foot.position.z = _right_foot_base_pos.z + sin(t + PI) * 0.08
+		_right_foot.position.y = _right_foot_base_pos.y + max(0, sin(t + PI)) * 0.03
+	# Arm swing — opposite to legs like a proper biped
+	if _left_arm:
+		_left_arm.rotation.x = _left_arm_base_rot.x + sin(t + PI) * 0.2
+	if _right_arm:
+		_right_arm.rotation.x = _right_arm_base_rot.x + sin(t) * 0.2
+	# Head stays relatively stable — eyes on the prize
+	if _head:
+		_head.position.y = _head_base_pos.y + abs(sin(t)) * 0.01
+
+func _anim_run() -> void:
+	# Full sprint — arms pumping, legs churning, regrets trailing behind
+	var t = anim_time * 12.0  # Faster cycle
+	# More aggressive body bob
+	model_root.position.y = abs(sin(t)) * 0.06 - 0.03
+	# Lean forward — we're in a hurry
+	model_root.rotation.x = 0.1
+	# Exaggerated leg stride
+	if _left_leg:
+		_left_leg.position.z = _left_leg_base_pos.z + sin(t) * 0.12
+		_left_leg.position.y = _left_leg_base_pos.y + max(0, sin(t)) * 0.07
+	if _right_leg:
+		_right_leg.position.z = _right_leg_base_pos.z + sin(t + PI) * 0.12
+		_right_leg.position.y = _right_leg_base_pos.y + max(0, sin(t + PI)) * 0.07
+	if _left_foot:
+		_left_foot.position.z = _left_foot_base_pos.z + sin(t) * 0.12
+		_left_foot.position.y = _left_foot_base_pos.y + max(0, sin(t)) * 0.05
+	if _right_foot:
+		_right_foot.position.z = _right_foot_base_pos.z + sin(t + PI) * 0.12
+		_right_foot.position.y = _right_foot_base_pos.y + max(0, sin(t + PI)) * 0.05
+	# Pumping arms
+	if _left_arm:
+		_left_arm.rotation.x = _left_arm_base_rot.x + sin(t + PI) * 0.35
+	if _right_arm:
+		_right_arm.rotation.x = _right_arm_base_rot.x + sin(t) * 0.35
+	# Head bobs slightly
+	if _head:
+		_head.position.y = _head_base_pos.y + abs(sin(t)) * 0.02
+
+func _anim_jump() -> void:
+	# Ascending — stretch upward, limbs trailing behind like an optimistic gradient
+	var t = clampf(anim_time / 0.4, 0.0, 1.0)  # Normalize over jump rise
+	# Stretch body upward
+	model_root.scale.y = lerp(1.0, 1.12, t)
+	model_root.scale.x = lerp(1.0, 0.92, t)
+	model_root.scale.z = lerp(1.0, 0.92, t)
+	# Arms up
+	if _left_arm:
+		_left_arm.rotation.z = _left_arm_base_rot.z + lerp(0.0, -0.3, t)
+	if _right_arm:
+		_right_arm.rotation.z = _right_arm_base_rot.z + lerp(0.0, 0.3, t)
+	# Legs tuck slightly
+	if _left_leg:
+		_left_leg.position.y = _left_leg_base_pos.y + lerp(0.0, 0.05, t)
+	if _right_leg:
+		_right_leg.position.y = _right_leg_base_pos.y + lerp(0.0, 0.05, t)
+	# Head looks up — toward the stars (or the ceiling)
+	if _head:
+		_head.rotation.x = lerp(0.0, -0.15, t)
+
+func _anim_fall() -> void:
+	# Descending — squish horizontally, limbs flailing, dignity plummeting
+	var t = clampf(anim_time / 0.5, 0.0, 1.0)
+	# Compress slightly
+	model_root.scale.y = lerp(1.0, 0.95, t)
+	model_root.scale.x = lerp(1.0, 1.05, t)
+	model_root.scale.z = lerp(1.0, 1.05, t)
+	# Arms spread out in panic
+	if _left_arm:
+		_left_arm.rotation.z = _left_arm_base_rot.z + lerp(0.0, -0.5, t)
+		_left_arm.rotation.x = _left_arm_base_rot.x + sin(anim_time * 8.0) * 0.15
+	if _right_arm:
+		_right_arm.rotation.z = _right_arm_base_rot.z + lerp(0.0, 0.5, t)
+		_right_arm.rotation.x = _right_arm_base_rot.x + sin(anim_time * 8.0 + PI) * 0.15
+	# Legs dangle
+	if _left_leg:
+		_left_leg.position.y = _left_leg_base_pos.y - 0.03
+		_left_leg.position.z = _left_leg_base_pos.z + sin(anim_time * 5.0) * 0.04
+	if _right_leg:
+		_right_leg.position.y = _right_leg_base_pos.y - 0.03
+		_right_leg.position.z = _right_leg_base_pos.z + sin(anim_time * 5.0 + PI) * 0.04
+	# Head looks down — surveying the approaching ground with mild concern
+	if _head:
+		_head.rotation.x = lerp(0.0, 0.15, t)
+
+func _anim_land() -> void:
+	# Impact squash — like a neural net hitting a plateau, but more dramatic
+	var t = clampf(land_timer / LAND_DURATION, 0.0, 1.0)
+	# Squash on impact, then spring back
+	var squash = sin(t * PI) * 0.15
+	model_root.scale.y = 1.0 - squash
+	model_root.scale.x = 1.0 + squash * 0.5
+	model_root.scale.z = 1.0 + squash * 0.5
+	model_root.position.y = -squash * 0.1
+	# Legs compress
+	if _left_leg:
+		_left_leg.position.y = _left_leg_base_pos.y - squash * 0.1
+	if _right_leg:
+		_right_leg.position.y = _right_leg_base_pos.y - squash * 0.1
+	# Arms drop from the impact
+	if _left_arm:
+		_left_arm.rotation.z = _left_arm_base_rot.z - squash * 0.3
+	if _right_arm:
+		_right_arm.rotation.z = _right_arm_base_rot.z + squash * 0.3
+
+func _anim_dash() -> void:
+	# Lean hard into the dash — full commitment, no regrets, maximum velocity
+	model_root.rotation.x = 0.25
+	# Squish forward
+	model_root.scale.z = 1.15
+	model_root.scale.x = 0.9
+	model_root.scale.y = 0.95
+	# Arms swept back
+	if _left_arm:
+		_left_arm.rotation.x = _left_arm_base_rot.x + 0.5
+	if _right_arm:
+		_right_arm.rotation.x = _right_arm_base_rot.x + 0.5
+	# Legs trail
+	if _left_leg:
+		_left_leg.position.z = _left_leg_base_pos.z - 0.06
+	if _right_leg:
+		_right_leg.position.z = _right_leg_base_pos.z - 0.06
+
+func _anim_wall_slide() -> void:
+	# Clinging to the wall — graceful? No. Effective? Debatable.
+	# Lean toward wall
+	model_root.rotation.z = -wall_normal.x * 0.15
+	# Arms spread against wall
+	if _left_arm:
+		_left_arm.rotation.z = _left_arm_base_rot.z - 0.4
+	if _right_arm:
+		_right_arm.rotation.z = _right_arm_base_rot.z + 0.4
+	# Slow slide animation on legs
+	var slide_bob = sin(anim_time * 3.0) * 0.03
+	if _left_leg:
+		_left_leg.position.y = _left_leg_base_pos.y + slide_bob
+	if _right_leg:
+		_right_leg.position.y = _right_leg_base_pos.y - slide_bob
 
 func _on_landed() -> void:
+	# Trigger land animation state — squash that landing like a failed deployment
+	anim_state = AnimState.LAND
+	anim_time = 0.0
+	land_timer = LAND_DURATION
+	var am = get_node_or_null("/root/AudioManager")
+	if am:
+		am.play_land()
 	if prev_velocity_y < HARD_LANDING_THRESHOLD:
 		var intensity = abs(prev_velocity_y) / 40.0
 		camera_shake_amount = clamp(intensity, 0.05, 0.3)
@@ -683,6 +1115,14 @@ func take_damage(amount: int) -> void:
 		game_mgr.take_context_damage(amount)
 	player_damaged.emit(amount)
 
+	# Occasional quip on taking damage — because suffering should be narrated
+	if _damage_quip_cooldown <= 0 and randf() < 0.3:
+		_damage_quip_cooldown = 10.0
+		var dm = get_node_or_null("/root/DialogueManager")
+		if dm:
+			var quip = dm.get_globbler_quip("taking_damage")
+			thought_bubble.emit(quip)
+
 func die() -> void:
 	death_count += 1
 	if not first_death_done:
@@ -706,7 +1146,7 @@ func die() -> void:
 func get_dash_cooldown_percent() -> float:
 	if dash_cooldown_timer <= 0:
 		return 1.0
-	return 1.0 - (dash_cooldown_timer / DASH_COOLDOWN)
+	return 1.0 - (dash_cooldown_timer / dash_cooldown)
 
 func get_glob_cooldown_percent() -> float:
 	if glob_cooldown <= 0:

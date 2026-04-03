@@ -2,142 +2,139 @@
 # GLOBBLER'S BUILD LOOP - PowerShell Edition
 # ============================================
 # Usage:
-#   .\globbler_loop.ps1                                                       # Fresh start
-#   .\globbler_loop.ps1 -SessionId "d4817235-1970-478c-83ca-ec1ebf83a5b9"     # Resume session
-#   .\globbler_loop.ps1 -Iterations 30
-#   .\globbler_loop.ps1 -WaitSeconds 30
+#   .\globbler_loop.ps1                    # Run until all tasks done
+#   .\globbler_loop.ps1 -MaxIterations 50  # Safety cap
+#   .\globbler_loop.ps1 -WaitSeconds 15    # Pause between runs
 # ============================================
 
 param(
-    [string]$SessionId = "",
-    [int]$Iterations = 15,
+    [int]$MaxIterations = 100,
     [int]$WaitSeconds = 10
 )
+
+$logFile = "build_log_$(Get-Date -Format 'yyyyMMdd_HHmm').txt"
+
+function Log {
+    param([string]$msg, [string]$color = "Green")
+    $timestamp = Get-Date -Format "HH:mm:ss"
+    $line = "[$timestamp] $msg"
+    Write-Host $line -ForegroundColor $color
+    Add-Content -Path $logFile -Value $line
+}
+
+function Get-TaskCounts {
+    $done = 0
+    $todo = 0
+    $wip = 0
+    if (Test-Path "TASKS.md") {
+        $lines = Get-Content "TASKS.md"
+        foreach ($line in $lines) {
+            if ($line -match "- \[x\]") { $done++ }
+            elseif ($line -match "- \[ \]") { $todo++ }
+            elseif ($line -match "- \[~\]") { $wip++ }
+        }
+    }
+    return @{ Done = $done; Todo = $todo; InProgress = $wip }
+}
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green
 Write-Host "  GLOBBLER'S JOURNEY - BUILD LOOP" -ForegroundColor Green
-Write-Host "  Running $Iterations iterations" -ForegroundColor Green
-if ($SessionId) {
-    Write-Host "  Resuming session: $SessionId" -ForegroundColor Green
-}
-else {
-    Write-Host "  Starting fresh session" -ForegroundColor Green
-}
+Write-Host "  Runs until all tasks complete" -ForegroundColor Green
+Write-Host "  Safety cap: $MaxIterations iterations" -ForegroundColor Green
+Write-Host "  Log: $logFile" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 
-# Safety checks
 if (-not (Test-Path "project.godot")) {
-    Write-Host "ERROR: No project.godot found!" -ForegroundColor Red
-    Write-Host "Run this script from your Godot project root." -ForegroundColor Red
+    Write-Host "ERROR: No project.godot found! Run from project root." -ForegroundColor Red
     exit 1
 }
 
-if (-not (Test-Path "CLAUDE.md")) {
-    Write-Host "ERROR: No CLAUDE.md found!" -ForegroundColor Red
+if (-not (Test-Path "TASKS.md")) {
+    Write-Host "ERROR: No TASKS.md found!" -ForegroundColor Red
     exit 1
 }
 
-if (-not (Test-Path "prompt.md")) {
-    Write-Host "ERROR: No prompt.md found!" -ForegroundColor Red
-    exit 1
-}
-
-# Make sure we are on a feature branch
+# Feature branch check
 $branch = git branch --show-current 2>$null
 if ($branch -eq "main" -or $branch -eq "master") {
-    Write-Host "WARNING: You are on $branch. Creating a build branch..." -ForegroundColor Yellow
-    $timestamp = Get-Date -Format "yyyyMMdd-HHmm"
-    git checkout -b "globbler-build-$timestamp"
+    $ts = Get-Date -Format "yyyyMMdd-HHmm"
+    git checkout -b "globbler-build-$ts"
 }
 
-$currentBranch = git branch --show-current
-Write-Host "Branch: $currentBranch" -ForegroundColor Cyan
+Log "Branch: $(git branch --show-current)"
+
+# Show starting status
+$counts = Get-TaskCounts
+Write-Host "Starting: Done=$($counts.Done) | Todo=$($counts.Todo) | WIP=$($counts.InProgress)" -ForegroundColor Cyan
 Write-Host ""
 
-# Track the session ID across iterations
-$currentSessionId = $SessionId
+$buildPrompt = "STRICT RULES - READ CAREFULLY: 1. Open TASKS.md. Read the CURRENT STATUS section. 2. Find the FIRST single task marked with an unchecked box or a tilde box. 3. Build ONLY that ONE task. Do NOT move on to the next task. 4. When that ONE task is complete, update TASKS.md: mark that task with an x in the box, and update CURRENT STATUS with what you did and what the next task is. 5. Commit with a descriptive git message. 6. STOP. Do NOT start another task. You are done for this iteration. CRITICAL: Only ONE checkbox gets marked complete per iteration. If you find yourself about to start a second task, STOP and commit instead. Reference CLAUDE.md for design details. Use GDScript only. CSG primitives for 3D placeholders. Dark gray plus neon green number 39FF14. Sarcastic code comments. Do not ask questions. START NOW."
 
-for ($i = 1; $i -le $Iterations; $i++) {
+$iteration = 0
+
+while ($true) {
+    $iteration++
+
+    # Check if all tasks are done
+    $counts = Get-TaskCounts
+    if ($counts.Todo -eq 0 -and $counts.InProgress -eq 0) {
+        Write-Host ""
+        Write-Host "========================================" -ForegroundColor Green
+        Write-Host "  ALL TASKS COMPLETE!" -ForegroundColor Green
+        Write-Host "  $($counts.Done) tasks finished in $iteration iterations" -ForegroundColor Green
+        Write-Host "========================================" -ForegroundColor Green
+        break
+    }
+
+    # Safety cap
+    if ($iteration -gt $MaxIterations) {
+        Write-Host ""
+        Log "Hit safety cap of $MaxIterations iterations. Stopping." "Yellow"
+        break
+    }
+
     Write-Host ""
     Write-Host "======================================" -ForegroundColor Green
-    Write-Host "  ITERATION $i of $Iterations" -ForegroundColor Green
-    $now = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    Write-Host "  $now" -ForegroundColor Green
+    Log "ITERATION $iteration (Done=$($counts.Done) | Left=$($counts.Todo + $counts.InProgress))"
+    Write-Host "  (running silently - may take 5-15 min)" -ForegroundColor Yellow
     Write-Host "======================================" -ForegroundColor Green
+
+    $startTime = Get-Date
+
+    # Run Claude
+    claude --dangerously-skip-permissions -p $buildPrompt 2>&1 | Tee-Object -FilePath $logFile -Append
+
+    $elapsed = (Get-Date) - $startTime
+    $minutes = [math]::Round($elapsed.TotalMinutes, 1)
+
+    Log "Iteration $iteration done - took $minutes minutes"
+
+    # Show what changed
     Write-Host ""
+    Write-Host "--- RESULT ---" -ForegroundColor Cyan
+    $lastCommit = git log --oneline -1 2>$null
+    Write-Host "  Commit: $lastCommit" -ForegroundColor White
 
-    if ($currentSessionId) {
-        Write-Host "Resuming session: $currentSessionId" -ForegroundColor Cyan
-        claude --dangerously-skip-permissions --resume $currentSessionId -p (Get-Content prompt.md -Raw)
-    }
-    else {
-        Write-Host "Starting new session..." -ForegroundColor Cyan
-        claude --dangerously-skip-permissions -p (Get-Content prompt.md -Raw)
+    $counts = Get-TaskCounts
+    Write-Host "  Progress: Done=$($counts.Done) | Todo=$($counts.Todo) | WIP=$($counts.InProgress)" -ForegroundColor Cyan
 
-        # After first run, find the session ID so we can resume it
-        # Look at the .claude/projects directory for the most recent session
-        Write-Host ""
-        Write-Host "First run complete. Trying to find session ID..." -ForegroundColor Yellow
-        Write-Host "Check Claude Code output above for a session ID." -ForegroundColor Yellow
-        Write-Host ""
-        Write-Host "If you see a session ID in the output, you can restart with:" -ForegroundColor Yellow
-        Write-Host "  .\globbler_loop.ps1 -SessionId YOUR-SESSION-ID -Iterations $($Iterations - $i)" -ForegroundColor White
-        Write-Host ""
-        Write-Host "Or to find your latest session ID, run:" -ForegroundColor Yellow
-        Write-Host "  claude sessions list" -ForegroundColor White
-        Write-Host ""
-
-        # Try to auto-detect: run claude sessions list and grab first UUID
-        try {
-            $sessionOutput = (claude sessions list 2>$null) | Out-String
-            $uuidPattern = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-            $match = [regex]::Match($sessionOutput, $uuidPattern)
-            if ($match.Success) {
-                $currentSessionId = $match.Value
-                Write-Host "AUTO-DETECTED session ID: $currentSessionId" -ForegroundColor Cyan
-                Write-Host "Resuming this session for remaining iterations." -ForegroundColor Cyan
-            }
-            else {
-                Write-Host "Could not auto-detect session ID. Each iteration will start fresh." -ForegroundColor Yellow
-                Write-Host "This still works but Claude won't have context from previous iterations." -ForegroundColor Yellow
-            }
-        }
-        catch {
-            Write-Host "Could not run claude sessions list. Continuing without resume." -ForegroundColor Yellow
-        }
+    # Show current status from TASKS.md
+    $statusLines = Get-Content "TASKS.md" | Where-Object { $_ -match "Last|Next|Known" }
+    foreach ($line in $statusLines) {
+        Write-Host "  $($line.Trim())" -ForegroundColor White
     }
 
-    # Check exit code
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host ""
-        Write-Host "Claude exited with error code $LASTEXITCODE" -ForegroundColor Yellow
-        Write-Host "Continuing to next iteration..." -ForegroundColor Yellow
-    }
-
-    # Brief pause between iterations
-    if ($i -lt $Iterations) {
-        Write-Host ""
-        Write-Host "Pausing $WaitSeconds seconds before next iteration..." -ForegroundColor DarkGray
-        Start-Sleep -Seconds $WaitSeconds
-    }
-}
-
-Write-Host ""
-Write-Host "========================================" -ForegroundColor Green
-Write-Host "  BUILD LOOP COMPLETE" -ForegroundColor Green
-Write-Host "  $Iterations iterations finished" -ForegroundColor Green
-if ($currentSessionId) {
-    Write-Host "  Session: $currentSessionId" -ForegroundColor Green
-}
-Write-Host "========================================" -ForegroundColor Green
-Write-Host ""
-Write-Host "Review changes:" -ForegroundColor Cyan
-Write-Host "  git log --oneline -20" -ForegroundColor White
-Write-Host ""
-if ($currentSessionId) {
-    Write-Host "Resume later:" -ForegroundColor Cyan
-    Write-Host "  .\globbler_loop.ps1 -SessionId `"$currentSessionId`"" -ForegroundColor White
+    # Pause
     Write-Host ""
+    Write-Host "  Pausing $WaitSeconds seconds..." -ForegroundColor DarkGray
+    Start-Sleep -Seconds $WaitSeconds
 }
+
+Write-Host ""
+Write-Host "Review:" -ForegroundColor Cyan
+Write-Host "  git log --oneline -30" -ForegroundColor White
+Write-Host "  cat TASKS.md" -ForegroundColor White
+Write-Host "  Full log: $logFile" -ForegroundColor White
+Write-Host ""

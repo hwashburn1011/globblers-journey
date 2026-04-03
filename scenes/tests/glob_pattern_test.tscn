@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dglob_pattern_test"]
+
+[ext_resource type="Script" path="res://scenes/tests/glob_pattern_test.gd" id="1_test"]
+
+[node name="GlobPatternTest" type="Node3D"]
+script = ExtResource("1_test")

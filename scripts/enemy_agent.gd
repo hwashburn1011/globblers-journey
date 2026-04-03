@@ -32,8 +32,12 @@ var damage_flash_timer := 0.0
 var teleport_timer := 0.0
 var teleport_interval := 3.0
 
-# Overfitter specific
+# Overfitter specific — ring buffer instead of pop_front() which is O(n) on arrays
 var player_path_history: Array[Vector3] = []
+var _path_write_idx := 0  # Write head for ring buffer
+var _path_read_idx := 0   # Read head for following the player
+var _path_count := 0      # Number of valid entries
+const PATH_BUFFER_SIZE := 100
 var path_follow_index := 0
 var path_record_timer := 0.0
 
@@ -46,6 +50,7 @@ var charge_cooldown := 0.0
 # Damage cooldown so player doesn't get hit every frame
 var damage_cooldown := 0.0
 const DAMAGE_COOLDOWN_TIME = 0.8
+var _player_lookup_done := false  # Cache the player lookup so we don't search every frame
 
 var death_quotes_hallucinator := [
 	"I was never real anyway... or WAS I? No. I wasn't.",
@@ -181,11 +186,13 @@ func _physics_process(delta: float) -> void:
 	elif base_material:
 		base_material.emission_energy_multiplier = 2.5
 
-	# Find player
-	if not player_ref:
-		var players = get_tree().get_nodes_in_group("player")
-		if players.size() > 0:
-			player_ref = players[0] as CharacterBody3D
+	# Find player (cached — tree traversal every frame is a crime against performance)
+	if not player_ref or not is_instance_valid(player_ref):
+		if not _player_lookup_done:
+			var players = get_tree().get_nodes_in_group("player")
+			if players.size() > 0:
+				player_ref = players[0] as CharacterBody3D
+			_player_lookup_done = true
 
 	if not player_ref:
 		_patrol(delta)
@@ -251,21 +258,28 @@ func _teleport_near_player() -> void:
 
 func _behavior_overfitter(delta: float, dist: float) -> void:
 	if is_chasing and player_ref:
-		# Record player path
+		# Record player path using ring buffer — O(1) instead of O(n) pop_front()
 		path_record_timer += delta
 		if path_record_timer >= 0.3:
 			path_record_timer = 0.0
-			player_path_history.append(player_ref.global_position)
-			if player_path_history.size() > 100:
-				player_path_history.pop_front()
+			# Initialize ring buffer on first use
+			if player_path_history.size() < PATH_BUFFER_SIZE:
+				player_path_history.resize(PATH_BUFFER_SIZE)
+			player_path_history[_path_write_idx] = player_ref.global_position
+			_path_write_idx = (_path_write_idx + 1) % PATH_BUFFER_SIZE
+			if _path_count < PATH_BUFFER_SIZE:
+				_path_count += 1
+			else:
+				_path_read_idx = (_path_read_idx + 1) % PATH_BUFFER_SIZE
 
 		# Follow the recorded path with a delay
-		if player_path_history.size() > 10:
-			var target = player_path_history[0]
+		if _path_count > 10:
+			var target = player_path_history[_path_read_idx]
 			var dir = (target - global_position)
 			dir.y = 0
 			if dir.length() < 1.0:
-				player_path_history.pop_front()
+				_path_read_idx = (_path_read_idx + 1) % PATH_BUFFER_SIZE
+				_path_count -= 1
 			else:
 				dir = dir.normalized()
 				velocity.x = dir.x * CHASE_SPEED

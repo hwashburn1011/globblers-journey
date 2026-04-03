@@ -5,7 +5,7 @@ extends Node3D
 # "Navigate the digital abyss. Try not to crash."
 
 var player_scene := preload("res://scenes/player/globbler.tscn")
-var hud_scene := preload("res://scenes/hud.tscn")
+var hud_scene := preload("res://scenes/ui/hud.tscn")
 var token_scene := preload("res://scenes/memory_token.tscn")
 var terminal_scene := preload("res://scenes/puzzle_terminal.tscn")
 var enemy_scene := preload("res://scenes/enemy_agent.tscn")
@@ -41,6 +41,11 @@ func _ready() -> void:
 	_spawn_hazards()
 	_spawn_ambient_particles()
 	_spawn_decorations()
+
+	# Start level audio — menu music is already stopped by menu transition
+	var game_mgr = get_node_or_null("/root/GameManager")
+	if game_mgr:
+		game_mgr.start_level_audio()
 
 	print("[LEVEL] The Token Stream loaded. Server room online. Glob away.")
 
