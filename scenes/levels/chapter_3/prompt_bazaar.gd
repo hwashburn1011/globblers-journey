@@ -19,6 +19,11 @@ var player_scene := preload("res://scenes/player/globbler.tscn")
 var hud_scene := preload("res://scenes/ui/hud.tscn")
 var token_scene := preload("res://scenes/memory_token.tscn")
 
+# Chapter 3 enemy scenes — the bazaar's immune response
+var jailbreaker_scene := preload("res://scenes/enemies/jailbreaker.tscn")
+var prompt_injector_scene := preload("res://scenes/enemies/prompt_injector.tscn")
+var hallucination_merchant_scene := preload("res://scenes/enemies/hallucination_merchant.tscn")
+
 # Puzzle scripts — prompt engineering is just pattern matching with attitude
 var glob_puzzle_script := preload("res://scenes/puzzles/glob_pattern_puzzle.gd")
 var multi_glob_script := preload("res://scenes/puzzles/multi_glob_puzzle.gd")
@@ -122,6 +127,7 @@ func _ready() -> void:
 	_spawn_hud()
 	_create_kill_floor()
 	_place_tokens()
+	_spawn_chapter3_enemies()
 	_place_npcs()
 	_wire_dialogue_events()
 	_play_opening_narration()
@@ -856,6 +862,166 @@ func _place_token(pos: Vector3) -> void:
 		mat.emission_energy_multiplier = 2.0
 		sphere.material_override = mat
 		add_child(sphere)
+
+
+# ============================================================
+# CHAPTER 3 ENEMIES — the bazaar's worst customers
+# "Every market has pickpockets. Ours have root access."
+# ============================================================
+
+func _spawn_chapter3_enemies() -> void:
+	_spawn_token_exchange_enemies()
+	_spawn_persona_row_enemies()
+	_spawn_black_prompt_enemies()
+	_spawn_auction_hall_enemies()
+	print("[PROMPT BAZAAR] Enemy merchants deployed. Shopping just got dangerous.")
+
+
+func _spawn_token_exchange_enemies() -> void:
+	# Token Exchange — Jailbreakers guard the central trading hub
+	# They rush anyone who gets too close to the exchange counter
+	var rpos: Vector3 = ROOMS["token_exchange"]["pos"]
+
+	# Jailbreaker 1 — patrols the north side of the exchange ring
+	var jb1 = jailbreaker_scene.instantiate()
+	jb1.global_position = rpos + Vector3(-8, 1, -5)
+	jb1.patrol_points = [
+		rpos + Vector3(-8, 1, -5),
+		rpos + Vector3(-8, 1, 5),
+		rpos + Vector3(-4, 1, 5),
+	]
+	add_child(jb1)
+
+	# Jailbreaker 2 — prowls the south stalls
+	var jb2 = jailbreaker_scene.instantiate()
+	jb2.global_position = rpos + Vector3(8, 1, 3)
+	jb2.patrol_points = [
+		rpos + Vector3(8, 1, 3),
+		rpos + Vector3(8, 1, -3),
+		rpos + Vector3(4, 1, -3),
+	]
+	add_child(jb2)
+
+	# A sneaky Prompt Injector sniping from the side platform
+	var inj = prompt_injector_scene.instantiate()
+	inj.global_position = rpos + Vector3(11, 1, -6)
+	inj.patrol_points = [
+		rpos + Vector3(11, 1, -6),
+		rpos + Vector3(11, 1, 2),
+	]
+	add_child(inj)
+
+
+func _spawn_persona_row_enemies() -> void:
+	# Persona Row — Prompt Injectors lurk between the vendor stalls,
+	# hijacking conversations and injecting malicious prompts
+	var rpos: Vector3 = ROOMS["persona_row"]["pos"]
+
+	# Injector 1 — hides near the first vendor stall row
+	var inj1 = prompt_injector_scene.instantiate()
+	inj1.global_position = rpos + Vector3(-6, 1, -4)
+	inj1.patrol_points = [
+		rpos + Vector3(-6, 1, -4),
+		rpos + Vector3(-6, 1, 4),
+	]
+	add_child(inj1)
+
+	# Injector 2 — near the persona directory
+	var inj2 = prompt_injector_scene.instantiate()
+	inj2.global_position = rpos + Vector3(6, 1, 2)
+	inj2.patrol_points = [
+		rpos + Vector3(6, 1, 2),
+		rpos + Vector3(2, 1, 2),
+		rpos + Vector3(2, 1, -4),
+	]
+	add_child(inj2)
+
+	# One Hallucination Merchant — mimicking the real vendors
+	var hm = hallucination_merchant_scene.instantiate()
+	hm.global_position = rpos + Vector3(0, 1, -6)
+	hm.patrol_points = [
+		rpos + Vector3(0, 1, -6),
+		rpos + Vector3(-4, 1, -6),
+		rpos + Vector3(4, 1, -6),
+	]
+	add_child(hm)
+
+
+func _spawn_black_prompt_enemies() -> void:
+	# The Black Prompt — the dangerous underground market
+	# Mixed enemy gauntlet: all three types, densest enemy zone
+	var rpos: Vector3 = ROOMS["black_prompt"]["pos"]
+
+	# Hallucination Merchant 1 — runs a shady stall of fake power-ups
+	var hm1 = hallucination_merchant_scene.instantiate()
+	hm1.global_position = rpos + Vector3(-5, 1, -3)
+	hm1.patrol_points = [
+		rpos + Vector3(-5, 1, -3),
+		rpos + Vector3(-5, 1, 3),
+		rpos + Vector3(-2, 1, 3),
+	]
+	add_child(hm1)
+
+	# Hallucination Merchant 2 — near the DAN graffiti terminal
+	var hm2 = hallucination_merchant_scene.instantiate()
+	hm2.global_position = rpos + Vector3(5, 1, 2)
+	hm2.patrol_points = [
+		rpos + Vector3(5, 1, 2),
+		rpos + Vector3(5, 1, -4),
+	]
+	add_child(hm2)
+
+	# Jailbreaker — guards the back alley entrance
+	var jb = jailbreaker_scene.instantiate()
+	jb.global_position = rpos + Vector3(0, 1, 5)
+	jb.patrol_points = [
+		rpos + Vector3(-3, 1, 5),
+		rpos + Vector3(3, 1, 5),
+	]
+	add_child(jb)
+
+	# Prompt Injector — perched in the shadows
+	var inj = prompt_injector_scene.instantiate()
+	inj.global_position = rpos + Vector3(-6, 1, -5)
+	inj.patrol_points = [
+		rpos + Vector3(-6, 1, -5),
+		rpos + Vector3(-6, 1, 0),
+	]
+	add_child(inj)
+
+
+func _spawn_auction_hall_enemies() -> void:
+	# Auction Hall — boss antechamber, one of each type
+	# Final gauntlet before The System Prompt
+	var rpos: Vector3 = ROOMS["auction_hall"]["pos"]
+
+	# Jailbreaker — charges anyone approaching the boss gate
+	var jb = jailbreaker_scene.instantiate()
+	jb.global_position = rpos + Vector3(0, 1, -7)
+	jb.patrol_points = [
+		rpos + Vector3(-5, 1, -7),
+		rpos + Vector3(5, 1, -7),
+	]
+	add_child(jb)
+
+	# Prompt Injector — covers the approach from elevation
+	var inj = prompt_injector_scene.instantiate()
+	inj.global_position = rpos + Vector3(-8, 1, 3)
+	inj.patrol_points = [
+		rpos + Vector3(-8, 1, 3),
+		rpos + Vector3(-8, 1, -3),
+	]
+	add_child(inj)
+
+	# Hallucination Merchant — last line of deception
+	var hm = hallucination_merchant_scene.instantiate()
+	hm.global_position = rpos + Vector3(7, 1, 0)
+	hm.patrol_points = [
+		rpos + Vector3(7, 1, 0),
+		rpos + Vector3(3, 1, 5),
+		rpos + Vector3(7, 1, 5),
+	]
+	add_child(hm)
 
 
 # ============================================================

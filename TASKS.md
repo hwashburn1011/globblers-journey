@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** 5.2 Chapter 3: Chaotic marketplace environment with NPC AI personas — Created full Chapter 3 level (prompt_bazaar.gd/tscn) with 5 market districts (Bazaar Gate, Token Exchange, Persona Row, The Black Prompt, Auction Hall) connected by 4 narrow alleyways. Warm amber/gold/cyan color palette with market lanterns, hanging banners, prompt scrolls, vendor stalls, exchange rate displays, price tickers, floating bid tokens, shady back-alley dealers. 2 NPC AI personas: gpt_classic (vintage GPT-2 vendor, prompt shop, gameplay hints about Jailbreakers and Hallucination Merchants) and stable_diffusion (image model speaking in art descriptions, tips about Prompt Injectors and System Prompt boss). Full room-entry dialogue for all 4 non-spawn rooms, opening narration, event quips (enemy kills, token collection, death, low health, combos, puzzles). Checkpoints, ambient zones, kill floor, prompt rain particles, post-processing. Updated main_menu.gd to route Chapter 3.
-- **Next task to do:** 5.2 Chapter 3: Enemies — Jailbreakers, Prompt Injectors, Hallucination Merchants
+- **Last task completed:** 5.2 Chapter 3: Enemies — Jailbreakers, Prompt Injectors, Hallucination Merchants — Created 3 enemy types extending BaseEnemy. Jailbreaker (jailbreaker.gd/tscn): 4 HP, crimson hooded figure with broken chains and lockpick arm, rush-charges player with wind-up animation, scrambles ability cooldowns on hit, 40% stun resistance, immune to stun during rush. Prompt Injector (prompt_injector.gd/tscn): 2 HP fragile ranged kiter, cyan syringe entity with dripping code particles, fires injection projectiles that invert controls, maintains preferred distance with strafe/retreat AI, orbiting code fragments. Hallucination Merchant (hallucination_merchant.gd/tscn): 3 HP deceptive merchant with shifting magenta/gold shimmer, spawns up to 2 clones (1 HP fakes), 40% of attacks are visual-only fakes, 70% teleport-on-hit chance, clones drop no tokens. 15 enemies placed across 4 rooms: Token Exchange (2 Jailbreakers, 1 Injector), Persona Row (2 Injectors, 1 Merchant), The Black Prompt (2 Merchants, 1 Jailbreaker, 1 Injector), Auction Hall (1 each). All wired into prompt_bazaar.gd with preloads and per-room spawn functions.
+- **Next task to do:** 5.2 Chapter 3: Puzzles — social engineering, prompt crafting
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-3 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-3 music reuses chapter_1 track until dedicated music is implemented.
 
 ---
@@ -192,7 +192,7 @@
 
 ### 5.2 Chapter 3: The Prompt Bazaar
 - [x] Chaotic marketplace environment with NPC AI personas — 5 market districts (Bazaar Gate, Token Exchange, Persona Row, Black Prompt, Auction Hall), 4 alleyways, warm amber/cyan theme, 2 NPC AI personas (gpt_classic, stable_diffusion), full dialogue system, prompt rain particles
-- [ ] Enemies: Jailbreakers, Prompt Injectors, Hallucination Merchants
+- [x] Enemies: Jailbreakers, Prompt Injectors, Hallucination Merchants — 3 enemy types with unique mechanics (rush+scramble, ranged injection+kiting, clones+fake attacks+teleport), 15 placed across 4 rooms
 - [ ] Puzzles: social engineering, prompt crafting
 - [ ] Boss: The System Prompt — find and rewrite the invisible controller
 - [ ] Dialogue and story beats
