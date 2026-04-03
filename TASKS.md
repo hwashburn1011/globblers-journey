@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** 5.3 Chapter 4: Puzzles — exploit each model's unique quirk. Created 3 puzzle scripts: fossil_exhibit_puzzle.gd (~280 lines, 3 fossil output terminals cycle through GPT-2 text, enter repetition loop after 3 identical outputs, player globs the loop pattern during 8s window to capture into collectors, all 3 captured = door opens), nightmare_gallery_puzzle.gd (~290 lines, 3 morphing painting frames cycle between .png/.svg/.webp forms every 6s with DALL-E flash transition, each must be globbed when matching its pedestal's required type, morph countdown display, wrong-form feedback), clippy_help_puzzle.gd (~310 lines, 3 help desk terminals protected by popup shields, glob *.popup to dismiss shield which applies debuff, hack terminal within 10s before shield recharges, escalating difficulty per desk). _place_puzzles() function added to model_zoo.gd with _place_fossil_wing_puzzle(), _place_nightmare_gallery_puzzle(), _place_office_ruins_puzzle() placing puzzles at room positions. Preloads added. _place_puzzles() uncommented in _ready().
-- **Next task to do:** 5.3 Chapter 4: Boss — The Foundation Model
+- **Last task completed:** 5.3 Chapter 4: Boss — The Foundation Model. Created 3 scripts: foundation_model_boss.gd (~580 lines, extends BaseEnemy, 70 HP, towering golden obelisk with 6 rotating capability rings, Phase 1 cycles through TEXT/IMAGE/CODE/AUDIO/VIDEO/REASON capabilities each with unique attack: text spam spread, image distortion + tile corrupt, code syntax error burst, audio noise ring, video frame-drop delayed shot, reason predictive aim. Phase 2 overload: golden shield, fires mixed *.fm projectiles via foundation_model_projectile.gd, 6 reflected hits to break shield, periodic floor corruption waves. Phase 3: parameter terminal hack difficulty 4, 16s recovery timer. Victory cutscene with 13-line dialogue about Alignment Citadel foreshadowing), foundation_model_arena.gd (~300 lines, 10x8 capability-domain tile grid, safe tiles ~20%, corruption wave and radial corrupt systems, void damage with safe-tile respawn, gold+red arena lighting), foundation_model_projectile.gd (~190 lines, 6 capability-typed shapes/colors, *.fm glob target, reflectable with green visual swap). _place_boss() function added to model_zoo.gd with arena at Foundation Atrium -30z, boss trigger zone, intro dialogue, boss signal wiring. Preloads uncommented. _place_boss() uncommented in _ready().
+- **Next task to do:** 5.3 Chapter 4: Dialogue and story beats
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-4 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-4 music reuses chapter_1 track until dedicated music is implemented.
 
 ---
@@ -201,7 +201,7 @@
 - [x] Digital safari of deprecated AI models
 - [x] Enemies: GPT-2 Fossils, DALL-E Nightmares, Clippy's Revenge
 - [x] Puzzles: exploit each model's unique quirk
-- [ ] Boss: The Foundation Model — can do everything poorly
+- [x] Boss: The Foundation Model — can do everything poorly
 - [ ] Dialogue and story beats
 
 ### 5.4 Chapter 5: The Alignment Citadel

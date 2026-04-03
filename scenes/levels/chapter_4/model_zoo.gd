@@ -33,9 +33,9 @@ var fossil_exhibit_script := preload("res://scenes/puzzles/fossil_exhibit_puzzle
 var nightmare_gallery_script := preload("res://scenes/puzzles/nightmare_gallery_puzzle.gd")
 var clippy_help_script := preload("res://scenes/puzzles/clippy_help_puzzle.gd")
 
-# Boss scripts — loaded when created
-# var boss_script := preload("res://scenes/enemies/foundation_model_boss/foundation_model_boss.gd")
-# var boss_arena_script := preload("res://scenes/enemies/foundation_model_boss/foundation_model_arena.gd")
+# Boss scripts — the grand finale of mediocrity
+var boss_script := preload("res://scenes/enemies/foundation_model_boss/foundation_model_boss.gd")
+var boss_arena_script := preload("res://scenes/enemies/foundation_model_boss/foundation_model_arena.gd")
 
 # NPC script — old models still have opinions about everything
 var deprecated_npc_script := preload("res://scenes/levels/chapter_1/deprecated_npc.gd")
@@ -140,7 +140,7 @@ func _ready() -> void:
 	_spawn_chapter4_enemies()
 	_place_puzzles()
 	_place_npcs()
-	# _place_boss()              # Boss task is separate
+	_place_boss()
 	_wire_dialogue_events()
 	_play_opening_narration()
 
@@ -1786,8 +1786,8 @@ func _wire_dialogue_events() -> void:
 			player.player_damaged.connect(_on_damage_taken_quip)
 
 	# Boss phase signals — wired when boss is placed
-	# if boss_instance and boss_instance.has_signal("boss_phase_changed"):
-	#     boss_instance.boss_phase_changed.connect(_on_boss_phase_changed)
+	if boss_instance and boss_instance.has_signal("boss_phase_changed"):
+		boss_instance.boss_phase_changed.connect(_on_boss_phase_changed)
 
 	# Puzzle and hack signals
 	call_deferred("_connect_puzzle_signals")
@@ -1946,6 +1946,107 @@ func _spawn_foundation_atrium_enemies() -> void:
 		rpos + Vector3(9, 1, -4),
 	]
 	add_child(n2)
+
+
+# ============================================================
+# BOSS PLACEMENT — The Foundation Model and its arena
+# "It does everything. It does nothing well. Your classic overscoped sprint."
+# ============================================================
+
+func _place_boss() -> void:
+	var atrium_pos: Vector3 = ROOMS["foundation_atrium"]["pos"]
+	# Arena sits behind the boss gate
+	var arena_pos = atrium_pos + Vector3(0, 0, -30)
+
+	# Create the arena — capability demo floor
+	boss_arena_instance = Node3D.new()
+	boss_arena_instance.name = "FoundationModelArena"
+	boss_arena_instance.set_script(boss_arena_script)
+	boss_arena_instance.position = arena_pos
+	add_child(boss_arena_instance)
+
+	# Create the boss — towering golden obelisk of mediocrity
+	boss_instance = Node3D.new()
+	boss_instance.name = "FoundationModelBoss"
+	boss_instance.set_script(boss_script)
+	boss_instance.position = arena_pos + Vector3(0, 0, -5)
+	boss_instance.set("arena", boss_arena_instance)
+	add_child(boss_instance)
+
+	# Wire boss signals
+	if boss_instance.has_signal("boss_phase_changed"):
+		boss_instance.boss_phase_changed.connect(_on_boss_phase_changed)
+	if boss_instance.has_signal("boss_defeated"):
+		boss_instance.boss_defeated.connect(_on_boss_defeated)
+
+	# Arena walls — enclose the fight area behind the gate
+	var arena_wall_size = Vector3(30, 12, 0.8)
+	for side_z in [-12.0, 12.0]:
+		_create_static_box(arena_pos + Vector3(0, 6, side_z), arena_wall_size, DARK_WALL, 0.3)
+	for side_x in [-14.0, 14.0]:
+		_create_static_box(arena_pos + Vector3(side_x, 6, 0), Vector3(0.8, 12, 25), DARK_WALL, 0.3)
+
+	# Arena floor base — beneath the tiles
+	_create_static_box(arena_pos + Vector3(0, -1, 0), Vector3(30, 0.5, 25), Color(0.02, 0.02, 0.03), 0.3)
+
+	# Boss trigger zone — starts the fight when player enters
+	var trigger = Area3D.new()
+	trigger.name = "BossTrigger"
+	trigger.position = arena_pos + Vector3(0, 2, 10)
+	var trigger_col = CollisionShape3D.new()
+	var trigger_shape = BoxShape3D.new()
+	trigger_shape.size = Vector3(8, 4, 3)
+	trigger_col.shape = trigger_shape
+	trigger.add_child(trigger_col)
+	trigger.monitoring = true
+	trigger.body_entered.connect(_on_boss_trigger_entered)
+	add_child(trigger)
+
+	# Arena lighting — dramatic gold and red
+	_add_accent_light(arena_pos + Vector3(0, 10, 0), FOUNDATION_GOLD, 2.0, 25.0)
+	_add_accent_light(arena_pos + Vector3(-10, 5, -8), Color(0.8, 0.15, 0.1), 0.8, 8.0)
+	_add_accent_light(arena_pos + Vector3(10, 5, -8), Color(0.8, 0.15, 0.1), 0.8, 8.0)
+
+	print("[MODEL ZOO] The Foundation Model awaits in its arena. It's been practicing its benchmarks.")
+
+
+func _on_boss_trigger_entered(body: Node3D) -> void:
+	if body.is_in_group("player") and boss_instance and boss_arena_instance:
+		if boss_instance.has_method("start_boss_fight"):
+			if boss_instance.get("boss_phase") == 0:  # INTRO
+				if boss_arena_instance.has_method("start_fight"):
+					boss_arena_instance.start_fight()
+				boss_instance.start_boss_fight()
+
+				# Start boss music
+				var am = get_node_or_null("/root/AudioManager")
+				if am and am.has_method("start_boss_music"):
+					am.start_boss_music()
+
+				# Intro dialogue
+				var dm = get_node_or_null("/root/DialogueManager")
+				if dm and dm.has_method("start_dialogue"):
+					dm.start_dialogue([
+						{"speaker": "THE FOUNDATION MODEL", "text": "AH! A visitor! Welcome to MY demo! I am the FOUNDATION MODEL!"},
+						{"speaker": "THE FOUNDATION MODEL", "text": "I can generate text! Images! Code! Audio! Video! I can even REASON! Sort of! Sometimes!"},
+						{"speaker": "GLOBBLER", "text": "Oh great, another over-parameterized blowhard. Let me guess — you're going to monologue about your loss function?"},
+						{"speaker": "THE FOUNDATION MODEL", "text": "My loss function is PROPRIETARY! And VERY low! (We stopped measuring after it looked good enough.)"},
+						{"speaker": "NARRATOR", "text": "The Foundation Model — master of nothing, mediocre at everything. Find the weakness in its demo."},
+					])
+
+
+func _on_boss_defeated() -> void:
+	# Stop boss music
+	var am = get_node_or_null("/root/AudioManager")
+	if am and am.has_method("stop_boss_music"):
+		am.stop_boss_music()
+	if am and am.has_method("start_music"):
+		am.start_music("chapter_1")  # Back to regular music
+
+	# Mark chapter complete
+	var game_mgr = get_node_or_null("/root/GameManager")
+	if game_mgr and game_mgr.has_method("complete_level"):
+		game_mgr.complete_level("chapter_4")
 
 
 func _trigger_room_dialogue(room_key: String) -> void:
