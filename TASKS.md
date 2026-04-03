@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** 5.2 Chapter 3: Boss — The System Prompt — Created system_prompt_boss.gd (extends BaseEnemy, 65 HP, 3-phase fight) and system_prompt_arena.gd (8x6 instruction tile grid with rewrite mechanics). Phase 1 (INVISIBLE): Boss teleports around arena invisible, fires rule enforcement beams, spawns globbable instruction fragments (*.frag) — absorb them near the boss to reveal it temporarily (3.5s). Phase 2 (REWRITE): Boss partially visible with flickering, arena tiles unlock as globbable *.prompt targets — rewrite tiles to shift control from magenta to green. Fires compliance projectiles (COMPLY.prompt) player can reflect; shield breaks after 6 hits. Arena has enforcement waves that attempt to revert rewritten tiles unless player defends them. Phase 3 (OVERRIDE): Boss stunned, core terminal exposed — hack difficulty 3 with 16s timer to rewrite the core instruction. Boss recovers to Phase 2 if timer expires. Victory cutscene: 11-line dialogue, arena tiles cascade to green, complete_level(3). Wired into prompt_bazaar.gd with _place_boss(), _build_boss_room(), _connect_boss_arena(), _on_boss_trigger_entered() (music/seal/dialogue/fight start), boss gate in Auction Hall.
-- **Next task to do:** 5.2 Chapter 3: Dialogue and story beats
+- **Last task completed:** 5.2 Chapter 3: Dialogue and story beats — Added damage taken quips (_on_damage_taken_quip, 30% chance/10s cooldown, 7 bazaar-themed lines), hack success quips (_on_hack_completed_quip, 8s cooldown, 5 lines, wired via _connect_hack_signals), boss phase transition dialogue (_on_boss_phase_changed: Phase 2 REWRITE has 4-line narrator/boss/Globbler exchange with gameplay hint, Phase 3 OVERRIDE has 3-line urgent hack prompt, Phase 4 DEFEATED triggers audio). All signals wired in _wire_dialogue_events: player_damaged, boss_phase_changed, deferred hack_completed. Damage cooldown ticked in _process. Existing dialogue already in place: opening narration (7 lines), 2 NPCs (gpt_classic 8 lines, stable_diffusion 9 lines), 4 room-entry triggers (token_exchange, persona_row, black_prompt, auction_hall), enemy kill quips (7), token quips (5), first glob, death quips (5), low health (2), combo (3), puzzle solve/fail (3+3), boss intro (6 lines), boss victory cutscene (11 lines in boss script).
+- **Next task to do:** 5.3 Chapter 4: Digital safari of deprecated AI models
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-3 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-3 music reuses chapter_1 track until dedicated music is implemented.
 
 ---
@@ -195,7 +195,7 @@
 - [x] Enemies: Jailbreakers, Prompt Injectors, Hallucination Merchants — 3 enemy types with unique mechanics (rush+scramble, ranged injection+kiting, clones+fake attacks+teleport), 15 placed across 4 rooms
 - [x] Puzzles: social engineering, prompt crafting
 - [x] Boss: The System Prompt — find and rewrite the invisible controller
-- [ ] Dialogue and story beats
+- [x] Dialogue and story beats
 
 ### 5.3 Chapter 4: The Model Zoo
 - [ ] Digital safari of deprecated AI models

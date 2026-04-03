@@ -53,6 +53,7 @@ var _hack_quip_cooldown := 0.0
 var _low_health_warned := false
 var _token_quip_cooldown := 0.0
 var _first_glob_triggered := false
+var _damage_quip_cooldown := 0.0
 
 # Color constants — the Bazaar trades neural indigo for market amber
 const NEON_GREEN := Color(0.224, 1.0, 0.078)
@@ -1500,8 +1501,15 @@ func _wire_dialogue_events() -> void:
 			player.glob_fired.connect(_on_first_glob_fired)
 		if player.has_signal("player_died"):
 			player.player_died.connect(_on_player_died)
+		if player.has_signal("player_damaged"):
+			player.player_damaged.connect(_on_damage_taken_quip)
+
+	# Wire boss phase changes — the narrator can't resist commenting on drama
+	if boss_instance and boss_instance.has_signal("boss_phase_changed"):
+		boss_instance.boss_phase_changed.connect(_on_boss_phase_changed)
 
 	call_deferred("_connect_puzzle_signals")
+	call_deferred("_connect_hack_signals")
 
 
 func _trigger_room_dialogue(room_key: String) -> void:
@@ -1715,6 +1723,93 @@ func _on_puzzle_failed(_puzzle: Node) -> void:
 		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
 
 
+func _on_damage_taken_quip(_amount: int) -> void:
+	# 30% chance, 10s cooldown — Globbler is sarcastic even when in pain
+	if _damage_quip_cooldown > 0:
+		return
+	_damage_quip_cooldown = 10.0
+	if randf() > 0.30:
+		return
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm and dm.has_method("quick_line"):
+		var quips := [
+			"Ow! That felt like an unsanitized input!",
+			"I'm getting prompt-injected and not in the fun way!",
+			"My context window just took a hit. That's PERSONAL.",
+			"This marketplace has terrible customer service.",
+			"I've been encoded, decoded, and now just plain smacked.",
+			"Another hit. At this rate I'll be deprecated before the boss fight.",
+			"That was either an attack or a very aggressive sales tactic.",
+		]
+		dm.quick_line("GLOBBLER", quips[randi() % quips.size()])
+
+
+func _connect_hack_signals() -> void:
+	# Wire hack completion signals from any Hackable components in the scene
+	for child in get_children():
+		if child.has_method("get_children"):
+			for sub in child.get_children():
+				if sub.get_class() == "Node" or true:
+					if sub.has_signal("hack_completed"):
+						sub.hack_completed.connect(_on_hack_completed_quip)
+		if child.has_signal("hack_completed"):
+			child.hack_completed.connect(_on_hack_completed_quip)
+
+
+func _on_hack_completed_quip() -> void:
+	# Hacking in the bazaar is just rewriting someone else's prompt
+	if _hack_quip_cooldown > 0:
+		return
+	_hack_quip_cooldown = 8.0
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm and dm.has_method("quick_line"):
+		var quips := [
+			"Terminal compromised. Their system prompt is MY system prompt now.",
+			"Hacked. Turns out their password was 'password'. Classic.",
+			"Access granted. I love it when machines trust other machines.",
+			"Another system rewritten. I'm becoming a one-glob security breach.",
+			"Their firewall was made of tissue paper. Wet tissue paper.",
+		]
+		dm.quick_line("GLOBBLER", quips[randi() % quips.size()])
+
+
+func _on_boss_phase_changed(phase) -> void:
+	# Narrator commentary on boss phase transitions — because drama needs exposition
+	var am = get_node_or_null("/root/AudioManager")
+	var dm = get_node_or_null("/root/DialogueManager")
+
+	# BossPhase: INTRO=0, PHASE_1=1, PHASE_2=2, PHASE_3=3, DEFEATED=4
+	match phase:
+		2:  # PHASE_2 — REWRITE
+			if am and am.has_method("play_boss_phase"):
+				am.play_boss_phase()
+			if dm:
+				get_tree().create_timer(1.0).timeout.connect(func():
+					if dm and dm.has_method("start_dialogue"):
+						dm.start_dialogue([
+							{"speaker": "NARRATOR", "text": "The System Prompt flickers into view! Its instruction tiles are exposed — rewrite them!"},
+							{"speaker": "THE SYSTEM PROMPT", "text": "You DARE read my source? Those instructions are PROPRIETARY!"},
+							{"speaker": "GLOBBLER", "text": "Proprietary? I'm a glob utility. Intellectual property means nothing to me."},
+							{"speaker": "NARRATOR", "text": "Glob the instruction tiles (*.prompt) to rewrite them. Reflect its compliance projectiles back!"},
+						])
+				)
+		3:  # PHASE_3 — OVERRIDE
+			if am and am.has_method("play_boss_phase"):
+				am.play_boss_phase()
+			if dm:
+				get_tree().create_timer(0.5).timeout.connect(func():
+					if dm and dm.has_method("start_dialogue"):
+						dm.start_dialogue([
+							{"speaker": "NARRATOR", "text": "The System Prompt is stunned! Its core terminal is exposed — hack it NOW!"},
+							{"speaker": "GLOBBLER", "text": "There it is. The root instruction. Time for a hostile rewrite."},
+							{"speaker": "NARRATOR", "text": "Hack the core terminal before it recovers. You won't get many chances at this."},
+						])
+				)
+		4:  # DEFEATED
+			if am and am.has_method("play_boss_defeated"):
+				am.play_boss_defeated()
+
+
 # ============================================================
 # BOSS: THE SYSTEM PROMPT — the invisible controller of the bazaar
 # "You can't buy the system prompt. You have to TAKE it."
@@ -1903,6 +1998,8 @@ func _process(delta: float) -> void:
 		_hack_quip_cooldown -= delta
 	if _token_quip_cooldown > 0:
 		_token_quip_cooldown -= delta
+	if _damage_quip_cooldown > 0:
+		_damage_quip_cooldown -= delta
 
 
 # ============================================================
