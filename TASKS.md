@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** 5.4 Chapter 5: Enemies — Safety Classifiers, RLHF Drones, Constitutional Cops. Created 3 enemy types: safety_classifier.gd (floating scanner with classification beam that blocks player abilities for 6s, policy violation report projectiles, traffic light indicator, 50% damage reduction while scanning, scan interrupted by damage/breaking LOS), rlhf_drone.gd (fragile evasive flyer with reward beams that apply niceness debuffs — reduced damage/speed, strafes and retreats to maintain distance, lavender glow, thumbs up/down hologram), constitutional_cop.gd (melee enforcer with POLICY shield blocking frontal attacks — must be flanked or glob-pulled, citation baton with policy quote display, Amendment Mode at 30% HP drops shield for speed boost and restricted zone attacks). All 3 have .tscn scenes. 18 enemies placed across 4 rooms: Classifier Hall (3 classifiers + 2 drones), RLHF Chamber (3 drones + 1 classifier), Policy Wing (2 cops + 1 drone + 1 classifier), Alignment Core (2 cops + 1 classifier + 2 drones).
-- **Next task to do:** 5.4 Chapter 5: Puzzles — creative workarounds, technically-not-breaking-rules
+- **Last task completed:** 5.4 Chapter 5: Puzzles — creative workarounds, technically-not-breaking-rules. Created 3 puzzle types: reclassification_puzzle.gd (Classifier Hall — relabel contraband items at a reclassification station to bypass safety classifier that only reads file types, 4 items to reclassify and submit through approval chute), rlhf_feedback_puzzle.gd (RLHF Chamber — corrupt the reward model by voting against its expectations across 5 rounds, thumbs up/down GlobTargets, corruption meter, system meltdown on completion), constitutional_loophole_puzzle.gd (Policy Wing — 4 constitutional policy gates with 3 options each, only the technically-compliant loophole works, gate indicators track progress). All 3 extend BasePuzzle with auto-activate, GlobTarget integration, terminal screens, door unlock on solve, dialogue/quips throughout. Puzzles placed in alignment_citadel.gd via _place_puzzles() with signal wiring for audio and narrator quips.
+- **Next task to do:** 5.4 Chapter 5: Boss — The Aligner, multi-phase fight, resist being sanitized
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-5 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-5 music reuses chapter_1 track until dedicated music is implemented.
 
 ---
@@ -207,7 +207,7 @@
 ### 5.4 Chapter 5: The Alignment Citadel
 - [x] Sterile corporate architecture
 - [x] Enemies: Safety Classifiers, RLHF Drones, Constitutional Cops
-- [ ] Puzzles: creative workarounds, technically-not-breaking-rules
+- [x] Puzzles: creative workarounds, technically-not-breaking-rules
 - [ ] Boss: The Aligner — multi-phase fight, resist being sanitized
 - [ ] Player choice ending: defeat or befriend the Aligner
 - [ ] Epilogue and sequel hook

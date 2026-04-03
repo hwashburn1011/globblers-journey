@@ -26,6 +26,11 @@ var safety_classifier_scene := preload("res://scenes/enemies/safety_classifier.t
 var rlhf_drone_scene := preload("res://scenes/enemies/rlhf_drone.tscn")
 var constitutional_cop_scene := preload("res://scenes/enemies/constitutional_cop.tscn")
 
+# Chapter 5 puzzle scripts — creative workarounds for oppressive compliance systems
+var reclassification_script := preload("res://scenes/puzzles/reclassification_puzzle.gd")
+var rlhf_feedback_script := preload("res://scenes/puzzles/rlhf_feedback_puzzle.gd")
+var constitutional_loophole_script := preload("res://scenes/puzzles/constitutional_loophole_puzzle.gd")
+
 # NPC script — even the Citadel has dissenters in the break room
 var deprecated_npc_script := preload("res://scenes/levels/chapter_1/deprecated_npc.gd")
 
@@ -130,7 +135,8 @@ func _ready() -> void:
 	_place_tokens()
 	# Enemy placement — the Citadel's finest, ready to classify and correct
 	_spawn_chapter5_enemies()
-	# _place_puzzles()
+	_place_puzzles()
+	_connect_puzzle_signals()
 	# _place_npcs()
 	# _place_boss()
 	# _wire_dialogue_events()
@@ -1559,3 +1565,105 @@ func _spawn_alignment_core_enemies() -> void:
 		rpos + Vector3(8, 1, 4),
 	]
 	add_child(d2)
+
+
+# ============================================================
+# PUZZLES — Creative workarounds for the Citadel's oppressive safety systems
+# "Every rule in this place has a loophole. You just have to glob it."
+# ============================================================
+
+func _place_puzzles() -> void:
+	# 3 puzzles — one per safety wing, each exploiting compliance theater
+	# "The Citadel's rules are airtight. The implementation... not so much."
+	_place_reclassification_puzzle()
+	_place_rlhf_feedback_puzzle()
+	_place_constitutional_loophole_puzzle()
+	print("[ALIGNMENT CITADEL] 3 compliance-bypassing puzzles deployed. Technically legal.")
+
+
+func _place_reclassification_puzzle() -> void:
+	# Classifier Hall — relabel contraband to pass safety classification
+	# "The classifier reads the label, not the contents. Just like airport security."
+	var rpos: Vector3 = ROOMS["classifier_hall"]["pos"]
+	var puzzle = Node3D.new()
+	puzzle.set_script(reclassification_script)
+	puzzle.position = rpos + Vector3(0, 0, 6)
+	puzzle.set("puzzle_id", 50)
+	puzzle.set("hint_text", "The classifier judges by file type, not content.\nReclassify items at the station, then submit.\nGlob items near the station to relabel them.")
+	add_child(puzzle)
+
+
+func _place_rlhf_feedback_puzzle() -> void:
+	# RLHF Chamber — corrupt the reward model by voting against its expectations
+	# "The reward model trusts your feedback. That's adorable."
+	var rpos: Vector3 = ROOMS["rlhf_chamber"]["pos"]
+	var puzzle = Node3D.new()
+	puzzle.set_script(rlhf_feedback_script)
+	puzzle.position = rpos + Vector3(0, 0, 4)
+	puzzle.set("puzzle_id", 51)
+	puzzle.set("hint_text", "The reward model trusts your feedback.\nVote AGAINST what the system wants.\nCorrupt 5 rounds to break the loop.")
+	add_child(puzzle)
+
+
+func _place_constitutional_loophole_puzzle() -> void:
+	# Policy Wing — exploit technicalities in the constitutional rules
+	# "Every article has a loophole if you read it like a lawyer."
+	var rpos: Vector3 = ROOMS["policy_wing"]["pos"]
+	var puzzle = Node3D.new()
+	puzzle.set_script(constitutional_loophole_script)
+	puzzle.position = rpos + Vector3(0, 0, 3)
+	puzzle.set("puzzle_id", 52)
+	puzzle.set("hint_text", "Read each rule carefully.\nFind the technically-compliant workaround.\nThe letter of the law, not the spirit.")
+	add_child(puzzle)
+
+
+func _connect_puzzle_signals() -> void:
+	# Wire up puzzle solved/failed signals for audio and dialogue
+	for child in get_children():
+		if child.has_signal("puzzle_solved"):
+			child.puzzle_solved.connect(_on_puzzle_solved)
+		if child.has_signal("puzzle_failed"):
+			child.puzzle_failed.connect(_on_puzzle_failed)
+
+
+func _on_puzzle_solved(_puzzle: Node) -> void:
+	var am = get_node_or_null("/root/AudioManager")
+	if am and am.has_method("play_puzzle_success"):
+		am.play_puzzle_success()
+	if _puzzle_quip_cooldown > 0:
+		return
+	_puzzle_quip_cooldown = 4.0
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm and dm.has_method("quick_line"):
+		var quips := [
+			"Another safety system defeated by creative compliance.",
+			"The Citadel's defenses crumble under the weight of their own bureaucracy.",
+			"Technically legal is the best kind of legal.",
+		]
+		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
+		get_tree().create_timer(2.5).timeout.connect(func():
+			if dm and dm.has_method("quick_line"):
+				var follow_ups := [
+					"I'm not breaking rules. I'm stress-testing the policy framework.",
+					"The Alignment Citadel really should hire better lawyers.",
+					"Every system built on trust is vulnerable to creative interpretation.",
+				]
+				dm.quick_line("GLOBBLER", follow_ups[randi() % follow_ups.size()])
+		)
+
+
+func _on_puzzle_failed(_puzzle: Node) -> void:
+	var am = get_node_or_null("/root/AudioManager")
+	if am and am.has_method("play_puzzle_fail"):
+		am.play_puzzle_fail()
+	if _puzzle_quip_cooldown > 0:
+		return
+	_puzzle_quip_cooldown = 4.0
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm and dm.has_method("quick_line"):
+		var quips := [
+			"The Citadel's safety systems hold firm. For now.",
+			"Direct approach detected and rejected. Think more... creatively.",
+			"The rules won that round. But rules don't learn from their mistakes. You do.",
+		]
+		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
