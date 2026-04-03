@@ -8,9 +8,9 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** 5.4 Chapter 5: Epilogue and sequel hook — Full epilogue sequence in alignment_citadel.gd. After boss defeat (8s delay for cutscene dialogue to finish), triggers _start_epilogue(): builds AGI Mountain on the horizon (hexagonal peak with green summit glow, flanking spires, fog ring, floating label), transforms citadel environment (green path tiles leading toward mountain, ambient particles flowing toward it, choice-dependent lighting — warm green-blue blend for befriend, pure green for defeat). Branching 12-13 line epilogue dialogue: befriend path has Aligner as companion walking together, defeat path has Globbler alone. Both reference the five chapters as journey recap. "THE END...?" overlay fades in with staggered text (title, subtitle, thank you, blinking prompt). Any key press returns to main menu with final save. Mountain animates with summit bob and fog ring rotation in _process_epilogue().
-- **Next task to do:** Phase 6: Full playthrough QA
-- **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-5 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-5 music reuses chapter_1 track until dedicated music is implemented.
+- **Last task completed:** 6.0 Full playthrough QA — Systematic code review across all 5 chapters, player systems, enemies, bosses, puzzles, and UI. Fixed 3 bugs: (1) dropout_ghost.gd lines 163/273 used undefined `current_state` instead of `state` (crash on dropout timer), (2) terminal_hack.gd line 191 null reference when `_hack_ui` is null but code iterates its children, (3) rm_rf_boss.gd missing `complete_level()` call on defeat (Ch1 never marked complete for progression). Also fixed game_manager.gd `complete_level()` signature to accept optional chapter_id parameter (Ch2-5 bosses pass identifiers). Verified all 48+ scene paths are valid, all puzzle/enemy/boss scripts exist, level transitions work, main menu chapter select has all 5 chapters.
+- **Next task to do:** Balance pass: enemy health, damage values, puzzle difficulty
+- **Known issues:** Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-5 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-5 music reuses chapter_1 track until dedicated music is implemented.
 
 ---
 
@@ -215,7 +215,7 @@
 ---
 
 ## PHASE 6: FINAL POLISH
-- [ ] Full playthrough QA
+- [x] Full playthrough QA
 - [ ] Balance pass: enemy health, damage values, puzzle difficulty
 - [ ] Performance optimization
 - [ ] Controller support

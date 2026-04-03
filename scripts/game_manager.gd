@@ -125,7 +125,7 @@ func on_enemy_killed() -> void:
 
 	enemy_killed_signal.emit(enemies_killed)
 
-func complete_level() -> void:
+func complete_level(_chapter_id = null) -> void:
 	level_goal_reached = true
 	print("[LEVEL COMPLETE] %s cleared!" % level_names.get(current_level, "???"))
 	print("[STATS] Time: %.1fs | Tokens: %d | Kills: %d | Max Combo: x%d" % [

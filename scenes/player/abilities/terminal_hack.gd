@@ -186,8 +186,8 @@ func _process_hack_minigame(delta: float) -> void:
 		# Update display
 		var current_show = int(_show_timer / step_duration)
 		var seq_label = _hack_ui.get_node_or_null("VBoxContainer/SequenceLabel") if _hack_ui else null
-		if not seq_label:
-			# Try alternate path
+		if not seq_label and _hack_ui:
+			# Try alternate path — UI nodes love to hide from us
 			for child in _hack_ui.get_children():
 				if child is VBoxContainer:
 					for sub in child.get_children():

@@ -540,11 +540,13 @@ func _victory_cutscene() -> void:
 	if arena and arena.has_method("restore_all_tiles"):
 		arena.restore_all_tiles()
 
-	# Notify game systems
+	# Notify game systems — you've been deleted, deleter
 	boss_defeated.emit()
 	var game_mgr = get_node_or_null("/root/GameManager")
 	if game_mgr and game_mgr.has_method("on_enemy_killed"):
 		game_mgr.on_enemy_killed()
+	if game_mgr and game_mgr.has_method("complete_level"):
+		game_mgr.complete_level(1)
 
 	# Save checkpoint
 	var save_sys = get_node_or_null("/root/SaveSystem")

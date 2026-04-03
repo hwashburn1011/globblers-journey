@@ -637,6 +637,10 @@ func _get_level_scene(level: int) -> String:
 			return "res://scenes/levels/chapter_2/training_grounds.tscn"
 		3:
 			return "res://scenes/levels/chapter_3/prompt_bazaar.tscn"
+		4:
+			return "res://scenes/levels/chapter_4/model_zoo.tscn"
+		5:
+			return "res://scenes/levels/chapter_5/alignment_citadel.tscn"
 		_:
 			# Unbuilt chapters fall back to Chapter 1 — patience, we're getting there
 			return "res://scenes/main_level.tscn"

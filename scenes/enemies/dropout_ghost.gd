@@ -160,7 +160,7 @@ func _physics_process(delta: float) -> void:
 		mesh_node.position.y = 0.8 + sin(Time.get_ticks_msec() * 0.003) * 0.15
 
 	# Dropout timer — the core mechanic
-	if not is_dropped_out and not is_fading and current_state != EnemyState.DEATH:
+	if not is_dropped_out and not is_fading and state != EnemyState.DEATH:
 		dropout_timer -= delta
 		if dropout_timer <= 0:
 			_dropout()
@@ -270,7 +270,7 @@ func _dropout_return() -> void:
 		dropout_timer = randf_range(DROPOUT_INTERVAL_MIN, DROPOUT_INTERVAL_MAX)
 
 		# Surprise lunge toward player on reappear
-		if player_ref and current_state == EnemyState.CHASE:
+		if player_ref and state == EnemyState.CHASE:
 			_perform_attack()
 	)
 
