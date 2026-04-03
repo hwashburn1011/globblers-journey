@@ -19,6 +19,11 @@ var hud_scene := preload("res://scenes/ui/hud.tscn")
 var enemy_scene := preload("res://scenes/enemy_agent.tscn")
 var token_scene := preload("res://scenes/memory_token.tscn")
 
+# Chapter 2 enemy scenes — the neural network's immune system
+var overfitting_ogre_scene := preload("res://scenes/enemies/overfitting_ogre.tscn")
+var dropout_ghost_scene := preload("res://scenes/enemies/dropout_ghost.tscn")
+var vanishing_gradient_wisp_scene := preload("res://scenes/enemies/vanishing_gradient_wisp.tscn")
+
 # Puzzle scripts
 var glob_puzzle_script := preload("res://scenes/puzzles/glob_pattern_puzzle.gd")
 var multi_glob_script := preload("res://scenes/puzzles/multi_glob_puzzle.gd")
@@ -116,6 +121,7 @@ func _ready() -> void:
 	_spawn_hud()
 	_create_kill_floor()
 	_place_tokens()
+	_spawn_chapter2_enemies()
 	_wire_dialogue_events()
 	_play_opening_narration()
 
@@ -475,6 +481,134 @@ func _populate_loss_plaza() -> void:
 
 	_place_token(rpos + Vector3(-10, 2.8, 0))
 	_place_token(rpos + Vector3(10, 0.5, -3))
+
+
+# ============================================================
+# ENEMY SPAWNING — the network's immune system fights back
+# ============================================================
+
+func _spawn_chapter2_enemies() -> void:
+	# "You didn't think a neural network would let you walk through
+	#  without resistance, did you? That's not how training works."
+	_spawn_activation_enemies()
+	_spawn_gradient_enemies()
+	_spawn_dropout_enemies()
+	_spawn_loss_plaza_enemies()
+	print("[TRAINING GROUNDS] Spawned Chapter 2 enemy cohort. Good luck, Globbler.")
+
+func _spawn_activation_enemies() -> void:
+	# Activation Chamber gets Overfitting Ogres — they memorize the player
+	# in the room with the most platforms to weave through
+	var rpos: Vector3 = ROOMS["activation"]["pos"]
+
+	# Ogre 1 — patrols between the weight platforms
+	var ogre1 = overfitting_ogre_scene.instantiate()
+	ogre1.global_position = rpos + Vector3(-5, 1, 3)
+	ogre1.patrol_points = [
+		rpos + Vector3(-5, 1, 3),
+		rpos + Vector3(5, 1, 3),
+		rpos + Vector3(5, 1, -3),
+		rpos + Vector3(-5, 1, -3),
+	]
+	add_child(ogre1)
+
+	# Ogre 2 — guards the elevated platform with the token
+	var ogre2 = overfitting_ogre_scene.instantiate()
+	ogre2.global_position = rpos + Vector3(0, 2.8, 6)
+	ogre2.patrol_points = [
+		rpos + Vector3(-2, 2.8, 6),
+		rpos + Vector3(2, 2.8, 6),
+	]
+	add_child(ogre2)
+
+func _spawn_gradient_enemies() -> void:
+	# Gradient Falls gets Vanishing Gradient Wisps — anchored to the deep layers
+	# They're strong near their anchor and fade as they chase you up the steps
+	var rpos: Vector3 = ROOMS["gradient_falls"]["pos"]
+
+	# Wisp 1 — anchored at the bottom of the gradient descent (deep layer)
+	var wisp1 = vanishing_gradient_wisp_scene.instantiate()
+	wisp1.global_position = rpos + Vector3(-3, -3.0, 5)
+	wisp1.patrol_points = [rpos + Vector3(-3, -3.0, 5)]  # Wisps orbit their anchor
+	add_child(wisp1)
+
+	# Wisp 2 — mid-descent
+	var wisp2 = vanishing_gradient_wisp_scene.instantiate()
+	wisp2.global_position = rpos + Vector3(4, -1.5, 0)
+	wisp2.patrol_points = [rpos + Vector3(4, -1.5, 0)]
+	add_child(wisp2)
+
+	# Wisp 3 — near the side platform with the terminal
+	var wisp3 = vanishing_gradient_wisp_scene.instantiate()
+	wisp3.global_position = rpos + Vector3(-7, 1.5, -3)
+	wisp3.patrol_points = [rpos + Vector3(-7, 1.5, -3)]
+	add_child(wisp3)
+
+func _spawn_dropout_enemies() -> void:
+	# Dropout Void gets Dropout Ghosts — they vanish and reappear,
+	# perfectly thematic for the room where platforms disappear
+	var rpos: Vector3 = ROOMS["dropout_void"]["pos"]
+
+	# Ghost 1 — haunts the central platform grid
+	var ghost1 = dropout_ghost_scene.instantiate()
+	ghost1.global_position = rpos + Vector3(-3, 1, -2)
+	ghost1.patrol_points = [
+		rpos + Vector3(-3, 1, -2),
+		rpos + Vector3(3, 1, -2),
+		rpos + Vector3(3, 1, 3),
+		rpos + Vector3(-3, 1, 3),
+	]
+	add_child(ghost1)
+
+	# Ghost 2 — floats near the dropout rate display
+	var ghost2 = dropout_ghost_scene.instantiate()
+	ghost2.global_position = rpos + Vector3(5, 1, -4)
+	ghost2.patrol_points = [
+		rpos + Vector3(5, 1, -4),
+		rpos + Vector3(5, 1, 2),
+		rpos + Vector3(2, 1, 2),
+	]
+	add_child(ghost2)
+
+	# Ghost 3 — lurks near the exit
+	var ghost3 = dropout_ghost_scene.instantiate()
+	ghost3.global_position = rpos + Vector3(0, 1, 5)
+	ghost3.patrol_points = [
+		rpos + Vector3(-2, 1, 5),
+		rpos + Vector3(2, 1, 5),
+	]
+	add_child(ghost3)
+
+func _spawn_loss_plaza_enemies() -> void:
+	# Loss Function Plaza — mixed enemies guarding the boss gate
+	# The final gauntlet before the Local Minimum
+	var rpos: Vector3 = ROOMS["loss_plaza"]["pos"]
+
+	# One ogre guarding the boss gate — he's memorized every player who tried to pass
+	var ogre = overfitting_ogre_scene.instantiate()
+	ogre.global_position = rpos + Vector3(0, 1, -7)
+	ogre.patrol_points = [
+		rpos + Vector3(-4, 1, -7),
+		rpos + Vector3(4, 1, -7),
+	]
+	add_child(ogre)
+
+	# A wisp anchored near the output nodes
+	var wisp = vanishing_gradient_wisp_scene.instantiate()
+	wisp.global_position = rpos + Vector3(6, 1, 3)
+	wisp.patrol_points = [rpos + Vector3(6, 1, 3)]
+	add_child(wisp)
+
+	# A ghost patrolling the convergence rings
+	var ghost = dropout_ghost_scene.instantiate()
+	ghost.global_position = rpos + Vector3(-5, 1, 0)
+	ghost.patrol_points = [
+		rpos + Vector3(-5, 1, 0),
+		rpos + Vector3(0, 1, 5),
+		rpos + Vector3(5, 1, 0),
+		rpos + Vector3(0, 1, -5),
+	]
+	add_child(ghost)
 
 
 # ============================================================
