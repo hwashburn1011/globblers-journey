@@ -182,7 +182,7 @@ func _create_hack_ui() -> void:
 
 	var hint = Label.new()
 	hint.name = "HintLabel"
-	hint.text = "Arrow keys: UP DOWN LEFT RIGHT | ESC to abort"
+	hint.text = "Arrow keys / D-pad: UP DOWN LEFT RIGHT | ESC/B to abort"
 	hint.add_theme_color_override("font_color", Color(0.2, 0.6, 0.2, 0.7))
 	hint.add_theme_font_size_override("font_size", 14)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -225,42 +225,39 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not _is_hacking or not _input_phase:
 		return
 
-	if event is InputEventKey:
-		var key = event as InputEventKey
-		if not key.pressed:
+	# Abort hack: ESC / Start / B button
+	if event.is_action_pressed("pause") or event.is_action_pressed("ui_cancel"):
+		_end_hack(false)
+		return
+
+	# Directional input: Arrow keys / D-pad / Left stick — works with keyboard AND controller
+	var input_dir := -1
+	if event.is_action_pressed("hack_up"):
+		input_dir = 0
+	elif event.is_action_pressed("hack_right"):
+		input_dir = 1
+	elif event.is_action_pressed("hack_down"):
+		input_dir = 2
+	elif event.is_action_pressed("hack_left"):
+		input_dir = 3
+
+	if input_dir >= 0:
+		_player_input.append(input_dir)
+		# Every keypress gets a tiny bleep — satisfying terminal feedback
+		var audio = get_node_or_null("/root/AudioManager")
+		if audio:
+			audio.play_hack_keypress()
+
+		if input_dir != _sequence[_current_step]:
+			# Wrong input — hack failed!
+			_end_hack(false)
 			return
 
-		var input_dir := -1
-		match key.keycode:
-			KEY_UP:
-				input_dir = 0
-			KEY_RIGHT:
-				input_dir = 1
-			KEY_DOWN:
-				input_dir = 2
-			KEY_LEFT:
-				input_dir = 3
-			KEY_ESCAPE:
-				_end_hack(false)
-				return
+		_current_step += 1
 
-		if input_dir >= 0:
-			_player_input.append(input_dir)
-			# Every keypress gets a tiny bleep — satisfying terminal feedback
-			var audio = get_node_or_null("/root/AudioManager")
-			if audio:
-				audio.play_hack_keypress()
-
-			if input_dir != _sequence[_current_step]:
-				# Wrong input — hack failed!
-				_end_hack(false)
-				return
-
-			_current_step += 1
-
-			if _current_step >= _sequence.size():
-				# All correct — hack succeeded!
-				_end_hack(true)
+		if _current_step >= _sequence.size():
+			# All correct — hack succeeded!
+			_end_hack(true)
 
 func _end_hack(success: bool) -> void:
 	_is_hacking = false

@@ -105,7 +105,7 @@ func _build_hud() -> void:
 	# Upgrade hint
 	upgrade_hint = Label.new()
 	upgrade_hint.name = "UpgradeHint"
-	upgrade_hint.text = "[TAB] Upgrades"
+	upgrade_hint.text = "[TAB/Select] Upgrades"
 	upgrade_hint.add_theme_color_override("font_color", Color(0.2, 0.7, 0.3, 0.6))
 	upgrade_hint.add_theme_font_size_override("font_size", 12)
 	top_left.add_child(upgrade_hint)
@@ -119,7 +119,7 @@ func _build_hud() -> void:
 
 	# Dash cooldown
 	dash_label = Label.new()
-	dash_label.text = "[SHIFT] DASH"
+	dash_label.text = "[SHIFT/B] DASH"
 	dash_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
 	dash_label.add_theme_font_size_override("font_size", 13)
 	top_right.add_child(dash_label)

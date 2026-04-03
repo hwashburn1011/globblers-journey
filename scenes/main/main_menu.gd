@@ -307,7 +307,7 @@ func _build_settings_panel() -> void:
 
 	# Controls info
 	var controls_label = Label.new()
-	controls_label.text = "── Controls ──\nWASD: Move | SPACE: Jump | SHIFT: Dash\nE/LClick: Glob | F: Wrench | T: Hack\nG: Spawn Agent | V: Cycle Task | TAB: Upgrades"
+	controls_label.text = "── Controls (Keyboard / Controller) ──\nWASD/LStick: Move | SPACE/A: Jump | SHIFT/B: Dash\nE-LClick/RT: Glob | R-RClick/LT: Aim | F/RB: Wrench\nT/Y: Hack | Q/LB: Cycle Glob | TAB/Select: Upgrades\nG/D-Up: Agent | V/D-Down: Cycle Task | RStick: Camera"
 	controls_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	controls_label.add_theme_color_override("font_color", DIM_GREEN)
 	controls_label.add_theme_font_size_override("font_size", 13)

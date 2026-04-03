@@ -121,7 +121,7 @@ func _build_hud() -> void:
 
 	# Dash cooldown
 	dash_label = Label.new()
-	dash_label.text = "[SHIFT] DASH"
+	dash_label.text = "[SHIFT/B] DASH"
 	dash_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
 	dash_label.add_theme_font_size_override("font_size", 13)
 	top_right.add_child(dash_label)

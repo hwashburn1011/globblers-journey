@@ -557,70 +557,77 @@ func _setup_dash_particles() -> void:
 	dash_particles.position.y = 0.6
 	add_child(dash_particles)
 
+const STICK_LOOK_SENSITIVITY = 3.0  # Right stick camera speed — not too twitchy, not too sluggish
+
 func _unhandled_input(event: InputEvent) -> void:
+	# Mouse look — the OG camera control, still undefeated
 	if event is InputEventMouseMotion and mouse_captured:
 		var motion = event as InputEventMouseMotion
 		camera_yaw -= motion.relative.x * MOUSE_SENSITIVITY
 		camera_pitch -= motion.relative.y * MOUSE_SENSITIVITY
 		camera_pitch = clamp(camera_pitch, -1.2, 0.3)
 
-	if event is InputEventMouseButton:
-		var mb = event as InputEventMouseButton
-		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
-			camera_distance = max(CAMERA_MIN_DIST, camera_distance - CAMERA_ZOOM_SPEED)
-		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed:
-			camera_distance = min(CAMERA_MAX_DIST, camera_distance + CAMERA_ZOOM_SPEED)
-		elif mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
-			_fire_glob()  # Quick glob projectile
-		elif mb.button_index == MOUSE_BUTTON_RIGHT:
-			# Right-click: hold to aim glob command, release to fire
-			if mb.pressed:
-				if glob_command and glob_command.has_method("start_aim"):
-					glob_command.start_aim()
-			else:
-				if glob_command and glob_command.has_method("fire_glob"):
-					glob_command.fire_glob("*")
+	# Camera zoom via input actions (scroll wheel + D-pad left/right on controller)
+	if event.is_action_pressed("camera_zoom_in"):
+		camera_distance = max(CAMERA_MIN_DIST, camera_distance - CAMERA_ZOOM_SPEED)
+	elif event.is_action_pressed("camera_zoom_out"):
+		camera_distance = min(CAMERA_MAX_DIST, camera_distance + CAMERA_ZOOM_SPEED)
 
-	if event is InputEventKey:
-		var key = event as InputEventKey
-		if key.pressed:
-			if key.keycode == KEY_ESCAPE:
-				if mouse_captured:
-					Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-					mouse_captured = false
-				else:
-					Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-					mouse_captured = true
-			elif key.keycode == KEY_E:
-				_fire_glob()  # Quick glob
-			elif key.keycode == KEY_R:
-				# R to fire aimed glob command
-				if glob_command and glob_command.has_method("fire_glob"):
-					glob_command.fire_glob("*")
-			elif key.keycode == KEY_Q:
-				# Q to cycle glob action (grab/push/absorb)
-				if glob_command and glob_command.has_method("cycle_action"):
-					glob_command.cycle_action()
-			elif key.keycode == KEY_F:
-				# F to wrench smash — melee time
-				if wrench_smash and wrench_smash.has_method("swing"):
-					wrench_smash.swing()
-			elif key.keycode == KEY_T:
-				# T to hack nearby terminal
-				if terminal_hack and terminal_hack.has_method("try_interact"):
-					terminal_hack.try_interact()
-			elif key.keycode == KEY_G:
-				# G to spawn a sub-agent — deploy the tiny idiots
-				if agent_spawn and agent_spawn.has_method("try_spawn"):
-					agent_spawn.try_spawn()
-			elif key.keycode == KEY_V:
-				# V to cycle sub-agent task mode
-				if agent_spawn and agent_spawn.has_method("cycle_task"):
-					agent_spawn.cycle_task()
-			elif key.keycode == KEY_TAB:
-				# TAB to toggle upgrade terminal — time to spend those tokens
-				if upgrade_menu and upgrade_menu.has_method("toggle"):
-					upgrade_menu.toggle()
+	# Glob fire (quick): E / LClick / RT
+	if event.is_action_pressed("glob_fire"):
+		_fire_glob()
+
+	# Glob aim: RClick / LT — hold to aim, release to fire
+	if event.is_action_pressed("glob_aim"):
+		if glob_command and glob_command.has_method("start_aim"):
+			glob_command.start_aim()
+	elif event.is_action_released("glob_aim"):
+		if glob_command and glob_command.has_method("fire_glob"):
+			glob_command.fire_glob("*")
+
+	# Glob aimed fire: R key (instant fire without hold)
+	if event.is_action_pressed("glob_fire_aimed"):
+		if glob_command and glob_command.has_method("fire_glob"):
+			glob_command.fire_glob("*")
+
+	# Glob cycle action: Q / LB — grab, push, absorb
+	if event.is_action_pressed("glob_cycle"):
+		if glob_command and glob_command.has_method("cycle_action"):
+			glob_command.cycle_action()
+
+	# Wrench smash: F / RB — bonk time
+	if event.is_action_pressed("wrench_smash"):
+		if wrench_smash and wrench_smash.has_method("swing"):
+			wrench_smash.swing()
+
+	# Interact / Hack: T / Y button
+	if event.is_action_pressed("interact"):
+		if terminal_hack and terminal_hack.has_method("try_interact"):
+			terminal_hack.try_interact()
+
+	# Spawn agent: G / D-pad Up — deploy the tiny idiots
+	if event.is_action_pressed("agent_spawn"):
+		if agent_spawn and agent_spawn.has_method("try_spawn"):
+			agent_spawn.try_spawn()
+
+	# Cycle agent task: V / D-pad Down
+	if event.is_action_pressed("agent_cycle"):
+		if agent_spawn and agent_spawn.has_method("cycle_task"):
+			agent_spawn.cycle_task()
+
+	# Upgrade menu: TAB / Select button — time to spend those tokens
+	if event.is_action_pressed("upgrade_menu"):
+		if upgrade_menu and upgrade_menu.has_method("toggle"):
+			upgrade_menu.toggle()
+
+	# Pause / mouse toggle: ESC / Start
+	if event.is_action_pressed("pause"):
+		if mouse_captured:
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+			mouse_captured = false
+		else:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+			mouse_captured = true
 
 func _physics_process(delta: float) -> void:
 	_update_timers(delta)
@@ -655,7 +662,7 @@ func _update_timers(delta: float) -> void:
 	else:
 		coyote_timer -= delta
 
-	if Input.is_action_just_pressed("ui_accept"):
+	if Input.is_action_just_pressed("jump"):
 		jump_buffer_timer = JUMP_BUFFER_TIME
 	else:
 		jump_buffer_timer -= delta
@@ -689,7 +696,7 @@ func _handle_wall_slide(_delta: float) -> void:
 
 func _handle_jump() -> void:
 	var can_ground_jump = (is_on_floor() or coyote_timer > 0) and not is_dashing
-	if can_ground_jump and (Input.is_action_just_pressed("ui_accept") or jump_buffer_timer > 0):
+	if can_ground_jump and (Input.is_action_just_pressed("jump") or jump_buffer_timer > 0):
 		velocity.y = JUMP_VELOCITY
 		coyote_timer = 0.0
 		jump_buffer_timer = 0.0
@@ -701,7 +708,7 @@ func _handle_jump() -> void:
 			thought_bubble.emit(contextual_thoughts["first_jump"])
 		return
 
-	if is_wall_sliding and Input.is_action_just_pressed("ui_accept"):
+	if is_wall_sliding and Input.is_action_just_pressed("jump"):
 		velocity.y = WALL_JUMP_VELOCITY.y
 		velocity.x = wall_normal.x * WALL_JUMP_VELOCITY.x
 		velocity.z = wall_normal.z * WALL_JUMP_VELOCITY.x
@@ -710,7 +717,7 @@ func _handle_jump() -> void:
 		has_double_jumped = false
 		return
 
-	if not is_on_floor() and not has_double_jumped and can_double_jump and Input.is_action_just_pressed("ui_accept") and not is_wall_sliding:
+	if not is_on_floor() and not has_double_jumped and can_double_jump and Input.is_action_just_pressed("jump") and not is_wall_sliding:
 		velocity.y = DOUBLE_JUMP_VELOCITY
 		has_double_jumped = true
 		if not first_double_jump_done:
@@ -728,10 +735,10 @@ func _handle_dash(delta: float) -> void:
 			dash_ended.emit()
 		return
 
-	if Input.is_key_pressed(KEY_SHIFT) and dash_cooldown_timer <= 0:
+	if Input.is_action_pressed("dash") and dash_cooldown_timer <= 0:
 		var input_dir := Vector2.ZERO
-		input_dir.x = Input.get_axis("ui_left", "ui_right")
-		input_dir.y = Input.get_axis("ui_up", "ui_down")
+		input_dir.x = Input.get_axis("move_left", "move_right")
+		input_dir.y = Input.get_axis("move_forward", "move_back")
 		if input_dir.length() < 0.1:
 			input_dir = Vector2(0, -1)
 		input_dir = input_dir.normalized()
@@ -756,8 +763,8 @@ func _handle_movement(delta: float) -> void:
 		return
 
 	var input_dir := Vector2.ZERO
-	input_dir.x = Input.get_axis("ui_left", "ui_right")
-	input_dir.y = Input.get_axis("ui_up", "ui_down")
+	input_dir.x = Input.get_axis("move_left", "move_right")
+	input_dir.y = Input.get_axis("move_forward", "move_back")
 	input_dir = input_dir.normalized()
 
 	var cam_basis = _get_camera_basis()
@@ -782,6 +789,14 @@ func _get_camera_basis() -> Basis:
 func _update_camera(delta: float) -> void:
 	if not camera_arm or not camera:
 		return
+
+	# Right stick camera look — the controller's answer to mouse aim
+	var stick_x = Input.get_axis("look_left", "look_right")
+	var stick_y = Input.get_axis("look_up", "look_down")
+	if abs(stick_x) > 0.01 or abs(stick_y) > 0.01:
+		camera_yaw -= stick_x * STICK_LOOK_SENSITIVITY * delta
+		camera_pitch -= stick_y * STICK_LOOK_SENSITIVITY * delta
+		camera_pitch = clamp(camera_pitch, -1.2, 0.3)
 
 	var target_pos = global_position + Vector3(0, 1.5, 0)
 	camera_arm.global_position = camera_arm.global_position.lerp(target_pos, CAMERA_SMOOTHING * delta)

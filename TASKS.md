@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** Performance optimization — Cached player references in base_enemy.gd, enemy_agent.gd, aligner_arena.gd, system_prompt_arena.gd (eliminate per-frame get_nodes_in_group calls). Throttled terminal_hack.gd hackable scanning from 60Hz to 5Hz with node-change-driven cache invalidation. Optimized glob_engine.gd: cached GlobTarget child lookups on registration, reversed match_pattern_in_radius to filter by distance first using squared distance (skip expensive pattern matching on far-away targets). Replaced O(n) pop_front() in enemy_agent.gd overfitter path history with O(1) ring buffer. Reduced particle counts across all chapters (terminal_wastes river 100→50, binary rain 80→40, training_grounds 60→35 x2, prompt_bazaar 50→30, test_level 50→30, model_zoo 40→25, alignment_citadel 40→25). Cached HUD reference in glob_command.gd.
-- **Next task to do:** Controller support
+- **Last task completed:** Controller support — Registered 25+ custom input actions in game_manager.gd with keyboard+gamepad bindings (left stick movement, right stick camera, A=jump, B=dash, X/RB=wrench, Y=interact, LT=aim, RT=glob, LB=cycle, D-pad=agents/hack/zoom, Select=upgrades, Start=pause). Refactored globbler.gd from hardcoded KEY_ constants to Input.is_action_* calls. Added right stick camera look with STICK_LOOK_SENSITIVITY. Updated upgrade_menu.gd, terminal_hack.gd, dialogue_box.gd, deprecated_npc.gd to use input actions. Updated all hint text (HUD, hack UI, dialogue box, NPC prompts, main menu controls info) to show both keyboard and controller bindings.
+- **Next task to do:** Credits sequence
 - **Known issues:** Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-5 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-5 music reuses chapter_1 track until dedicated music is implemented.
 
 ---
@@ -218,6 +218,6 @@
 - [x] Full playthrough QA
 - [x] Balance pass: enemy health, damage values, puzzle difficulty
 - [x] Performance optimization
-- [ ] Controller support
+- [x] Controller support
 - [ ] Credits sequence
 - [ ] Final build and export

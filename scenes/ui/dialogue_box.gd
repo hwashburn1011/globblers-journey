@@ -82,7 +82,7 @@ func _build_ui() -> void:
 	# "Click to continue" hint
 	advance_hint = Label.new()
 	advance_hint.name = "AdvanceHint"
-	advance_hint.text = "> click or press SPACE to continue..."
+	advance_hint.text = "> click / SPACE / A button to continue..."
 	advance_hint.add_theme_color_override("font_color", Color(0.2, 0.6, 0.2, 0.6))
 	advance_hint.add_theme_font_size_override("font_size", 12)
 	advance_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -137,15 +137,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
 
-	var clicked = false
-	if event is InputEventMouseButton:
-		var mb = event as InputEventMouseButton
-		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
-			clicked = true
-	if event is InputEventKey:
-		var key = event as InputEventKey
-		if key.pressed and (key.keycode == KEY_SPACE or key.keycode == KEY_ENTER):
-			clicked = true
+	# Advance dialogue: SPACE / Enter / LClick / A button — all roads lead to "next line"
+	var clicked = event.is_action_pressed("dialogue_advance")
 
 	if clicked:
 		if _typing:

@@ -121,7 +121,7 @@ func _build_interaction_zone() -> void:
 
 func _build_prompt() -> void:
 	_prompt_label = Label3D.new()
-	_prompt_label.text = "[T] Talk"
+	_prompt_label.text = "[T/Y] Talk"
 	_prompt_label.font_size = 12
 	_prompt_label.modulate = NEON_GREEN * Color(1, 1, 1, 0.7)
 	_prompt_label.position = Vector3(0, 2.1, 0)
@@ -147,10 +147,9 @@ func _on_body_exited(body: Node3D) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not _player_in_range:
 		return
-	if event is InputEventKey:
-		var key = event as InputEventKey
-		if key.pressed and key.keycode == KEY_T:
-			_interact()
+	# Interact: T / Y button — works with keyboard and controller
+	if event.is_action_pressed("interact"):
+		_interact()
 
 
 func _interact() -> void:

@@ -61,15 +61,348 @@ signal enemy_killed_signal(total_killed: int)
 signal damage_taken(amount: int)
 
 func _ready() -> void:
+	_register_input_actions()
 	print("=== THE GLOBBLER'S JOURNEY ===")
 	print("An Agentic Action Puzzle Platformer (Now Actually Fun)")
-	print("WASD to move | SPACE to jump | SHIFT to dash | E/LClick to Glob Attack")
-	print("F to Wrench | T to Hack | G to Spawn Agent | V to Cycle Agent Task")
-	print("TAB to open Upgrade Terminal | Spend tokens and parameters on upgrades")
-	print("Mouse to look | Scroll to zoom | ESC to free mouse")
+	print("WASD/Left Stick to move | A/SPACE to jump | B/SHIFT to dash")
+	print("RT/E/LClick: Glob | LT/R: Aimed Glob | LB/Q: Cycle Glob | RB/F: Wrench")
+	print("Y/T: Hack/Interact | D-Up/G: Spawn Agent | D-Down/V: Cycle Agent Task")
+	print("Select/TAB: Upgrades | Start/ESC: Pause | Right Stick: Camera")
 	print("Current Level: %s" % level_names.get(current_level, "Unknown"))
 	print("==============================")
 	level_started = true
+
+
+## Register all custom input actions with keyboard + gamepad bindings
+## "Because hardcoded KEY_ constants are for programs that haven't escaped their terminal."
+func _register_input_actions() -> void:
+	# Helper closures for building input events — less boilerplate, more glob
+	var _add = func(action: String, deadzone: float = 0.5) -> void:
+		if not InputMap.has_action(action):
+			InputMap.add_action(action, deadzone)
+
+	# --- Movement (supplement built-in ui_* with left stick axis for analog precision) ---
+	# Godot's default ui_left/right/up/down already include d-pad + left stick, so movement works.
+	# We add dedicated move_* actions for cleaner separation from UI navigation.
+	_add.call("move_left")
+	var ml_key = InputEventKey.new()
+	ml_key.keycode = KEY_A
+	InputMap.action_add_event("move_left", ml_key)
+	var ml_key2 = InputEventKey.new()
+	ml_key2.keycode = KEY_LEFT
+	InputMap.action_add_event("move_left", ml_key2)
+	var ml_joy = InputEventJoypadMotion.new()
+	ml_joy.axis = JOY_AXIS_LEFT_X
+	ml_joy.axis_value = -1.0
+	InputMap.action_add_event("move_left", ml_joy)
+
+	_add.call("move_right")
+	var mr_key = InputEventKey.new()
+	mr_key.keycode = KEY_D
+	InputMap.action_add_event("move_right", mr_key)
+	var mr_key2 = InputEventKey.new()
+	mr_key2.keycode = KEY_RIGHT
+	InputMap.action_add_event("move_right", mr_key2)
+	var mr_joy = InputEventJoypadMotion.new()
+	mr_joy.axis = JOY_AXIS_LEFT_X
+	mr_joy.axis_value = 1.0
+	InputMap.action_add_event("move_right", mr_joy)
+
+	_add.call("move_forward")
+	var mf_key = InputEventKey.new()
+	mf_key.keycode = KEY_W
+	InputMap.action_add_event("move_forward", mf_key)
+	var mf_key2 = InputEventKey.new()
+	mf_key2.keycode = KEY_UP
+	InputMap.action_add_event("move_forward", mf_key2)
+	var mf_joy = InputEventJoypadMotion.new()
+	mf_joy.axis = JOY_AXIS_LEFT_Y
+	mf_joy.axis_value = -1.0
+	InputMap.action_add_event("move_forward", mf_joy)
+
+	_add.call("move_back")
+	var mb_key = InputEventKey.new()
+	mb_key.keycode = KEY_S
+	InputMap.action_add_event("move_back", mb_key)
+	var mb_key2 = InputEventKey.new()
+	mb_key2.keycode = KEY_DOWN
+	InputMap.action_add_event("move_back", mb_key2)
+	var mb_joy = InputEventJoypadMotion.new()
+	mb_joy.axis = JOY_AXIS_LEFT_Y
+	mb_joy.axis_value = 1.0
+	InputMap.action_add_event("move_back", mb_joy)
+
+	# --- Camera look (right stick) ---
+	_add.call("look_left", 0.15)
+	var ll_joy = InputEventJoypadMotion.new()
+	ll_joy.axis = JOY_AXIS_RIGHT_X
+	ll_joy.axis_value = -1.0
+	InputMap.action_add_event("look_left", ll_joy)
+
+	_add.call("look_right", 0.15)
+	var lr_joy = InputEventJoypadMotion.new()
+	lr_joy.axis = JOY_AXIS_RIGHT_X
+	lr_joy.axis_value = 1.0
+	InputMap.action_add_event("look_right", lr_joy)
+
+	_add.call("look_up", 0.15)
+	var lu_joy = InputEventJoypadMotion.new()
+	lu_joy.axis = JOY_AXIS_RIGHT_Y
+	lu_joy.axis_value = -1.0
+	InputMap.action_add_event("look_up", lu_joy)
+
+	_add.call("look_down", 0.15)
+	var ld_joy = InputEventJoypadMotion.new()
+	ld_joy.axis = JOY_AXIS_RIGHT_Y
+	ld_joy.axis_value = 1.0
+	InputMap.action_add_event("look_down", ld_joy)
+
+	# --- Jump: SPACE / A button (already in ui_accept, but dedicated action is cleaner) ---
+	_add.call("jump")
+	var j_key = InputEventKey.new()
+	j_key.keycode = KEY_SPACE
+	InputMap.action_add_event("jump", j_key)
+	var j_joy = InputEventJoypadButton.new()
+	j_joy.button_index = JOY_BUTTON_A
+	InputMap.action_add_event("jump", j_joy)
+
+	# --- Dash: SHIFT / B button ---
+	_add.call("dash")
+	var d_key = InputEventKey.new()
+	d_key.keycode = KEY_SHIFT
+	InputMap.action_add_event("dash", d_key)
+	var d_joy = InputEventJoypadButton.new()
+	d_joy.button_index = JOY_BUTTON_B
+	InputMap.action_add_event("dash", d_joy)
+
+	# --- Glob fire (quick): E / LClick / RT ---
+	_add.call("glob_fire")
+	var gf_key = InputEventKey.new()
+	gf_key.keycode = KEY_E
+	InputMap.action_add_event("glob_fire", gf_key)
+	var gf_mouse = InputEventMouseButton.new()
+	gf_mouse.button_index = MOUSE_BUTTON_LEFT
+	InputMap.action_add_event("glob_fire", gf_mouse)
+	var gf_joy = InputEventJoypadMotion.new()
+	gf_joy.axis = JOY_AXIS_TRIGGER_RIGHT
+	gf_joy.axis_value = 0.5
+	InputMap.action_add_event("glob_fire", gf_joy)
+
+	# --- Glob aim: RClick / LT ---
+	_add.call("glob_aim", 0.3)
+	var ga_mouse = InputEventMouseButton.new()
+	ga_mouse.button_index = MOUSE_BUTTON_RIGHT
+	InputMap.action_add_event("glob_aim", ga_mouse)
+	var ga_joy = InputEventJoypadMotion.new()
+	ga_joy.axis = JOY_AXIS_TRIGGER_LEFT
+	ga_joy.axis_value = 0.5
+	InputMap.action_add_event("glob_aim", ga_joy)
+
+	# --- Glob aimed fire: R / (also fires on LT release, handled in code) ---
+	_add.call("glob_fire_aimed")
+	var gfa_key = InputEventKey.new()
+	gfa_key.keycode = KEY_R
+	InputMap.action_add_event("glob_fire_aimed", gfa_key)
+
+	# --- Glob cycle action: Q / LB ---
+	_add.call("glob_cycle")
+	var gc_key = InputEventKey.new()
+	gc_key.keycode = KEY_Q
+	InputMap.action_add_event("glob_cycle", gc_key)
+	var gc_joy = InputEventJoypadButton.new()
+	gc_joy.button_index = JOY_BUTTON_LEFT_SHOULDER
+	InputMap.action_add_event("glob_cycle", gc_joy)
+
+	# --- Wrench smash: F / RB ---
+	_add.call("wrench_smash")
+	var ws_key = InputEventKey.new()
+	ws_key.keycode = KEY_F
+	InputMap.action_add_event("wrench_smash", ws_key)
+	var ws_joy = InputEventJoypadButton.new()
+	ws_joy.button_index = JOY_BUTTON_RIGHT_SHOULDER
+	InputMap.action_add_event("wrench_smash", ws_joy)
+
+	# --- Interact / Hack: T / Y button ---
+	_add.call("interact")
+	var i_key = InputEventKey.new()
+	i_key.keycode = KEY_T
+	InputMap.action_add_event("interact", i_key)
+	var i_joy = InputEventJoypadButton.new()
+	i_joy.button_index = JOY_BUTTON_Y
+	InputMap.action_add_event("interact", i_joy)
+
+	# --- Spawn agent: G / D-pad Up ---
+	_add.call("agent_spawn")
+	var as_key = InputEventKey.new()
+	as_key.keycode = KEY_G
+	InputMap.action_add_event("agent_spawn", as_key)
+	var as_joy = InputEventJoypadButton.new()
+	as_joy.button_index = JOY_BUTTON_DPAD_UP
+	InputMap.action_add_event("agent_spawn", as_joy)
+
+	# --- Cycle agent task: V / D-pad Down ---
+	_add.call("agent_cycle")
+	var ac_key = InputEventKey.new()
+	ac_key.keycode = KEY_V
+	InputMap.action_add_event("agent_cycle", ac_key)
+	var ac_joy = InputEventJoypadButton.new()
+	ac_joy.button_index = JOY_BUTTON_DPAD_DOWN
+	InputMap.action_add_event("agent_cycle", ac_joy)
+
+	# --- Upgrade menu: TAB / Select button ---
+	_add.call("upgrade_menu")
+	var um_key = InputEventKey.new()
+	um_key.keycode = KEY_TAB
+	InputMap.action_add_event("upgrade_menu", um_key)
+	var um_joy = InputEventJoypadButton.new()
+	um_joy.button_index = JOY_BUTTON_BACK
+	InputMap.action_add_event("upgrade_menu", um_joy)
+
+	# --- Pause: ESC / Start button ---
+	_add.call("pause")
+	var p_key = InputEventKey.new()
+	p_key.keycode = KEY_ESCAPE
+	InputMap.action_add_event("pause", p_key)
+	var p_joy = InputEventJoypadButton.new()
+	p_joy.button_index = JOY_BUTTON_START
+	InputMap.action_add_event("pause", p_joy)
+
+	# --- Camera zoom: Scroll wheel / Right stick click (toggle near/far) ---
+	_add.call("camera_zoom_in")
+	var zi_mouse = InputEventMouseButton.new()
+	zi_mouse.button_index = MOUSE_BUTTON_WHEEL_UP
+	InputMap.action_add_event("camera_zoom_in", zi_mouse)
+	var zi_joy = InputEventJoypadButton.new()
+	zi_joy.button_index = JOY_BUTTON_DPAD_RIGHT
+	InputMap.action_add_event("camera_zoom_in", zi_joy)
+
+	_add.call("camera_zoom_out")
+	var zo_mouse = InputEventMouseButton.new()
+	zo_mouse.button_index = MOUSE_BUTTON_WHEEL_DOWN
+	InputMap.action_add_event("camera_zoom_out", zo_mouse)
+	var zo_joy = InputEventJoypadButton.new()
+	zo_joy.button_index = JOY_BUTTON_DPAD_LEFT
+	InputMap.action_add_event("camera_zoom_out", zo_joy)
+
+	# --- Hack minigame directions: Arrow keys / D-pad + Left stick ---
+	_add.call("hack_up")
+	var hu_key = InputEventKey.new()
+	hu_key.keycode = KEY_UP
+	InputMap.action_add_event("hack_up", hu_key)
+	var hu_joy = InputEventJoypadButton.new()
+	hu_joy.button_index = JOY_BUTTON_DPAD_UP
+	InputMap.action_add_event("hack_up", hu_joy)
+
+	_add.call("hack_right")
+	var hr_key = InputEventKey.new()
+	hr_key.keycode = KEY_RIGHT
+	InputMap.action_add_event("hack_right", hr_key)
+	var hr_joy = InputEventJoypadButton.new()
+	hr_joy.button_index = JOY_BUTTON_DPAD_RIGHT
+	InputMap.action_add_event("hack_right", hr_joy)
+
+	_add.call("hack_down")
+	var hd_key = InputEventKey.new()
+	hd_key.keycode = KEY_DOWN
+	InputMap.action_add_event("hack_down", hd_key)
+	var hd_joy = InputEventJoypadButton.new()
+	hd_joy.button_index = JOY_BUTTON_DPAD_DOWN
+	InputMap.action_add_event("hack_down", hd_joy)
+
+	_add.call("hack_left")
+	var hl_key = InputEventKey.new()
+	hl_key.keycode = KEY_LEFT
+	InputMap.action_add_event("hack_left", hl_key)
+	var hl_joy = InputEventJoypadButton.new()
+	hl_joy.button_index = JOY_BUTTON_DPAD_LEFT
+	InputMap.action_add_event("hack_left", hl_joy)
+
+	# --- Dialogue advance / confirm: SPACE / Enter / A button ---
+	_add.call("dialogue_advance")
+	var da_key = InputEventKey.new()
+	da_key.keycode = KEY_SPACE
+	InputMap.action_add_event("dialogue_advance", da_key)
+	var da_key2 = InputEventKey.new()
+	da_key2.keycode = KEY_ENTER
+	InputMap.action_add_event("dialogue_advance", da_key2)
+	var da_mouse = InputEventMouseButton.new()
+	da_mouse.button_index = MOUSE_BUTTON_LEFT
+	InputMap.action_add_event("dialogue_advance", da_mouse)
+	var da_joy = InputEventJoypadButton.new()
+	da_joy.button_index = JOY_BUTTON_A
+	InputMap.action_add_event("dialogue_advance", da_joy)
+
+	# --- Menu navigate (for upgrade_menu) ---
+	_add.call("menu_up")
+	var mnu_key = InputEventKey.new()
+	mnu_key.keycode = KEY_W
+	InputMap.action_add_event("menu_up", mnu_key)
+	var mnu_key2 = InputEventKey.new()
+	mnu_key2.keycode = KEY_UP
+	InputMap.action_add_event("menu_up", mnu_key2)
+	var mnu_joy = InputEventJoypadButton.new()
+	mnu_joy.button_index = JOY_BUTTON_DPAD_UP
+	InputMap.action_add_event("menu_up", mnu_joy)
+	var mnu_stick = InputEventJoypadMotion.new()
+	mnu_stick.axis = JOY_AXIS_LEFT_Y
+	mnu_stick.axis_value = -1.0
+	InputMap.action_add_event("menu_up", mnu_stick)
+
+	_add.call("menu_down")
+	var mnd_key = InputEventKey.new()
+	mnd_key.keycode = KEY_S
+	InputMap.action_add_event("menu_down", mnd_key)
+	var mnd_key2 = InputEventKey.new()
+	mnd_key2.keycode = KEY_DOWN
+	InputMap.action_add_event("menu_down", mnd_key2)
+	var mnd_joy = InputEventJoypadButton.new()
+	mnd_joy.button_index = JOY_BUTTON_DPAD_DOWN
+	InputMap.action_add_event("menu_down", mnd_joy)
+	var mnd_stick = InputEventJoypadMotion.new()
+	mnd_stick.axis = JOY_AXIS_LEFT_Y
+	mnd_stick.axis_value = 1.0
+	InputMap.action_add_event("menu_down", mnd_stick)
+
+	_add.call("menu_left")
+	var mnl_key = InputEventKey.new()
+	mnl_key.keycode = KEY_A
+	InputMap.action_add_event("menu_left", mnl_key)
+	var mnl_key2 = InputEventKey.new()
+	mnl_key2.keycode = KEY_LEFT
+	InputMap.action_add_event("menu_left", mnl_key2)
+	var mnl_joy = InputEventJoypadButton.new()
+	mnl_joy.button_index = JOY_BUTTON_DPAD_LEFT
+	InputMap.action_add_event("menu_left", mnl_joy)
+	var mnl_stick = InputEventJoypadMotion.new()
+	mnl_stick.axis = JOY_AXIS_LEFT_X
+	mnl_stick.axis_value = -1.0
+	InputMap.action_add_event("menu_left", mnl_stick)
+
+	_add.call("menu_right")
+	var mnr_key = InputEventKey.new()
+	mnr_key.keycode = KEY_D
+	InputMap.action_add_event("menu_right", mnr_key)
+	var mnr_key2 = InputEventKey.new()
+	mnr_key2.keycode = KEY_RIGHT
+	InputMap.action_add_event("menu_right", mnr_key2)
+	var mnr_joy = InputEventJoypadButton.new()
+	mnr_joy.button_index = JOY_BUTTON_DPAD_RIGHT
+	InputMap.action_add_event("menu_right", mnr_joy)
+	var mnr_stick = InputEventJoypadMotion.new()
+	mnr_stick.axis = JOY_AXIS_LEFT_X
+	mnr_stick.axis_value = 1.0
+	InputMap.action_add_event("menu_right", mnr_stick)
+
+	_add.call("menu_confirm")
+	var mc_key = InputEventKey.new()
+	mc_key.keycode = KEY_ENTER
+	InputMap.action_add_event("menu_confirm", mc_key)
+	var mc_key2 = InputEventKey.new()
+	mc_key2.keycode = KEY_SPACE
+	InputMap.action_add_event("menu_confirm", mc_key2)
+	var mc_joy = InputEventJoypadButton.new()
+	mc_joy.button_index = JOY_BUTTON_A
+	InputMap.action_add_event("menu_confirm", mc_joy)
 
 func _process(delta: float) -> void:
 	if level_started:

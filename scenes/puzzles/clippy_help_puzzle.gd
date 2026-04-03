@@ -330,7 +330,7 @@ func _pop_shield(idx: int) -> void:
 	# Update screen to show vulnerability
 	var screen = _desks[idx]["screen_label"] as Label3D
 	if screen:
-		screen.text = "SHIELD DOWN!\n[T] TO HACK\nHurry before it\nrecharges..."
+		screen.text = "SHIELD DOWN!\n[T/Y] TO HACK\nHurry before it\nrecharges..."
 		screen.modulate = Color(0.224, 1.0, 0.078)
 
 	var dm = get_node_or_null("/root/DialogueManager")

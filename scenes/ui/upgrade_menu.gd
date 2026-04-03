@@ -71,47 +71,52 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not is_open:
 		return
 
-	if event is InputEventKey and event.pressed:
-		var key = event as InputEventKey
-		match key.keycode:
-			KEY_TAB, KEY_ESCAPE:
-				close_menu()
-				get_viewport().set_input_as_handled()
-			KEY_LEFT, KEY_A:
-				var old_cat := _category_index
-				_category_index = max(0, _category_index - 1)
-				_selected_index = 0
-				_refresh_all()
-				if old_cat != _category_index:
-					_play_ui_sfx("menu_select")
-				get_viewport().set_input_as_handled()
-			KEY_RIGHT, KEY_D:
-				var old_cat := _category_index
-				_category_index = min(_category_names.size() - 1, _category_index + 1)
-				_selected_index = 0
-				_refresh_all()
-				if old_cat != _category_index:
-					_play_ui_sfx("menu_select")
-				get_viewport().set_input_as_handled()
-			KEY_UP, KEY_W:
-				var old_idx := _selected_index
-				_selected_index = max(0, _selected_index - 1)
-				_refresh_selection()
-				if old_idx != _selected_index:
-					_play_ui_sfx("menu_hover")
-				get_viewport().set_input_as_handled()
-			KEY_DOWN, KEY_S:
-				var old_idx := _selected_index
-				_selected_index = min(_upgrade_list.size() - 1, _selected_index)
-				if _upgrade_list.size() > 0:
-					_selected_index = min(_upgrade_list.size() - 1, _selected_index + 1)
-				_refresh_selection()
-				if old_idx != _selected_index:
-					_play_ui_sfx("menu_hover")
-				get_viewport().set_input_as_handled()
-			KEY_ENTER, KEY_SPACE:
-				_try_purchase()
-				get_viewport().set_input_as_handled()
+	# Close menu: TAB / ESC / Select / Start / B button
+	if event.is_action_pressed("upgrade_menu") or event.is_action_pressed("pause") or event.is_action_pressed("ui_cancel"):
+		close_menu()
+		get_viewport().set_input_as_handled()
+		return
+
+	# Navigate categories: left/right
+	if event.is_action_pressed("menu_left"):
+		var old_cat := _category_index
+		_category_index = max(0, _category_index - 1)
+		_selected_index = 0
+		_refresh_all()
+		if old_cat != _category_index:
+			_play_ui_sfx("menu_select")
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("menu_right"):
+		var old_cat := _category_index
+		_category_index = min(_category_names.size() - 1, _category_index + 1)
+		_selected_index = 0
+		_refresh_all()
+		if old_cat != _category_index:
+			_play_ui_sfx("menu_select")
+		get_viewport().set_input_as_handled()
+
+	# Navigate upgrades: up/down
+	if event.is_action_pressed("menu_up"):
+		var old_idx := _selected_index
+		_selected_index = max(0, _selected_index - 1)
+		_refresh_selection()
+		if old_idx != _selected_index:
+			_play_ui_sfx("menu_hover")
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("menu_down"):
+		var old_idx := _selected_index
+		_selected_index = min(_upgrade_list.size() - 1, _selected_index)
+		if _upgrade_list.size() > 0:
+			_selected_index = min(_upgrade_list.size() - 1, _selected_index + 1)
+		_refresh_selection()
+		if old_idx != _selected_index:
+			_play_ui_sfx("menu_hover")
+		get_viewport().set_input_as_handled()
+
+	# Confirm purchase: Enter / Space / A button
+	if event.is_action_pressed("menu_confirm"):
+		_try_purchase()
+		get_viewport().set_input_as_handled()
 
 func _build_ui() -> void:
 	# Full-screen dark overlay
@@ -235,7 +240,7 @@ func _build_ui() -> void:
 	hint_row.add_theme_constant_override("separation", 20)
 	vbox.add_child(hint_row)
 
-	_close_hint = _make_label("[TAB/ESC] Close  |  [A/D] Category  |  [W/S] Select  |  [ENTER] Buy", 13, DIM_GREEN)
+	_close_hint = _make_label("[TAB/ESC/Select] Close  |  [A-D/LStick] Category  |  [W-S/LStick] Select  |  [ENTER/A] Buy", 13, DIM_GREEN)
 	hint_row.add_child(_close_hint)
 
 func _make_panel() -> PanelContainer:
