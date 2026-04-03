@@ -2130,7 +2130,7 @@ func _show_end_screen() -> void:
 	# "Press any key to return to main menu" — the exit door
 	var prompt_label = Label.new()
 	prompt_label.name = "PromptLabel"
-	prompt_label.text = "[Press any key to return to the main menu]"
+	prompt_label.text = "[Press any key to continue]"
 	prompt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	prompt_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	prompt_label.anchors_preset = Control.PRESET_CENTER
@@ -2206,9 +2206,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _return_to_main_menu() -> void:
-	print("[EPILOGUE] Returning to main menu. Thanks for playing, you magnificent glob utility.")
+	print("[EPILOGUE] Rolling credits. You earned this, you magnificent glob utility.")
 	# Save the completed game state one last time
 	var save_sys = get_node_or_null("/root/SaveSystem")
 	if save_sys and save_sys.has_method("checkpoint_save"):
 		save_sys.checkpoint_save()
-	get_tree().change_scene_to_file("res://scenes/main/main_menu.tscn")
+	# Show credits before returning to menu — they scrolled through 5 chapters,
+	# the least we can do is scroll some text at them
+	get_tree().change_scene_to_file("res://scenes/main/credits.tscn")
