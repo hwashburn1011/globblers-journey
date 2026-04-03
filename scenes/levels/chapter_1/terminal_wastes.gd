@@ -93,6 +93,7 @@ func _ready() -> void:
 	_place_tokens()
 	_place_parameter_pickups()
 	_place_checkpoints()
+	_place_ambient_zones()
 	_place_binary_rain()
 	_spawn_player()
 	_spawn_hud()
@@ -601,10 +602,11 @@ func _on_boss_trigger_entered(body: Node3D) -> void:
 
 	_boss_fight_started = true
 
-	# Start the boss music — time to crank it up
+	# Start the boss music and ambient — time to crank it up
 	var am = get_node_or_null("/root/AudioManager")
 	if am:
 		am.start_music("boss")
+		am.set_area_ambient("boss")
 
 	# Seal the entrance — no escape
 	_seal_boss_entrance()
@@ -1030,6 +1032,51 @@ func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> v
 			var dm = get_node_or_null("/root/DialogueManager")
 			if dm and dm.has_method("quick_line"):
 				dm.quick_line("GLOBBLER", "Checkpoint reached. At least something persists around here.")
+	)
+
+	add_child(area)
+
+
+# ============================================================
+# AMBIENT ZONES — each room gets its own sonic personality
+# "Because nothing says 'you've moved to a new area' like subtly different hums."
+# ============================================================
+
+func _place_ambient_zones() -> void:
+	# Map room keys to ambient area names for AudioManager
+	var room_ambient_map := {
+		"spawn": "spawn",
+		"cmd_hall": "cmd_hall",
+		"data_river": "data_river",
+		"graveyard": "graveyard",
+		"nexus": "nexus",
+	}
+	for room_key in ROOMS:
+		var r = ROOMS[room_key]
+		var pos: Vector3 = r["pos"]
+		var sz: Vector2 = r["size"]
+		var wh: float = r["wall_h"]
+		var ambient_name: String = room_ambient_map.get(room_key, room_key)
+		_create_ambient_zone(ambient_name, pos + Vector3(0, wh / 2.0, 0), Vector3(sz.x, wh, sz.y))
+
+
+func _create_ambient_zone(area_name: String, pos: Vector3, size: Vector3) -> void:
+	var area = Area3D.new()
+	area.name = "AmbientZone_" + area_name
+	area.position = pos
+	area.monitoring = true
+
+	var col = CollisionShape3D.new()
+	var shape = BoxShape3D.new()
+	shape.size = size
+	col.shape = shape
+	area.add_child(col)
+
+	area.body_entered.connect(func(body: Node3D):
+		if body.is_in_group("player"):
+			var am = get_node_or_null("/root/AudioManager")
+			if am and am.has_method("set_area_ambient"):
+				am.set_area_ambient(area_name)
 	)
 
 	add_child(area)

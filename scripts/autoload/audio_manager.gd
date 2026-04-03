@@ -21,6 +21,8 @@ var ui_volume := 0.6
 var _music_player: AudioStreamPlayer
 var _boss_music_player: AudioStreamPlayer
 var _ambient_player: AudioStreamPlayer
+var _ambient_player_b: AudioStreamPlayer  # Second ambient player for crossfade layering
+var _current_area_ambient := ""  # Which area's ambient is currently playing
 var _sfx_players: Array[AudioStreamPlayer] = []  # Pool of SFX players
 const SFX_POOL_SIZE = 8  # Enough concurrent bleeps for a chaotic firefight
 
@@ -141,11 +143,17 @@ func _create_players() -> void:
 	_boss_music_player.volume_db = linear_to_db(music_volume) + BASE_VOLUME_DB
 	add_child(_boss_music_player)
 
-	# Ambient player — server hums and cooling fans
+	# Ambient players — server hums, cooling fans, and area-specific vibes
+	# Two players so we can crossfade between area ambients without silence gaps
 	_ambient_player = AudioStreamPlayer.new()
 	_ambient_player.name = "AmbientPlayer"
 	_ambient_player.volume_db = linear_to_db(ambient_volume) + BASE_VOLUME_DB - 4.0
 	add_child(_ambient_player)
+
+	_ambient_player_b = AudioStreamPlayer.new()
+	_ambient_player_b.name = "AmbientPlayerB"
+	_ambient_player_b.volume_db = -40.0  # Starts silent
+	add_child(_ambient_player_b)
 
 	# Menu music player — chill vibes for the title screen
 	_menu_music_player = AudioStreamPlayer.new()
@@ -364,6 +372,142 @@ func _generate_ambient_loop() -> AudioStreamWAV:
 	return stream
 
 
+# --- Per-area ambient generation ---
+# "Every room deserves its own flavor of existential background noise."
+# Each area gets a unique procedural ambient loop layered on the base hum.
+
+func _generate_area_ambient(area_name: String) -> AudioStreamWAV:
+	var duration := 8.0
+	var num_samples := int(duration * SAMPLE_RATE)
+	var data := PackedByteArray()
+	data.resize(num_samples * 2)
+	var hum_phase := 0.0
+
+	for i in num_samples:
+		var t := float(i) / SAMPLE_RATE
+		var sample := 0.0
+
+		match area_name:
+			"spawn":
+				# Boot-up ambience: gentle hum with periodic startup beeps
+				# "Home sweet terminal. Smells like ozone and regret."
+				var hum := sin(hum_phase * TAU) * 0.06
+				hum_phase += 50.0 / SAMPLE_RATE
+				# Soft periodic boot chirp every ~2 seconds
+				var chirp_t := fmod(t, 2.0)
+				var chirp := 0.0
+				if chirp_t < 0.03:
+					chirp = sin(chirp_t * 1200.0 * TAU) * 0.04 * (1.0 - chirp_t / 0.03)
+				# Light fan
+				var fan := randf_range(-1.0, 1.0) * 0.008 * (sin(t * 0.5 * TAU) * 0.5 + 0.5)
+				sample = hum + chirp + fan
+
+			"cmd_hall":
+				# Heavy processing: deeper hum, rapid clicking, more digital crackle
+				# "The sound of a million commands being ignored."
+				var hum := sin(hum_phase * TAU) * 0.07
+				hum += sin(hum_phase * TAU * 3.0) * 0.02  # Third harmonic
+				hum_phase += 55.0 / SAMPLE_RATE
+				# Keyboard-like clicking at irregular intervals
+				var click := 0.0
+				if randf() < 0.003:
+					click = randf_range(-0.12, 0.12)
+				# Steady crackle — more frequent than base
+				var crackle := 0.0
+				if randf() < 0.001:
+					crackle = randf_range(-0.1, 0.1)
+				# Processing whir: modulated noise
+				var whir := randf_range(-1.0, 1.0) * 0.012 * (sin(t * 3.0 * TAU) * 0.5 + 0.5)
+				sample = hum + click + crackle + whir
+
+			"data_river":
+				# Flowing data: water-like filtered noise, electrical hum, bubble pops
+				# "It's not water. It's ones and zeros pretending to have fluid dynamics."
+				var hum := sin(hum_phase * TAU) * 0.05
+				hum_phase += 45.0 / SAMPLE_RATE
+				# Flowing noise — two modulated noise layers for stereo-ish movement
+				var flow_mod1 := sin(t * 0.4 * TAU) * 0.5 + 0.5
+				var flow_mod2 := sin(t * 0.6 * TAU + 1.0) * 0.5 + 0.5
+				var flow := randf_range(-1.0, 1.0) * 0.025 * flow_mod1
+				flow += randf_range(-1.0, 1.0) * 0.015 * flow_mod2
+				# Data bubble pops — brief high-freq blips
+				var bubble := 0.0
+				if randf() < 0.002:
+					bubble = sin(randf() * 2000.0 * TAU) * 0.06
+				# Low electrical thrum
+				var thrum := sin(hum_phase * TAU * 0.5) * 0.03 * (sin(t * 0.2 * TAU) * 0.3 + 0.7)
+				sample = hum + flow + bubble + thrum
+
+			"graveyard":
+				# Eerie silence: minimal hum, distant creaks, wind-like noise, decay
+				# "Where old programs come to not rest in peace."
+				var hum := sin(hum_phase * TAU) * 0.03  # Much quieter
+				hum_phase += 40.0 / SAMPLE_RATE
+				# Wind-like filtered noise — slow and desolate
+				var wind_mod := sin(t * 0.15 * TAU) * 0.5 + 0.5
+				var wind := randf_range(-1.0, 1.0) * 0.018 * wind_mod
+				# Distant metallic creak — rare
+				var creak := 0.0
+				if randf() < 0.0003:
+					creak = sin(t * 180.0 * TAU) * 0.08
+				# Eerie tone — slow detuned sine
+				var eerie := sin(t * 38.0 * TAU) * 0.015 * (sin(t * 0.08 * TAU) * 0.5 + 0.5)
+				sample = hum + wind + creak + eerie
+
+			"nexus":
+				# Power convergence: intense hum, overlapping harmonics, surge pulses
+				# "All roads lead to the nexus. All power bills too."
+				var hum := sin(hum_phase * TAU) * 0.09
+				hum += sin(hum_phase * TAU * 2.0) * 0.04  # 2nd harmonic
+				hum += sin(hum_phase * TAU * 4.0) * 0.02  # 4th harmonic
+				hum_phase += 60.0 / SAMPLE_RATE
+				# Power surge pulse — periodic swell
+				var surge := sin(t * 0.25 * TAU) * 0.03
+				surge *= surge  # Squared for sharper pulse shape
+				# Dense digital chatter — more crackle than other rooms
+				var chatter := 0.0
+				if randf() < 0.002:
+					chatter = randf_range(-0.1, 0.1)
+				# Cooling fan — louder here, more machinery
+				var fan := randf_range(-1.0, 1.0) * 0.02 * (sin(t * 1.2 * TAU) * 0.3 + 0.7)
+				sample = hum + surge + chatter + fan
+
+			"boss":
+				# Deep rumble: sub-bass drone, ominous pulse, static crackle
+				# "This room sounds like a hard drive's last confession."
+				var hum := sin(hum_phase * TAU) * 0.1
+				hum_phase += 30.0 / SAMPLE_RATE  # Very low
+				# Sub pulse
+				var pulse := sin(t * 0.5 * TAU) * 0.05
+				# Static
+				var static_noise := randf_range(-1.0, 1.0) * 0.015
+				# Ominous overtone
+				var overtone := sin(t * 62.0 * TAU) * 0.03 * (sin(t * 0.3 * TAU) * 0.5 + 0.5)
+				sample = hum + pulse + static_noise + overtone
+
+			_:
+				# Fallback: basic server hum (same as original ambient)
+				var hum := sin(hum_phase * TAU) * 0.08
+				hum += sin(hum_phase * TAU * 2.0) * 0.03
+				hum_phase += 60.0 / SAMPLE_RATE
+				var fan := randf_range(-1.0, 1.0) * 0.02 * (sin(t * 0.7 * TAU) * 0.5 + 0.5)
+				sample = hum + fan
+
+		var pcm := int(clampf(sample, -1.0, 1.0) * 32767.0)
+		data[i * 2] = pcm & 0xFF
+		data[i * 2 + 1] = (pcm >> 8) & 0xFF
+
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = int(SAMPLE_RATE)
+	stream.stereo = false
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	stream.loop_begin = 0
+	stream.loop_end = num_samples
+	stream.data = data
+	return stream
+
+
 # --- Playback ---
 
 func play_sfx(sfx_name: String) -> void:
@@ -440,10 +584,49 @@ func start_ambient() -> void:
 
 func stop_ambient() -> void:
 	_ambient_player.stop()
+	_ambient_player_b.stop()
+	_current_area_ambient = ""
+
+
+## Crossfade to a new area-specific ambient loop.
+## Call this when the player enters a new room/area.
+## "Smooth transitions — because jarring audio cuts are for amateurs and horror games."
+func set_area_ambient(area_name: String) -> void:
+	if area_name == _current_area_ambient:
+		return  # Already playing this area's vibe
+
+	_current_area_ambient = area_name
+	var target_db := linear_to_db(ambient_volume) + BASE_VOLUME_DB - 4.0
+	var fade_time := 1.5  # Seconds to crossfade — long enough to feel smooth
+
+	# Figure out which player is currently active (A) and which is free (B)
+	var active: AudioStreamPlayer
+	var incoming: AudioStreamPlayer
+	if _ambient_player.playing and _ambient_player.volume_db > -35.0:
+		active = _ambient_player
+		incoming = _ambient_player_b
+	else:
+		active = _ambient_player_b
+		incoming = _ambient_player
+
+	# Start the new area ambient on the incoming player at silence
+	incoming.stream = _generate_area_ambient(area_name)
+	incoming.volume_db = -40.0
+	incoming.play()
+
+	# Crossfade: fade out active, fade in incoming
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(active, "volume_db", -40.0, fade_time)
+	tween.tween_property(incoming, "volume_db", target_db, fade_time)
+	# Stop the old player once it's faded out
+	tween.set_parallel(false)
+	tween.tween_callback(active.stop)
+	print("[AUDIO] Ambient crossfade -> '%s'. New room, new vibes." % area_name)
 
 
 func _start_chapter_1_audio() -> void:
-	start_ambient()
+	set_area_ambient("spawn")  # Start with spawn chamber ambient instead of generic
 	start_music("chapter_1")
 
 
@@ -535,7 +718,9 @@ func stop_all_audio() -> void:
 	_boss_music_player.stop()
 	_menu_music_player.stop()
 	_ambient_player.stop()
+	_ambient_player_b.stop()
 	_current_music = ""
+	_current_area_ambient = ""
 	_boss_fight_active = false
 
 
@@ -732,7 +917,12 @@ func set_music_volume(vol: float) -> void:
 
 func set_ambient_volume(vol: float) -> void:
 	ambient_volume = clampf(vol, 0.0, 1.0)
-	_ambient_player.volume_db = linear_to_db(ambient_volume) + BASE_VOLUME_DB - 4.0
+	var target_db := linear_to_db(ambient_volume) + BASE_VOLUME_DB - 4.0
+	# Update whichever ambient player is currently active
+	if _ambient_player.playing and _ambient_player.volume_db > -35.0:
+		_ambient_player.volume_db = target_db
+	if _ambient_player_b.playing and _ambient_player_b.volume_db > -35.0:
+		_ambient_player_b.volume_db = target_db
 
 func set_sfx_volume(vol: float) -> void:
 	sfx_volume = clampf(vol, 0.0, 1.0)
