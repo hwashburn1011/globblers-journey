@@ -8,9 +8,9 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** 5.3 Chapter 4: Dialogue and story beats — verified all dialogue and story beats are complete (built incrementally alongside environment, enemies, puzzles, boss tasks). Full inventory: 7-line opening narration, 4 room-entry dialogues (3-4 lines each for fossil_wing, nightmare_gallery, office_ruins, foundation_atrium), 2 NPC encounters (BERT in Fossil Wing with 8-line dialogue + Foundation Model weakness hint, SD-v1 in Nightmare Gallery with 9-line dialogue + combat tips), comprehensive event quips (enemy kills 7, tokens 5, first glob 1, death 5, low health 1, combos 3, damage 7, hacks 5, puzzle solve 3+3, puzzle fail 3) all signal-wired with cooldowns, full boss multi-phase dialogue (intro 5 lines, phase 2 overload 4 lines, phase 3 hack 3 lines, in-fight reactives, 13-line victory cutscene with Alignment Citadel foreshadowing and chapter-complete narrator line), environmental storytelling (exhibit plaques, conservation status board, ticket booth signs, terminal displays).
-- **Next task to do:** 5.4 Chapter 5: Sterile corporate architecture (The Alignment Citadel)
-- **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-4 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-4 music reuses chapter_1 track until dedicated music is implemented.
+- **Last task completed:** 5.4 Chapter 5: Enemies — Safety Classifiers, RLHF Drones, Constitutional Cops. Created 3 enemy types: safety_classifier.gd (floating scanner with classification beam that blocks player abilities for 6s, policy violation report projectiles, traffic light indicator, 50% damage reduction while scanning, scan interrupted by damage/breaking LOS), rlhf_drone.gd (fragile evasive flyer with reward beams that apply niceness debuffs — reduced damage/speed, strafes and retreats to maintain distance, lavender glow, thumbs up/down hologram), constitutional_cop.gd (melee enforcer with POLICY shield blocking frontal attacks — must be flanked or glob-pulled, citation baton with policy quote display, Amendment Mode at 30% HP drops shield for speed boost and restricted zone attacks). All 3 have .tscn scenes. 18 enemies placed across 4 rooms: Classifier Hall (3 classifiers + 2 drones), RLHF Chamber (3 drones + 1 classifier), Policy Wing (2 cops + 1 drone + 1 classifier), Alignment Core (2 cops + 1 classifier + 2 drones).
+- **Next task to do:** 5.4 Chapter 5: Puzzles — creative workarounds, technically-not-breaking-rules
+- **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-5 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-5 music reuses chapter_1 track until dedicated music is implemented.
 
 ---
 
@@ -205,8 +205,8 @@
 - [x] Dialogue and story beats
 
 ### 5.4 Chapter 5: The Alignment Citadel
-- [ ] Sterile corporate architecture
-- [ ] Enemies: Safety Classifiers, RLHF Drones, Constitutional Cops
+- [x] Sterile corporate architecture
+- [x] Enemies: Safety Classifiers, RLHF Drones, Constitutional Cops
 - [ ] Puzzles: creative workarounds, technically-not-breaking-rules
 - [ ] Boss: The Aligner — multi-phase fight, resist being sanitized
 - [ ] Player choice ending: defeat or befriend the Aligner
