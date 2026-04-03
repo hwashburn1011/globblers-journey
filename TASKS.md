@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** 5.3 Chapter 4: Digital safari of deprecated AI models — Created model_zoo.gd (scenes/levels/chapter_4/model_zoo.gd, ~1950 lines). 5 exhibit halls: Zoo Entrance (ticket booth, safari map, welcome arch, exhibit plaques), Fossil Wing (GPT-2 skeleton in glass case, ELMo/Word2Vec/RNN/LSTM side exhibits, archaeological dig site, rope barriers), Nightmare Gallery (8 DALL-E paintings with titles/descriptions, nightmare sculpture with eye, purple lighting, content warning), Office Ruins (6 cubicle ruins with BSoD monitors, giant paperclip Clippy monument, scattered papers, jammed printer, water cooler), Foundation Atrium (6 grand pillars with gold caps, holographic Foundation Model preview, 6 capability pillars with quality ratings "C-", boss gate with gold inlay, AI timeline display). 4 corridors with safari ropes and info plaques. 4 checkpoints at exhibit entrances. 16 tokens across all rooms. Ambient zones per room. Data dust particles. 2 NPCs: BERT (Fossil Wing, 8 lines, reveals boss weakness — force single-task focus), SD-v1 (Nightmare Gallery, 9 lines, explains DALL-E enemy weakness). Opening narration (7 lines). 4 room-entry dialogues. Full quip system: enemy kills (7), tokens (5), death (5), damage (7), combos (3), puzzles solve/fail (3+3), hack (5), low health, first glob. Boss phase dialogue stubs. Post-processing shader (cool teal vignette + chromatic aberration). Color palette: EXHIBIT_TEAL, FOSSIL_AMBER, NIGHTMARE_PURPLE, CLIPPY_BLUE, FOUNDATION_GOLD. Enemy/puzzle/boss placement stubs commented out for separate tasks.
-- **Next task to do:** 5.3 Chapter 4: Enemies — GPT-2 Fossils, DALL-E Nightmares, Clippy's Revenge
+- **Last task completed:** 5.3 Chapter 4: Enemies — GPT-2 Fossils, DALL-E Nightmares, Clippy's Revenge. Created 3 enemy types: gpt2_fossil.gd (~290 lines, slow tanky ranged enemy with repetitive attack patterns that enter a "repetition loop" stun after 3 attacks, amber stacked transformer layers visual, crumbling parameter dust, text block projectiles with random GPT-2 outputs), dalle_nightmare.gd (~290 lines, ranged kiter that morphs between 3 forms every 8s with invulnerability during transition, changes glob target file_type per form, distortion bolt projectiles, asymmetrical nightmare creature with glitch parts and wrong anatomy), clippy_revenge.gd (~310 lines, aggressive melee paperclip with Help Popup Shield absorbing first hit, random "helpful" debuffs on attack — slow/scramble/force_jump, rage mode at 50% HP adds popup projectiles and speed boost, googly eyes track player, cycling speech bubble tips). 3 .tscn wrappers. 15 enemies placed across 4 rooms in model_zoo.gd: Fossil Wing (3 GPT-2 Fossils), Nightmare Gallery (3 DALL-E Nightmares), Office Ruins (2 Clippys + 1 stray Fossil), Foundation Atrium (1 Fossil + 2 Nightmares + 1 Clippy as boss gate gauntlet). Enemy preloads and _spawn_chapter4_enemies() uncommented in model_zoo.gd.
+- **Next task to do:** 5.3 Chapter 4: Puzzles — exploit each model's unique quirk
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-4 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-4 music reuses chapter_1 track until dedicated music is implemented.
 
 ---
@@ -199,7 +199,7 @@
 
 ### 5.3 Chapter 4: The Model Zoo
 - [x] Digital safari of deprecated AI models
-- [ ] Enemies: GPT-2 Fossils, DALL-E Nightmares, Clippy's Revenge
+- [x] Enemies: GPT-2 Fossils, DALL-E Nightmares, Clippy's Revenge
 - [ ] Puzzles: exploit each model's unique quirk
 - [ ] Boss: The Foundation Model — can do everything poorly
 - [ ] Dialogue and story beats
