@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-02
-- **Last task completed:** 4.6 Sound Design Pass (UI sounds) — Added menu_open and dialogue_type SFX definitions to AudioManager. Wired upgrade menu with full navigation sounds: menu_open on open, menu_back on close, menu_select on category switch, menu_hover on item navigation. Added per-character dialogue typing blips (every 3rd non-space char, skipped in fast-forward mode). All new SFX routed through ui_volume.
-- **Next task to do:** 4.6 Sound Design Pass — Glob command: satisfying whoosh-lock on match, error buzzer on no match
+- **Last task completed:** 4.6 Sound Design Pass (Glob SFX) — Replaced basic single-tone glob_match/glob_fail with layered multi-sound design. Match now plays 3-part whoosh-lock: noise sweep (glob_whoosh), rising tone (glob_match), and delayed percussive snap (glob_lock at +120ms). Fail now plays double-buzz: two offset square-wave buzzes (glob_fail + glob_buzz at +180ms). All routed through existing GlobEngine signal wiring.
+- **Next task to do:** 4.6 Sound Design Pass — Ambient layering per area
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn
 
 ---
@@ -176,7 +176,7 @@
 ### 4.6 Sound Design Pass
 - [x] Review all SFX for consistency
 - [x] Add UI sounds: menu navigation, button clicks, dialogue advance
-- [ ] Glob command: satisfying whoosh-lock on match, error buzzer on no match
+- [x] Glob command: satisfying whoosh-lock on match, error buzzer on no match
 - [ ] Ambient layering per area
 
 ---

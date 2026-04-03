@@ -50,8 +50,13 @@ var _sfx_defs := {
 	"land": { "freq": 80.0, "duration": 0.15, "wave": "noise", "env_attack": 0.0, "env_decay": 0.14, "volume_db": -12.0 },
 	"dash": { "freq": 600.0, "duration": 0.25, "wave": "saw", "env_attack": 0.01, "env_decay": 0.23, "pitch_slide": -500.0, "volume_db": -8.0 },
 	"glob_fire": { "freq": 440.0, "duration": 0.35, "wave": "sine", "env_attack": 0.02, "env_decay": 0.32, "pitch_slide": 300.0, "volume_db": -6.0 },
-	"glob_match": { "freq": 660.0, "duration": 0.2, "wave": "sine", "env_attack": 0.01, "env_decay": 0.18, "pitch_slide": 200.0, "volume_db": -6.0 },
-	"glob_fail": { "freq": 200.0, "duration": 0.3, "wave": "square", "env_attack": 0.01, "env_decay": 0.28, "pitch_slide": -150.0, "volume_db": -8.0 },
+	# --- Glob match: layered whoosh-lock --- "That satisfying sound of regex finding its soulmate"
+	"glob_whoosh": { "freq": 2000.0, "duration": 0.25, "wave": "noise", "env_attack": 0.0, "env_decay": 0.24, "pitch_slide": -1500.0, "volume_db": -10.0 },
+	"glob_match": { "freq": 660.0, "duration": 0.35, "wave": "sine", "env_attack": 0.01, "env_decay": 0.33, "pitch_slide": 440.0, "volume_db": -6.0 },
+	"glob_lock": { "freq": 1400.0, "duration": 0.08, "wave": "square", "env_attack": 0.0, "env_decay": 0.07, "volume_db": -8.0 },
+	# --- Glob fail: harsh double-buzz --- "Even the sound is disappointed in you"
+	"glob_fail": { "freq": 150.0, "duration": 0.15, "wave": "square", "env_attack": 0.0, "env_decay": 0.14, "pitch_slide": -60.0, "volume_db": -6.0 },
+	"glob_buzz": { "freq": 120.0, "duration": 0.18, "wave": "square", "env_attack": 0.0, "env_decay": 0.17, "pitch_slide": -80.0, "volume_db": -8.0 },
 	"wrench_swing": { "freq": 300.0, "duration": 0.18, "wave": "saw", "env_attack": 0.0, "env_decay": 0.17, "pitch_slide": -200.0, "volume_db": -8.0 },
 	"wrench_hit": { "freq": 150.0, "duration": 0.2, "wave": "noise", "env_attack": 0.0, "env_decay": 0.19, "volume_db": -6.0 },
 	"player_damage": { "freq": 180.0, "duration": 0.25, "wave": "saw", "env_attack": 0.0, "env_decay": 0.24, "pitch_slide": -100.0, "volume_db": -6.0 },
@@ -603,10 +608,18 @@ func _on_player_glob_fired() -> void:
 	play_sfx("glob_fire")
 
 func _on_glob_matched(_targets) -> void:
+	# Whoosh-lock: noise sweep + rising tone + delayed snap for that chef's-kiss feeling
+	# "Three sounds walk into a bar. The result? Pure dopamine."
+	play_sfx("glob_whoosh")
 	play_sfx("glob_match")
+	# Delay the lock click so it hits right as the whoosh fades — timing is everything
+	get_tree().create_timer(0.12).timeout.connect(func(): play_sfx("glob_lock"))
 
 func _on_glob_failed(_pattern) -> void:
+	# Double-buzz: two offset buzzes for that classic "WRONG" feel
+	# "Two buzzes because one wasn't demoralizing enough."
 	play_sfx("glob_fail")
+	get_tree().create_timer(0.18).timeout.connect(func(): play_sfx("glob_buzz"))
 
 func _on_wrench_swing() -> void:
 	play_sfx("wrench_swing")
