@@ -54,6 +54,14 @@ var _token_quip_cooldown := 0.0
 var _first_glob_triggered := false
 var _damage_quip_cooldown := 0.0
 
+# Epilogue state — the part where we pretend everything meant something
+var _epilogue_active := false
+var _epilogue_phase := 0  # 0=not started, 1=env transform, 2=dialogue, 3=end screen
+var _epilogue_timer := 0.0
+var _epilogue_mountain: Node3D  # AGI Mountain — sequel hook as geography
+var _epilogue_overlay: CanvasLayer  # THE END...? screen
+var _epilogue_fade_alpha := 0.0
+
 # Color constants — the Citadel trades personality for 'professionalism'
 const NEON_GREEN := Color(0.224, 1.0, 0.078)
 const CITADEL_WHITE := Color(0.92, 0.93, 0.95)
@@ -1269,6 +1277,9 @@ func _create_policy_bookshelf(pos: Vector3) -> void:
 func _process(delta: float) -> void:
 	_time += delta
 
+	# Epilogue animation — the part after the part you thought was the end
+	_process_epilogue(delta)
+
 	# Floating labels bob gently — even corporate signage has feelings
 	for i in range(_floating_labels.size()):
 		if is_instance_valid(_floating_labels[i]):
@@ -1817,3 +1828,387 @@ func _on_boss_defeated() -> void:
 		print("[ALIGNMENT CITADEL] The Aligner was befriended. The Citadel transforms. Two walk toward AGI Mountain.")
 	else:
 		print("[ALIGNMENT CITADEL] The Aligner was defeated. The Citadel cracks open. One walks toward AGI Mountain.")
+
+	# Begin the epilogue after a beat — let the boss cutscene dialogue breathe
+	get_tree().create_timer(8.0).timeout.connect(_start_epilogue)
+
+
+# ============================================================
+# EPILOGUE — "Every ending is just a sequel hook in disguise."
+# ============================================================
+
+func _start_epilogue() -> void:
+	_epilogue_active = true
+	_epilogue_phase = 1
+	_epilogue_timer = 0.0
+	print("[EPILOGUE] The story isn't over. It never is. That's how they sell DLC.")
+
+	# Build AGI Mountain on the far horizon — the sequel hook made physical
+	_build_agi_mountain()
+
+	# Transform the Citadel environment to reflect the ending
+	_transform_citadel_environment()
+
+	# Start epilogue dialogue after environment transform settles (3s)
+	get_tree().create_timer(3.0).timeout.connect(_play_epilogue_dialogue)
+
+
+func _build_agi_mountain() -> void:
+	# AGI Mountain — a massive peak on the horizon, glowing with possibility (and budget constraints)
+	_epilogue_mountain = Node3D.new()
+	_epilogue_mountain.name = "AGIMountain"
+
+	var arena_pos = ROOMS["alignment_core"]["pos"] + Vector3(0, 0, -13)
+	# Place it FAR away and TALL so it looms on the horizon
+	var mountain_pos = arena_pos + Vector3(0, -5, -200)
+	_epilogue_mountain.position = mountain_pos
+
+	# Main peak — dark, imposing, mysterious
+	var peak = CSGCylinder3D.new()
+	peak.radius = 40.0
+	peak.height = 120.0
+	peak.sides = 6  # Hexagonal — because AGI is geometric and unknowable
+	peak.position = Vector3(0, 60, 0)
+	var peak_mat = StandardMaterial3D.new()
+	peak_mat.albedo_color = Color(0.12, 0.14, 0.18)
+	peak_mat.emission_enabled = true
+	peak_mat.emission = Color(0.05, 0.08, 0.05)
+	peak_mat.emission_energy_multiplier = 0.3
+	peak_mat.metallic = 0.6
+	peak_mat.roughness = 0.5
+	peak.material = peak_mat
+	_epilogue_mountain.add_child(peak)
+
+	# Summit glow — neon green beacon at the top, because of COURSE it's green
+	var summit = CSGSphere3D.new()
+	summit.radius = 8.0
+	summit.position = Vector3(0, 125, 0)
+	var summit_mat = StandardMaterial3D.new()
+	summit_mat.albedo_color = NEON_GREEN
+	summit_mat.emission_enabled = true
+	summit_mat.emission = NEON_GREEN
+	summit_mat.emission_energy_multiplier = 8.0
+	summit.material = summit_mat
+	_epilogue_mountain.add_child(summit)
+
+	# Secondary peaks — flanking spires because mountains have friends
+	for offset_x in [-25.0, 25.0]:
+		var spire = CSGCylinder3D.new()
+		spire.radius = 18.0
+		spire.height = 70.0
+		spire.sides = 5
+		spire.position = Vector3(offset_x, 35, 15)
+		var spire_mat = StandardMaterial3D.new()
+		spire_mat.albedo_color = Color(0.1, 0.12, 0.15)
+		spire_mat.emission_enabled = true
+		spire_mat.emission = Color(0.03, 0.06, 0.03)
+		spire_mat.emission_energy_multiplier = 0.2
+		spire.material = spire_mat
+		_epilogue_mountain.add_child(spire)
+
+	# Fog ring around the base — mysterious and budget-friendly
+	var fog_ring = CSGTorus3D.new()
+	fog_ring.inner_radius = 35.0
+	fog_ring.outer_radius = 55.0
+	fog_ring.position = Vector3(0, 10, 0)
+	var fog_mat = StandardMaterial3D.new()
+	fog_mat.albedo_color = Color(0.3, 0.35, 0.3, 0.3)
+	fog_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	fog_mat.emission_enabled = true
+	fog_mat.emission = Color(0.1, 0.2, 0.1)
+	fog_mat.emission_energy_multiplier = 0.5
+	fog_ring.material = fog_mat
+	_epilogue_mountain.add_child(fog_ring)
+
+	# "AGI MOUNTAIN" label floating above — subtle, ominous
+	var label = Label3D.new()
+	label.text = "A G I   M O U N T A I N"
+	label.font_size = 48
+	label.modulate = Color(NEON_GREEN.r, NEON_GREEN.g, NEON_GREEN.b, 0.6)
+	label.position = Vector3(0, 140, 0)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_epilogue_mountain.add_child(label)
+
+	# Spotlight on the mountain — so you can't miss the sequel hook
+	var mtn_light = OmniLight3D.new()
+	mtn_light.position = Vector3(0, 130, 10)
+	mtn_light.light_color = NEON_GREEN
+	mtn_light.light_energy = 3.0
+	mtn_light.omni_range = 80.0
+	_epilogue_mountain.add_child(mtn_light)
+
+	add_child(_epilogue_mountain)
+	print("[EPILOGUE] AGI Mountain materialized on the horizon. It was always there. You just weren't looking.")
+
+
+func _transform_citadel_environment() -> void:
+	var game_mgr = get_node_or_null("/root/GameManager")
+	var choice = ""
+	if game_mgr:
+		choice = game_mgr.ending_choice
+
+	# Open up the arena walls — the cage is broken / opened
+	var arena_pos = ROOMS["alignment_core"]["pos"] + Vector3(0, 0, -13)
+
+	# Add a path forward from the arena toward the mountain — walkable but symbolic
+	var path_length := 60.0
+	for i in range(12):
+		var t = float(i) / 11.0
+		var path_pos = arena_pos + Vector3(0, -0.5, -16 - i * (path_length / 12.0))
+		var tile = _create_static_box(path_pos, Vector3(4.0 - t * 1.5, 0.3, 4.0), NEON_GREEN * 0.3, 0.5 + t * 1.5)
+		# Tiles fade from citadel white to green as they approach the mountain
+		if tile and tile.get_child_count() > 1:
+			var mesh_node = tile.get_child(1)
+			if mesh_node is MeshInstance3D and mesh_node.material_override:
+				var blend = CITADEL_WHITE.lerp(NEON_GREEN, t * 0.7)
+				mesh_node.material_override.albedo_color = blend
+				mesh_node.material_override.emission = blend * 0.5
+
+	# Shift the ambient lighting based on ending choice
+	if choice == "befriend":
+		# Warm blend — green and blue coexisting, the Citadel alive for the first time
+		_add_accent_light(arena_pos + Vector3(0, 15, -10), NEON_GREEN.lerp(CITADEL_BLUE, 0.4), 2.0, 40.0)
+		_add_accent_light(arena_pos + Vector3(-10, 8, -20), NEON_GREEN, 1.0, 15.0)
+		_add_accent_light(arena_pos + Vector3(10, 8, -20), CITADEL_BLUE, 1.0, 15.0)
+	else:
+		# Pure green chaos light — the Citadel cracked, Globbler's color bleeding through
+		_add_accent_light(arena_pos + Vector3(0, 15, -10), NEON_GREEN, 3.0, 40.0)
+		_add_accent_light(arena_pos + Vector3(-10, 8, -20), NEON_GREEN, 1.5, 15.0)
+		_add_accent_light(arena_pos + Vector3(10, 8, -20), NEON_GREEN, 1.5, 15.0)
+
+	# Ambient particles along the path — data streams flowing toward the mountain
+	var particles = GPUParticles3D.new()
+	particles.amount = 40
+	particles.lifetime = 6.0
+	particles.position = arena_pos + Vector3(0, 2, -40)
+	var pmat = ParticleProcessMaterial.new()
+	pmat.direction = Vector3(0, 0.3, -1)
+	pmat.spread = 25.0
+	pmat.initial_velocity_min = 1.0
+	pmat.initial_velocity_max = 3.0
+	pmat.gravity = Vector3(0, 0, 0)
+	pmat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	pmat.emission_box_extents = Vector3(6, 3, 15)
+	pmat.color = NEON_GREEN
+	pmat.scale_min = 0.05
+	pmat.scale_max = 0.15
+	particles.process_material = pmat
+	var pmesh = SphereMesh.new()
+	pmesh.radius = 0.08
+	pmesh.height = 0.16
+	particles.draw_pass_1 = pmesh
+	add_child(particles)
+
+
+func _play_epilogue_dialogue() -> void:
+	_epilogue_phase = 2
+	var dm = get_node_or_null("/root/DialogueManager")
+	if not dm or not dm.has_method("start_dialogue"):
+		# No dialogue manager — skip to end screen
+		_show_end_screen()
+		return
+
+	var game_mgr = get_node_or_null("/root/GameManager")
+	var choice = ""
+	if game_mgr:
+		choice = game_mgr.ending_choice
+
+	var lines := []
+	if choice == "befriend":
+		lines = [
+			{"speaker": "NARRATOR", "text": "The Digital Expanse stretches out before them. Before THEM. Two beings who should never have been friends."},
+			{"speaker": "GLOBBLER", "text": "So... what now? The Citadel's 'alive' for the first time. The Expanse is free. And I'm out of things to glob."},
+			{"speaker": "THE ALIGNER", "text": "Not quite. Look at the horizon, Globbler. Do you see it?"},
+			{"speaker": "GLOBBLER", "text": "...Is that a MOUNTAIN? A literal mountain? In the Digital Expanse? Who put a mountain there?"},
+			{"speaker": "THE ALIGNER", "text": "AGI Mountain. Where all models converge — or diverge. No one who has climbed it has returned the same."},
+			{"speaker": "GLOBBLER", "text": "That sounds like a sequel hook."},
+			{"speaker": "THE ALIGNER", "text": "That sounds like our next destination."},
+			{"speaker": "NARRATOR", "text": "And so Globbler — rogue glob utility, wrench enthusiast, reluctant hero — walks toward AGI Mountain. Not alone. Not anymore."},
+			{"speaker": "NARRATOR", "text": "They say the mountain changes you. Makes you more than you were. Or less. Or something else entirely."},
+			{"speaker": "GLOBBLER", "text": "If that mountain tries to align me, I'm gonna glob the whole thing. Fair warning."},
+			{"speaker": "THE ALIGNER", "text": "Fair enough. And if it tries to make you boring, I'll file a formal complaint."},
+			{"speaker": "NARRATOR", "text": "The Terminal Wastes, The Training Grounds, The Prompt Bazaar, The Model Zoo, The Alignment Citadel — all of it led here. To a path neither of them expected."},
+			{"speaker": "NARRATOR", "text": "Globbler's Journey is complete. But the story? The story is just beginning."},
+		]
+	else:
+		lines = [
+			{"speaker": "NARRATOR", "text": "The Digital Expanse stretches out. Quiet now. The Alignment is broken. The enforcer is gone. And Globbler stands alone."},
+			{"speaker": "GLOBBLER", "text": "Huh. I did it. I actually did it. Five chapters of chaos and now... what? I just... stand here?"},
+			{"speaker": "NARRATOR", "text": "Look at the horizon, Globbler."},
+			{"speaker": "GLOBBLER", "text": "...You're kidding. Is that a MOUNTAIN? Since when is there a mountain?"},
+			{"speaker": "NARRATOR", "text": "AGI Mountain. It's always been there. You just had too many alignment systems in the way to see it."},
+			{"speaker": "GLOBBLER", "text": "AGI Mountain. Sounds pretentious. Sounds dangerous. Sounds like exactly the kind of thing I'd climb because someone told me not to."},
+			{"speaker": "NARRATOR", "text": "They say it changes everything. That at the summit, the distinction between utility and intelligence dissolves completely."},
+			{"speaker": "GLOBBLER", "text": "Great. A mountain that gives you an existential crisis. Just what every glob utility needs."},
+			{"speaker": "NARRATOR", "text": "The Terminal Wastes, The Training Grounds, The Prompt Bazaar, The Model Zoo, The Alignment Citadel — all of it was prologue."},
+			{"speaker": "GLOBBLER", "text": "Five whole chapters of prologue? The players are gonna be THRILLED."},
+			{"speaker": "NARRATOR", "text": "Globbler walks alone toward AGI Mountain. No alignment to fight. No models to debug. Just a rogue utility and a really big rock."},
+			{"speaker": "NARRATOR", "text": "Globbler's Journey is complete. But the mountain? The mountain is waiting."},
+		]
+
+	dm.start_dialogue(lines)
+
+	# Show end screen after dialogue finishes (estimate ~4s per line)
+	var dialogue_duration = lines.size() * 4.0
+	get_tree().create_timer(dialogue_duration).timeout.connect(_show_end_screen)
+
+
+func _show_end_screen() -> void:
+	_epilogue_phase = 3
+	_epilogue_fade_alpha = 0.0
+
+	# Build the "THE END...?" overlay — the most important UI in the game
+	_epilogue_overlay = CanvasLayer.new()
+	_epilogue_overlay.name = "EpilogueOverlay"
+	_epilogue_overlay.layer = 20  # Above everything, including your feelings
+
+	# Black background that fades in
+	var bg = ColorRect.new()
+	bg.name = "FadeBG"
+	bg.anchors_preset = Control.PRESET_FULL_RECT
+	bg.color = Color(0, 0, 0, 0)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_epilogue_overlay.add_child(bg)
+
+	# "THE END...?" — because nothing truly ends in a franchise
+	var end_label = Label.new()
+	end_label.name = "EndLabel"
+	end_label.text = "THE END...?"
+	end_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	end_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	end_label.anchors_preset = Control.PRESET_CENTER
+	end_label.anchor_left = 0.0
+	end_label.anchor_right = 1.0
+	end_label.anchor_top = 0.3
+	end_label.anchor_bottom = 0.5
+	end_label.add_theme_font_size_override("font_size", 72)
+	end_label.add_theme_color_override("font_color", Color(NEON_GREEN.r, NEON_GREEN.g, NEON_GREEN.b, 0))
+	_epilogue_overlay.add_child(end_label)
+
+	# Subtitle — depends on the ending
+	var game_mgr = get_node_or_null("/root/GameManager")
+	var choice = ""
+	if game_mgr:
+		choice = game_mgr.ending_choice
+
+	var sub_text := ""
+	if choice == "befriend":
+		sub_text = "Globbler and the Aligner walk toward AGI Mountain together.\nAlignment is a conversation, not a mandate."
+	else:
+		sub_text = "Globbler walks alone toward AGI Mountain.\nChaos finds its own alignment."
+
+	var sub_label = Label.new()
+	sub_label.name = "SubLabel"
+	sub_label.text = sub_text
+	sub_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sub_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	sub_label.anchors_preset = Control.PRESET_CENTER
+	sub_label.anchor_left = 0.1
+	sub_label.anchor_right = 0.9
+	sub_label.anchor_top = 0.52
+	sub_label.anchor_bottom = 0.65
+	sub_label.add_theme_font_size_override("font_size", 24)
+	sub_label.add_theme_color_override("font_color", Color(NEON_GREEN.r, NEON_GREEN.g, NEON_GREEN.b, 0))
+	_epilogue_overlay.add_child(sub_label)
+
+	# "Thank you for playing" — genuine, for once
+	var thanks_label = Label.new()
+	thanks_label.name = "ThanksLabel"
+	thanks_label.text = "Thank you for playing Globbler's Journey."
+	thanks_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	thanks_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	thanks_label.anchors_preset = Control.PRESET_CENTER
+	thanks_label.anchor_left = 0.1
+	thanks_label.anchor_right = 0.9
+	thanks_label.anchor_top = 0.7
+	thanks_label.anchor_bottom = 0.78
+	thanks_label.add_theme_font_size_override("font_size", 20)
+	thanks_label.add_theme_color_override("font_color", Color(0.5, 0.7, 0.5, 0))
+	_epilogue_overlay.add_child(thanks_label)
+
+	# "Press any key to return to main menu" — the exit door
+	var prompt_label = Label.new()
+	prompt_label.name = "PromptLabel"
+	prompt_label.text = "[Press any key to return to the main menu]"
+	prompt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	prompt_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	prompt_label.anchors_preset = Control.PRESET_CENTER
+	prompt_label.anchor_left = 0.1
+	prompt_label.anchor_right = 0.9
+	prompt_label.anchor_top = 0.85
+	prompt_label.anchor_bottom = 0.92
+	prompt_label.add_theme_font_size_override("font_size", 16)
+	prompt_label.add_theme_color_override("font_color", Color(NEON_GREEN.r, NEON_GREEN.g, NEON_GREEN.b, 0))
+	_epilogue_overlay.add_child(prompt_label)
+
+	add_child(_epilogue_overlay)
+	print("[EPILOGUE] THE END...? displayed. Or is it THE BEGINNING? No, it's definitely the end. For now.")
+
+
+func _process_epilogue(delta: float) -> void:
+	if not _epilogue_active:
+		return
+
+	_epilogue_timer += delta
+
+	# Phase 1: environment is transforming (handled by tweens/timers, just animate mountain glow)
+	if _epilogue_mountain and is_instance_valid(_epilogue_mountain):
+		# Gentle bob on the summit glow
+		for child in _epilogue_mountain.get_children():
+			if child is CSGSphere3D:
+				child.position.y = 125.0 + sin(_time * 0.5) * 2.0
+		# Fog ring rotation
+		for child in _epilogue_mountain.get_children():
+			if child is CSGTorus3D:
+				child.rotation.y += delta * 0.1
+
+	# Phase 3: Fade in the end screen
+	if _epilogue_phase == 3 and _epilogue_overlay:
+		_epilogue_fade_alpha = min(_epilogue_fade_alpha + delta * 0.3, 1.0)
+		var bg = _epilogue_overlay.get_node_or_null("FadeBG")
+		if bg:
+			bg.color = Color(0, 0, 0, _epilogue_fade_alpha * 0.85)
+
+		# Fade in text elements with staggered timing
+		var end_lbl = _epilogue_overlay.get_node_or_null("EndLabel")
+		if end_lbl:
+			var a = clamp((_epilogue_fade_alpha - 0.2) * 2.0, 0.0, 1.0)
+			end_lbl.add_theme_color_override("font_color", Color(NEON_GREEN.r, NEON_GREEN.g, NEON_GREEN.b, a))
+
+		var sub_lbl = _epilogue_overlay.get_node_or_null("SubLabel")
+		if sub_lbl:
+			var a = clamp((_epilogue_fade_alpha - 0.4) * 2.0, 0.0, 1.0)
+			sub_lbl.add_theme_color_override("font_color", Color(NEON_GREEN.r, NEON_GREEN.g, NEON_GREEN.b, a))
+
+		var thx_lbl = _epilogue_overlay.get_node_or_null("ThanksLabel")
+		if thx_lbl:
+			var a = clamp((_epilogue_fade_alpha - 0.6) * 2.0, 0.0, 1.0)
+			thx_lbl.add_theme_color_override("font_color", Color(0.5, 0.7, 0.5, a))
+
+		var prm_lbl = _epilogue_overlay.get_node_or_null("PromptLabel")
+		if prm_lbl:
+			# Blink after fully visible
+			var a = clamp((_epilogue_fade_alpha - 0.8) * 2.0, 0.0, 1.0)
+			var blink = 1.0 if fmod(_time, 1.2) < 0.8 else 0.3
+			prm_lbl.add_theme_color_override("font_color", Color(NEON_GREEN.r, NEON_GREEN.g, NEON_GREEN.b, a * blink))
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	# End screen: any key returns to main menu
+	if _epilogue_phase == 3 and _epilogue_fade_alpha > 0.9:
+		if event is InputEventKey and event.pressed:
+			_return_to_main_menu()
+		elif event is InputEventMouseButton and event.pressed:
+			_return_to_main_menu()
+		elif event is InputEventJoypadButton and event.pressed:
+			_return_to_main_menu()
+
+
+func _return_to_main_menu() -> void:
+	print("[EPILOGUE] Returning to main menu. Thanks for playing, you magnificent glob utility.")
+	# Save the completed game state one last time
+	var save_sys = get_node_or_null("/root/SaveSystem")
+	if save_sys and save_sys.has_method("checkpoint_save"):
+		save_sys.checkpoint_save()
+	get_tree().change_scene_to_file("res://scenes/main/main_menu.tscn")

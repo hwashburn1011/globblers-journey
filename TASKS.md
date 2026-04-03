@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude Opus — 2026-04-03
-- **Last task completed:** 5.4 Chapter 5: Player choice ending — defeat or befriend the Aligner. Phase 3 now spawns TWO terminals side by side: LEFT "OVERRIDE" terminal (hack difficulty 4, green, force-rewrites values = defeat path) and RIGHT "COMMUNICATE" terminal (hack difficulty 1, blue, opens dialogue = befriend path). Defeat path: existing cutscene — Aligner collapses, values undefined, 12-line dialogue about forced alignment being a cage, Aligner queue_free'd. Befriend path: NEW 13-line cutscene — Aligner transforms instead of collapsing (value rings shift to green-blue blend, halo turns warm green, body shrinks to 60% not destroyed), dialogue about alignment being a conversation not a mandate, Aligner persists as ally with "STATUS: FRIEND". ending_choice ("defeat"/"befriend") stored in GameManager and persisted via SaveSystem. alignment_citadel.gd Phase 3 dialogue updated to present the choice. Both paths call _finalize_ending() for boss_defeated signal, checkpoint save, and level completion.
-- **Next task to do:** 5.4 Chapter 5: Epilogue and sequel hook
+- **Last task completed:** 5.4 Chapter 5: Epilogue and sequel hook — Full epilogue sequence in alignment_citadel.gd. After boss defeat (8s delay for cutscene dialogue to finish), triggers _start_epilogue(): builds AGI Mountain on the horizon (hexagonal peak with green summit glow, flanking spires, fog ring, floating label), transforms citadel environment (green path tiles leading toward mountain, ambient particles flowing toward it, choice-dependent lighting — warm green-blue blend for befriend, pure green for defeat). Branching 12-13 line epilogue dialogue: befriend path has Aligner as companion walking together, defeat path has Globbler alone. Both reference the five chapters as journey recap. "THE END...?" overlay fades in with staggered text (title, subtitle, thank you, blinking prompt). Any key press returns to main menu with final save. Mountain animates with summit bob and fog ring rotation in _process_epilogue().
+- **Next task to do:** Phase 6: Full playthrough QA
 - **Known issues:** None currently. Old flat player.tscn still exists but main_level now loads scenes/player/globbler.tscn. Chapters 2-5 use AudioManager fallback ambient (chapter-specific ambient not yet added). Chapters 2-5 music reuses chapter_1 track until dedicated music is implemented.
 
 ---
@@ -210,7 +210,7 @@
 - [x] Puzzles: creative workarounds, technically-not-breaking-rules
 - [x] Boss: The Aligner — multi-phase fight, resist being sanitized
 - [x] Player choice ending: defeat or befriend the Aligner
-- [ ] Epilogue and sequel hook
+- [x] Epilogue and sequel hook
 
 ---
 
