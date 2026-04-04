@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 2.8 — Fixed base_enemy player lookup caching
-- **Next task to do:** Task 2.9 — Implement dialogue typing animation
+- **Last task completed:** Task 2.9 — Wired dialogue_box to DialogueManager signals for typing animation
+- **Next task to do:** Task 3.1 — Fix dash particles one_shot
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -68,7 +68,7 @@
 - [x] In `scenes/enemies/base_enemy.gd` around line 189, `_player_lookup_done` is set to `true` even when no player is found. This means if the player spawns after the enemy, the enemy will never detect them. Fix by only setting `_player_lookup_done = true` when a valid player reference is actually found. Or remove the cache flag entirely and look up the player each time (it's cheap via groups).
 
 ### 2.9 Implement dialogue typing animation
-- [ ] In `scripts/autoload/dialogue_manager.gd`, the `dialogue_started` signal emits full text instantly. The dialogue_box.gd already handles typing animation display, but verify the full chain works: DialogueManager emits → dialogue_box receives and types out character by character. If dialogue_box.gd already has typing logic, this task is just verifying. If not, add a `visible_characters` tween in dialogue_box.gd that types text out over time (0.03s per char), skippable on input.
+- [x] dialogue_box.gd already had full typing animation logic (0.03s/char, fast mode on skip, SFX blips) but was never connected to DialogueManager signals. Added `dm.dialogue_started.connect(show_line)` and `dm.dialogue_ended.connect(hide_box)` in dialogue_box._ready(). The full chain now works: DialogueManager emits → dialogue_box receives and types out character by character.
 
 ---
 

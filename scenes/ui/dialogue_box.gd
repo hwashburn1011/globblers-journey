@@ -24,6 +24,12 @@ signal advanced()
 func _ready() -> void:
 	visible = false
 	_build_ui()
+	# Wire up to DialogueManager signals — the typing animation was built but never plugged in.
+	# Classic "the code exists but nobody told it to run" situation.
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm:
+		dm.dialogue_started.connect(show_line)
+		dm.dialogue_ended.connect(hide_box)
 
 func _build_ui() -> void:
 	# Terminal-style panel
