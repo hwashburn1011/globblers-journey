@@ -103,9 +103,9 @@ func apply_loaded_data() -> void:
 	# Restore progression upgrades
 	var prog = get_node_or_null("/root/ProgressionManager")
 	if prog and prog.has_method("load_save_data"):
+		# Always call load_save_data even with empty dict — ProgressionManager needs to reset properly on fresh saves
 		var upg_data = save_data.get("upgrades", {})
-		if not upg_data.is_empty():
-			prog.load_save_data(upg_data)
+		prog.load_save_data(upg_data)
 
 ## Collect current game state into save_data
 func _collect_current_state() -> void:

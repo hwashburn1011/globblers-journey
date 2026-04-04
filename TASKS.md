@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 2.4 — Fixed ProgressionManager dialogue call from show_dialogue to quick_line
-- **Next task to do:** Task 2.5 — Fix save system progression restore
+- **Last task completed:** Task 2.5 — Fixed save system progression restore by removing is_empty guard
+- **Next task to do:** Task 2.6 — Fix GameManager level state reset on chapter complete
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -56,7 +56,7 @@
 - [x] Changed `show_dialogue("Globbler", ...)` to `quick_line("GLOBBLER", ...)` at line 250-251. Also updated the `has_method` check. No other `show_dialogue` calls found in the file.
 
 ### 2.5 Fix save system progression restore
-- [ ] In `scripts/autoload/save_system.gd` around lines 104-108, `load_save_data()` is only called when upgrade data is non-empty. Remove the `if not upg_data.is_empty()` check so `load_save_data()` is always called (even with empty dict). This ensures ProgressionManager resets properly on fresh saves.
+- [x] Removed the `if not upg_data.is_empty()` guard so `prog.load_save_data(upg_data)` is always called, ensuring ProgressionManager resets properly on fresh saves.
 
 ### 2.6 Fix GameManager level state reset on chapter complete
 - [ ] In `scripts/game_manager.gd`, find `complete_level()` (around line 461). After incrementing `current_level`, add a call to `reset_level()` (or inline the reset logic) so that `level_time`, `enemies_killed`, `memory_tokens_collected`, `max_combo`, etc. are zeroed out before the next chapter starts.
