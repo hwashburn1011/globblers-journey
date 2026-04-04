@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.2 complete
-- **Last task completed:** Task 2.2 — Registered RespawnManager in project.godot autoload section (after DialogueManager, before SaveSystem). MCP verified: project loads cleanly, no script errors.
-- **Next task to do:** Task 2.3 — Implement fade-to-black overlay in RespawnManager
+- **Last updated by:** Claude (2026-04-04) — Task 2.3 complete
+- **Last task completed:** Task 2.3 — Implemented fade-to-black overlay in RespawnManager. CanvasLayer (layer 200, PROCESS_MODE_ALWAYS) with black ColorRect (PRESET_FULL_RECT, modulate.a=0, mouse_filter=IGNORE). Added _fade_out() and _fade_in() async helpers using tweens with TWEEN_PAUSE_PROCESS. MCP verified: zero script errors on load.
+- **Next task to do:** Task 2.4 — Implement respawn_player() logic in RespawnManager
 - **Known issues:** Respawn logic duplicated in every chapter. No tutorial hints. No game-over screen. No accessibility options.
 
 ---
@@ -43,7 +43,7 @@
 - [x] **DONE.** Added `RespawnManager="*res://scripts/autoload/respawn_manager.gd"` to `[autoload]` in project.godot, after DialogueManager and before SaveSystem. MCP run_project verified: zero script errors, zero runtime errors. Only warnings are expected unused-signal notices for `respawn_started`/`respawn_finished` (wired in Task 2.4).
 
 ### 2.3 Implement fade-to-black overlay in RespawnManager
-- [ ] In `respawn_manager.gd`, add `_fade_overlay: CanvasLayer` built in `_ready()` with a ColorRect child (PRESET_FULL_RECT, black, modulate.a = 0, `process_mode = PROCESS_MODE_ALWAYS`, layer = 200). Add `_fade_out(duration: float)` and `_fade_in(duration: float)` helpers that tween modulate.a. Do NOT connect to any chapter yet.
+- [x] **DONE.** Added `_fade_overlay: CanvasLayer` (layer 200, `PROCESS_MODE_ALWAYS`) with black `ColorRect` child (`PRESET_FULL_RECT`, `modulate.a = 0`, `mouse_filter = IGNORE`) built in `_ready()`. Added `_fade_out(duration)` and `_fade_in(duration)` async helpers using tweens with `TWEEN_PAUSE_PROCESS`. Kills any active tween before starting a new one. MCP verified: project loads cleanly, zero script errors. Only warnings are expected unused-signal notices (wired in Task 2.4) and a pre-existing integer division warning.
 
 ### 2.4 Implement respawn_player() logic in RespawnManager
 - [ ] Fill in `respawn_player()`: emit `respawn_started`, fade out (0.5s), teleport player (found via group "player") to `current_checkpoint`, restore health to full via `health_component.heal_full()` or equivalent, fade in (0.5s), emit `respawn_finished`. If no player found or no checkpoint set, log warning and bail out safely.
