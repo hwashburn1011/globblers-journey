@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 4.3 complete
-- **Last task completed:** Task 4.3 — Added `_show_hint_once(id, title, body)` helper to `terminal_wastes.gd` that checks `GameManager.has_seen_hint()`, marks seen, instantiates `first_time_hint.tscn`, and calls `show_hint()`. Fires movement hint at end of `_ready()`. Preloaded hint scene. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 4.4 — Fire glob-command hint on first aim-mode enter
-- **Known issues:** Only movement hint wired so far. No accessibility options.
+- **Last updated by:** Claude (2026-04-04) — Task 4.4 complete
+- **Last task completed:** Task 4.4 — Added `_show_hint_once(id, title, body)` helper and preloaded `first_time_hint.tscn` in `glob_command.gd`. Fires hint with id "glob_aim" in `start_aim()` on first aim-mode enter. Routes through GameManager `has_seen_hint`/`mark_hint_seen`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 4.5 — Fire wrench hint on first enemy detected within 10m
+- **Known issues:** Movement + glob aim hints wired. No accessibility options.
 
 ---
 
@@ -98,7 +98,7 @@
 - [x] **DONE.** Added `_show_hint_once(id, title, body)` helper to `terminal_wastes.gd` — checks `GameManager.has_seen_hint(id)`, marks hint seen via `mark_hint_seen(id)`, instantiates `first_time_hint.tscn` on root, and calls `show_hint(title, body)`. Called at end of `_ready()` with movement hint. Preloaded `hint_scene`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 4.4 Fire glob-command hint on first aim-mode enter
-- [ ] In `scenes/player/abilities/glob_command.gd`, when aim mode activates for the first time, call the hint system with id "glob_aim", title "GLOB COMMAND", body "Right-click to aim. Pattern-match targets. Q cycles grab/push/absorb." Route through GameManager so the hint UI lookup works.
+- [x] **DONE.** Added `_show_hint_once(id, title, body)` helper and `_HINT_SCENE` preload to `glob_command.gd`. Fires hint id "glob_aim" in `start_aim()` on first aim-mode activation. Routes through `GameManager.has_seen_hint()`/`mark_hint_seen()`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 4.5 Fire wrench hint on first enemy detected within 10m
 - [ ] In `scenes/player/globbler.gd` `_physics_process` (or a lightweight separate timer), check once per second if any enemy is within 10m. First time it triggers, show hint id "wrench", title "WRENCH SMASH", body "F to smash. Percussive maintenance is a valid debugging strategy."

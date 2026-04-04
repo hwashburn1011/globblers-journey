@@ -7,6 +7,7 @@ extends Node3D
 enum GlobAction { GRAB, PUSH, ABSORB }
 
 const BEAM_DURATION := 0.4
+const _HINT_SCENE := preload("res://scenes/ui/first_time_hint.tscn")
 const GRAB_FORCE := 15.0
 const PUSH_FORCE := 25.0
 
@@ -157,6 +158,10 @@ func start_aim() -> void:
 		return
 	is_aiming = true
 	reticle.visible = true
+
+	# First-time hint — because nobody reads the manual
+	_show_hint_once("glob_aim", "GLOB COMMAND",
+		"Right-click to aim. Pattern-match targets. Q cycles grab/push/absorb.")
 
 	# Show glob pattern input on HUD
 	var hud = _get_hud()
@@ -353,3 +358,12 @@ func cycle_action() -> void:
 		GlobAction.ABSORB:
 			current_action = GlobAction.GRAB
 	print("[GLOB] Action mode: %s" % GlobAction.keys()[current_action])
+
+## Show a hint exactly once — because repeating yourself is a code smell
+func _show_hint_once(id: String, title: String, body: String) -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and not gm.has_seen_hint(id):
+		gm.mark_hint_seen(id)
+		var hint = _HINT_SCENE.instantiate()
+		get_tree().root.add_child(hint)
+		hint.show_hint(title, body)
