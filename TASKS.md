@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 6.1 complete
-- **Last task completed:** Task 6.1 — Added ESC key handling to `dialogue_box.gd` to skip entire dialogue sequence during active dialogue. Added public `skip_all()` method to `dialogue_manager.gd` that calls `_end_dialogue()`. ESC press during dialogue consumes the input event (`set_input_as_handled()`) so it doesn't also trigger the pause menu. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 6.2 — Add dialogue backlog storage
+- **Last updated by:** Claude (2026-04-04) — Task 6.2 complete
+- **Last task completed:** Task 6.2 — Added `var history: Array[Dictionary] = []` and `const MAX_HISTORY := 200` to `dialogue_manager.gd`. Added `_record_history(speaker, text)` helper that appends `{speaker, text, timestamp}` and pops oldest entry when over 200. Called from both `advance()` and `quick_line()` so every displayed line is captured. Added `get_history() -> Array` public accessor. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 6.3 — Add dialogue history viewer
 - **Known issues:** None outstanding.
 
 ---
@@ -147,7 +147,7 @@
 - [x] **DONE.** Added ESC handling in `dialogue_box.gd` `_unhandled_input()`: checks for "pause" action press, and if DialogueManager has active dialogue, calls `dm.skip_all()` and consumes the event via `set_input_as_handled()` so pause menu is not triggered. Added public `skip_all()` method to `dialogue_manager.gd` that calls `_end_dialogue()` to cleanly end the sequence and emit `dialogue_ended`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 6.2 Add dialogue backlog storage
-- [ ] In `scripts/autoload/dialogue_manager.gd`, add `var history: Array[Dictionary] = []` (max 200 entries). Each entry `{speaker, text, timestamp}`. Append every time a line is shown. Add `func get_history() -> Array` accessor.
+- [x] **DONE.** Added `var history: Array[Dictionary] = []` and `const MAX_HISTORY := 200` to `dialogue_manager.gd`. Added `_record_history(speaker, text)` private helper that appends `{speaker, text, timestamp}` using `Time.get_unix_time_from_system()` and pops oldest entry when over 200. Called from both `advance()` (sequence lines) and `quick_line()` (one-off lines) so every displayed line is captured. Added `get_history() -> Array` public accessor for the backlog viewer (Task 6.3). MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 6.3 Add dialogue history viewer
 - [ ] Create `scenes/ui/dialogue_history.gd` and `.tscn`. Opens with H key (bind via GameManager input action "dialogue_history"). Scrollable list of last 30 history entries. Close with ESC or H. `process_mode = PROCESS_MODE_WHEN_PAUSED` and pauses the game while open.

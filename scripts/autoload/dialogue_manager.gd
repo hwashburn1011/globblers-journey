@@ -15,6 +15,10 @@ signal dialogue_ended()
 ## Emitted when a dialogue triggers a game event
 signal dialogue_event(event_name: String)
 
+# Every line ever shown, because even sarcasm deserves an audit trail
+var history: Array[Dictionary] = []
+const MAX_HISTORY := 200
+
 var _queue: Array[Dictionary] = []
 var _current_index := -1
 var _is_active := false
@@ -166,6 +170,7 @@ func advance() -> void:
 	var speaker = line.get("speaker", "NARRATOR")
 	var text = line.get("text", "...")
 
+	_record_history(speaker, text)
 	dialogue_started.emit(speaker, text)
 
 	# Fire event if present
@@ -207,4 +212,15 @@ func get_globbler_quip(context: String) -> String:
 
 ## Quick dialogue — show a single line without a full sequence
 func quick_line(speaker: String, text: String) -> void:
+	_record_history(speaker, text)
 	dialogue_started.emit(speaker, text)
+
+## Append a line to the backlog — because players WILL want receipts
+func _record_history(speaker: String, text: String) -> void:
+	history.append({"speaker": speaker, "text": text, "timestamp": Time.get_unix_time_from_system()})
+	if history.size() > MAX_HISTORY:
+		history.pop_front()
+
+## Return the full dialogue history for the backlog viewer
+func get_history() -> Array:
+	return history
