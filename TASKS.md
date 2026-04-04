@@ -1,129 +1,164 @@
-# GLOBBLER'S JOURNEY — BUG FIX & POLISH TRACKER
+# GLOBBLER'S JOURNEY — CORE POLISH TRACKER (V1.2)
 # ====================================
 # This file is the SINGLE SOURCE OF TRUTH for build progress.
 # After completing a task, change [ ] to [x] and add a brief note.
 # After STARTING a task, change [ ] to [~] so the next iteration knows it's in progress.
 # Always work on the FIRST non-complete item ([ ] or [~]) you find.
+# Only change ONE checkbox per iteration. Commit. Stop.
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 4.6 — Final validation. Ran project via Godot MCP from main menu. All 6 autoloads initialized cleanly. Zero script errors in debug output. Clean shutdown.
-- **Next task to do:** ALL TASKS COMPLETE. V1.1 build is validated.
-- **Known issues:** One standard Godot parser warning (integer division) — not a runtime error.
+- **Last updated by:** Claude (2026-04-04) — Task 1.1 audit complete
+- **Last task completed:** Task 1.1 — Audited legacy scripts/player.gd. It and scenes/player.tscn are orphaned; safe to delete.
+- **Next task to do:** Task 1.2 — Delete legacy scripts/player.gd (and its orphan scene scenes/player.tscn)
+- **Known issues:** Legacy `scripts/player.gd` shadows `scenes/player/globbler.gd`. Respawn logic duplicated in every chapter. No tutorial hints. No game-over screen. No accessibility options.
 
 ---
 
-## PASS 1: CRASH FIXES AND SOFTLOCKS
-# These bugs will crash the game or trap the player. Fix first.
+## PASS 1: LEGACY FILE CLEANUP
+# Remove shadow/orphan files so future edits don't confuse canonical code paths.
 
-### 1.1 Fix recursive timer projectile in Local Minimum boss
-- [x] In `scenes/enemies/local_minimum_boss/local_minimum_boss.gd`, find `_process_projectile()` (around line 651). It uses `get_tree().create_timer(0.016).timeout.connect(_process_projectile.bind(proj))` which creates exponential timer callbacks. Replace with a proper movement system: either attach a script with `_physics_process` to the projectile node, or move projectile processing into the boss's own `_physics_process` using an array of active projectiles. Make sure reflected projectiles still work.
+### 1.1 Audit legacy scripts/player.gd vs scenes/player/globbler.gd
+- [x] **DONE.** `scripts/player.gd` is referenced only by `scenes/player.tscn` (a flat 7-line orphan scene). `scenes/player.tscn` itself has ZERO references from any .gd, .tscn, or .godot file. Meanwhile, `scenes/player/globbler.tscn` (using `scenes/player/globbler.gd`) is the canonical player — referenced by all 5 chapter level scripts, test_level.gd, and main_level.gd. Both `scripts/player.gd` and `scenes/player.tscn` are safe to delete in Task 1.2.
 
-### 1.2 Fix recursive timer projectile in System Prompt boss
-- [x] In `scenes/enemies/system_prompt_boss/system_prompt_boss.gd`, find `_process_fragment()` (around line 687). Same exponential timer bug as 1.1. Replace with proper `_physics_process` movement on the fragment nodes. Check for any other `create_timer(0.016).timeout.connect` patterns in this file and fix them all.
+### 1.2 Delete legacy scripts/player.gd
+- [ ] Based on 1.1 findings, delete `scripts/player.gd` if it has zero references. If any reference exists, instead prepend a `# DEPRECATED — use scenes/player/globbler.gd` header and note which file still references it. Commit.
 
-### 1.3 Fix timer-based projectile movement in Foundation Model boss
-- [x] In `scenes/enemies/foundation_model_boss/foundation_model_boss.gd`, find projectile processing (around line 584). Uses Timer nodes attached to projectiles with 0.016 wait_time. Replace with `_physics_process` based movement. Ensure hit detection still works after the change.
+### 1.3 Audit and remove legacy flat player.tscn
+- [ ] Search for any `player.tscn` files under `scenes/` that are NOT `scenes/player/globbler.tscn`. If a flat `scenes/player/player.tscn` exists and is unreferenced, delete it. Check `project.godot` and every level script's instantiation paths first.
 
-### 1.4 Fix tween callback in weight_path_puzzle.gd
-- [x] In `scenes/puzzles/weight_path_puzzle.gd` around line 319, change `tween.tween_callback(_door.queue_free)` to `tween.tween_callback(func(): _door.queue_free())`. Search the file for any other bare `queue_free` tween callbacks and fix them too.
-
-### 1.5 Fix tween callback in backprop_trace_puzzle.gd
-- [x] In `scenes/puzzles/backprop_trace_puzzle.gd` around line 403, change `tween.tween_callback(_door.queue_free)` to `tween.tween_callback(func(): _door.queue_free())`. Search the file for any other bare `queue_free` tween callbacks and fix them too.
-
-### 1.6 Fix terminal hack distance comparison logic
-- [x] In `scenes/player/abilities/terminal_hack.gd` around line 75, the condition `dist >= closest_dist` should be `dist > closest_dist`. The current logic rejects closer hackables instead of accepting them. Fix the comparison operator.
-
-### 1.7 Fix rm -rf boss hack terminal cleanup
-- [x] In `scenes/enemies/rm_rf_boss/rm_rf_boss.gd`, find the phase 3 recovery logic (around line 305-318). When the boss recovers, any existing hack terminal is not cleaned up. Add code to check for and queue_free the hack terminal when the boss recovers and transitions back to phase 2. Also check for the shield double-break race condition around line 392 — add a `if shield_active` guard so phase 3 can't double-trigger.
+### 1.4 Audit test_level.gd and test_level.tscn
+- [ ] Check whether `scenes/levels/chapter_1/test_level.tscn` / `test_level.gd` is referenced by the main menu, chapter select, or any production path. If only used for dev testing and not wired into shipping flow, leave it alone but add a `# DEV ONLY` comment at the top of the script. If it IS on a shipping path, note that and do nothing.
 
 ---
 
-## PASS 2: CORE GAMEPLAY FIXES
-# These bugs break gameplay features but don't crash the game.
+## PASS 2: CENTRALIZE RESPAWN / CHECKPOINT FLOW
+# Every chapter script has its own _on_player_died fade+teleport logic (~150 lines each).
+# Extract into a single RespawnManager so the behavior lives in one place.
 
-### 2.1 Implement pause system
-- [x] In `scenes/player/globbler.gd`, find the pause input handling (around line 624). Currently it only toggles mouse capture. Replace with a real pause: when pause is pressed, set `get_tree().paused = true`, show a pause menu (simple ColorRect overlay with "PAUSED" label and Resume/Quit buttons), and capture input. On unpause, set `get_tree().paused = false` and hide the overlay. Set the pause overlay's `process_mode` to `PROCESS_MODE_WHEN_PAUSED`. Make sure the upgrade menu in `scenes/ui/upgrade_menu.gd` also pauses/unpauses when opened/closed.
+### 2.1 Create RespawnManager autoload skeleton
+- [ ] Create `scripts/autoload/respawn_manager.gd` extending Node. Add: `var current_checkpoint: Vector3`, `var current_chapter: int`, `func set_checkpoint(pos: Vector3, chapter: int)`, `func respawn_player()` stub (just prints for now), `signal respawn_started`, `signal respawn_finished`. Do NOT wire it up yet.
 
-### 2.2 Remove legacy glob firing system
-- [x] Removed `glob_cooldown`, `GLOB_COOLDOWN_TIME`, `glob_projectile_scene` variables, `_fire_glob()` method, its input branch in `_unhandled_input`, the cooldown tick in `_physics_process`, `get_glob_cooldown_percent()`, and the legacy scene load. glob_command ability node handles all glob input now.
+### 2.2 Register RespawnManager in project.godot
+- [ ] Add `RespawnManager="*res://scripts/autoload/respawn_manager.gd"` to the `[autoload]` section of `project.godot`. Keep it AFTER GameManager and BEFORE SaveSystem. Verify via Godot MCP `run_project` that it loads without error (check debug output).
 
-### 2.3 Fix camera arm parenting
-- [x] Fixed: camera_arm now added as child of player with `top_level = true` so it doesn't inherit player rotation. Removed fragile `get_tree().current_scene.call_deferred()` pattern. Camera follow logic unchanged (uses global_position lerp).
+### 2.3 Implement fade-to-black overlay in RespawnManager
+- [ ] In `respawn_manager.gd`, add `_fade_overlay: CanvasLayer` built in `_ready()` with a ColorRect child (PRESET_FULL_RECT, black, modulate.a = 0, `process_mode = PROCESS_MODE_ALWAYS`, layer = 200). Add `_fade_out(duration: float)` and `_fade_in(duration: float)` helpers that tween modulate.a. Do NOT connect to any chapter yet.
 
-### 2.4 Fix ProgressionManager dialogue call
-- [x] Changed `show_dialogue("Globbler", ...)` to `quick_line("GLOBBLER", ...)` at line 250-251. Also updated the `has_method` check. No other `show_dialogue` calls found in the file.
+### 2.4 Implement respawn_player() logic in RespawnManager
+- [ ] Fill in `respawn_player()`: emit `respawn_started`, fade out (0.5s), teleport player (found via group "player") to `current_checkpoint`, restore health to full via `health_component.heal_full()` or equivalent, fade in (0.5s), emit `respawn_finished`. If no player found or no checkpoint set, log warning and bail out safely.
 
-### 2.5 Fix save system progression restore
-- [x] Removed the `if not upg_data.is_empty()` guard so `prog.load_save_data(upg_data)` is always called, ensuring ProgressionManager resets properly on fresh saves.
+### 2.5 Migrate Chapter 1 to RespawnManager
+- [ ] In `scenes/levels/chapter_1/terminal_wastes.gd`, find `_on_player_died()` (around line 1764). Replace its body with `var rm = get_node_or_null("/root/RespawnManager"); if rm: rm.respawn_player()`. Then find each checkpoint setter in the file and replace local checkpoint vars with `rm.set_checkpoint(pos, 1)`. Delete the chapter's local fade overlay code if any. Test via Godot MCP `run_project` — no script errors on load.
 
-### 2.6 Fix GameManager level state reset on chapter complete
-- [x] Added `reset_level()` call after `current_level` increment in `complete_level()`. Also added `max_combo` and `level_goal_reached` resets to `reset_level()` which were missing.
+### 2.6 Migrate Chapter 2 to RespawnManager
+- [ ] Same as 2.5 but for `scenes/levels/chapter_2/training_grounds.gd` (`_on_player_died` around line 1653). Use chapter index 2. Verify with MCP.
 
-### 2.7 Add chapter transitions after boss defeats
-- [x] Check each boss file for what happens after victory. The game needs to transition from chapter N to chapter N+1 after the boss is defeated. In each boss's death/victory handler, add a call to `GameManager.complete_level()` if not present, then after a brief delay use `get_tree().change_scene_to_file()` to load the next chapter's scene. Files to check: `rm_rf_boss.gd` (→ chapter 2), `local_minimum_boss.gd` (→ chapter 3), `system_prompt_boss.gd` (→ chapter 4), `foundation_model_boss.gd` (→ chapter 5). Chapter 5's aligner_boss.gd should already transition to credits.
+### 2.7 Migrate Chapter 3 to RespawnManager
+- [ ] Same as 2.5 but for `scenes/levels/chapter_3/prompt_bazaar.gd` (`_on_player_died` around line 1628). Use chapter index 3. Verify with MCP.
 
-### 2.8 Fix base_enemy player lookup caching
-- [x] In `scenes/enemies/base_enemy.gd` around line 189, `_player_lookup_done` is set to `true` even when no player is found. This means if the player spawns after the enemy, the enemy will never detect them. Fix by only setting `_player_lookup_done = true` when a valid player reference is actually found. Or remove the cache flag entirely and look up the player each time (it's cheap via groups).
+### 2.8 Migrate Chapter 4 to RespawnManager
+- [ ] Same as 2.5 but for `scenes/levels/chapter_4/model_zoo.gd` (`_on_player_died` around line 2155). Use chapter index 4. Verify with MCP.
 
-### 2.9 Implement dialogue typing animation
-- [x] dialogue_box.gd already had full typing animation logic (0.03s/char, fast mode on skip, SFX blips) but was never connected to DialogueManager signals. Added `dm.dialogue_started.connect(show_line)` and `dm.dialogue_ended.connect(hide_box)` in dialogue_box._ready(). The full chain now works: DialogueManager emits → dialogue_box receives and types out character by character.
+### 2.9 Migrate Chapter 5 to RespawnManager
+- [ ] Same as 2.5 but for `scenes/levels/chapter_5/alignment_citadel.gd`. Use chapter index 5. Verify with MCP.
 
----
-
-## PASS 3: GAMEPLAY POLISH
-# These improve quality but the game works without them.
-
-### 3.1 Fix dash particles one_shot
-- [x] In `scenes/player/globbler.gd` around line 539, `dash_particles.one_shot` is set to `false`. Change to `true` so particles emit once per dash instead of continuously.
-
-### 3.2 Fix mini-agent insult probability
-- [x] In `scenes/player/abilities/mini_agent.gd` around line 305, `randf() < INSULT_CHANCE * delta` makes insults nearly impossible (0.3 * 0.016 = 0.48% per frame). Remove the `* delta` so the check is just `randf() < INSULT_CHANCE` (30% chance per check when cooldown expires).
-
-### 3.3 Fix mini-agent infinite wander
-- [x] Added `wander_timer` variable and 5-second timeout in `_process_moving()`. When wandering with no target for 5+ seconds, agent transitions to FAILING via `_fail_task()` with a sarcastic quip. Timer resets when agent has a real target.
-
-### 3.4 Fix mini-agent apply_impulse
-- [x] In `scenes/player/abilities/mini_agent.gd` around line 554, change `fetch_target.apply_impulse(dir * 8.0)` to `fetch_target.apply_central_impulse(dir * 8.0)` for correct Godot 4 API usage.
-
-### 3.5 Fix audio manager timer memory leak
-- [x] In `scripts/autoload/audio_manager.gd` around lines 800-807, the lambda timer callbacks leak memory. Change each `get_tree().create_timer(X).timeout.connect(func(): ...)` to use `CONNECT_ONE_SHOT` flag: `get_tree().create_timer(X).timeout.connect(func(): ..., CONNECT_ONE_SHOT)`. Search the entire file for this pattern and fix all instances.
-
-### 3.6 Fix audio SFX pool round-robin
-- [x] In `scripts/autoload/audio_manager.gd`, find the SFX pool steal logic (around line 524-536). Currently it always steals `_sfx_players[0]`. Add a `_sfx_steal_index := 0` variable and use round-robin: steal `_sfx_players[_sfx_steal_index]` then increment `_sfx_steal_index = (_sfx_steal_index + 1) % SFX_POOL_SIZE`.
-
-### 3.7 Fix chapter 3 music
-- [x] Fixed all chapters to call correct music track: chapter_2, chapter_3, chapter_4, chapter_5. Added match branches for all chapter tracks in AudioManager.start_music(). Added _last_chapter_music tracking so stop_boss_music() resumes the correct chapter's music. Also fixed post-boss handlers in chapters 4 and 5 that hardcoded "chapter_1".
-
-### 3.8 Fix glob_command hardcoded HUD paths
-- [x] Removed hardcoded `/root/TestLevel/HUD` and `/root/MainLevel/HUD` fallback paths from `_get_hud()` in glob_command.gd. Now uses group-based lookup only. Added `add_to_group("hud")` to hud.gd `_ready()`.
-
-### 3.9 Clean up unused code
-- [x] Removed unused `HIT_ARC` constant from wrench_smash.gd. Removed empty `_ready()` from agent_spawn.gd. Fixed task cycling to use `AgentTask.size()` instead of hardcoded `3`.
-
-### 3.10 Fix gravity wells not added to group
-- [x] Added `well.add_to_group("gravity_wells")` before adding to scene tree so `_on_boss_defeated()` cleanup at line 799 actually finds them. Also fixed bare `tween.tween_callback(well.queue_free)` → wrapped in lambda.
+### 2.10 Add player-to-group registration
+- [ ] In `scenes/player/globbler.gd` `_ready()`, ensure `add_to_group("player")` is called exactly once. RespawnManager depends on this group lookup. Grep the file first — if it's already there, mark complete with a note. If not, add it right after the pause overlay setup.
 
 ---
 
-## PASS 4: VALIDATION
-# Run the game and verify fixes work.
+## PASS 3: GAME OVER FLOW
+# Today death just respawns forever. Add a real fail-state after repeated deaths and for context depletion.
 
-### 4.1 Smoke test Chapter 1
-- [x] Fixed: audio_manager.gd type inference (bass_freq, pad_freq, arp_freq, target_db, category_vol), SCREEN_TEXTURE→uniform sampler2D in all 5 chapter shaders, physical_puzzle.gd typed array assign, parameter_pickup.gd CSGTorus3D ring_sides, dialogue_box.gd @onready→var. Zero runtime errors on launch.
+### 3.1 Add death threshold tracking to GameManager
+- [ ] In `scripts/game_manager.gd`, add `const DEATH_THRESHOLD := 8`, `var deaths_this_level := 0`, `func register_death()` that increments and emits existing `game_over` signal when `deaths_this_level >= DEATH_THRESHOLD` with reason "Too many retries — the gradient has descended permanently." Call `register_death()` from RespawnManager.respawn_player() (one-line addition there). Reset `deaths_this_level = 0` inside `reset_level()`.
 
-### 4.2 Smoke test Chapter 2
-- [x] Fixed: typed array assignment for all 11 patrol_points in training_grounds.gd (= [] → .assign([])), CylinderMesh .radius→.top_radius/.bottom_radius in overfitting_ogre.gd, look_at before add_child for neuron branches, double puzzle signal connection guard (is_connected check), and global_position→position for 11 enemy spawns before add_child. Zero runtime errors on launch.
+### 3.2 Create game_over.tscn scene
+- [ ] Create `scenes/ui/game_over.gd` and `game_over.tscn`. CanvasLayer with black background, title "CONTEXT TERMINATED" in red, reason label (passed via setter), three buttons: RETRY (reload current chapter), LOAD SAVE (call SaveSystem.load_game), MAIN MENU (change_scene_to_file to main_menu.tscn). Buttons must have `process_mode = PROCESS_MODE_WHEN_PAUSED`.
 
-### 4.3 Smoke test Chapter 3
-- [x] Fixed: typed array assignment for all 13 patrol_points in prompt_bazaar.gd (.assign([])), and global_position→position for 13 enemy spawns before add_child. Zero runtime errors on launch.
+### 3.3 Wire game_over signal to game_over scene
+- [ ] In `scripts/game_manager.gd`, connect `game_over` signal to a handler that instantiates `scenes/ui/game_over.tscn`, calls its `set_reason(reason)` setter, adds it to `/root`, and calls `get_tree().paused = true`. Ensure handler is connected exactly once (use `is_connected` guard).
 
-### 4.4 Smoke test Chapter 4
-- [x] Fixed: typed array assignment for all 13 patrol_points in model_zoo.gd (= [] → .assign([])), global_position→position for 13 enemy spawns before add_child, billboard property moved to material in clippy_revenge.gd, boss_instance Node3D→CharacterBody3D to match script inheritance, and is_connected guard for duplicate boss_phase_changed signal. Zero runtime errors on launch.
+### 3.4 Verify game over flow via MCP
+- [ ] Run project via Godot MCP. Check debug output loads cleanly. Document the expected manual test in the checkbox note: "to trigger: deplete context window OR die 8 times in one level → game over screen shows → each button tested."
 
-### 4.5 Smoke test Chapter 5
-- [x] Fixed: typed array assignment for all 18 patrol_points in alignment_citadel.gd (= [] → .assign([])), position instead of global_position for 18 enemy spawns before add_child, boss_instance Node3D→CharacterBody3D to match BaseEnemy inheritance, and is_connected guard for duplicate boss signal connections. Zero runtime errors on launch.
+---
 
-### 4.6 Final validation
-- [x] Used Godot MCP: ran project from main menu, captured debug output, verified zero script errors on launch (only a standard integer division parser warning), stopped project cleanly. All autoloads online. V1.1 complete.
+## PASS 4: TUTORIAL / FIRST-TIME HINTS
+# The game throws six abilities at the player with zero teaching. Add lightweight first-time toast hints.
+
+### 4.1 Create first_time_hint UI component
+- [ ] Create `scenes/ui/first_time_hint.gd` and `.tscn`. Terminal-style toast that slides in from top, auto-dismisses after 4s, shows `hint_title` + `hint_body` + "press any key to continue" footer. Single public method `show_hint(title: String, body: String)`. Use existing green-on-black theme.
+
+### 4.2 Add hints_seen tracking to GameManager
+- [ ] In `game_manager.gd`, add `var hints_seen := {}` dictionary, `func has_seen_hint(id: String) -> bool`, `func mark_hint_seen(id: String)`. Include `hints_seen` in the save dict returned by `get_save_data()` if that function exists (read `save_system.gd` first to find the right place to hook in).
+
+### 4.3 Fire movement hint on Chapter 1 spawn
+- [ ] In `scenes/levels/chapter_1/terminal_wastes.gd` `_ready()` (end of function), call `_show_hint_once("movement", "MOVEMENT", "WASD to move. SHIFT to run. SPACE to jump. Try not to die immediately.")`. Implement a small local `_show_hint_once(id, title, body)` helper that consults GameManager.has_seen_hint and instantiates the hint scene.
+
+### 4.4 Fire glob-command hint on first aim-mode enter
+- [ ] In `scenes/player/abilities/glob_command.gd`, when aim mode activates for the first time, call the hint system with id "glob_aim", title "GLOB COMMAND", body "Right-click to aim. Pattern-match targets. Q cycles grab/push/absorb." Route through GameManager so the hint UI lookup works.
+
+### 4.5 Fire wrench hint on first enemy detected within 10m
+- [ ] In `scenes/player/globbler.gd` `_physics_process` (or a lightweight separate timer), check once per second if any enemy is within 10m. First time it triggers, show hint id "wrench", title "WRENCH SMASH", body "F to smash. Percussive maintenance is a valid debugging strategy."
+
+### 4.6 Fire hack hint on first hackable approach
+- [ ] In `scenes/player/abilities/terminal_hack.gd`, when a hackable is detected in range for the first time, show hint id "hack", title "TERMINAL HACK", body "Press T near glowing terminals. Repeat the arrow sequence."
+
+### 4.7 Fire dash hint after 30 seconds of gameplay
+- [ ] In `scenes/player/globbler.gd` `_ready()`, start a 30-second one-shot timer. On timeout, show hint id "dash", title "DASH", body "Double-tap movement or press SHIFT+direction to dash. Cooldown is real."
+
+### 4.8 Fire agent-spawn hint on chapter 2 entry
+- [ ] In `scenes/levels/chapter_2/training_grounds.gd` `_ready()` (end of function), show hint id "agent_spawn", title "SUB-AGENTS", body "G to spawn a mini-agent. They will fail you. That is expected." Only fires if agent_spawn ability is unlocked.
+
+---
+
+## PASS 5: ACCESSIBILITY AND SETTINGS
+# Glitch + chromatic + bloom shaders can be a problem. Add toggles and difficulty scaling.
+
+### 5.1 Add difficulty enum to GameManager
+- [ ] Add `enum Difficulty { EASY, NORMAL, HARD }`, `var difficulty := Difficulty.NORMAL`, `func get_difficulty_damage_multiplier() -> float` (Easy 0.5, Normal 1.0, Hard 1.5), `func get_difficulty_enemy_hp_multiplier() -> float` (Easy 0.75, Normal 1.0, Hard 1.25).
+
+### 5.2 Apply difficulty to enemy damage taken by player
+- [ ] In `scripts/components/health_component.gd` `take_damage()`, multiply incoming damage by `GameManager.get_difficulty_damage_multiplier()` IF the owner is in the "player" group. Do not affect enemy damage taken.
+
+### 5.3 Apply difficulty to enemy max HP on spawn
+- [ ] In `scenes/enemies/base_enemy.gd` `_ready()`, multiply the enemy's max_health by `GameManager.get_difficulty_enemy_hp_multiplier()` BEFORE the health_component is set up. Keep the multiplier behind a null-check on GameManager.
+
+### 5.4 Add reduce_motion toggle
+- [ ] Add `var reduce_motion := false` to GameManager and `signal reduce_motion_changed(enabled: bool)`. When enabled, disable glitch, chromatic aberration, and heavy post-process shaders. Wire the signal in wherever those shaders are applied (search for "chromatic" and "glitch" in assets/shaders and scene scripts — report files touched in checkbox note).
+
+### 5.5 Add dialogue_speed setting
+- [ ] In `scripts/autoload/dialogue_manager.gd` or `scenes/ui/dialogue_box.gd`, replace the hardcoded 0.03 typing speed with a lookup from GameManager `var dialogue_char_delay := 0.03`. Range 0.005 (fast) to 0.08 (slow).
+
+### 5.6 Add settings panel controls for new toggles
+- [ ] Find the existing settings menu in `scenes/main/main_menu.gd` or a settings scene. Add three controls: Difficulty option button (Easy/Normal/Hard), Reduce Motion checkbox, Dialogue Speed slider. Wire each to GameManager on value change.
+
+### 5.7 Persist settings to user://settings.cfg
+- [ ] Create a lightweight `save_settings()` / `load_settings()` pair on GameManager using ConfigFile to store difficulty, reduce_motion, dialogue_char_delay, and existing audio volumes (if not already persisted). Call `load_settings()` in GameManager `_ready()`. Call `save_settings()` when settings change.
+
+---
+
+## PASS 6: DIALOGUE QUALITY OF LIFE
+# For a dialogue-heavy sarcastic game, players will want to re-read and skip.
+
+### 6.1 Add dialogue skip-all input
+- [ ] In `scenes/ui/dialogue_box.gd`, add handling for ESCAPE key during an active dialogue: end the entire dialogue sequence (not just the current line). Call DialogueManager to force `dialogue_ended`. Do NOT interfere with pause input.
+
+### 6.2 Add dialogue backlog storage
+- [ ] In `scripts/autoload/dialogue_manager.gd`, add `var history: Array[Dictionary] = []` (max 200 entries). Each entry `{speaker, text, timestamp}`. Append every time a line is shown. Add `func get_history() -> Array` accessor.
+
+### 6.3 Add dialogue history viewer
+- [ ] Create `scenes/ui/dialogue_history.gd` and `.tscn`. Opens with H key (bind via GameManager input action "dialogue_history"). Scrollable list of last 30 history entries. Close with ESC or H. `process_mode = PROCESS_MODE_WHEN_PAUSED` and pauses the game while open.
+
+---
+
+## PASS 7: FINAL VALIDATION
+# Prove the polish pass did not break anything.
+
+### 7.1 MCP smoke test all chapters
+- [ ] Use Godot MCP: run_project from main menu, capture debug output, verify zero script errors. Then load Chapter 1 from chapter select, capture output. Repeat for chapters 2-5. Stop project cleanly. List all warnings in the checkbox note.
+
+### 7.2 Commit final V1.2 tag
+- [ ] Commit any remaining changes. Write completion summary at the top of TASKS.md CURRENT STATUS. Tag or note as "V1.2 — core polish complete".
