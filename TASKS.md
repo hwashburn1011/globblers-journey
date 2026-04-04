@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 1.3 complete
-- **Last task completed:** Task 1.3 — Deleted orphan `scenes/player.tscn` (7-line scene referencing already-deleted `scripts/player.gd`). Zero references from any .gd, .tscn, or .godot file.
-- **Next task to do:** Task 1.4 — Audit test_level.gd and test_level.tscn
+- **Last updated by:** Claude (2026-04-04) — Task 1.4 complete
+- **Last task completed:** Task 1.4 — Audited `test_level.gd`/`test_level.tscn`. Not referenced by main menu, chapter select, or project.godot. Dev-only sandbox. Added `# DEV ONLY` comment to script.
+- **Next task to do:** Task 2.1 — Create RespawnManager autoload skeleton
 - **Known issues:** Respawn logic duplicated in every chapter. No tutorial hints. No game-over screen. No accessibility options.
 
 ---
@@ -28,7 +28,7 @@
 - [x] **DONE.** Found `scenes/player.tscn` — a 7-line orphan scene referencing deleted `scripts/player.gd`. Zero references from any .gd, .tscn, or .godot file (only TASKS.md and MCP addon example docs mentioned it). Deleted. Legacy player shadow issue is now fully resolved.
 
 ### 1.4 Audit test_level.gd and test_level.tscn
-- [ ] Check whether `scenes/levels/chapter_1/test_level.tscn` / `test_level.gd` is referenced by the main menu, chapter select, or any production path. If only used for dev testing and not wired into shipping flow, leave it alone but add a `# DEV ONLY` comment at the top of the script. If it IS on a shipping path, note that and do nothing.
+- [x] **DONE.** `test_level.gd`/`test_level.tscn` are NOT on any shipping path. Zero references from `project.godot`, main menu (`main_menu.gd`), chapter select, or any production .gd/.tscn file. Only self-reference in its own .tscn and a comment in `glob_pattern_test.gd`. Added `# DEV ONLY` comment block at top of `test_level.gd`.
 
 ---
 
