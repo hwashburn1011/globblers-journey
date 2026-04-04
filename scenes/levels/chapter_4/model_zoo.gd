@@ -1785,9 +1785,10 @@ func _wire_dialogue_events() -> void:
 		if player.has_signal("player_damaged"):
 			player.player_damaged.connect(_on_damage_taken_quip)
 
-	# Boss phase signals — wired when boss is placed
+	# Boss phase signals — wired when boss is placed (guard against double-connect)
 	if boss_instance and boss_instance.has_signal("boss_phase_changed"):
-		boss_instance.boss_phase_changed.connect(_on_boss_phase_changed)
+		if not boss_instance.boss_phase_changed.is_connected(_on_boss_phase_changed):
+			boss_instance.boss_phase_changed.connect(_on_boss_phase_changed)
 
 	# Puzzle and hack signals
 	call_deferred("_connect_puzzle_signals")
@@ -1812,30 +1813,30 @@ func _spawn_fossil_wing_enemies() -> void:
 
 	# GPT-2 Fossil 1 — patrols near the skeleton display case
 	var f1 = gpt2_fossil_scene.instantiate()
-	f1.global_position = rpos + Vector3(-8, 1, -5)
-	f1.patrol_points = [
+	f1.position = rpos + Vector3(-8, 1, -5)
+	f1.patrol_points.assign([
 		rpos + Vector3(-8, 1, -5),
 		rpos + Vector3(-8, 1, 5),
-	]
+	])
 	add_child(f1)
 
 	# GPT-2 Fossil 2 — wanders the archaeological dig site
 	var f2 = gpt2_fossil_scene.instantiate()
-	f2.global_position = rpos + Vector3(6, 1, -3)
-	f2.patrol_points = [
+	f2.position = rpos + Vector3(6, 1, -3)
+	f2.patrol_points.assign([
 		rpos + Vector3(6, 1, -3),
 		rpos + Vector3(6, 1, 6),
 		rpos + Vector3(2, 1, 6),
-	]
+	])
 	add_child(f2)
 
 	# GPT-2 Fossil 3 — guards the corridor exit toward the gallery
 	var f3 = gpt2_fossil_scene.instantiate()
-	f3.global_position = rpos + Vector3(-3, 1, -8)
-	f3.patrol_points = [
+	f3.position = rpos + Vector3(-3, 1, -8)
+	f3.patrol_points.assign([
 		rpos + Vector3(-3, 1, -8),
 		rpos + Vector3(3, 1, -8),
-	]
+	])
 	add_child(f3)
 
 
@@ -1844,32 +1845,32 @@ func _spawn_nightmare_gallery_enemies() -> void:
 
 	# DALL-E Nightmare 1 — drifts between the paintings, morphing constantly
 	var n1 = dalle_nightmare_scene.instantiate()
-	n1.global_position = rpos + Vector3(-5, 1, -4)
-	n1.patrol_points = [
+	n1.position = rpos + Vector3(-5, 1, -4)
+	n1.patrol_points.assign([
 		rpos + Vector3(-5, 1, -4),
 		rpos + Vector3(5, 1, -4),
 		rpos + Vector3(5, 1, 4),
 		rpos + Vector3(-5, 1, 4),
-	]
+	])
 	add_child(n1)
 
 	# DALL-E Nightmare 2 — lurks near the nightmare sculpture
 	var n2 = dalle_nightmare_scene.instantiate()
-	n2.global_position = rpos + Vector3(4, 1, 0)
-	n2.patrol_points = [
+	n2.position = rpos + Vector3(4, 1, 0)
+	n2.patrol_points.assign([
 		rpos + Vector3(4, 1, 0),
 		rpos + Vector3(4, 1, -6),
-	]
+	])
 	add_child(n2)
 
 	# DALL-E Nightmare 3 — ambush near the content warning sign
 	var n3 = dalle_nightmare_scene.instantiate()
-	n3.global_position = rpos + Vector3(-6, 1, 5)
-	n3.patrol_points = [
+	n3.position = rpos + Vector3(-6, 1, 5)
+	n3.patrol_points.assign([
 		rpos + Vector3(-6, 1, 5),
 		rpos + Vector3(-2, 1, 5),
 		rpos + Vector3(-2, 1, 2),
-	]
+	])
 	add_child(n3)
 
 
@@ -1878,31 +1879,31 @@ func _spawn_office_ruins_enemies() -> void:
 
 	# Clippy 1 — the main event, patrols near the Clippy monument
 	var c1 = clippy_revenge_scene.instantiate()
-	c1.global_position = rpos + Vector3(0, 1, -4)
-	c1.patrol_points = [
+	c1.position = rpos + Vector3(0, 1, -4)
+	c1.patrol_points.assign([
 		rpos + Vector3(-3, 1, -4),
 		rpos + Vector3(3, 1, -4),
 		rpos + Vector3(3, 1, 2),
 		rpos + Vector3(-3, 1, 2),
-	]
+	])
 	add_child(c1)
 
 	# Clippy 2 — lurks behind the cubicle ruins
 	var c2 = clippy_revenge_scene.instantiate()
-	c2.global_position = rpos + Vector3(6, 1, 3)
-	c2.patrol_points = [
+	c2.position = rpos + Vector3(6, 1, 3)
+	c2.patrol_points.assign([
 		rpos + Vector3(6, 1, 3),
 		rpos + Vector3(6, 1, -3),
-	]
+	])
 	add_child(c2)
 
 	# A lone GPT-2 Fossil wandered in from the wing — lost and confused
 	var stray = gpt2_fossil_scene.instantiate()
-	stray.global_position = rpos + Vector3(-6, 1, 5)
-	stray.patrol_points = [
+	stray.position = rpos + Vector3(-6, 1, 5)
+	stray.patrol_points.assign([
 		rpos + Vector3(-6, 1, 5),
 		rpos + Vector3(-6, 1, 0),
-	]
+	])
 	add_child(stray)
 
 
@@ -1912,39 +1913,39 @@ func _spawn_foundation_atrium_enemies() -> void:
 	# One of each — the atrium is a gauntlet before the boss
 	# GPT-2 Fossil — slow tank blocking the center
 	var f1 = gpt2_fossil_scene.instantiate()
-	f1.global_position = rpos + Vector3(0, 1, 4)
-	f1.patrol_points = [
+	f1.position = rpos + Vector3(0, 1, 4)
+	f1.patrol_points.assign([
 		rpos + Vector3(-5, 1, 4),
 		rpos + Vector3(5, 1, 4),
-	]
+	])
 	add_child(f1)
 
 	# DALL-E Nightmare — ranged harassment from the side
 	var n1 = dalle_nightmare_scene.instantiate()
-	n1.global_position = rpos + Vector3(-8, 1, -2)
-	n1.patrol_points = [
+	n1.position = rpos + Vector3(-8, 1, -2)
+	n1.patrol_points.assign([
 		rpos + Vector3(-8, 1, -2),
 		rpos + Vector3(-8, 1, -8),
-	]
+	])
 	add_child(n1)
 
 	# Clippy — aggressive melee near the boss gate
 	var c1 = clippy_revenge_scene.instantiate()
-	c1.global_position = rpos + Vector3(7, 1, -5)
-	c1.patrol_points = [
+	c1.position = rpos + Vector3(7, 1, -5)
+	c1.patrol_points.assign([
 		rpos + Vector3(7, 1, -5),
 		rpos + Vector3(3, 1, -5),
 		rpos + Vector3(3, 1, -9),
-	]
+	])
 	add_child(c1)
 
 	# One more Nightmare — flanking the approach
 	var n2 = dalle_nightmare_scene.instantiate()
-	n2.global_position = rpos + Vector3(9, 1, 2)
-	n2.patrol_points = [
+	n2.position = rpos + Vector3(9, 1, 2)
+	n2.patrol_points.assign([
 		rpos + Vector3(9, 1, 2),
 		rpos + Vector3(9, 1, -4),
-	]
+	])
 	add_child(n2)
 
 
@@ -1966,7 +1967,7 @@ func _place_boss() -> void:
 	add_child(boss_arena_instance)
 
 	# Create the boss — towering golden obelisk of mediocrity
-	boss_instance = Node3D.new()
+	boss_instance = CharacterBody3D.new()
 	boss_instance.name = "FoundationModelBoss"
 	boss_instance.set_script(boss_script)
 	boss_instance.position = arena_pos + Vector3(0, 0, -5)

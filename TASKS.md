@@ -8,9 +8,9 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 4.3 — Smoke tested Chapter 3; fixed typed array assignment for all 13 patrol_points in prompt_bazaar.gd (= [] → .assign([])), and global_position→position for 13 enemy spawns before add_child. Zero runtime errors on launch.
-- **Next task to do:** Task 4.4 — Smoke test Chapter 4
-- **Known issues:** Chapters 4-5 likely have same typed array patrol_points bug (will be caught in their smoke tests). Remaining items are static analysis warnings only (unused params, variable shadowing).
+- **Last task completed:** Task 4.4 — Smoke tested Chapter 4; fixed typed array assignment for all 13 patrol_points in model_zoo.gd (.assign([])), global_position→position for 13 enemy spawns before add_child, billboard property on material not MeshInstance3D in clippy_revenge.gd, boss Node3D→CharacterBody3D type mismatch, and duplicate boss_phase_changed signal connection guard. Zero runtime errors on launch.
+- **Next task to do:** Task 4.5 — Smoke test Chapter 5
+- **Known issues:** Chapter 5 likely has same typed array patrol_points bug. Remaining items are static analysis warnings only (unused params, variable shadowing).
 
 ---
 
@@ -120,7 +120,7 @@
 - [x] Fixed: typed array assignment for all 13 patrol_points in prompt_bazaar.gd (.assign([])), and global_position→position for 13 enemy spawns before add_child. Zero runtime errors on launch.
 
 ### 4.4 Smoke test Chapter 4
-- [ ] Use Godot MCP: run_project with Chapter 4 scene. Wait 30 seconds, get_debug_output. Fix any errors. Then stop_project.
+- [x] Fixed: typed array assignment for all 13 patrol_points in model_zoo.gd (= [] → .assign([])), global_position→position for 13 enemy spawns before add_child, billboard property moved to material in clippy_revenge.gd, boss_instance Node3D→CharacterBody3D to match script inheritance, and is_connected guard for duplicate boss_phase_changed signal. Zero runtime errors on launch.
 
 ### 4.5 Smoke test Chapter 5
 - [ ] Use Godot MCP: run_project with Chapter 5 scene. Wait 30 seconds, get_debug_output. Fix any errors. Then stop_project.

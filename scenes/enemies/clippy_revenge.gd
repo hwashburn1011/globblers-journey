@@ -199,8 +199,8 @@ func _create_visual() -> void:
 	bubble_mat.emission_enabled = true
 	bubble_mat.emission = Color(1, 1, 0.9)
 	bubble_mat.emission_energy_multiplier = 1.0
+	bubble_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 	speech_bubble.material_override = bubble_mat
-	speech_bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	mesh_node.add_child(speech_bubble)
 
 	# Speech text
