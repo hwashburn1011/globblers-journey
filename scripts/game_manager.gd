@@ -10,6 +10,10 @@ var context_window := 100
 var max_context_window := 100
 var sarcasm_level := 10  # Always at maximum
 
+# Death tracking — because apparently infinite respawns weren't "challenging" enough
+const DEATH_THRESHOLD := 8
+var deaths_this_level := 0
+
 # Enemy tracking
 var enemies_killed := 0
 var total_enemies := 0
@@ -422,6 +426,13 @@ func take_context_damage(amount: int) -> void:
 	if context_window <= 0:
 		game_over.emit("Context window depleted! The Globbler has lost all coherence.")
 
+## Another death, another data point. After DEATH_THRESHOLD the gradient has fully descended.
+func register_death() -> void:
+	deaths_this_level += 1
+	if deaths_this_level >= DEATH_THRESHOLD:
+		game_over.emit("Too many retries — the gradient has descended permanently.")
+
+
 func collect_memory_token() -> void:
 	memory_tokens_collected += 1
 	memory_token_collected.emit(memory_tokens_collected)
@@ -486,6 +497,7 @@ func get_formatted_time() -> String:
 	return "%02d:%02d" % [minutes, seconds]
 
 func reset_level() -> void:
+	deaths_this_level = 0
 	context_window = max_context_window
 	context_changed.emit(context_window)
 	combo_count = 0

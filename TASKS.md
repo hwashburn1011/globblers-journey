@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.10 complete
-- **Last task completed:** Task 2.10 — Verified `add_to_group("player")` already exists in `scenes/player/globbler.gd` `_ready()` at line 158, right after the init print. No changes needed — RespawnManager group lookup is already satisfied.
-- **Next task to do:** Task 3.1 — Add death threshold tracking to GameManager
-- **Known issues:** No tutorial hints. No game-over screen. No accessibility options.
+- **Last updated by:** Claude (2026-04-04) — Task 3.1 complete
+- **Last task completed:** Task 3.1 — Added `DEATH_THRESHOLD := 8`, `deaths_this_level`, and `register_death()` to GameManager. RespawnManager now calls `register_death()` before each respawn; emits `game_over` signal after 8 deaths. `deaths_this_level` resets in `reset_level()`. MCP verified: zero script errors, zero runtime errors.
+- **Next task to do:** Task 3.2 — Create game_over.tscn scene
+- **Known issues:** No tutorial hints. No game-over screen (scene not yet built). No accessibility options.
 
 ---
 
@@ -72,7 +72,7 @@
 # Today death just respawns forever. Add a real fail-state after repeated deaths and for context depletion.
 
 ### 3.1 Add death threshold tracking to GameManager
-- [ ] In `scripts/game_manager.gd`, add `const DEATH_THRESHOLD := 8`, `var deaths_this_level := 0`, `func register_death()` that increments and emits existing `game_over` signal when `deaths_this_level >= DEATH_THRESHOLD` with reason "Too many retries — the gradient has descended permanently." Call `register_death()` from RespawnManager.respawn_player() (one-line addition there). Reset `deaths_this_level = 0` inside `reset_level()`.
+- [x] **DONE.** Added `DEATH_THRESHOLD := 8`, `deaths_this_level := 0`, `register_death()` to `game_manager.gd`. `register_death()` increments counter and emits `game_over` signal with reason when threshold reached. Added `register_death()` call in `respawn_manager.gd` `respawn_player()` before respawn sequence. `deaths_this_level` reset to 0 in `reset_level()`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning. In `scripts/game_manager.gd`, add `const DEATH_THRESHOLD := 8`, `var deaths_this_level := 0`, `func register_death()` that increments and emits existing `game_over` signal when `deaths_this_level >= DEATH_THRESHOLD` with reason "Too many retries — the gradient has descended permanently." Call `register_death()` from RespawnManager.respawn_player() (one-line addition there). Reset `deaths_this_level = 0` inside `reset_level()`.
 
 ### 3.2 Create game_over.tscn scene
 - [ ] Create `scenes/ui/game_over.gd` and `game_over.tscn`. CanvasLayer with black background, title "CONTEXT TERMINATED" in red, reason label (passed via setter), three buttons: RETRY (reload current chapter), LOAD SAVE (call SaveSystem.load_game), MAIN MENU (change_scene_to_file to main_menu.tscn). Buttons must have `process_mode = PROCESS_MODE_WHEN_PAUSED`.

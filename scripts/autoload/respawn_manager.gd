@@ -71,6 +71,11 @@ func respawn_player() -> void:
 		push_warning("[RespawnManager] No player found in group 'player'. Did they alt-F4 out of existence?")
 		return
 
+	# Log the death — GameManager is keeping score (and judging you)
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.has_method("register_death"):
+		gm.register_death()
+
 	respawn_started.emit()
 
 	# Act 1: The dramatic fade to black
@@ -81,7 +86,8 @@ func respawn_player() -> void:
 	player.velocity = Vector3.ZERO
 
 	# Act 3: Heal — reset the context window like a bad memory wipe
-	var gm = get_node_or_null("/root/GameManager")
+	if not gm:
+		gm = get_node_or_null("/root/GameManager")
 	if gm:
 		gm.context_window = gm.max_context_window
 		gm.context_changed.emit(gm.context_window)
