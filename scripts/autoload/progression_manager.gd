@@ -247,8 +247,8 @@ func unlock_chapter_patterns(chapter: int) -> void:
 			print("[GLOB PATTERNS] Unlocked: %s" % pattern_descriptions.get(pattern_type, pattern_type))
 
 			var dm = get_node_or_null("/root/DialogueManager")
-			if dm and dm.has_method("show_dialogue"):
-				dm.show_dialogue("Globbler", "New glob pattern unlocked: %s. My power grows." % pattern_descriptions.get(pattern_type, "???"))
+			if dm and dm.has_method("quick_line"):
+				dm.quick_line("GLOBBLER", "New glob pattern unlocked: %s. My power grows." % pattern_descriptions.get(pattern_type, "???"))
 
 ## Check if a pattern type is unlocked
 func is_pattern_unlocked(pattern_type: String) -> bool:

@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 2.3 — Fixed camera arm parenting to use player node with top_level instead of current_scene
-- **Next task to do:** Task 2.4 — Fix ProgressionManager dialogue call
+- **Last task completed:** Task 2.4 — Fixed ProgressionManager dialogue call from show_dialogue to quick_line
+- **Next task to do:** Task 2.5 — Fix save system progression restore
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -53,7 +53,7 @@
 - [x] Fixed: camera_arm now added as child of player with `top_level = true` so it doesn't inherit player rotation. Removed fragile `get_tree().current_scene.call_deferred()` pattern. Camera follow logic unchanged (uses global_position lerp).
 
 ### 2.4 Fix ProgressionManager dialogue call
-- [ ] In `scripts/autoload/progression_manager.gd` around line 249-251, the code calls `dm.show_dialogue("Globbler", ...)` but DialogueManager doesn't have a `show_dialogue` method. Change to `dm.quick_line("GLOBBLER", ...)` which does exist. Search the file for any other calls to `show_dialogue` and fix them too.
+- [x] Changed `show_dialogue("Globbler", ...)` to `quick_line("GLOBBLER", ...)` at line 250-251. Also updated the `has_method` check. No other `show_dialogue` calls found in the file.
 
 ### 2.5 Fix save system progression restore
 - [ ] In `scripts/autoload/save_system.gd` around lines 104-108, `load_save_data()` is only called when upgrade data is non-empty. Remove the `if not upg_data.is_empty()` check so `load_save_data()` is always called (even with empty dict). This ensures ProgressionManager resets properly on fresh saves.
