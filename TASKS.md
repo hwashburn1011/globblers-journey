@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 1.3 — Replaced timer-based projectile movement in foundation_model_boss.gd with _physics_process script
-- **Next task to do:** Task 1.4 — Fix tween callback in weight_path_puzzle.gd
+- **Last task completed:** Task 1.4 — Fixed bare queue_free tween callback in weight_path_puzzle.gd (wrapped in lambda)
+- **Next task to do:** Task 1.5 — Fix tween callback in backprop_trace_puzzle.gd
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -27,7 +27,7 @@
 - [x] In `scenes/enemies/foundation_model_boss/foundation_model_boss.gd`, find projectile processing (around line 584). Uses Timer nodes attached to projectiles with 0.016 wait_time. Replace with `_physics_process` based movement. Ensure hit detection still works after the change.
 
 ### 1.4 Fix tween callback in weight_path_puzzle.gd
-- [ ] In `scenes/puzzles/weight_path_puzzle.gd` around line 319, change `tween.tween_callback(_door.queue_free)` to `tween.tween_callback(func(): _door.queue_free())`. Search the file for any other bare `queue_free` tween callbacks and fix them too.
+- [x] In `scenes/puzzles/weight_path_puzzle.gd` around line 319, change `tween.tween_callback(_door.queue_free)` to `tween.tween_callback(func(): _door.queue_free())`. Search the file for any other bare `queue_free` tween callbacks and fix them too.
 
 ### 1.5 Fix tween callback in backprop_trace_puzzle.gd
 - [ ] In `scenes/puzzles/backprop_trace_puzzle.gd` around line 403, change `tween.tween_callback(_door.queue_free)` to `tween.tween_callback(func(): _door.queue_free())`. Search the file for any other bare `queue_free` tween callbacks and fix them too.
