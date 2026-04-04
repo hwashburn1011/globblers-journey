@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.7 complete
-- **Last task completed:** Task 2.7 — Migrated Chapter 3 (prompt_bazaar.gd) to RespawnManager. `_on_player_died()` now calls `rm.respawn_player()` (kept narrator quips). Checkpoint body_entered handler calls `rm.set_checkpoint(pos, 3)`. `_spawn_player()` seeds RespawnManager with initial player position. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 2.8 — Migrate Chapter 4 to RespawnManager
-- **Known issues:** Respawn logic still duplicated in chapters 2-5. No tutorial hints. No game-over screen. No accessibility options.
+- **Last updated by:** Claude (2026-04-04) — Task 2.8 complete
+- **Last task completed:** Task 2.8 — Migrated Chapter 4 (model_zoo.gd) to RespawnManager. `_on_player_died()` now calls `rm.respawn_player()` (kept narrator quips). Checkpoint body_entered handler calls `rm.set_checkpoint(pos, 4)`. `_spawn_player()` seeds RespawnManager with initial player position. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 2.9 — Migrate Chapter 5 to RespawnManager
+- **Known issues:** Respawn logic still duplicated in chapter 5. No tutorial hints. No game-over screen. No accessibility options.
 
 ---
 
@@ -58,7 +58,7 @@
 - [x] **DONE.** `_on_player_died()` now calls `rm.respawn_player()` alongside narrator quips. Checkpoint body_entered handler calls `rm.set_checkpoint(pos, 3)`. `_spawn_player()` seeds RespawnManager with initial player position as fallback. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 2.8 Migrate Chapter 4 to RespawnManager
-- [ ] Same as 2.5 but for `scenes/levels/chapter_4/model_zoo.gd` (`_on_player_died` around line 2155). Use chapter index 4. Verify with MCP.
+- [x] **DONE.** `_on_player_died()` now calls `rm.respawn_player()` alongside narrator quips. Checkpoint body_entered handler calls `rm.set_checkpoint(pos, 4)`. `_spawn_player()` seeds RespawnManager with initial player position as fallback. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 2.9 Migrate Chapter 5 to RespawnManager
 - [ ] Same as 2.5 but for `scenes/levels/chapter_5/alignment_citadel.gd`. Use chapter index 5. Verify with MCP.

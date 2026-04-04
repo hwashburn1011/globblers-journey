@@ -1354,6 +1354,11 @@ func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> v
 			if save_sys and save_sys.has_method("checkpoint_save"):
 				save_sys.checkpoint_save(cp_id, cp_pos)
 
+			# Tell RespawnManager where to put us when we inevitably die
+			var rm = get_node_or_null("/root/RespawnManager")
+			if rm and rm.has_method("set_checkpoint"):
+				rm.set_checkpoint(cp_pos, 4)
+
 			var am = get_node_or_null("/root/AudioManager")
 			if am and am.has_method("play_checkpoint"):
 				am.play_checkpoint()
@@ -1563,6 +1568,11 @@ func _spawn_player() -> void:
 	else:
 		player.position = ROOMS["zoo_entrance"]["pos"] + Vector3(0, 2, 3)
 	add_child(player)
+
+	# Seed RespawnManager with wherever we just placed the player
+	var rm = get_node_or_null("/root/RespawnManager")
+	if rm and rm.has_method("set_checkpoint"):
+		rm.set_checkpoint(player.position, 4)
 
 
 func _spawn_hud() -> void:
@@ -2163,6 +2173,11 @@ func _on_player_died() -> void:
 			"Death by deprecated model. That's going on the incident report.",
 		]
 		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
+
+	# Let the RespawnManager handle the actual dying-and-coming-back ritual
+	var rm = get_node_or_null("/root/RespawnManager")
+	if rm and rm.has_method("respawn_player"):
+		rm.respawn_player()
 
 
 func _on_context_changed(new_value: int) -> void:
