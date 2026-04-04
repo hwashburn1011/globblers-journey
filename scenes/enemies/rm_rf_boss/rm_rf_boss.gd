@@ -311,6 +311,10 @@ func _process_phase_3(delta: float) -> void:
 		shield_mesh.visible = true
 		shield_active = true
 		reflected_hits = 0
+		# Clean up the hack terminal — can't leave ghost terminals floating around
+		if hack_terminal and is_instance_valid(hack_terminal):
+			hack_terminal.queue_free()
+			hack_terminal = null
 		# Heal a bit — punishment for slow hacking
 		if health_comp and health_comp.has_method("heal"):
 			health_comp.heal(5)
@@ -383,6 +387,10 @@ func _spawn_delete_command() -> void:
 
 func on_reflected_hit() -> void:
 	# Called when a delete command is reflected back at the boss
+	# Guard against double-triggers — can't break what's already broken
+	if not shield_active:
+		return
+
 	reflected_hits += 1
 	if health_comp and health_comp.has_method("take_damage"):
 		health_comp.take_damage(4, player_ref)

@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 1.6 — Fixed terminal hack distance comparison (>= to >) so closer hackables aren't rejected
-- **Next task to do:** Task 1.7 — Fix rm -rf boss hack terminal cleanup
+- **Last task completed:** Task 1.7 — Fixed rm -rf boss hack terminal cleanup on recovery and added shield_active guard to prevent phase 3 double-trigger
+- **Next task to do:** Task 2.1 — Implement pause system
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -36,7 +36,7 @@
 - [x] In `scenes/player/abilities/terminal_hack.gd` around line 75, the condition `dist >= closest_dist` should be `dist > closest_dist`. The current logic rejects closer hackables instead of accepting them. Fix the comparison operator.
 
 ### 1.7 Fix rm -rf boss hack terminal cleanup
-- [ ] In `scenes/enemies/rm_rf_boss/rm_rf_boss.gd`, find the phase 3 recovery logic (around line 305-318). When the boss recovers, any existing hack terminal is not cleaned up. Add code to check for and queue_free the hack terminal when the boss recovers and transitions back to phase 2. Also check for the shield double-break race condition around line 392 — add a `if shield_active` guard so phase 3 can't double-trigger.
+- [x] In `scenes/enemies/rm_rf_boss/rm_rf_boss.gd`, find the phase 3 recovery logic (around line 305-318). When the boss recovers, any existing hack terminal is not cleaned up. Add code to check for and queue_free the hack terminal when the boss recovers and transitions back to phase 2. Also check for the shield double-break race condition around line 392 — add a `if shield_active` guard so phase 3 can't double-trigger.
 
 ---
 
