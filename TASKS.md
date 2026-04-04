@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 3.2 — Removed `* delta` from insult chance check so mini-agents actually trash-talk (30% per cooldown expiry instead of 0.48% per frame)
-- **Next task to do:** Task 3.3 — Fix mini-agent infinite wander
+- **Last task completed:** Task 3.3 — Added 5-second wander timeout to mini-agents so they fail instead of wandering forever
+- **Next task to do:** Task 3.4 — Fix mini-agent apply_impulse
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -82,7 +82,7 @@
 - [x] In `scenes/player/abilities/mini_agent.gd` around line 305, `randf() < INSULT_CHANCE * delta` makes insults nearly impossible (0.3 * 0.016 = 0.48% per frame). Remove the `* delta` so the check is just `randf() < INSULT_CHANCE` (30% chance per check when cooldown expires).
 
 ### 3.3 Fix mini-agent infinite wander
-- [ ] In `scenes/player/abilities/mini_agent.gd`, when agents can't find a task target they wander forever. In `_process_moving()` (around line 340), add a wander timeout: if the agent has been wandering for more than 5 seconds without finding a task, transition to FAILING state with reason "got lost". This prevents agents from wandering endlessly.
+- [x] Added `wander_timer` variable and 5-second timeout in `_process_moving()`. When wandering with no target for 5+ seconds, agent transitions to FAILING via `_fail_task()` with a sarcastic quip. Timer resets when agent has a real target.
 
 ### 3.4 Fix mini-agent apply_impulse
 - [ ] In `scenes/player/abilities/mini_agent.gd` around line 554, change `fetch_target.apply_impulse(dir * 8.0)` to `fetch_target.apply_central_impulse(dir * 8.0)` for correct Godot 4 API usage.

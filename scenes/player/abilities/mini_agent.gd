@@ -44,6 +44,7 @@ var is_spinning := false
 var spin_timer := 0.0
 var is_confused := false
 var confusion_timer := 0.0
+var wander_timer := 0.0  # How long we've been wandering without a target — patience is finite
 
 # Task-specific
 var fetch_target: Node3D = null
@@ -338,9 +339,18 @@ func _process_idle(delta: float) -> void:
 
 func _process_moving(delta: float) -> void:
 	if target_position == Vector3.ZERO:
-		# No target — wander aimlessly like a lost process
+		# No target — wander aimlessly like a lost process (but not forever)
+		wander_timer += delta
+		if wander_timer >= 5.0:
+			# 5 seconds of existential wandering is enough for anyone
+			wander_timer = 0.0
+			_fail_task()
+			agent_quip.emit("I wandered for 5 whole seconds. That's like 3 years in mini-agent time.")
+			return
 		_wander()
 		return
+
+	wander_timer = 0.0  # Reset wander timer when we have a real target
 
 	var to_target = target_position - global_position
 	to_target.y = 0  # Stay on the ground plane, we're not a flying agent
