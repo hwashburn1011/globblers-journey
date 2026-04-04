@@ -24,6 +24,7 @@ var _ambient_player: AudioStreamPlayer
 var _ambient_player_b: AudioStreamPlayer  # Second ambient player for crossfade layering
 var _current_area_ambient := ""  # Which area's ambient is currently playing
 var _sfx_players: Array[AudioStreamPlayer] = []  # Pool of SFX players
+var _sfx_steal_index := 0  # Round-robin index so we don't bully the same player every time
 const SFX_POOL_SIZE = 8  # Enough concurrent bleeps for a chaotic firefight
 
 # --- Music state ---
@@ -529,11 +530,13 @@ func play_sfx(sfx_name: String) -> void:
 			p.play()
 			return
 
-	# All players busy — steal the oldest one (the Globbler waits for no one)
-	_sfx_players[0].stop()
-	_sfx_players[0].volume_db = target_db
-	_sfx_players[0].stream = _sfx_cache[sfx_name]
-	_sfx_players[0].play()
+	# All players busy — round-robin steal so no single player gets bullied
+	var victim := _sfx_players[_sfx_steal_index]
+	_sfx_steal_index = (_sfx_steal_index + 1) % SFX_POOL_SIZE
+	victim.stop()
+	victim.volume_db = target_db
+	victim.stream = _sfx_cache[sfx_name]
+	victim.play()
 
 
 func start_music(track_name: String) -> void:

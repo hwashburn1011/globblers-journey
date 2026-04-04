@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 3.5 — Fixed audio manager timer memory leak with CONNECT_ONE_SHOT
-- **Next task to do:** Task 3.6 — Fix audio SFX pool round-robin
+- **Last task completed:** Task 3.6 — Fixed audio SFX pool round-robin stealing
+- **Next task to do:** Task 3.7 — Fix chapter 3 music
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -91,7 +91,7 @@
 - [x] In `scripts/autoload/audio_manager.gd` around lines 800-807, the lambda timer callbacks leak memory. Change each `get_tree().create_timer(X).timeout.connect(func(): ...)` to use `CONNECT_ONE_SHOT` flag: `get_tree().create_timer(X).timeout.connect(func(): ..., CONNECT_ONE_SHOT)`. Search the entire file for this pattern and fix all instances.
 
 ### 3.6 Fix audio SFX pool round-robin
-- [ ] In `scripts/autoload/audio_manager.gd`, find the SFX pool steal logic (around line 524-536). Currently it always steals `_sfx_players[0]`. Add a `_sfx_steal_index := 0` variable and use round-robin: steal `_sfx_players[_sfx_steal_index]` then increment `_sfx_steal_index = (_sfx_steal_index + 1) % SFX_POOL_SIZE`.
+- [x] In `scripts/autoload/audio_manager.gd`, find the SFX pool steal logic (around line 524-536). Currently it always steals `_sfx_players[0]`. Add a `_sfx_steal_index := 0` variable and use round-robin: steal `_sfx_players[_sfx_steal_index]` then increment `_sfx_steal_index = (_sfx_steal_index + 1) % SFX_POOL_SIZE`.
 
 ### 3.7 Fix chapter 3 music
 - [ ] In `scenes/levels/chapter_3/prompt_bazaar.gd` around line 149, change `am.start_music("chapter_1")` to `am.start_music("chapter_3")`. Check if AudioManager handles unknown track names gracefully (it should fall back). Do the same check in chapters 2, 4, and 5 — make sure each chapter calls the right music track name.
