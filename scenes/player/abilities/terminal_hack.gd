@@ -72,7 +72,7 @@ func _scan_for_hackables() -> void:
 		if not is_instance_valid(node) or not node is Node3D:
 			continue
 		var dist = player.global_position.distance_to((node as Node3D).global_position)
-		if dist >= INTERACT_RANGE or dist >= closest_dist:
+		if dist >= INTERACT_RANGE or dist > closest_dist:
 			continue
 		# Check hackable group nodes for hackable component
 		if node.is_in_group("hackable"):
