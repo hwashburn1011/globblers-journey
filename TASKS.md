@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 2.1 — Implemented real pause system with overlay, resume/quit buttons, and upgrade menu pause integration
-- **Next task to do:** Task 2.2 — Remove legacy glob firing system
+- **Last task completed:** Task 2.2 — Removed legacy glob firing system (variables, method, input branch, cooldown tick, cooldown percent helper)
+- **Next task to do:** Task 2.3 — Fix camera arm parenting
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -47,7 +47,7 @@
 - [x] In `scenes/player/globbler.gd`, find the pause input handling (around line 624). Currently it only toggles mouse capture. Replace with a real pause: when pause is pressed, set `get_tree().paused = true`, show a pause menu (simple ColorRect overlay with "PAUSED" label and Resume/Quit buttons), and capture input. On unpause, set `get_tree().paused = false` and hide the overlay. Set the pause overlay's `process_mode` to `PROCESS_MODE_WHEN_PAUSED`. Make sure the upgrade menu in `scenes/ui/upgrade_menu.gd` also pauses/unpauses when opened/closed.
 
 ### 2.2 Remove legacy glob firing system
-- [ ] In `scenes/player/globbler.gd`, find the legacy `_fire_glob()` method and the variables `glob_cooldown`, `GLOB_COOLDOWN_TIME`, `glob_projectile_scene` (around lines 59-61). Remove the legacy method and variables. Find where `_fire_glob()` is called in `_unhandled_input` (around line 578) and remove that input branch. The full glob_command ability node handles all glob input now.
+- [x] Removed `glob_cooldown`, `GLOB_COOLDOWN_TIME`, `glob_projectile_scene` variables, `_fire_glob()` method, its input branch in `_unhandled_input`, the cooldown tick in `_physics_process`, `get_glob_cooldown_percent()`, and the legacy scene load. glob_command ability node handles all glob input now.
 
 ### 2.3 Fix camera arm parenting
 - [ ] In `scenes/player/globbler.gd` around line 523, camera_arm is added to `get_tree().current_scene` instead of to the player. Change it so the camera_arm is added as a child of the player node (use `add_child(camera_arm)` or add to the player's parent). Make sure the camera still follows the player correctly after the change by checking the camera offset logic.

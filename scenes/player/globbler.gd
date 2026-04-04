@@ -55,10 +55,7 @@ var camera_pitch := -0.25
 var camera_distance := 7.0
 var mouse_captured := true
 
-# Glob attack — now with proper ability system
-var glob_cooldown := 0.0
-const GLOB_COOLDOWN_TIME = 0.35
-var glob_projectile_scene: PackedScene
+# Glob attack — legacy quick-fire removed, glob_command handles everything now
 var glob_command: Node3D  # The full glob command ability node
 var wrench_smash: Node3D  # Melee wrench attack
 var terminal_hack: Node3D  # Hacking interaction system
@@ -179,9 +176,6 @@ func _ready() -> void:
 
 	# Dash particles
 	_setup_dash_particles()
-
-	# Preload glob projectile (legacy quick-fire)
-	glob_projectile_scene = load("res://scenes/glob_projectile.tscn")
 
 	# Set up glob command ability (the full aim+beam+select system)
 	var GlobCommandScript = load("res://scenes/player/abilities/glob_command.gd")
@@ -591,10 +585,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("camera_zoom_out"):
 		camera_distance = min(CAMERA_MAX_DIST, camera_distance + CAMERA_ZOOM_SPEED)
 
-	# Glob fire (quick): E / LClick / RT
-	if event.is_action_pressed("glob_fire"):
-		_fire_glob()
-
 	# Glob aim: RClick / LT — hold to aim, release to fire
 	if event.is_action_pressed("glob_aim"):
 		if glob_command and glob_command.has_method("start_aim"):
@@ -680,8 +670,6 @@ func _update_timers(delta: float) -> void:
 
 	if dash_cooldown_timer > 0:
 		dash_cooldown_timer -= delta
-	if glob_cooldown > 0:
-		glob_cooldown -= delta
 	if camera_shake_amount > 0:
 		camera_shake_amount = move_toward(camera_shake_amount, 0.0, camera_shake_decay * delta)
 	if _damage_quip_cooldown > 0:
@@ -1099,27 +1087,6 @@ func _on_landed() -> void:
 		var intensity = abs(prev_velocity_y) / 40.0
 		camera_shake_amount = clamp(intensity, 0.05, 0.3)
 
-func _fire_glob() -> void:
-	if glob_cooldown > 0 or not glob_projectile_scene:
-		return
-	glob_cooldown = GLOB_COOLDOWN_TIME
-
-	var projectile = glob_projectile_scene.instantiate()
-	var fire_dir = -camera_arm.global_transform.basis.z
-	fire_dir.y = 0
-	fire_dir = fire_dir.normalized()
-	if fire_dir.length() < 0.1:
-		fire_dir = -global_transform.basis.z
-
-	projectile.global_position = global_position + Vector3(0, 1.0, 0) + fire_dir * 1.0
-	projectile.direction = fire_dir
-	get_tree().current_scene.add_child(projectile)
-	glob_fired.emit()
-
-	if not first_glob_done:
-		first_glob_done = true
-		thought_bubble.emit(contextual_thoughts["first_glob"])
-
 func take_damage(amount: int) -> void:
 	var game_mgr = get_node_or_null("/root/GameManager")
 	if game_mgr:
@@ -1158,11 +1125,6 @@ func get_dash_cooldown_percent() -> float:
 	if dash_cooldown_timer <= 0:
 		return 1.0
 	return 1.0 - (dash_cooldown_timer / dash_cooldown)
-
-func get_glob_cooldown_percent() -> float:
-	if glob_cooldown <= 0:
-		return 1.0
-	return 1.0 - (glob_cooldown / GLOB_COOLDOWN_TIME)
 
 func _emit_random_thought() -> void:
 	var thought = sarcastic_thoughts[randi() % sarcastic_thoughts.size()]
