@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 3.3 — Added 5-second wander timeout to mini-agents so they fail instead of wandering forever
-- **Next task to do:** Task 3.4 — Fix mini-agent apply_impulse
+- **Last task completed:** Task 3.4 — Fixed mini-agent apply_impulse → apply_central_impulse for Godot 4 API
+- **Next task to do:** Task 3.5 — Fix audio manager timer memory leak
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -85,7 +85,7 @@
 - [x] Added `wander_timer` variable and 5-second timeout in `_process_moving()`. When wandering with no target for 5+ seconds, agent transitions to FAILING via `_fail_task()` with a sarcastic quip. Timer resets when agent has a real target.
 
 ### 3.4 Fix mini-agent apply_impulse
-- [ ] In `scenes/player/abilities/mini_agent.gd` around line 554, change `fetch_target.apply_impulse(dir * 8.0)` to `fetch_target.apply_central_impulse(dir * 8.0)` for correct Godot 4 API usage.
+- [x] In `scenes/player/abilities/mini_agent.gd` around line 554, change `fetch_target.apply_impulse(dir * 8.0)` to `fetch_target.apply_central_impulse(dir * 8.0)` for correct Godot 4 API usage.
 
 ### 3.5 Fix audio manager timer memory leak
 - [ ] In `scripts/autoload/audio_manager.gd` around lines 800-807, the lambda timer callbacks leak memory. Change each `get_tree().create_timer(X).timeout.connect(func(): ...)` to use `CONNECT_ONE_SHOT` flag: `get_tree().create_timer(X).timeout.connect(func(): ..., CONNECT_ONE_SHOT)`. Search the entire file for this pattern and fix all instances.

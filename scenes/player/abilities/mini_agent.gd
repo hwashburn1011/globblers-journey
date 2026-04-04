@@ -561,7 +561,7 @@ func _succeed_task() -> void:
 				# Try to "collect" it — push it toward the player
 				var dir = (player.global_position - fetch_target.global_position).normalized()
 				if fetch_target is RigidBody3D:
-					fetch_target.apply_impulse(dir * 8.0)
+					fetch_target.apply_central_impulse(dir * 8.0)  # apply_central_impulse, because Godot 4 said so
 		TaskType.DISTRACT:
 			if is_instance_valid(distract_target):
 				# Alert the enemy to look at the mini-agent instead
