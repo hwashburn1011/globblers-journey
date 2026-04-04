@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 3.8 — Removed hardcoded HUD paths from glob_command, added HUD to "hud" group
-- **Next task to do:** Task 3.9 — Clean up unused code
+- **Last task completed:** Task 3.9 — Removed unused HIT_ARC const, empty _ready(), and fixed hardcoded task cycling
+- **Next task to do:** Task 3.10 — Fix gravity wells not added to group
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -100,7 +100,7 @@
 - [x] Removed hardcoded `/root/TestLevel/HUD` and `/root/MainLevel/HUD` fallback paths from `_get_hud()` in glob_command.gd. Now uses group-based lookup only. Added `add_to_group("hud")` to hud.gd `_ready()`.
 
 ### 3.9 Clean up unused code
-- [ ] Remove `HIT_ARC` constant from `scenes/player/abilities/wrench_smash.gd` (declared but never used). Remove empty `_ready()` from `scenes/player/abilities/agent_spawn.gd`. Fix agent_spawn.gd task cycling to use `AgentTask.size()` instead of hardcoded `3` (around line 103).
+- [x] Removed unused `HIT_ARC` constant from wrench_smash.gd. Removed empty `_ready()` from agent_spawn.gd. Fixed task cycling to use `AgentTask.size()` instead of hardcoded `3`.
 
 ### 3.10 Fix gravity wells not added to group
 - [ ] In `scenes/enemies/local_minimum_boss/local_minimum_boss.gd`, find `_fire_gravity_well()` (around line 450). After creating each gravity well node, add it to a group: `well.add_to_group("gravity_wells")`. Then verify the cleanup code around line 781 that calls `get_tree().get_nodes_in_group("gravity_wells")` will properly find and free them.

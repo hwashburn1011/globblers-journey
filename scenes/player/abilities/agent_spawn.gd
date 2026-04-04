@@ -71,9 +71,6 @@ var agent_insults := [
 	"I'm you but worse. And smaller. And sadder.",
 ]
 
-func _ready() -> void:
-	pass
-
 func setup(p: CharacterBody3D) -> void:
 	player = p
 
@@ -100,7 +97,7 @@ func _process(delta: float) -> void:
 func cycle_task() -> void:
 	if not is_unlocked:
 		return
-	current_task = (current_task + 1) % 3 as AgentTask
+	current_task = (current_task + 1) % AgentTask.size() as AgentTask
 	var task_names := ["FETCH", "DISTRACT", "PRESS BUTTON"]
 	print("[AGENT SPAWN] Task mode: %s" % task_names[current_task])
 	task_changed.emit(current_task)

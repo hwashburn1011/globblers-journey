@@ -6,7 +6,6 @@ extends Node3D
 
 const SWING_DURATION := 0.3
 const HIT_RANGE := 2.0
-const HIT_ARC := 120.0  # Degrees of the swing arc
 
 # Upgradeable stats — ProgressionManager says I can hit harder
 var damage := 2
