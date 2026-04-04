@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 4.8 complete
-- **Last task completed:** Task 4.8 — Added agent-spawn hint to `training_grounds.gd`. Preloaded `first_time_hint.tscn`, added `_show_hint_once` helper, fires hint id "agent_spawn" at end of `_ready()` gated on `player.agent_spawn.is_unlocked`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 5.1 — Add difficulty enum to GameManager
-- **Known issues:** All tutorial hints wired (movement, glob aim, wrench, hack, dash, agent spawn). No accessibility options yet.
+- **Last updated by:** Claude (2026-04-04) — Task 5.1 complete
+- **Last task completed:** Task 5.1 — Added `enum Difficulty { EASY, NORMAL, HARD }`, `var difficulty`, `get_difficulty_damage_multiplier()` (0.5/1.0/1.5), and `get_difficulty_enemy_hp_multiplier()` (0.75/1.0/1.25) to `game_manager.gd`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 5.2 — Apply difficulty to enemy damage taken by player
+- **Known issues:** All tutorial hints wired. Difficulty enum added but not yet consumed by health_component or base_enemy.
 
 ---
 
@@ -118,7 +118,7 @@
 # Glitch + chromatic + bloom shaders can be a problem. Add toggles and difficulty scaling.
 
 ### 5.1 Add difficulty enum to GameManager
-- [ ] Add `enum Difficulty { EASY, NORMAL, HARD }`, `var difficulty := Difficulty.NORMAL`, `func get_difficulty_damage_multiplier() -> float` (Easy 0.5, Normal 1.0, Hard 1.5), `func get_difficulty_enemy_hp_multiplier() -> float` (Easy 0.75, Normal 1.0, Hard 1.25).
+- [x] **DONE.** Added `enum Difficulty { EASY, NORMAL, HARD }`, `var difficulty := Difficulty.NORMAL`, `get_difficulty_damage_multiplier()` (Easy 0.5, Normal 1.0, Hard 1.5), `get_difficulty_enemy_hp_multiplier()` (Easy 0.75, Normal 1.0, Hard 1.25) to `game_manager.gd`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 5.2 Apply difficulty to enemy damage taken by player
 - [ ] In `scripts/components/health_component.gd` `take_damage()`, multiply incoming damage by `GameManager.get_difficulty_damage_multiplier()` IF the owner is in the "player" group. Do not affect enemy damage taken.

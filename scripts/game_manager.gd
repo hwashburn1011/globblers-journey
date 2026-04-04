@@ -3,6 +3,10 @@ extends Node
 # Game Manager - The orchestration layer for The Globbler's Journey
 # Now with enemy tracking, combos, time tracking, and actual game flow
 
+# Difficulty — because some players want a challenge and others just want the sarcasm
+enum Difficulty { EASY, NORMAL, HARD }
+var difficulty := Difficulty.NORMAL
+
 var current_level := 1
 var memory_tokens_collected := 0
 var total_memory_tokens := 0
@@ -447,6 +451,22 @@ func has_seen_hint(id: String) -> bool:
 ## Mark a hint as seen so we don't nag. Saves are additive — we never un-learn sarcasm.
 func mark_hint_seen(id: String) -> void:
 	hints_seen[id] = true
+
+
+## How much extra pain the player signed up for. Easy: half damage. Hard: you asked for this.
+func get_difficulty_damage_multiplier() -> float:
+	match difficulty:
+		Difficulty.EASY: return 0.5
+		Difficulty.HARD: return 1.5
+		_: return 1.0
+
+
+## Enemy HP scaling — because EASY mode enemies are made of wet paper, HARD mode ones ate their Wheaties.
+func get_difficulty_enemy_hp_multiplier() -> float:
+	match difficulty:
+		Difficulty.EASY: return 0.75
+		Difficulty.HARD: return 1.25
+		_: return 1.0
 
 
 func collect_memory_token() -> void:
