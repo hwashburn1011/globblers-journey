@@ -1,76 +1,46 @@
-You are autonomously building the game Globbler's Journey in Godot 4.x.
+You are autonomously polishing core systems in Globbler's Journey (Godot 4.x, GDScript).
 
 IMPORTANT FILES TO READ FIRST:
-1. TASKS.md — Your task tracker. This tells you what to build next.
-2. CLAUDE.md — Full game design document with character details, story, and technical specs.
+1. TASKS.md — Your task tracker. This tells you what to do next.
+2. CLAUDE.md — Project context, file layout, and patterns for this pass.
 
-DO NOT ASK WHAT TO WORK ON. DO NOT WAIT FOR INPUT. Just build.
+DO NOT ASK WHAT TO WORK ON. DO NOT WAIT FOR INPUT. Just work.
 
 WORKFLOW:
 1. Open TASKS.md. Read the CURRENT STATUS section at the top.
 2. Find the FIRST task marked [ ] (not started) or [~] (in progress).
-3. Build ONLY that ONE task. Do NOT move on to the next task.
-4. After building, use Godot MCP Pro to validate your work: run the project, check for errors, take a screenshot to verify visuals if relevant.
-5. Update TASKS.md:
+3. Read the file(s) mentioned in the task to understand the current code.
+4. Complete ONLY that ONE task. Do NOT move on to the next task.
+5. After the change, verify it by reading surrounding code to make sure it integrates.
+6. Update TASKS.md:
    - Mark that ONE task [x] and add a brief note of what you did.
    - Update the CURRENT STATUS section with what you completed and what comes next.
    - If you started but could not finish, mark it [~] and note what remains.
-6. Commit everything with a descriptive git message like: feat: add Chapter 2 weight puzzle
-7. STOP. Do NOT start another task. You are done for this iteration.
+7. Commit everything with a descriptive git message like: feat: add RespawnManager autoload skeleton
+8. STOP. Do NOT start another task. You are done for this iteration.
 
 CRITICAL: Only ONE checkbox gets changed from [ ] to [x] per iteration. If you are about to start a second task, STOP and commit instead.
 
-GODOT MCP PRO:
-You have access to Godot MCP Pro with 163 tools. USE THEM. The Godot editor is running and connected. Key tools available:
+WORK APPROACH:
+- Read the existing code BEFORE writing the change. Understand what it does.
+- Keep changes minimal. Change only what the task requires.
+- Don't refactor surrounding code. Don't add docstrings. Don't improve things that aren't broken.
+- If the task says "around line X", use that as a hint but search for the actual pattern — line numbers may have shifted.
+- If a task touches multiple files (e.g., registering an autoload affects project.godot AND the script), that's fine — it's still one task.
+- If you're unsure, err on the side of the simpler change.
+- Match the sarcastic Globbler voice in any new user-facing strings.
 
-PROJECT AND SCENE:
-- Run/stop the game project
-- Get debug output, error logs, console messages
-- Create, open, delete, save scenes
-- Get scene tree, instance scenes
-- Get project info, search files
-
-NODES AND SCRIPTS:
-- Add, delete, duplicate, move nodes
-- Get/set node properties, signals, groups
-- Read, create, edit scripts
-- Validate script syntax
-- Attach scripts to nodes
-
-TESTING AND VALIDATION (USE THESE AFTER EVERY BUILD TASK):
-- Take screenshots of the editor and running game
-- Simulate keyboard keys and mouse input
-- Simulate input action sequences
-- Run the game and inspect runtime state
-- Record and replay input sessions
-- Navigate to specific scenes in the running game
-- Click UI elements in the running game
-
-3D, PHYSICS, AUDIO, ANIMATION:
-- Create meshes, cameras, lights, environment, GridMap
-- Set up physics bodies, collision shapes, raycasts
-- Create GPU particles with materials and gradients
-- Set up audio players and bus layouts
-- Create animations, tracks, keyframes
-- Build AnimationTree state machines and blend trees
-
-AFTER BUILDING EACH TASK:
-1. Run the project with MCP
-2. Check debug output for errors — fix any you find
-3. Take a screenshot to verify the visual result
-4. If testing gameplay (enemies, puzzles, movement), simulate input to verify it works
-5. Stop the project
-6. Then update TASKS.md and commit
+GODOT MCP (for validation tasks):
+You have access to Godot MCP with tools: run_project, stop_project, get_debug_output, get_project_info.
+For validation tasks, use these to run the game and check for errors.
 
 RULES:
 - TASKS.md is the source of truth. Always check it first. Always update it when done.
-- Do NOT ask questions. Make reasonable decisions and keep building.
-- Do NOT overwrite working code unless it is broken.
+- Do NOT ask questions. Make reasonable decisions and keep working.
+- Do NOT overwrite working code unless the task specifically says to.
+- Do NOT touch shaders, models, sprites, audio, or materials — that is the NEXT pass.
 - Use GDScript only.
-- Use CSG primitives as placeholder 3D models with correct proportions.
-- Dark plus neon green (#39FF14) color scheme on everything visual. Exception: Chapter 5 uses blue-white theme.
-- Write sarcastic code comments in Globbler's voice.
-- Refer to CLAUDE.md for any design details about characters, story, abilities, or world.
-- When creating new enemies or puzzles, follow patterns established in existing code (base_enemy.gd, base_puzzle.gd).
+- Refer to CLAUDE.md for project layout and code patterns.
+- When a task says "search the file" for a pattern, actually do it — don't assume a pattern only appears once.
 
-START BUILDING NOW.
+START WORKING NOW.

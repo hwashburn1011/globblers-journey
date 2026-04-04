@@ -8,10 +8,20 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 7.1 complete
-- **Last task completed:** Task 7.1 — MCP smoke test all chapters. Main menu + all 5 chapters launched and verified. Found and fixed one runtime crash: `first_time_hint.gd` `add_child()` failed during `_ready()` because root was busy setting up children. Fixed by deferring `add_child` and `show_hint` calls in `terminal_wastes.gd` and `training_grounds.gd`. After fix: zero runtime errors, zero script errors across all chapters. All remaining "ERROR" lines are pre-existing GDScript warnings (unused params, variable shadowing, integer division, ternary type mismatch).
-- **Next task to do:** Task 7.2 — Commit final V1.2 tag
+- **Last updated by:** Claude (2026-04-04) — V1.2 COMPLETE
+- **Last task completed:** Task 7.2 — Final V1.2 tag committed. All 23 tasks across 7 passes complete.
+- **Next task to do:** None — V1.2 core polish pass is finished. Next milestone is the art/asset pass.
 - **Known issues:** None outstanding. All pre-existing warnings are cosmetic (unused params, integer division, variable shadowing).
+
+### V1.2 — CORE POLISH COMPLETE
+All 7 passes delivered:
+1. **Legacy cleanup** (Tasks 1.1–1.4): Removed orphan `scripts/player.gd` and `scenes/player.tscn`. Marked `test_level` as DEV ONLY.
+2. **Centralized respawn** (Tasks 2.1–2.10): New `RespawnManager` autoload with fade-to-black overlay. All 5 chapters migrated from inline death/respawn to shared manager.
+3. **Game over flow** (Tasks 3.1–3.4): Death threshold (8 deaths) and context depletion trigger game over screen with RETRY/LOAD/MENU options.
+4. **Tutorial hints** (Tasks 4.1–4.8): First-time toast hint system with 6 contextual hints (movement, glob, wrench, hack, dash, agent spawn). Persisted via save system.
+5. **Accessibility & settings** (Tasks 5.1–5.7): Difficulty scaling (Easy/Normal/Hard), reduce_motion toggle, dialogue speed slider. All persisted to `user://settings.cfg`.
+6. **Dialogue QoL** (Tasks 6.1–6.3): ESC to skip dialogue, 200-entry backlog, H key history viewer.
+7. **Final validation** (Tasks 7.1–7.2): MCP smoke test all chapters — zero runtime errors. One deferred-call fix applied.
 
 ---
 
@@ -161,4 +171,4 @@
 - [x] **DONE.** MCP smoke test: main menu + chapters 1–5 all launched cleanly. Fixed one runtime crash: `first_time_hint.gd:108` — `add_child()` on root failed during `_ready()` ("Parent node is busy setting up children"). Root cause: `_show_hint_once()` called synchronously from `_ready()` in `terminal_wastes.gd` and `training_grounds.gd`. Fix: changed `add_child(hint)` and `hint.show_hint()` to `call_deferred` variants. After fix: zero runtime errors, zero script errors across all scenes. Pre-existing warnings (all cosmetic, not introduced by V1.2): unused parameters (`_delta`, `_dist`, `_targets`, `_puzzle`, `_amount`, `_source`, `_killer`, `_reason`, `_idx`, `_room_key`, `_response_node`, `_option_node`, `_wave_width`), unused variables (`old_state`, `old_phase`, `total_show_time`, `damage_tick`, `orig_emission`, `bridge`, `backing`, `_main_panel`, `_category_tabs`, `_opening_narration_done`, `_room_dialogue_triggered`, `_low_health_warned`, `_first_glob_triggered`, `_pulse_nodes`), variable shadowing (`box`, `mat`, `dm`, `maxed`, `health_comp`), integer division warnings, ternary type mismatch, `sign` built-in name shadow, lambda capture reassignment, `glob_fired`/`tile_restored` unused signals.
 
 ### 7.2 Commit final V1.2 tag
-- [ ] Commit any remaining changes. Write completion summary at the top of TASKS.md CURRENT STATUS. Tag or note as "V1.2 — core polish complete".
+- [x] **DONE.** Updated TASKS.md with V1.2 completion summary. Committed CLAUDE.md (updated to V1.2 instructions), prompt.md, and TASKS.md. Tagged as "V1.2 — core polish complete".
