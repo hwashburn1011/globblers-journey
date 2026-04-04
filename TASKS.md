@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.9 complete
-- **Last task completed:** Task 2.9 — Migrated Chapter 5 (alignment_citadel.gd) to RespawnManager. Added `_on_player_died()` with narrator quips + `rm.respawn_player()`. Connected `player_died` signal in `_spawn_player()`. Checkpoint body_entered handler calls `rm.set_checkpoint(pos, 5)`. `_spawn_player()` seeds RespawnManager with initial player position. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 2.10 — Add player-to-group registration in globbler.gd
+- **Last updated by:** Claude (2026-04-04) — Task 2.10 complete
+- **Last task completed:** Task 2.10 — Verified `add_to_group("player")` already exists in `scenes/player/globbler.gd` `_ready()` at line 158, right after the init print. No changes needed — RespawnManager group lookup is already satisfied.
+- **Next task to do:** Task 3.1 — Add death threshold tracking to GameManager
 - **Known issues:** No tutorial hints. No game-over screen. No accessibility options.
 
 ---
@@ -64,7 +64,7 @@
 - [x] **DONE.** `_on_player_died()` added with Citadel-themed narrator quips + `rm.respawn_player()`. Connected `player_died` signal in `_spawn_player()`. Checkpoint body_entered handler calls `rm.set_checkpoint(pos, 5)`. `_spawn_player()` seeds RespawnManager with initial player position as fallback. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 2.10 Add player-to-group registration
-- [ ] In `scenes/player/globbler.gd` `_ready()`, ensure `add_to_group("player")` is called exactly once. RespawnManager depends on this group lookup. Grep the file first — if it's already there, mark complete with a note. If not, add it right after the pause overlay setup.
+- [x] **DONE.** `add_to_group("player")` already present at `globbler.gd:158`, first statement in `_ready()`. No changes needed — RespawnManager group lookup is already satisfied.
 
 ---
 
