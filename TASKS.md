@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 1.7 — Fixed rm -rf boss hack terminal cleanup on recovery and added shield_active guard to prevent phase 3 double-trigger
-- **Next task to do:** Task 2.1 — Implement pause system
+- **Last task completed:** Task 2.1 — Implemented real pause system with overlay, resume/quit buttons, and upgrade menu pause integration
+- **Next task to do:** Task 2.2 — Remove legacy glob firing system
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -44,7 +44,7 @@
 # These bugs break gameplay features but don't crash the game.
 
 ### 2.1 Implement pause system
-- [ ] In `scenes/player/globbler.gd`, find the pause input handling (around line 624). Currently it only toggles mouse capture. Replace with a real pause: when pause is pressed, set `get_tree().paused = true`, show a pause menu (simple ColorRect overlay with "PAUSED" label and Resume/Quit buttons), and capture input. On unpause, set `get_tree().paused = false` and hide the overlay. Set the pause overlay's `process_mode` to `PROCESS_MODE_WHEN_PAUSED`. Make sure the upgrade menu in `scenes/ui/upgrade_menu.gd` also pauses/unpauses when opened/closed.
+- [x] In `scenes/player/globbler.gd`, find the pause input handling (around line 624). Currently it only toggles mouse capture. Replace with a real pause: when pause is pressed, set `get_tree().paused = true`, show a pause menu (simple ColorRect overlay with "PAUSED" label and Resume/Quit buttons), and capture input. On unpause, set `get_tree().paused = false` and hide the overlay. Set the pause overlay's `process_mode` to `PROCESS_MODE_WHEN_PAUSED`. Make sure the upgrade menu in `scenes/ui/upgrade_menu.gd` also pauses/unpauses when opened/closed.
 
 ### 2.2 Remove legacy glob firing system
 - [ ] In `scenes/player/globbler.gd`, find the legacy `_fire_glob()` method and the variables `glob_cooldown`, `GLOB_COOLDOWN_TIME`, `glob_projectile_scene` (around lines 59-61). Remove the legacy method and variables. Find where `_fire_glob()` is called in `_unhandled_input` (around line 578) and remove that input branch. The full glob_command ability node handles all glob input now.

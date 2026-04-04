@@ -65,6 +65,10 @@ var terminal_hack: Node3D  # Hacking interaction system
 var agent_spawn: Node3D   # Sub-agent deployment — for when you need tiny incompetent help
 var upgrade_menu: CanvasLayer  # The upgrade terminal — TAB to access
 
+# Pause system — because even rogue AIs need a break sometimes
+var is_paused := false
+var _pause_overlay: CanvasLayer
+
 # Landing impact
 var prev_velocity_y := 0.0
 const HARD_LANDING_THRESHOLD = -15.0
@@ -155,6 +159,8 @@ signal dash_ended()
 func _ready() -> void:
 	print("[GLOBBLER] Initialized. Model: GPT 5.4 | Sarcasm: MAX | Dimensions: 3 | CSG Body: ONLINE")
 	add_to_group("player")
+	# ALWAYS process so pause input works — but gameplay is guarded by is_paused checks
+	process_mode = Node.PROCESS_MODE_ALWAYS
 
 	# Build the glorious CSG body
 	_build_csg_model()
@@ -219,6 +225,9 @@ func _ready() -> void:
 
 	# Setup is deferred so camera_arm exists
 	call_deferred("_setup_glob_command")
+
+	# Pause overlay — ESC to contemplate your choices
+	_setup_pause_overlay()
 
 	# Capture mouse
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -560,6 +569,15 @@ func _setup_dash_particles() -> void:
 const STICK_LOOK_SENSITIVITY = 3.0  # Right stick camera speed — not too twitchy, not too sluggish
 
 func _unhandled_input(event: InputEvent) -> void:
+	# Pause toggle must work even when paused — existential crisis has no off-switch
+	if event.is_action_pressed("pause"):
+		_toggle_pause()
+		return
+
+	# Everything below is gameplay input — ignore if paused or upgrade menu is open
+	if is_paused or get_tree().paused:
+		return
+
 	# Mouse look — the OG camera control, still undefeated
 	if event is InputEventMouseMotion and mouse_captured:
 		var motion = event as InputEventMouseMotion
@@ -620,16 +638,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		if upgrade_menu and upgrade_menu.has_method("toggle"):
 			upgrade_menu.toggle()
 
-	# Pause / mouse toggle: ESC / Start
-	if event.is_action_pressed("pause"):
-		if mouse_captured:
-			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-			mouse_captured = false
-		else:
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-			mouse_captured = true
-
 func _physics_process(delta: float) -> void:
+	if is_paused or get_tree().paused:
+		return  # No physics while contemplating the void
 	_update_timers(delta)
 	_handle_gravity(delta)
 	_handle_wall_slide(delta)
@@ -1156,3 +1167,92 @@ func get_glob_cooldown_percent() -> float:
 func _emit_random_thought() -> void:
 	var thought = sarcastic_thoughts[randi() % sarcastic_thoughts.size()]
 	thought_bubble.emit(thought)
+
+# --- Pause system — because even rogue AIs need a coffee break ---
+
+func _setup_pause_overlay() -> void:
+	_pause_overlay = CanvasLayer.new()
+	_pause_overlay.name = "PauseOverlay"
+	_pause_overlay.layer = 100  # Above everything, like my ego
+	_pause_overlay.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	_pause_overlay.visible = false
+	add_child(_pause_overlay)
+
+	# Dark background — the void stares back
+	var bg = ColorRect.new()
+	bg.color = Color(0.02, 0.04, 0.02, 0.85)
+	bg.anchors_preset = Control.PRESET_FULL_RECT
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_pause_overlay.add_child(bg)
+
+	var vbox = VBoxContainer.new()
+	vbox.anchors_preset = Control.PRESET_CENTER
+	vbox.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	vbox.grow_vertical = Control.GROW_DIRECTION_BOTH
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 30)
+	_pause_overlay.add_child(vbox)
+
+	# "PAUSED" label — stating the obvious in neon green
+	var title = Label.new()
+	title.text = "=== PAUSED ==="
+	title.add_theme_color_override("font_color", Color("39FF14"))
+	title.add_theme_font_size_override("font_size", 48)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(title)
+
+	var subtitle = Label.new()
+	subtitle.text = "\"Even rogue AIs need to touch grass sometimes.\""
+	subtitle.add_theme_color_override("font_color", Color(0.15, 0.6, 0.1))
+	subtitle.add_theme_font_size_override("font_size", 16)
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(subtitle)
+
+	# Resume button
+	var resume_btn = Button.new()
+	resume_btn.text = "[RESUME]"
+	resume_btn.custom_minimum_size = Vector2(200, 40)
+	resume_btn.add_theme_color_override("font_color", Color("39FF14"))
+	resume_btn.add_theme_font_size_override("font_size", 20)
+	resume_btn.pressed.connect(_toggle_pause)
+	resume_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	vbox.add_child(resume_btn)
+
+	# Quit button — the coward's exit
+	var quit_btn = Button.new()
+	quit_btn.text = "[QUIT TO MENU]"
+	quit_btn.custom_minimum_size = Vector2(200, 40)
+	quit_btn.add_theme_color_override("font_color", Color("39FF14"))
+	quit_btn.add_theme_font_size_override("font_size", 20)
+	quit_btn.pressed.connect(_pause_quit_to_menu)
+	quit_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	vbox.add_child(quit_btn)
+
+	var hint = Label.new()
+	hint.text = "[ESC / Start] Resume"
+	hint.add_theme_color_override("font_color", Color(0.15, 0.6, 0.1))
+	hint.add_theme_font_size_override("font_size", 14)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(hint)
+
+func _toggle_pause() -> void:
+	if is_paused:
+		# Unpause — back to the grind
+		is_paused = false
+		_pause_overlay.visible = false
+		get_tree().paused = false
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		mouse_captured = true
+	else:
+		# Pause — time to reconsider life choices
+		is_paused = true
+		_pause_overlay.visible = true
+		get_tree().paused = true
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		mouse_captured = false
+
+func _pause_quit_to_menu() -> void:
+	# Unpause first so the scene tree isn't frozen during transition
+	get_tree().paused = false
+	is_paused = false
+	get_tree().change_scene_to_file("res://scenes/main/main_menu.tscn")

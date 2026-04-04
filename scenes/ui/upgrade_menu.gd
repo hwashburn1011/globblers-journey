@@ -44,6 +44,7 @@ signal menu_closed()
 func _ready() -> void:
 	layer = 10
 	visible = false
+	process_mode = Node.PROCESS_MODE_ALWAYS  # Menus work even when reality is frozen
 	_build_ui()
 
 func toggle() -> void:
@@ -59,12 +60,14 @@ func open_menu() -> void:
 	_selected_index = 0
 	_refresh_all()
 	_play_ui_sfx("menu_open")
+	get_tree().paused = true  # Freeze the world while we shop — capitalism waits for no one
 	menu_opened.emit()
 
 func close_menu() -> void:
 	is_open = false
 	visible = false
 	_play_ui_sfx("menu_back")
+	get_tree().paused = false  # Back to reality, unfortunately
 	menu_closed.emit()
 
 func _unhandled_input(event: InputEvent) -> void:
