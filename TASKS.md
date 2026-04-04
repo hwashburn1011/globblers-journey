@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 5.1 complete
-- **Last task completed:** Task 5.1 — Added `enum Difficulty { EASY, NORMAL, HARD }`, `var difficulty`, `get_difficulty_damage_multiplier()` (0.5/1.0/1.5), and `get_difficulty_enemy_hp_multiplier()` (0.75/1.0/1.25) to `game_manager.gd`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 5.2 — Apply difficulty to enemy damage taken by player
-- **Known issues:** All tutorial hints wired. Difficulty enum added but not yet consumed by health_component or base_enemy.
+- **Last updated by:** Claude (2026-04-04) — Task 5.2 complete
+- **Last task completed:** Task 5.2 — Applied difficulty damage multiplier in `health_component.gd` `take_damage()`. Only scales damage when owner is in "player" group. Uses `ceil()` so Easy mode never rounds to zero. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 5.3 — Apply difficulty to enemy max HP on spawn
+- **Known issues:** All tutorial hints wired. Difficulty damage multiplier now active on player. Enemy HP multiplier not yet applied (Task 5.3).
 
 ---
 
@@ -121,7 +121,7 @@
 - [x] **DONE.** Added `enum Difficulty { EASY, NORMAL, HARD }`, `var difficulty := Difficulty.NORMAL`, `get_difficulty_damage_multiplier()` (Easy 0.5, Normal 1.0, Hard 1.5), `get_difficulty_enemy_hp_multiplier()` (Easy 0.75, Normal 1.0, Hard 1.25) to `game_manager.gd`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 5.2 Apply difficulty to enemy damage taken by player
-- [ ] In `scripts/components/health_component.gd` `take_damage()`, multiply incoming damage by `GameManager.get_difficulty_damage_multiplier()` IF the owner is in the "player" group. Do not affect enemy damage taken.
+- [x] **DONE.** In `health_component.gd` `take_damage()`, added difficulty multiplier lookup via `GameManager.get_difficulty_damage_multiplier()` gated on `get_parent().is_in_group("player")`. Uses `ceil()` to prevent rounding to zero on Easy. Enemy damage unaffected. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 5.3 Apply difficulty to enemy max HP on spawn
 - [ ] In `scenes/enemies/base_enemy.gd` `_ready()`, multiply the enemy's max_health by `GameManager.get_difficulty_enemy_hp_multiplier()` BEFORE the health_component is set up. Keep the multiplier behind a null-check on GameManager.

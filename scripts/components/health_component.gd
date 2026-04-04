@@ -30,7 +30,13 @@ func _process(delta: float) -> void:
 func take_damage(amount: int, source: Node = null) -> void:
 	if is_dead or _invincible:
 		return
-	current_health = max(0, current_health - amount)
+	# "Difficulty scaling: because even masochism should have a slider."
+	var final_amount := amount
+	if get_parent() and get_parent().is_in_group("player"):
+		var gm = get_node_or_null("/root/GameManager")
+		if gm and gm.has_method("get_difficulty_damage_multiplier"):
+			final_amount = int(ceil(float(amount) * gm.get_difficulty_damage_multiplier()))
+	current_health = max(0, current_health - final_amount)
 	health_changed.emit(current_health, max_health)
 	damage_taken.emit(amount, source)
 
