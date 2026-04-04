@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 2.2 — Removed legacy glob firing system (variables, method, input branch, cooldown tick, cooldown percent helper)
-- **Next task to do:** Task 2.3 — Fix camera arm parenting
+- **Last task completed:** Task 2.3 — Fixed camera arm parenting to use player node with top_level instead of current_scene
+- **Next task to do:** Task 2.4 — Fix ProgressionManager dialogue call
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -50,7 +50,7 @@
 - [x] Removed `glob_cooldown`, `GLOB_COOLDOWN_TIME`, `glob_projectile_scene` variables, `_fire_glob()` method, its input branch in `_unhandled_input`, the cooldown tick in `_physics_process`, `get_glob_cooldown_percent()`, and the legacy scene load. glob_command ability node handles all glob input now.
 
 ### 2.3 Fix camera arm parenting
-- [ ] In `scenes/player/globbler.gd` around line 523, camera_arm is added to `get_tree().current_scene` instead of to the player. Change it so the camera_arm is added as a child of the player node (use `add_child(camera_arm)` or add to the player's parent). Make sure the camera still follows the player correctly after the change by checking the camera offset logic.
+- [x] Fixed: camera_arm now added as child of player with `top_level = true` so it doesn't inherit player rotation. Removed fragile `get_tree().current_scene.call_deferred()` pattern. Camera follow logic unchanged (uses global_position lerp).
 
 ### 2.4 Fix ProgressionManager dialogue call
 - [ ] In `scripts/autoload/progression_manager.gd` around line 249-251, the code calls `dm.show_dialogue("Globbler", ...)` but DialogueManager doesn't have a `show_dialogue` method. Change to `dm.quick_line("GLOBBLER", ...)` which does exist. Search the file for any other calls to `show_dialogue` and fix them too.

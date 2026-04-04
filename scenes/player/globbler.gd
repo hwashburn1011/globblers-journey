@@ -523,7 +523,9 @@ func _build_csg_model() -> void:
 func _setup_camera() -> void:
 	camera_arm = Node3D.new()
 	camera_arm.name = "CameraArm"
-	get_tree().current_scene.call_deferred("add_child", camera_arm)
+	# Parent to player but top_level so it doesn't inherit our rotation — camera has its own yaw/pitch, thanks
+	camera_arm.top_level = true
+	add_child(camera_arm)
 
 	camera = Camera3D.new()
 	camera.name = "PlayerCamera"
