@@ -577,23 +577,34 @@ func _spawn_attack_projectile(dir: Vector3, cap_type: String, spd: float, dmg: i
 	var proj_damage = dmg
 	var proj_lifetime = 6.0
 
+	# Attach a _physics_process script instead of timer-based movement
+	# (Timers with 0.016s are a recipe for exponential sadness)
+	var script = GDScript.new()
+	script.source_code = """
+extends Node3D
+var move_dir := Vector3.ZERO
+var move_speed := 0.0
+var lifetime := 6.0
+var _mesh: MeshInstance3D
+
+func _ready():
+	_mesh = get_child(0) as MeshInstance3D
+
+func _physics_process(delta):
+	position += move_dir * move_speed * delta
+	if _mesh:
+		_mesh.rotation.y += 4.0 * delta
+	lifetime -= delta
+	if lifetime <= 0:
+		queue_free()
+"""
+	script.reload()
+	proj.set_script(script)
+	proj.set("move_dir", move_dir)
+	proj.set("move_speed", move_speed)
+	proj.set("lifetime", proj_lifetime)
+
 	get_tree().current_scene.call_deferred("add_child", proj)
-
-	# Use a timer-based approach for projectile movement
-	var timer_node = Timer.new()
-	timer_node.wait_time = 0.016
-	timer_node.autostart = true
-	proj.add_child(timer_node)
-
-	timer_node.timeout.connect(func():
-		if not is_instance_valid(proj):
-			return
-		proj.position += move_dir * move_speed * 0.016
-		mesh.rotation.y += 4.0 * 0.016
-		proj_lifetime -= 0.016
-		if proj_lifetime <= 0:
-			proj.queue_free()
-	)
 
 	area.body_entered.connect(func(body: Node3D):
 		if body.is_in_group("player"):
