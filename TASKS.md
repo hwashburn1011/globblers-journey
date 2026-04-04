@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 4.4 complete
-- **Last task completed:** Task 4.4 — Added `_show_hint_once(id, title, body)` helper and preloaded `first_time_hint.tscn` in `glob_command.gd`. Fires hint with id "glob_aim" in `start_aim()` on first aim-mode enter. Routes through GameManager `has_seen_hint`/`mark_hint_seen`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 4.5 — Fire wrench hint on first enemy detected within 10m
-- **Known issues:** Movement + glob aim hints wired. No accessibility options.
+- **Last updated by:** Claude (2026-04-04) — Task 4.5 complete
+- **Last task completed:** Task 4.5 — Added enemy proximity check to `globbler.gd` `_physics_process` (throttled to 1s intervals). Scans "enemies" group for any within 10m. First detection fires wrench hint via `_show_hint_once`. Early-exits if hint already seen. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 4.6 — Fire hack hint on first hackable approach
+- **Known issues:** Movement, glob aim, and wrench hints wired. No accessibility options.
 
 ---
 
@@ -101,7 +101,7 @@
 - [x] **DONE.** Added `_show_hint_once(id, title, body)` helper and `_HINT_SCENE` preload to `glob_command.gd`. Fires hint id "glob_aim" in `start_aim()` on first aim-mode activation. Routes through `GameManager.has_seen_hint()`/`mark_hint_seen()`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 4.5 Fire wrench hint on first enemy detected within 10m
-- [ ] In `scenes/player/globbler.gd` `_physics_process` (or a lightweight separate timer), check once per second if any enemy is within 10m. First time it triggers, show hint id "wrench", title "WRENCH SMASH", body "F to smash. Percussive maintenance is a valid debugging strategy."
+- [x] **DONE.** Added `_check_enemy_proximity()` in `globbler.gd`, called from `_physics_process` throttled to 1s via `_enemy_check_timer`. Scans "enemies" group, fires hint id "wrench" on first enemy within 10m. Early-exits if hint already seen (no wasted cycles). Preloaded `_HINT_SCENE` and added `_show_hint_once` helper. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 4.6 Fire hack hint on first hackable approach
 - [ ] In `scenes/player/abilities/terminal_hack.gd`, when a hackable is detected in range for the first time, show hint id "hack", title "TERMINAL HACK", body "Press T near glowing terminals. Repeat the arrow sequence."

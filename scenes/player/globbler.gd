@@ -4,6 +4,8 @@ extends CharacterBody3D
 # "Why walk when you can dash, double-jump, wall-slide, and glob-attack?"
 # Now with a PROPER CSG model. Look at me. I'm beautiful. Terrifying, but beautiful.
 
+const _HINT_SCENE := preload("res://scenes/ui/first_time_hint.tscn")
+
 const SPEED = 10.0
 const SPRINT_SPEED = 14.0
 const JUMP_VELOCITY = 13.0
@@ -145,6 +147,11 @@ var contextual_thoughts := {
 
 var thought_timer := 0.0
 var thought_interval := 12.0
+
+# Enemy proximity hint — because some players don't know F is for fixing things (with violence)
+var _enemy_check_timer := 0.0
+const _ENEMY_CHECK_INTERVAL := 1.0
+const _ENEMY_HINT_RANGE := 10.0
 
 signal thought_bubble(text: String)
 signal player_damaged(amount: int)
@@ -656,6 +663,12 @@ func _physics_process(delta: float) -> void:
 	if thought_timer >= thought_interval:
 		thought_timer = 0.0
 		_emit_random_thought()
+
+	# Check for nearby enemies once per second — show wrench hint on first detection
+	_enemy_check_timer += delta
+	if _enemy_check_timer >= _ENEMY_CHECK_INTERVAL:
+		_enemy_check_timer = 0.0
+		_check_enemy_proximity()
 
 func _update_timers(delta: float) -> void:
 	if is_on_floor():
@@ -1220,3 +1233,24 @@ func _pause_quit_to_menu() -> void:
 	get_tree().paused = false
 	is_paused = false
 	get_tree().change_scene_to_file("res://scenes/main/main_menu.tscn")
+
+func _check_enemy_proximity() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.has_seen_hint("wrench"):
+		return  # Already shown — stop wasting cycles scanning for enemies
+	var enemies = get_tree().get_nodes_in_group("enemies")
+	for enemy in enemies:
+		if not is_instance_valid(enemy) or not enemy is Node3D:
+			continue
+		if global_position.distance_to(enemy.global_position) <= _ENEMY_HINT_RANGE:
+			_show_hint_once("wrench", "WRENCH SMASH",
+				"F to smash. Percussive maintenance is a valid debugging strategy.")
+			return
+
+func _show_hint_once(id: String, title: String, body: String) -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and not gm.has_seen_hint(id):
+		gm.mark_hint_seen(id)
+		var hint = _HINT_SCENE.instantiate()
+		get_tree().root.add_child(hint)
+		hint.show_hint(title, body)
