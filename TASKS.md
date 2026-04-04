@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 5.2 complete
-- **Last task completed:** Task 5.2 — Applied difficulty damage multiplier in `health_component.gd` `take_damage()`. Only scales damage when owner is in "player" group. Uses `ceil()` so Easy mode never rounds to zero. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 5.3 — Apply difficulty to enemy max HP on spawn
-- **Known issues:** All tutorial hints wired. Difficulty damage multiplier now active on player. Enemy HP multiplier not yet applied (Task 5.3).
+- **Last updated by:** Claude (2026-04-04) — Task 5.3 complete
+- **Last task completed:** Task 5.3 — Applied difficulty enemy HP multiplier in `base_enemy.gd` `_ready()` before `_setup_health_component()`. Uses `ceil()` so Easy mode never rounds to zero. Gated on GameManager null-check and `has_method()`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 5.4 — Add reduce_motion toggle
+- **Known issues:** All tutorial hints wired. Difficulty damage multiplier active on player. Enemy HP multiplier now active on spawn.
 
 ---
 
@@ -124,7 +124,7 @@
 - [x] **DONE.** In `health_component.gd` `take_damage()`, added difficulty multiplier lookup via `GameManager.get_difficulty_damage_multiplier()` gated on `get_parent().is_in_group("player")`. Uses `ceil()` to prevent rounding to zero on Easy. Enemy damage unaffected. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 5.3 Apply difficulty to enemy max HP on spawn
-- [ ] In `scenes/enemies/base_enemy.gd` `_ready()`, multiply the enemy's max_health by `GameManager.get_difficulty_enemy_hp_multiplier()` BEFORE the health_component is set up. Keep the multiplier behind a null-check on GameManager.
+- [x] **DONE.** In `base_enemy.gd` `_ready()`, multiply `max_health` by `GameManager.get_difficulty_enemy_hp_multiplier()` before `_setup_health_component()` is called. Uses `ceil()` to prevent rounding to zero on Easy. Gated on `get_node_or_null("/root/GameManager")` and `has_method()`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 5.4 Add reduce_motion toggle
 - [ ] Add `var reduce_motion := false` to GameManager and `signal reduce_motion_changed(enabled: bool)`. When enabled, disable glitch, chromatic aberration, and heavy post-process shaders. Wire the signal in wherever those shaders are applied (search for "chromatic" and "glitch" in assets/shaders and scene scripts — report files touched in checkbox note).

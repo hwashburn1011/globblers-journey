@@ -51,6 +51,11 @@ func _ready() -> void:
 	add_to_group("enemies")
 	add_to_group("hackable_objects")
 
+	# Scale enemy HP by difficulty — because Easy mode enemies deserve less health insurance
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.has_method("get_difficulty_enemy_hp_multiplier"):
+		max_health = int(ceil(max_health * gm.get_difficulty_enemy_hp_multiplier()))
+
 	_setup_collision()
 	_create_visual()
 	_setup_health_component()
