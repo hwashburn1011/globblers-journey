@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 1.1 — Replaced recursive timer projectile in local_minimum_boss.gd with _physics_process script
-- **Next task to do:** Task 1.2 — Fix recursive timer projectile in system_prompt_boss.gd
+- **Last task completed:** Task 1.2 — Replaced recursive timer fragments and projectiles in system_prompt_boss.gd with _physics_process scripts
+- **Next task to do:** Task 1.3 — Fix timer-based projectile movement in foundation_model_boss.gd
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -21,7 +21,7 @@
 - [x] In `scenes/enemies/local_minimum_boss/local_minimum_boss.gd`, find `_process_projectile()` (around line 651). It uses `get_tree().create_timer(0.016).timeout.connect(_process_projectile.bind(proj))` which creates exponential timer callbacks. Replace with a proper movement system: either attach a script with `_physics_process` to the projectile node, or move projectile processing into the boss's own `_physics_process` using an array of active projectiles. Make sure reflected projectiles still work.
 
 ### 1.2 Fix recursive timer projectile in System Prompt boss
-- [ ] In `scenes/enemies/system_prompt_boss/system_prompt_boss.gd`, find `_process_fragment()` (around line 687). Same exponential timer bug as 1.1. Replace with proper `_physics_process` movement on the fragment nodes. Check for any other `create_timer(0.016).timeout.connect` patterns in this file and fix them all.
+- [x] In `scenes/enemies/system_prompt_boss/system_prompt_boss.gd`, find `_process_fragment()` (around line 687). Same exponential timer bug as 1.1. Replace with proper `_physics_process` movement on the fragment nodes. Check for any other `create_timer(0.016).timeout.connect` patterns in this file and fix them all.
 
 ### 1.3 Fix timer-based projectile movement in Foundation Model boss
 - [ ] In `scenes/enemies/foundation_model_boss/foundation_model_boss.gd`, find projectile processing (around line 584). Uses Timer nodes attached to projectiles with 0.016 wait_time. Replace with `_physics_process` based movement. Ensure hit detection still works after the change.
