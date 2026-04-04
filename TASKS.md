@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 3.3 complete
-- **Last task completed:** Task 3.3 — Wired `game_over` signal in `game_manager.gd`. Connected signal to `_on_game_over` handler in `_ready()` with `is_connected` guard. Handler loads `scenes/ui/game_over.tscn`, instantiates it, calls `set_reason(reason)`, adds to `/root`, and pauses the tree. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 3.4 — Verify game over flow via MCP
+- **Last updated by:** Claude (2026-04-04) — Task 3.4 complete
+- **Last task completed:** Task 3.4 — MCP verification of game over flow. Project loads cleanly: zero script errors, zero runtime errors. Only pre-existing integer division warning. `game_over` signal wired in `game_manager.gd:70-71`, handler at `:544` loads `scenes/ui/game_over.tscn`, calls `set_reason()`, adds to root, pauses tree. Two trigger paths confirmed: context depletion (`:430`) and death threshold >= 8 (`:436`). Scene files `game_over.gd`/`.tscn` present. Manual test documented.
+- **Next task to do:** Task 4.1 — Create first_time_hint UI component
 - **Known issues:** No tutorial hints. No accessibility options.
 
 ---
@@ -81,7 +81,7 @@
 - [x] **DONE.** Connected `game_over` signal to `_on_game_over` handler in `game_manager.gd` `_ready()` with `is_connected` guard. Handler loads `res://scenes/ui/game_over.tscn`, instantiates it, calls `set_reason(reason)`, adds to `/root`, and sets `get_tree().paused = true`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 3.4 Verify game over flow via MCP
-- [ ] Run project via Godot MCP. Check debug output loads cleanly. Document the expected manual test in the checkbox note: "to trigger: deplete context window OR die 8 times in one level → game over screen shows → each button tested."
+- [x] **DONE.** MCP run_project verified: zero script errors, zero runtime errors. Only pre-existing integer division warning. Game over flow wiring confirmed: `game_over` signal connected in `_ready()`, handler loads `game_over.tscn`, sets reason, adds to root, pauses tree. Two trigger paths: (1) context window depletion, (2) death count >= 8 via `register_death()`. Manual test: deplete context window OR die 8 times in one level → game over screen shows → RETRY reloads chapter + resets death counter, LOAD SAVE calls SaveSystem.load_game, MAIN MENU returns to main_menu.tscn.
 
 ---
 
