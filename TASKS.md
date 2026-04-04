@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 2.9 — Wired dialogue_box to DialogueManager signals for typing animation
-- **Next task to do:** Task 3.1 — Fix dash particles one_shot
+- **Last task completed:** Task 3.1 — Fixed dash_particles.one_shot to true so particles emit once per dash
+- **Next task to do:** Task 3.2 — Fix mini-agent insult probability
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -76,7 +76,7 @@
 # These improve quality but the game works without them.
 
 ### 3.1 Fix dash particles one_shot
-- [ ] In `scenes/player/globbler.gd` around line 539, `dash_particles.one_shot` is set to `false`. Change to `true` so particles emit once per dash instead of continuously.
+- [x] In `scenes/player/globbler.gd` around line 539, `dash_particles.one_shot` is set to `false`. Change to `true` so particles emit once per dash instead of continuously.
 
 ### 3.2 Fix mini-agent insult probability
 - [ ] In `scenes/player/abilities/mini_agent.gd` around line 305, `randf() < INSULT_CHANCE * delta` makes insults nearly impossible (0.3 * 0.016 = 0.48% per frame). Remove the `* delta` so the check is just `randf() < INSULT_CHANCE` (30% chance per check when cooldown expires).

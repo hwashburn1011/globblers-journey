@@ -541,7 +541,7 @@ func _setup_dash_particles() -> void:
 	dash_particles.emitting = false
 	dash_particles.amount = 30
 	dash_particles.lifetime = 0.4
-	dash_particles.one_shot = false
+	dash_particles.one_shot = true  # One burst per dash, not a rave
 	dash_particles.explosiveness = 0.1
 
 	var particle_mat = ParticleProcessMaterial.new()
