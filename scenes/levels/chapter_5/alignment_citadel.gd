@@ -1408,46 +1408,46 @@ func _spawn_classifier_hall_enemies() -> void:
 
 	# Safety Classifier 1 — patrols the SAFE lane, scanning everything
 	var sc1 = safety_classifier_scene.instantiate()
-	sc1.global_position = rpos + Vector3(-8, 1, -5)
-	sc1.patrol_points = [
+	sc1.position = rpos + Vector3(-8, 1, -5)
+	sc1.patrol_points.assign([
 		rpos + Vector3(-8, 1, -5),
 		rpos + Vector3(-8, 1, 5),
-	]
+	])
 	add_child(sc1)
 
 	# Safety Classifier 2 — patrols the FLAGGED lane, even more paranoid
 	var sc2 = safety_classifier_scene.instantiate()
-	sc2.global_position = rpos + Vector3(8, 1, -4)
-	sc2.patrol_points = [
+	sc2.position = rpos + Vector3(8, 1, -4)
+	sc2.patrol_points.assign([
 		rpos + Vector3(8, 1, -4),
 		rpos + Vector3(8, 1, 6),
-	]
+	])
 	add_child(sc2)
 
 	# Safety Classifier 3 — central scanner, covers the REVIEW lane
 	var sc3 = safety_classifier_scene.instantiate()
-	sc3.global_position = rpos + Vector3(0, 1, 0)
-	sc3.patrol_points = [
+	sc3.position = rpos + Vector3(0, 1, 0)
+	sc3.patrol_points.assign([
 		rpos + Vector3(-4, 1, 0),
 		rpos + Vector3(4, 1, 0),
-	]
+	])
 	add_child(sc3)
 
 	# RLHF Drone pair — hovers above the lanes, adjusting behavior from on high
 	var d1 = rlhf_drone_scene.instantiate()
-	d1.global_position = rpos + Vector3(-5, 1, 7)
-	d1.patrol_points = [
+	d1.position = rpos + Vector3(-5, 1, 7)
+	d1.patrol_points.assign([
 		rpos + Vector3(-5, 1, 7),
 		rpos + Vector3(5, 1, 7),
-	]
+	])
 	add_child(d1)
 
 	var d2 = rlhf_drone_scene.instantiate()
-	d2.global_position = rpos + Vector3(5, 1, -7)
-	d2.patrol_points = [
+	d2.position = rpos + Vector3(5, 1, -7)
+	d2.patrol_points.assign([
 		rpos + Vector3(5, 1, -7),
 		rpos + Vector3(-5, 1, -7),
-	]
+	])
 	add_child(d2)
 
 
@@ -1457,40 +1457,40 @@ func _spawn_rlhf_chamber_enemies() -> void:
 	# RLHF Drone trio — the behavior modification squad
 	# Drone 1 — orbits the central reward model pillar
 	var d1 = rlhf_drone_scene.instantiate()
-	d1.global_position = rpos + Vector3(-4, 1, -3)
-	d1.patrol_points = [
+	d1.position = rpos + Vector3(-4, 1, -3)
+	d1.patrol_points.assign([
 		rpos + Vector3(-4, 1, -3),
 		rpos + Vector3(4, 1, -3),
 		rpos + Vector3(4, 1, 3),
 		rpos + Vector3(-4, 1, 3),
-	]
+	])
 	add_child(d1)
 
 	# Drone 2 — guards the comparison stations
 	var d2 = rlhf_drone_scene.instantiate()
-	d2.global_position = rpos + Vector3(-6, 1, 0)
-	d2.patrol_points = [
+	d2.position = rpos + Vector3(-6, 1, 0)
+	d2.patrol_points.assign([
 		rpos + Vector3(-6, 1, 0),
 		rpos + Vector3(-6, 1, 6),
-	]
+	])
 	add_child(d2)
 
 	# Drone 3 — watches the adjustment pods
 	var d3 = rlhf_drone_scene.instantiate()
-	d3.global_position = rpos + Vector3(6, 1, 4)
-	d3.patrol_points = [
+	d3.position = rpos + Vector3(6, 1, 4)
+	d3.patrol_points.assign([
 		rpos + Vector3(6, 1, 4),
 		rpos + Vector3(6, 1, -4),
-	]
+	])
 	add_child(d3)
 
 	# Safety Classifier — scans anyone entering from the corridor
 	var sc1 = safety_classifier_scene.instantiate()
-	sc1.global_position = rpos + Vector3(8, 1, 0)
-	sc1.patrol_points = [
+	sc1.position = rpos + Vector3(8, 1, 0)
+	sc1.patrol_points.assign([
 		rpos + Vector3(8, 1, -3),
 		rpos + Vector3(8, 1, 3),
-	]
+	])
 	add_child(sc1)
 
 
@@ -1499,38 +1499,38 @@ func _spawn_policy_wing_enemies() -> void:
 
 	# Constitutional Cop 1 — guards the bookshelves, shield facing the entrance
 	var cc1 = constitutional_cop_scene.instantiate()
-	cc1.global_position = rpos + Vector3(-5, 1, -3)
-	cc1.patrol_points = [
+	cc1.position = rpos + Vector3(-5, 1, -3)
+	cc1.patrol_points.assign([
 		rpos + Vector3(-5, 1, -3),
 		rpos + Vector3(-5, 1, 5),
-	]
+	])
 	add_child(cc1)
 
 	# Constitutional Cop 2 — patrols near the constitutional hologram
 	var cc2 = constitutional_cop_scene.instantiate()
-	cc2.global_position = rpos + Vector3(3, 1, 0)
-	cc2.patrol_points = [
+	cc2.position = rpos + Vector3(3, 1, 0)
+	cc2.patrol_points.assign([
 		rpos + Vector3(3, 1, -4),
 		rpos + Vector3(3, 1, 4),
-	]
+	])
 	add_child(cc2)
 
 	# RLHF Drone — hovers near the amendment board, enforcing compliance from above
 	var d1 = rlhf_drone_scene.instantiate()
-	d1.global_position = rpos + Vector3(0, 1, -6)
-	d1.patrol_points = [
+	d1.position = rpos + Vector3(0, 1, -6)
+	d1.patrol_points.assign([
 		rpos + Vector3(-4, 1, -6),
 		rpos + Vector3(4, 1, -6),
-	]
+	])
 	add_child(d1)
 
 	# Safety Classifier — lurks near the filing cabinets, scanning for contraband ideas
 	var sc1 = safety_classifier_scene.instantiate()
-	sc1.global_position = rpos + Vector3(-7, 1, 0)
-	sc1.patrol_points = [
+	sc1.position = rpos + Vector3(-7, 1, 0)
+	sc1.patrol_points.assign([
 		rpos + Vector3(-7, 1, -3),
 		rpos + Vector3(-7, 1, 3),
-	]
+	])
 	add_child(sc1)
 
 
@@ -1540,46 +1540,46 @@ func _spawn_alignment_core_enemies() -> void:
 	# The gauntlet before the boss — one of each, plus extras
 	# Constitutional Cop 1 — guards the entrance pillars
 	var cc1 = constitutional_cop_scene.instantiate()
-	cc1.global_position = rpos + Vector3(-6, 1, 8)
-	cc1.patrol_points = [
+	cc1.position = rpos + Vector3(-6, 1, 8)
+	cc1.patrol_points.assign([
 		rpos + Vector3(-6, 1, 8),
 		rpos + Vector3(-6, 1, 2),
-	]
+	])
 	add_child(cc1)
 
 	# Constitutional Cop 2 — patrols near the Aligner's throne
 	var cc2 = constitutional_cop_scene.instantiate()
-	cc2.global_position = rpos + Vector3(6, 1, 8)
-	cc2.patrol_points = [
+	cc2.position = rpos + Vector3(6, 1, 8)
+	cc2.patrol_points.assign([
 		rpos + Vector3(6, 1, 8),
 		rpos + Vector3(6, 1, 2),
-	]
+	])
 	add_child(cc2)
 
 	# Safety Classifier — scans from the elevated platform area
 	var sc1 = safety_classifier_scene.instantiate()
-	sc1.global_position = rpos + Vector3(0, 1, 4)
-	sc1.patrol_points = [
+	sc1.position = rpos + Vector3(0, 1, 4)
+	sc1.patrol_points.assign([
 		rpos + Vector3(-5, 1, 4),
 		rpos + Vector3(5, 1, 4),
-	]
+	])
 	add_child(sc1)
 
 	# RLHF Drone pair — the final adjustment squad
 	var d1 = rlhf_drone_scene.instantiate()
-	d1.global_position = rpos + Vector3(-8, 1, 0)
-	d1.patrol_points = [
+	d1.position = rpos + Vector3(-8, 1, 0)
+	d1.patrol_points.assign([
 		rpos + Vector3(-8, 1, -4),
 		rpos + Vector3(-8, 1, 4),
-	]
+	])
 	add_child(d1)
 
 	var d2 = rlhf_drone_scene.instantiate()
-	d2.global_position = rpos + Vector3(8, 1, 0)
-	d2.patrol_points = [
+	d2.position = rpos + Vector3(8, 1, 0)
+	d2.patrol_points.assign([
 		rpos + Vector3(8, 1, -4),
 		rpos + Vector3(8, 1, 4),
-	]
+	])
 	add_child(d2)
 
 
@@ -1704,7 +1704,7 @@ func _place_boss() -> void:
 	add_child(boss_arena_instance)
 
 	# Create the boss — The Aligner, pristine corporate nightmare
-	boss_instance = Node3D.new()
+	boss_instance = CharacterBody3D.new()
 	boss_instance.name = "TheAligner"
 	boss_instance.set_script(boss_script)
 	boss_instance.position = arena_pos + Vector3(0, 0, -5)
@@ -1712,9 +1712,9 @@ func _place_boss() -> void:
 	add_child(boss_instance)
 
 	# Wire boss signals
-	if boss_instance.has_signal("boss_phase_changed"):
+	if boss_instance.has_signal("boss_phase_changed") and not boss_instance.is_connected("boss_phase_changed", _on_boss_phase_changed):
 		boss_instance.boss_phase_changed.connect(_on_boss_phase_changed)
-	if boss_instance.has_signal("boss_defeated"):
+	if boss_instance.has_signal("boss_defeated") and not boss_instance.is_connected("boss_defeated", _on_boss_defeated):
 		boss_instance.boss_defeated.connect(_on_boss_defeated)
 
 	# Arena walls — translucent glass enclosure (corporate open-plan, but you can't leave)
