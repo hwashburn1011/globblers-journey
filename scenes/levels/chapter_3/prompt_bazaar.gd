@@ -789,6 +789,10 @@ func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> v
 	area.body_entered.connect(func(body: Node3D):
 		if body.is_in_group("player") and not saved_already[0]:
 			saved_already[0] = true
+			# Tell RespawnManager where to put us when we inevitably die
+			var rm = get_node_or_null("/root/RespawnManager")
+			if rm and rm.has_method("set_checkpoint"):
+				rm.set_checkpoint(pos, 3)
 			if save_sys and save_sys.has_method("checkpoint_save"):
 				save_sys.checkpoint_save(checkpoint_id, pos)
 			var am_ref = get_node_or_null("/root/AudioManager")
@@ -1101,6 +1105,10 @@ func _spawn_player() -> void:
 	else:
 		player.position = ROOMS["bazaar_gate"]["pos"] + Vector3(0, 2, 3)
 	add_child(player)
+	# Seed RespawnManager with wherever we just placed the player
+	var rm = get_node_or_null("/root/RespawnManager")
+	if rm and rm.has_method("set_checkpoint"):
+		rm.set_checkpoint(player.position, 3)
 
 
 func _spawn_hud() -> void:
@@ -1626,6 +1634,10 @@ func _on_first_glob_fired() -> void:
 
 
 func _on_player_died() -> void:
+	# Let the RespawnManager handle the actual dying-and-coming-back ritual
+	var rm = get_node_or_null("/root/RespawnManager")
+	if rm and rm.has_method("respawn_player"):
+		rm.respawn_player()
 	var dm = get_node_or_null("/root/DialogueManager")
 	if not dm or not dm.has_method("quick_line"):
 		return
