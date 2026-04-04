@@ -8,9 +8,9 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 4.2 — Smoke tested Chapter 2; fixed typed array assignment (patrol_points .assign()), CylinderMesh .radius→.top_radius/.bottom_radius in overfitting_ogre.gd, look_at before add_child in training_grounds.gd, double signal connection guard, and global_position→position for pre-tree enemy spawns
-- **Next task to do:** Task 4.3 — Smoke test Chapter 3
-- **Known issues:** Chapters 3-5 have same typed array patrol_points bug (will be caught in their smoke tests). Remaining items are static analysis warnings only (unused params, variable shadowing).
+- **Last task completed:** Task 4.3 — Smoke tested Chapter 3; fixed typed array assignment for all 13 patrol_points in prompt_bazaar.gd (= [] → .assign([])), and global_position→position for 13 enemy spawns before add_child. Zero runtime errors on launch.
+- **Next task to do:** Task 4.4 — Smoke test Chapter 4
+- **Known issues:** Chapters 4-5 likely have same typed array patrol_points bug (will be caught in their smoke tests). Remaining items are static analysis warnings only (unused params, variable shadowing).
 
 ---
 
@@ -117,7 +117,7 @@
 - [x] Fixed: typed array assignment for all 11 patrol_points in training_grounds.gd (= [] → .assign([])), CylinderMesh .radius→.top_radius/.bottom_radius in overfitting_ogre.gd, look_at before add_child for neuron branches, double puzzle signal connection guard (is_connected check), and global_position→position for 11 enemy spawns before add_child. Zero runtime errors on launch.
 
 ### 4.3 Smoke test Chapter 3
-- [ ] Use Godot MCP: run_project with Chapter 3 scene. Wait 30 seconds, get_debug_output. Fix any errors. Then stop_project.
+- [x] Fixed: typed array assignment for all 13 patrol_points in prompt_bazaar.gd (.assign([])), and global_position→position for 13 enemy spawns before add_child. Zero runtime errors on launch.
 
 ### 4.4 Smoke test Chapter 4
 - [ ] Use Godot MCP: run_project with Chapter 4 scene. Wait 30 seconds, get_debug_output. Fix any errors. Then stop_project.

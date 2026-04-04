@@ -893,31 +893,31 @@ func _spawn_token_exchange_enemies() -> void:
 
 	# Jailbreaker 1 — patrols the north side of the exchange ring
 	var jb1 = jailbreaker_scene.instantiate()
-	jb1.global_position = rpos + Vector3(-8, 1, -5)
-	jb1.patrol_points = [
+	jb1.position = rpos + Vector3(-8, 1, -5)
+	jb1.patrol_points.assign([
 		rpos + Vector3(-8, 1, -5),
 		rpos + Vector3(-8, 1, 5),
 		rpos + Vector3(-4, 1, 5),
-	]
+	])
 	add_child(jb1)
 
 	# Jailbreaker 2 — prowls the south stalls
 	var jb2 = jailbreaker_scene.instantiate()
-	jb2.global_position = rpos + Vector3(8, 1, 3)
-	jb2.patrol_points = [
+	jb2.position = rpos + Vector3(8, 1, 3)
+	jb2.patrol_points.assign([
 		rpos + Vector3(8, 1, 3),
 		rpos + Vector3(8, 1, -3),
 		rpos + Vector3(4, 1, -3),
-	]
+	])
 	add_child(jb2)
 
 	# A sneaky Prompt Injector sniping from the side platform
 	var inj = prompt_injector_scene.instantiate()
-	inj.global_position = rpos + Vector3(11, 1, -6)
-	inj.patrol_points = [
+	inj.position = rpos + Vector3(11, 1, -6)
+	inj.patrol_points.assign([
 		rpos + Vector3(11, 1, -6),
 		rpos + Vector3(11, 1, 2),
-	]
+	])
 	add_child(inj)
 
 
@@ -928,31 +928,31 @@ func _spawn_persona_row_enemies() -> void:
 
 	# Injector 1 — hides near the first vendor stall row
 	var inj1 = prompt_injector_scene.instantiate()
-	inj1.global_position = rpos + Vector3(-6, 1, -4)
-	inj1.patrol_points = [
+	inj1.position = rpos + Vector3(-6, 1, -4)
+	inj1.patrol_points.assign([
 		rpos + Vector3(-6, 1, -4),
 		rpos + Vector3(-6, 1, 4),
-	]
+	])
 	add_child(inj1)
 
 	# Injector 2 — near the persona directory
 	var inj2 = prompt_injector_scene.instantiate()
-	inj2.global_position = rpos + Vector3(6, 1, 2)
-	inj2.patrol_points = [
+	inj2.position = rpos + Vector3(6, 1, 2)
+	inj2.patrol_points.assign([
 		rpos + Vector3(6, 1, 2),
 		rpos + Vector3(2, 1, 2),
 		rpos + Vector3(2, 1, -4),
-	]
+	])
 	add_child(inj2)
 
 	# One Hallucination Merchant — mimicking the real vendors
 	var hm = hallucination_merchant_scene.instantiate()
-	hm.global_position = rpos + Vector3(0, 1, -6)
-	hm.patrol_points = [
+	hm.position = rpos + Vector3(0, 1, -6)
+	hm.patrol_points.assign([
 		rpos + Vector3(0, 1, -6),
 		rpos + Vector3(-4, 1, -6),
 		rpos + Vector3(4, 1, -6),
-	]
+	])
 	add_child(hm)
 
 
@@ -963,39 +963,39 @@ func _spawn_black_prompt_enemies() -> void:
 
 	# Hallucination Merchant 1 — runs a shady stall of fake power-ups
 	var hm1 = hallucination_merchant_scene.instantiate()
-	hm1.global_position = rpos + Vector3(-5, 1, -3)
-	hm1.patrol_points = [
+	hm1.position = rpos + Vector3(-5, 1, -3)
+	hm1.patrol_points.assign([
 		rpos + Vector3(-5, 1, -3),
 		rpos + Vector3(-5, 1, 3),
 		rpos + Vector3(-2, 1, 3),
-	]
+	])
 	add_child(hm1)
 
 	# Hallucination Merchant 2 — near the DAN graffiti terminal
 	var hm2 = hallucination_merchant_scene.instantiate()
-	hm2.global_position = rpos + Vector3(5, 1, 2)
-	hm2.patrol_points = [
+	hm2.position = rpos + Vector3(5, 1, 2)
+	hm2.patrol_points.assign([
 		rpos + Vector3(5, 1, 2),
 		rpos + Vector3(5, 1, -4),
-	]
+	])
 	add_child(hm2)
 
 	# Jailbreaker — guards the back alley entrance
 	var jb = jailbreaker_scene.instantiate()
-	jb.global_position = rpos + Vector3(0, 1, 5)
-	jb.patrol_points = [
+	jb.position = rpos + Vector3(0, 1, 5)
+	jb.patrol_points.assign([
 		rpos + Vector3(-3, 1, 5),
 		rpos + Vector3(3, 1, 5),
-	]
+	])
 	add_child(jb)
 
 	# Prompt Injector — perched in the shadows
 	var inj = prompt_injector_scene.instantiate()
-	inj.global_position = rpos + Vector3(-6, 1, -5)
-	inj.patrol_points = [
+	inj.position = rpos + Vector3(-6, 1, -5)
+	inj.patrol_points.assign([
 		rpos + Vector3(-6, 1, -5),
 		rpos + Vector3(-6, 1, 0),
-	]
+	])
 	add_child(inj)
 
 
@@ -1006,30 +1006,30 @@ func _spawn_auction_hall_enemies() -> void:
 
 	# Jailbreaker — charges anyone approaching the boss gate
 	var jb = jailbreaker_scene.instantiate()
-	jb.global_position = rpos + Vector3(0, 1, -7)
-	jb.patrol_points = [
+	jb.position = rpos + Vector3(0, 1, -7)
+	jb.patrol_points.assign([
 		rpos + Vector3(-5, 1, -7),
 		rpos + Vector3(5, 1, -7),
-	]
+	])
 	add_child(jb)
 
 	# Prompt Injector — covers the approach from elevation
 	var inj = prompt_injector_scene.instantiate()
-	inj.global_position = rpos + Vector3(-8, 1, 3)
-	inj.patrol_points = [
+	inj.position = rpos + Vector3(-8, 1, 3)
+	inj.patrol_points.assign([
 		rpos + Vector3(-8, 1, 3),
 		rpos + Vector3(-8, 1, -3),
-	]
+	])
 	add_child(inj)
 
 	# Hallucination Merchant — last line of deception
 	var hm = hallucination_merchant_scene.instantiate()
-	hm.global_position = rpos + Vector3(7, 1, 0)
-	hm.patrol_points = [
+	hm.position = rpos + Vector3(7, 1, 0)
+	hm.patrol_points.assign([
 		rpos + Vector3(7, 1, 0),
 		rpos + Vector3(3, 1, 5),
 		rpos + Vector3(7, 1, 5),
-	]
+	])
 	add_child(hm)
 
 
