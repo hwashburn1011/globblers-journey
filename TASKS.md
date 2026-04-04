@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 3.1 complete
-- **Last task completed:** Task 3.1 — Added `DEATH_THRESHOLD := 8`, `deaths_this_level`, and `register_death()` to GameManager. RespawnManager now calls `register_death()` before each respawn; emits `game_over` signal after 8 deaths. `deaths_this_level` resets in `reset_level()`. MCP verified: zero script errors, zero runtime errors.
-- **Next task to do:** Task 3.2 — Create game_over.tscn scene
+- **Last updated by:** Claude (2026-04-04) — Task 3.2 complete
+- **Last task completed:** Task 3.2 — Created `scenes/ui/game_over.gd` and `game_over.tscn`. CanvasLayer (layer 150, PROCESS_MODE_ALWAYS) with black scanline background, "CONTEXT TERMINATED" title in red with glitch effect, reason label (set via `set_reason()`), ASCII skull art, three buttons: RETRY (reloads current chapter scene, resets death counter), LOAD SAVE (calls SaveSystem.load_game), MAIN MENU (change_scene_to_file to main_menu.tscn). All buttons have PROCESS_MODE_ALWAYS to work while paused. Terminal-aesthetic styling matches main_menu.gd. MCP verified: zero script errors, zero runtime errors.
+- **Next task to do:** Task 3.3 — Wire game_over signal to game_over scene
 - **Known issues:** No tutorial hints. No game-over screen (scene not yet built). No accessibility options.
 
 ---
@@ -75,7 +75,7 @@
 - [x] **DONE.** Added `DEATH_THRESHOLD := 8`, `deaths_this_level := 0`, `register_death()` to `game_manager.gd`. `register_death()` increments counter and emits `game_over` signal with reason when threshold reached. Added `register_death()` call in `respawn_manager.gd` `respawn_player()` before respawn sequence. `deaths_this_level` reset to 0 in `reset_level()`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning. In `scripts/game_manager.gd`, add `const DEATH_THRESHOLD := 8`, `var deaths_this_level := 0`, `func register_death()` that increments and emits existing `game_over` signal when `deaths_this_level >= DEATH_THRESHOLD` with reason "Too many retries — the gradient has descended permanently." Call `register_death()` from RespawnManager.respawn_player() (one-line addition there). Reset `deaths_this_level = 0` inside `reset_level()`.
 
 ### 3.2 Create game_over.tscn scene
-- [ ] Create `scenes/ui/game_over.gd` and `game_over.tscn`. CanvasLayer with black background, title "CONTEXT TERMINATED" in red, reason label (passed via setter), three buttons: RETRY (reload current chapter), LOAD SAVE (call SaveSystem.load_game), MAIN MENU (change_scene_to_file to main_menu.tscn). Buttons must have `process_mode = PROCESS_MODE_WHEN_PAUSED`.
+- [x] **DONE.** Created `scenes/ui/game_over.gd` and `game_over.tscn`. CanvasLayer (layer 150, PROCESS_MODE_ALWAYS) with black scanline background, "CONTEXT TERMINATED" title in red with glitch effect, reason label via `set_reason()`, ASCII skull art, three buttons: RETRY (reloads current chapter, resets death counter), LOAD SAVE (calls SaveSystem.load_game), MAIN MENU (change_scene_to_file to main_menu.tscn). All buttons use PROCESS_MODE_ALWAYS so they work while game is paused. Terminal-aesthetic green-on-dark styling matches main_menu.gd. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 3.3 Wire game_over signal to game_over scene
 - [ ] In `scripts/game_manager.gd`, connect `game_over` signal to a handler that instantiates `scenes/ui/game_over.tscn`, calls its `set_reason(reason)` setter, adds it to `/root`, and calls `get_tree().paused = true`. Ensure handler is connected exactly once (use `is_connected` guard).
