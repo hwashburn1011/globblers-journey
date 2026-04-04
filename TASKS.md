@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 5.5 complete
-- **Last task completed:** Task 5.5 — Added `dialogue_char_delay` setting (range 0.005–0.08, default 0.03) to `game_manager.gd`. Replaced hardcoded `TYPING_SPEED` constant in `dialogue_box.gd` with dynamic lookup from `GameManager.dialogue_char_delay`. Falls back to `DEFAULT_TYPING_SPEED` (0.03) if GameManager is unavailable. Fast-mode mashing (0.005) unchanged. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 5.6 — Add settings panel controls for new toggles
-- **Known issues:** All tutorial hints wired. Difficulty multipliers active. Reduce motion toggle ready. Dialogue speed setting ready. All need settings UI in Task 5.6.
+- **Last updated by:** Claude (2026-04-04) — Task 5.6 complete
+- **Last task completed:** Task 5.6 — Added three new controls to the settings panel in `main_menu.gd`: Difficulty OptionButton (Easy/Normal/Hard), Reduce Motion CheckBox, and Dialogue Speed HSlider (inverted: higher = faster). Each wired to GameManager on value change. Panel height expanded from 350→520 to fit. All controls read initial values from GameManager. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 5.7 — Persist settings to user://settings.cfg
+- **Known issues:** Settings controls are live but not persisted across sessions yet (Task 5.7).
 
 ---
 
@@ -133,7 +133,7 @@
 - [x] **DONE.** Added `var dialogue_char_delay := 0.03` to `game_manager.gd` (range 0.005–0.08). In `dialogue_box.gd`, replaced hardcoded `TYPING_SPEED` with dynamic lookup from `GameManager.dialogue_char_delay`, with `DEFAULT_TYPING_SPEED` (0.03) fallback. Fast-mode (0.005) for mashing unchanged. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 5.6 Add settings panel controls for new toggles
-- [ ] Find the existing settings menu in `scenes/main/main_menu.gd` or a settings scene. Add three controls: Difficulty option button (Easy/Normal/Hard), Reduce Motion checkbox, Dialogue Speed slider. Wire each to GameManager on value change.
+- [x] **DONE.** Added three controls to existing settings panel in `main_menu.gd`: Difficulty OptionButton (Easy/Normal/Hard, wired to `gm.difficulty`), Reduce Motion CheckBox (wired to `gm.set_reduce_motion()`), Dialogue Speed HSlider (inverted mapping: 0.0=slow/0.08s delay, 1.0=fast/0.005s delay, wired to `gm.dialogue_char_delay`). All read initial values from GameManager. Panel min height expanded 350→520. Terminal-green styling consistent with existing controls. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 5.7 Persist settings to user://settings.cfg
 - [ ] Create a lightweight `save_settings()` / `load_settings()` pair on GameManager using ConfigFile to store difficulty, reduce_motion, dialogue_char_delay, and existing audio volumes (if not already persisted). Call `load_settings()` in GameManager `_ready()`. Call `save_settings()` when settings change.

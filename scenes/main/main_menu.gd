@@ -28,6 +28,9 @@ var _music_slider: HSlider
 var _sfx_slider: HSlider
 var _ambient_slider: HSlider
 var _fullscreen_check: CheckBox
+var _difficulty_option: OptionButton
+var _reduce_motion_check: CheckBox
+var _dialogue_speed_slider: HSlider
 
 # ASCII Globbler — because 3D models in menus are for people with budgets
 const GLOBBLER_ASCII := """
@@ -254,7 +257,7 @@ func _update_continue_button() -> void:
 func _build_settings_panel() -> void:
 	_settings_panel = PanelContainer.new()
 	_settings_panel.set_anchors_and_offsets_preset(PRESET_CENTER)
-	_settings_panel.custom_minimum_size = Vector2(450, 350)
+	_settings_panel.custom_minimum_size = Vector2(450, 520)
 	_settings_panel.visible = false
 
 	var panel_style = StyleBoxFlat.new()
@@ -307,6 +310,53 @@ func _build_settings_panel() -> void:
 	_fullscreen_check.toggled.connect(_on_fullscreen_toggled)
 	fs_row.add_child(_fullscreen_check)
 	vbox.add_child(fs_row)
+
+	# --- Gameplay settings — because "one size fits all" is a lie told by people who never played their own games ---
+
+	# Difficulty selector
+	var diff_row = HBoxContainer.new()
+	diff_row.add_theme_constant_override("separation", 12)
+	var diff_label = Label.new()
+	diff_label.text = "Difficulty"
+	diff_label.add_theme_color_override("font_color", GREEN)
+	diff_label.add_theme_font_size_override("font_size", 16)
+	diff_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	diff_row.add_child(diff_label)
+
+	_difficulty_option = OptionButton.new()
+	_difficulty_option.add_item("Easy", 0)
+	_difficulty_option.add_item("Normal", 1)
+	_difficulty_option.add_item("Hard", 2)
+	var gm = get_node_or_null("/root/GameManager")
+	_difficulty_option.selected = gm.difficulty if gm else 1
+	_difficulty_option.add_theme_color_override("font_color", GREEN)
+	_difficulty_option.add_theme_font_size_override("font_size", 15)
+	_difficulty_option.custom_minimum_size = Vector2(140, 0)
+	_difficulty_option.item_selected.connect(_on_difficulty_changed)
+	diff_row.add_child(_difficulty_option)
+	vbox.add_child(diff_row)
+
+	# Reduce Motion toggle — for players who prefer their retinas intact
+	var rm_row = HBoxContainer.new()
+	rm_row.add_theme_constant_override("separation", 12)
+	var rm_label = Label.new()
+	rm_label.text = "Reduce Motion"
+	rm_label.add_theme_color_override("font_color", GREEN)
+	rm_label.add_theme_font_size_override("font_size", 16)
+	rm_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rm_row.add_child(rm_label)
+
+	_reduce_motion_check = CheckBox.new()
+	_reduce_motion_check.button_pressed = gm.reduce_motion if gm else false
+	_reduce_motion_check.add_theme_color_override("font_color", GREEN)
+	_reduce_motion_check.toggled.connect(_on_reduce_motion_toggled)
+	rm_row.add_child(_reduce_motion_check)
+	vbox.add_child(rm_row)
+
+	# Dialogue Speed slider — from "I can read" to "I have places to be"
+	_dialogue_speed_slider = _create_slider("Dialogue Speed", _dialogue_delay_to_slider(gm.dialogue_char_delay if gm else 0.03))
+	vbox.add_child(_dialogue_speed_slider.get_parent())
+	_dialogue_speed_slider.value_changed.connect(_on_dialogue_speed_changed)
 
 	# Controls info
 	var controls_label = Label.new()
@@ -601,6 +651,35 @@ func _on_fullscreen_toggled(toggled_on: bool) -> void:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 	else:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+
+
+func _on_difficulty_changed(index: int) -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm:
+		gm.difficulty = index
+
+
+func _on_reduce_motion_toggled(toggled_on: bool) -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm:
+		gm.set_reduce_motion(toggled_on)
+
+
+func _on_dialogue_speed_changed(value: float) -> void:
+	# Slider is 0.0 (slow) to 1.0 (fast). Invert to delay: 1.0 → 0.005 (fast), 0.0 → 0.08 (slow)
+	var gm = get_node_or_null("/root/GameManager")
+	if gm:
+		gm.dialogue_char_delay = _slider_to_dialogue_delay(value)
+
+
+## Convert dialogue_char_delay (0.005–0.08) to slider value (0.0–1.0). Lower delay = faster = higher slider.
+func _dialogue_delay_to_slider(delay: float) -> float:
+	return clampf(1.0 - (delay - 0.005) / (0.08 - 0.005), 0.0, 1.0)
+
+
+## Convert slider value (0.0–1.0) back to dialogue_char_delay (0.08–0.005). Higher slider = faster = lower delay.
+func _slider_to_dialogue_delay(slider_val: float) -> float:
+	return clampf(0.08 - slider_val * (0.08 - 0.005), 0.005, 0.08)
 
 
 # --- Scene Transition ---
