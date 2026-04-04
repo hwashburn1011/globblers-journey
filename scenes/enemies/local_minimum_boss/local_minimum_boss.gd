@@ -611,44 +611,63 @@ func _attach_projectile_behavior(proj: Node) -> void:
 	if not is_instance_valid(proj):
 		return
 
-	# We'll use the tree process to move projectiles since we can't easily
-	# attach scripts without a file. Use a timer-based approach instead.
-	_process_projectile(proj)
+	# Attach a _physics_process script instead of recursive timers
+	# (because exponential timer callbacks are how you get a REAL memory leak, not a local minimum)
+	var script = GDScript.new()
+	script.source_code = """
+extends Node3D
 
+var move_direction := Vector3.ZERO
+var speed := 8.0
+var lifetime := 0.0
+var reflected := false
+var boss_ref: Node = null
+var player_ref: Node = null
 
-func _process_projectile(proj: Node) -> void:
-	if not is_instance_valid(proj):
+func _physics_process(delta: float) -> void:
+	if not is_instance_valid(boss_ref):
+		queue_free()
 		return
 
-	var dir = proj.get_meta("move_direction") as Vector3
-	var spd = proj.get_meta("speed") as float
-	var lifetime = proj.get_meta("lifetime") as float
-
-	proj.position += dir * spd * get_process_delta_time()
-	lifetime += get_process_delta_time()
-	proj.set_meta("lifetime", lifetime)
+	position += move_direction * speed * delta
+	lifetime += delta
 
 	# Check if reflected and hitting the boss
-	if proj.get_meta("reflected") and proj.position.distance_to(global_position) < 2.5:
-		on_reflected_hit()
-		proj.queue_free()
-		return
+	if reflected and is_instance_valid(boss_ref):
+		if position.distance_to(boss_ref.global_position) < 2.5:
+			boss_ref.on_reflected_hit()
+			queue_free()
+			return
 
 	# Check if hitting the player (not reflected)
-	if not proj.get_meta("reflected") and player_ref:
-		if proj.position.distance_to(player_ref.global_position) < 1.5:
-			if player_ref.has_method("take_damage"):
+	if not reflected and is_instance_valid(player_ref):
+		if position.distance_to(player_ref.global_position) < 1.5:
+			if player_ref.has_method(\"take_damage\"):
 				player_ref.take_damage(8)
-			proj.queue_free()
+			queue_free()
 			return
 
 	# Expire after 8 seconds
 	if lifetime > 8.0:
-		proj.queue_free()
+		queue_free()
 		return
 
-	# Continue next frame
-	get_tree().create_timer(0.016).timeout.connect(_process_projectile.bind(proj))
+# Called by glob push to reflect projectile back at the boss
+func apply_glob_force(force: Vector3) -> void:
+	reflected = true
+	move_direction = force.normalized()
+	speed = 12.0
+"""
+	script.reload()
+	proj.set_script(script)
+
+	# Transfer meta values to script properties
+	proj.move_direction = proj.get_meta("move_direction")
+	proj.speed = proj.get_meta("speed")
+	proj.lifetime = proj.get_meta("lifetime")
+	proj.reflected = proj.get_meta("reflected")
+	proj.boss_ref = self
+	proj.player_ref = player_ref
 
 
 func on_reflected_hit() -> void:
