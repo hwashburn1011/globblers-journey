@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 3.4 — Fixed mini-agent apply_impulse → apply_central_impulse for Godot 4 API
-- **Next task to do:** Task 3.5 — Fix audio manager timer memory leak
+- **Last task completed:** Task 3.5 — Fixed audio manager timer memory leak with CONNECT_ONE_SHOT
+- **Next task to do:** Task 3.6 — Fix audio SFX pool round-robin
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -88,7 +88,7 @@
 - [x] In `scenes/player/abilities/mini_agent.gd` around line 554, change `fetch_target.apply_impulse(dir * 8.0)` to `fetch_target.apply_central_impulse(dir * 8.0)` for correct Godot 4 API usage.
 
 ### 3.5 Fix audio manager timer memory leak
-- [ ] In `scripts/autoload/audio_manager.gd` around lines 800-807, the lambda timer callbacks leak memory. Change each `get_tree().create_timer(X).timeout.connect(func(): ...)` to use `CONNECT_ONE_SHOT` flag: `get_tree().create_timer(X).timeout.connect(func(): ..., CONNECT_ONE_SHOT)`. Search the entire file for this pattern and fix all instances.
+- [x] In `scripts/autoload/audio_manager.gd` around lines 800-807, the lambda timer callbacks leak memory. Change each `get_tree().create_timer(X).timeout.connect(func(): ...)` to use `CONNECT_ONE_SHOT` flag: `get_tree().create_timer(X).timeout.connect(func(): ..., CONNECT_ONE_SHOT)`. Search the entire file for this pattern and fix all instances.
 
 ### 3.6 Fix audio SFX pool round-robin
 - [ ] In `scripts/autoload/audio_manager.gd`, find the SFX pool steal logic (around line 524-536). Currently it always steals `_sfx_players[0]`. Add a `_sfx_steal_index := 0` variable and use round-robin: steal `_sfx_players[_sfx_steal_index]` then increment `_sfx_steal_index = (_sfx_steal_index + 1) % SFX_POOL_SIZE`.

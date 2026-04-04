@@ -798,13 +798,13 @@ func _on_glob_matched(_targets) -> void:
 	play_sfx("glob_whoosh")
 	play_sfx("glob_match")
 	# Delay the lock click so it hits right as the whoosh fades — timing is everything
-	get_tree().create_timer(0.12).timeout.connect(func(): play_sfx("glob_lock"))
+	get_tree().create_timer(0.12).timeout.connect(func(): play_sfx("glob_lock"), CONNECT_ONE_SHOT)
 
 func _on_glob_failed(_pattern) -> void:
 	# Double-buzz: two offset buzzes for that classic "WRONG" feel
 	# "Two buzzes because one wasn't demoralizing enough."
 	play_sfx("glob_fail")
-	get_tree().create_timer(0.18).timeout.connect(func(): play_sfx("glob_buzz"))
+	get_tree().create_timer(0.18).timeout.connect(func(): play_sfx("glob_buzz"), CONNECT_ONE_SHOT)
 
 func _on_wrench_swing() -> void:
 	play_sfx("wrench_swing")
