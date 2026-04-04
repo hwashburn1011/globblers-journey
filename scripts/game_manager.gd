@@ -66,6 +66,9 @@ signal damage_taken(amount: int)
 
 func _ready() -> void:
 	_register_input_actions()
+	# Wire the game_over signal — one connection, one existential crisis
+	if not game_over.is_connected(_on_game_over):
+		game_over.connect(_on_game_over)
 	print("=== THE GLOBBLER'S JOURNEY ===")
 	print("An Agentic Action Puzzle Platformer (Now Actually Fun)")
 	print("WASD/Left Stick to move | A/SPACE to jump | B/SHIFT to dash")
@@ -535,3 +538,15 @@ func start_level_audio() -> void:
 	var audio = get_node_or_null("/root/AudioManager")
 	if audio:
 		audio.call_deferred("_start_chapter_1_audio")
+
+
+## The end. The screen. The shame. Instantiate game_over scene and pause everything.
+func _on_game_over(reason: String) -> void:
+	var game_over_scene = load("res://scenes/ui/game_over.tscn")
+	if not game_over_scene:
+		push_warning("[GameManager] game_over.tscn failed to load — you cheated death, but only by accident.")
+		return
+	var game_over_ui = game_over_scene.instantiate()
+	game_over_ui.set_reason(reason)
+	get_tree().root.add_child(game_over_ui)
+	get_tree().paused = true

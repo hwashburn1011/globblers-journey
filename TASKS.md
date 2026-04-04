@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 3.2 complete
-- **Last task completed:** Task 3.2 — Created `scenes/ui/game_over.gd` and `game_over.tscn`. CanvasLayer (layer 150, PROCESS_MODE_ALWAYS) with black scanline background, "CONTEXT TERMINATED" title in red with glitch effect, reason label (set via `set_reason()`), ASCII skull art, three buttons: RETRY (reloads current chapter scene, resets death counter), LOAD SAVE (calls SaveSystem.load_game), MAIN MENU (change_scene_to_file to main_menu.tscn). All buttons have PROCESS_MODE_ALWAYS to work while paused. Terminal-aesthetic styling matches main_menu.gd. MCP verified: zero script errors, zero runtime errors.
-- **Next task to do:** Task 3.3 — Wire game_over signal to game_over scene
-- **Known issues:** No tutorial hints. No game-over screen (scene not yet built). No accessibility options.
+- **Last updated by:** Claude (2026-04-04) — Task 3.3 complete
+- **Last task completed:** Task 3.3 — Wired `game_over` signal in `game_manager.gd`. Connected signal to `_on_game_over` handler in `_ready()` with `is_connected` guard. Handler loads `scenes/ui/game_over.tscn`, instantiates it, calls `set_reason(reason)`, adds to `/root`, and pauses the tree. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 3.4 — Verify game over flow via MCP
+- **Known issues:** No tutorial hints. No accessibility options.
 
 ---
 
@@ -78,7 +78,7 @@
 - [x] **DONE.** Created `scenes/ui/game_over.gd` and `game_over.tscn`. CanvasLayer (layer 150, PROCESS_MODE_ALWAYS) with black scanline background, "CONTEXT TERMINATED" title in red with glitch effect, reason label via `set_reason()`, ASCII skull art, three buttons: RETRY (reloads current chapter, resets death counter), LOAD SAVE (calls SaveSystem.load_game), MAIN MENU (change_scene_to_file to main_menu.tscn). All buttons use PROCESS_MODE_ALWAYS so they work while game is paused. Terminal-aesthetic green-on-dark styling matches main_menu.gd. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 3.3 Wire game_over signal to game_over scene
-- [ ] In `scripts/game_manager.gd`, connect `game_over` signal to a handler that instantiates `scenes/ui/game_over.tscn`, calls its `set_reason(reason)` setter, adds it to `/root`, and calls `get_tree().paused = true`. Ensure handler is connected exactly once (use `is_connected` guard).
+- [x] **DONE.** Connected `game_over` signal to `_on_game_over` handler in `game_manager.gd` `_ready()` with `is_connected` guard. Handler loads `res://scenes/ui/game_over.tscn`, instantiates it, calls `set_reason(reason)`, adds to `/root`, and sets `get_tree().paused = true`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 3.4 Verify game over flow via MCP
 - [ ] Run project via Godot MCP. Check debug output loads cleanly. Document the expected manual test in the checkbox note: "to trigger: deplete context window OR die 8 times in one level → game over screen shows → each button tested."
