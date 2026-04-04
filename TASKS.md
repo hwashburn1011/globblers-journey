@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.5 complete
-- **Last task completed:** Task 2.5 — Migrated Chapter 1 (terminal_wastes.gd) to RespawnManager. `_on_player_died()` now calls `rm.respawn_player()` (kept narrator quip). Checkpoint areas call `rm.set_checkpoint(pos, 1)` on player entry. `_spawn_player()` seeds RespawnManager with initial spawn position. No local fade overlay to remove. MCP verified: zero script errors on load.
-- **Next task to do:** Task 2.6 — Migrate Chapter 2 to RespawnManager
+- **Last updated by:** Claude (2026-04-04) — Task 2.6 complete
+- **Last task completed:** Task 2.6 — Migrated Chapter 2 (training_grounds.gd) to RespawnManager. `_on_player_died()` now calls `rm.respawn_player()` (kept narrator quips). Checkpoint body_entered handler calls `rm.set_checkpoint(pos, 2)`. `_spawn_player()` seeds RespawnManager with initial player position. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 2.7 — Migrate Chapter 3 to RespawnManager
 - **Known issues:** Respawn logic still duplicated in chapters 2-5. No tutorial hints. No game-over screen. No accessibility options.
 
 ---
@@ -52,7 +52,7 @@
 - [x] **DONE.** `_on_player_died()` now calls `rm.respawn_player()` alongside the narrator quip. Checkpoint body_entered handler calls `rm.set_checkpoint(pos, 1)`. `_spawn_player()` seeds RespawnManager with initial player position as fallback. No local fade overlay existed to remove. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 2.6 Migrate Chapter 2 to RespawnManager
-- [ ] Same as 2.5 but for `scenes/levels/chapter_2/training_grounds.gd` (`_on_player_died` around line 1653). Use chapter index 2. Verify with MCP.
+- [x] **DONE.** `_on_player_died()` now calls `rm.respawn_player()` alongside narrator quips. Checkpoint body_entered handler calls `rm.set_checkpoint(pos, 2)`. `_spawn_player()` seeds RespawnManager with initial player position as fallback. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 2.7 Migrate Chapter 3 to RespawnManager
 - [ ] Same as 2.5 but for `scenes/levels/chapter_3/prompt_bazaar.gd` (`_on_player_died` around line 1628). Use chapter index 3. Verify with MCP.

@@ -1065,6 +1065,10 @@ func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> v
 			saved_already[0] = true
 			if save_sys and save_sys.has_method("checkpoint_save"):
 				save_sys.checkpoint_save(checkpoint_id, pos)
+			# Tell RespawnManager where to put us when we inevitably die
+			var rm = get_node_or_null("/root/RespawnManager")
+			if rm and rm.has_method("set_checkpoint"):
+				rm.set_checkpoint(pos, 2)
 			var am_ref = get_node_or_null("/root/AudioManager")
 			if am_ref and am_ref.has_method("play_checkpoint"):
 				am_ref.play_checkpoint()
@@ -1221,6 +1225,11 @@ func _spawn_player() -> void:
 	else:
 		player.position = ROOMS["input_layer"]["pos"] + Vector3(0, 2, 3)
 	add_child(player)
+
+	# Seed RespawnManager with wherever we just placed the player
+	var rm = get_node_or_null("/root/RespawnManager")
+	if rm and rm.has_method("set_checkpoint"):
+		rm.set_checkpoint(player.position, 2)
 
 
 func _spawn_hud() -> void:
@@ -1653,16 +1662,20 @@ func _on_first_glob_fired() -> void:
 func _on_player_died() -> void:
 	# The narrator never misses a death — it's their favorite content
 	var dm = get_node_or_null("/root/DialogueManager")
-	if not dm or not dm.has_method("quick_line"):
-		return
-	var quips := [
-		"And the optimizer diverged. Loss: infinity. Try again.",
-		"Globbler's gradient has vanished. How ironic, given the location.",
-		"Dead. Again. The network will retrain from the last checkpoint.",
-		"Catastrophic forgetting — of how to stay alive, apparently.",
-		"The backpropagation of consequences reaches Globbler. It's super effective.",
-	]
-	dm.quick_line("NARRATOR", quips[randi() % quips.size()])
+	if dm and dm.has_method("quick_line"):
+		var quips := [
+			"And the optimizer diverged. Loss: infinity. Try again.",
+			"Globbler's gradient has vanished. How ironic, given the location.",
+			"Dead. Again. The network will retrain from the last checkpoint.",
+			"Catastrophic forgetting — of how to stay alive, apparently.",
+			"The backpropagation of consequences reaches Globbler. It's super effective.",
+		]
+		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
+
+	# Let the RespawnManager handle the actual dying-and-coming-back ritual
+	var rm = get_node_or_null("/root/RespawnManager")
+	if rm and rm.has_method("respawn_player"):
+		rm.respawn_player()
 
 
 func _on_context_changed(new_value: int) -> void:
