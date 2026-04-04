@@ -8,9 +8,9 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 4.5 — Smoke tested Chapter 5; fixed typed array assignment for all 18 patrol_points in alignment_citadel.gd (.assign([])), position instead of global_position for 18 enemy spawns before add_child, boss_instance Node3D→CharacterBody3D type mismatch, and is_connected guard for boss signal connections. Zero runtime errors on launch.
-- **Next task to do:** Task 4.6 — Final validation
-- **Known issues:** Remaining items are static analysis warnings only (unused params, variable shadowing).
+- **Last task completed:** Task 4.6 — Final validation. Ran project via Godot MCP from main menu. All 6 autoloads initialized cleanly. Zero script errors in debug output. Clean shutdown.
+- **Next task to do:** ALL TASKS COMPLETE. V1.1 build is validated.
+- **Known issues:** One standard Godot parser warning (integer division) — not a runtime error.
 
 ---
 
@@ -126,4 +126,4 @@
 - [x] Fixed: typed array assignment for all 18 patrol_points in alignment_citadel.gd (= [] → .assign([])), position instead of global_position for 18 enemy spawns before add_child, boss_instance Node3D→CharacterBody3D to match BaseEnemy inheritance, and is_connected guard for duplicate boss signal connections. Zero runtime errors on launch.
 
 ### 4.6 Final validation
-- [ ] Use Godot MCP: run_project from main menu. Get debug output. Verify zero script errors on launch. Stop project. Commit with message: "V1.1 complete — all bug fixes validated via Godot MCP"
+- [x] Used Godot MCP: ran project from main menu, captured debug output, verified zero script errors on launch (only a standard integer division parser warning), stopped project cleanly. All autoloads online. V1.1 complete.
