@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 3.9 — Removed unused HIT_ARC const, empty _ready(), and fixed hardcoded task cycling
-- **Next task to do:** Task 3.10 — Fix gravity wells not added to group
+- **Last task completed:** Task 3.10 — Added gravity wells to "gravity_wells" group so cleanup finds them; fixed bare queue_free tween callback
+- **Next task to do:** Task 4.1 — Smoke test Chapter 1
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -103,7 +103,7 @@
 - [x] Removed unused `HIT_ARC` constant from wrench_smash.gd. Removed empty `_ready()` from agent_spawn.gd. Fixed task cycling to use `AgentTask.size()` instead of hardcoded `3`.
 
 ### 3.10 Fix gravity wells not added to group
-- [ ] In `scenes/enemies/local_minimum_boss/local_minimum_boss.gd`, find `_fire_gravity_well()` (around line 450). After creating each gravity well node, add it to a group: `well.add_to_group("gravity_wells")`. Then verify the cleanup code around line 781 that calls `get_tree().get_nodes_in_group("gravity_wells")` will properly find and free them.
+- [x] Added `well.add_to_group("gravity_wells")` before adding to scene tree so `_on_boss_defeated()` cleanup at line 799 actually finds them. Also fixed bare `tween.tween_callback(well.queue_free)` → wrapped in lambda.
 
 ---
 

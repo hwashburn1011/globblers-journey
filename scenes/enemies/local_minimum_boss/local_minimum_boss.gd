@@ -484,6 +484,7 @@ func _fire_gravity_well() -> void:
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	well.add_child(label)
 
+	well.add_to_group("gravity_wells")  # So cleanup in _on_boss_defeated() can actually find these
 	get_tree().current_scene.add_child(well)
 
 	# Pull effect lasts 3 seconds — apply force via timer-based process
@@ -494,7 +495,7 @@ func _fire_gravity_well() -> void:
 	# Animate the gravity well — shrink the indicator as it pulls
 	var tween = get_tree().create_tween()
 	tween.tween_property(indicator, "scale", Vector3(0.1, 1, 0.1), pull_time)
-	tween.tween_callback(well.queue_free)
+	tween.tween_callback(func(): well.queue_free())
 
 	# Apply pull force to player while they're in the well
 	well.body_entered.connect(func(body: Node3D):
