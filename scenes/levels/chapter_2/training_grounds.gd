@@ -39,6 +39,9 @@ var boss_arena_script := preload("res://scenes/enemies/local_minimum_boss/local_
 # NPC script — deprecated programs who've seen better epochs
 var deprecated_npc_script := preload("res://scenes/levels/chapter_1/deprecated_npc.gd")
 
+# Hint scene — because even neural networks need a tutorial
+var hint_scene := preload("res://scenes/ui/first_time_hint.tscn")
+
 var player: CharacterBody3D
 var hud: CanvasLayer
 var boss_instance: Node  # The Local Minimum — tracked for phase events
@@ -147,6 +150,10 @@ func _ready() -> void:
 		am.call_deferred("set_area_ambient", "input_layer")
 		if am.has_method("start_music"):
 			am.start_music("chapter_2")
+
+	# Fire agent-spawn hint if the ability is unlocked — Chapter 2 is where they meet the tiny idiots
+	if player and player.agent_spawn and player.agent_spawn.get("is_unlocked"):
+		_show_hint_once("agent_spawn", "SUB-AGENTS", "G to spawn a mini-agent. They will fail you. That is expected.")
 
 	print("[TRAINING GROUNDS] Network loaded. %d neuron-rooms ready for traversal." % ROOMS.size())
 
@@ -2144,3 +2151,14 @@ func _seal_boss_entrance() -> void:
 		Color(0.15, 0.02, 0.02),
 		0.8
 	)
+
+
+func _show_hint_once(id: String, title: String, body: String) -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.has_seen_hint(id):
+		return
+	if gm:
+		gm.mark_hint_seen(id)
+	var hint = hint_scene.instantiate()
+	get_tree().root.add_child(hint)
+	hint.show_hint(title, body)
