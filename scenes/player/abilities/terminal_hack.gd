@@ -8,6 +8,7 @@ extends Node3D
 # Failure: triggers alarm or spawns enemies.
 
 const INTERACT_RANGE := 3.5
+const _HINT_SCENE := preload("res://scenes/ui/first_time_hint.tscn")
 
 var player: CharacterBody3D
 var _nearby_hackable: Node = null
@@ -85,6 +86,10 @@ func _scan_for_hackables() -> void:
 			# hackable_objects group — node itself is the target
 			_nearby_hackable = node
 			closest_dist = dist
+
+	# First time spotting a hackable? Drop the tutorial hint — hand-holding, but necessary
+	if _nearby_hackable:
+		_show_hint_once("hack", "TERMINAL HACK", "Press T near glowing terminals. Repeat the arrow sequence.")
 
 func try_interact() -> void:
 	if _is_hacking:
@@ -292,3 +297,13 @@ func has_nearby_hackable() -> bool:
 
 func is_hacking() -> bool:
 	return _is_hacking
+
+# — Hint plumbing — because apparently players don't read minds
+func _show_hint_once(id: String, title: String, body: String) -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if not gm or gm.has_seen_hint(id):
+		return
+	gm.mark_hint_seen(id)
+	var hint_inst = _HINT_SCENE.instantiate()
+	get_tree().root.add_child(hint_inst)
+	hint_inst.show_hint(title, body)

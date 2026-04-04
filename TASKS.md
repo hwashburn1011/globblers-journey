@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 4.5 complete
-- **Last task completed:** Task 4.5 — Added enemy proximity check to `globbler.gd` `_physics_process` (throttled to 1s intervals). Scans "enemies" group for any within 10m. First detection fires wrench hint via `_show_hint_once`. Early-exits if hint already seen. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 4.6 — Fire hack hint on first hackable approach
-- **Known issues:** Movement, glob aim, and wrench hints wired. No accessibility options.
+- **Last updated by:** Claude (2026-04-04) — Task 4.6 complete
+- **Last task completed:** Task 4.6 — Added hack hint to `terminal_hack.gd`. Preloaded `first_time_hint.tscn`, added `_show_hint_once` helper. Fires hint id "hack" at end of `_scan_for_hackables()` when `_nearby_hackable` is first detected. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 4.7 — Fire dash hint after 30 seconds of gameplay
+- **Known issues:** Movement, glob aim, wrench, and hack hints wired. No accessibility options.
 
 ---
 
@@ -104,7 +104,7 @@
 - [x] **DONE.** Added `_check_enemy_proximity()` in `globbler.gd`, called from `_physics_process` throttled to 1s via `_enemy_check_timer`. Scans "enemies" group, fires hint id "wrench" on first enemy within 10m. Early-exits if hint already seen (no wasted cycles). Preloaded `_HINT_SCENE` and added `_show_hint_once` helper. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 4.6 Fire hack hint on first hackable approach
-- [ ] In `scenes/player/abilities/terminal_hack.gd`, when a hackable is detected in range for the first time, show hint id "hack", title "TERMINAL HACK", body "Press T near glowing terminals. Repeat the arrow sequence."
+- [x] **DONE.** Added `_HINT_SCENE` preload and `_show_hint_once` helper to `terminal_hack.gd`. Fires hint id "hack" at end of `_scan_for_hackables()` when `_nearby_hackable` is set. Routes through `GameManager.has_seen_hint()`/`mark_hint_seen()`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 4.7 Fire dash hint after 30 seconds of gameplay
 - [ ] In `scenes/player/globbler.gd` `_ready()`, start a 30-second one-shot timer. On timeout, show hint id "dash", title "DASH", body "Double-tap movement or press SHIFT+direction to dash. Cooldown is real."
