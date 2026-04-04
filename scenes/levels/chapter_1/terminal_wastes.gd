@@ -29,6 +29,9 @@ var boss_arena_script := preload("res://scenes/enemies/rm_rf_boss/boss_arena.gd"
 # NPC script — the relics that refuse to be garbage collected
 var deprecated_npc_script := preload("res://scenes/levels/chapter_1/deprecated_npc.gd")
 
+# Hint scene — for when the player inevitably forgets how to walk
+var hint_scene := preload("res://scenes/ui/first_time_hint.tscn")
+
 var boss_instance: Node  # The boss node — tracked for phase events
 var boss_arena_instance: Node3D  # The arena floor
 
@@ -101,6 +104,7 @@ func _ready() -> void:
 	_place_npcs()
 	_wire_dialogue_events()
 	_play_opening_narration()
+	_show_hint_once("movement", "MOVEMENT", "WASD to move. SHIFT to run. SPACE to jump. Try not to die immediately.")
 	print("[TERMINAL WASTES] Level loaded. %d rooms of existential dread ready." % ROOMS.size())
 
 
@@ -1970,3 +1974,18 @@ func _create_binary_rain(pos: Vector3, area_size: Vector2, height: float = 8.0) 
 
 	rain.draw_pass_1 = digit_mesh
 	add_child(rain)
+
+
+# ============================================================
+# HINTS — because apparently "WASD" isn't self-explanatory
+# ============================================================
+
+func _show_hint_once(id: String, title: String, body: String) -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.has_seen_hint(id):
+		return
+	if gm:
+		gm.mark_hint_seen(id)
+	var hint = hint_scene.instantiate()
+	get_tree().root.add_child(hint)
+	hint.show_hint(title, body)

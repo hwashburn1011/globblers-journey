@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 4.2 complete
-- **Last task completed:** Task 4.2 — Added `hints_seen` dict, `has_seen_hint(id)`, and `mark_hint_seen(id)` to `game_manager.gd`. Hooked into `save_system.gd` for persistence: `_collect_current_state()` saves `hints_seen` to save dict, `apply_loaded_data()` restores it on load. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 4.3 — Fire movement hint on Chapter 1 spawn
-- **Known issues:** No tutorial hints wired up yet. No accessibility options.
+- **Last updated by:** Claude (2026-04-04) — Task 4.3 complete
+- **Last task completed:** Task 4.3 — Added `_show_hint_once(id, title, body)` helper to `terminal_wastes.gd` that checks `GameManager.has_seen_hint()`, marks seen, instantiates `first_time_hint.tscn`, and calls `show_hint()`. Fires movement hint at end of `_ready()`. Preloaded hint scene. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 4.4 — Fire glob-command hint on first aim-mode enter
+- **Known issues:** Only movement hint wired so far. No accessibility options.
 
 ---
 
@@ -95,7 +95,7 @@
 - [x] **DONE.** Added `var hints_seen := {}`, `func has_seen_hint(id: String) -> bool`, `func mark_hint_seen(id: String)` to `game_manager.gd`. SaveSystem has no `get_save_data()` on GameManager — instead hooked directly into `save_system.gd`: `_collect_current_state()` saves `hints_seen` to save dict, `apply_loaded_data()` restores it on load with type guard. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 4.3 Fire movement hint on Chapter 1 spawn
-- [ ] In `scenes/levels/chapter_1/terminal_wastes.gd` `_ready()` (end of function), call `_show_hint_once("movement", "MOVEMENT", "WASD to move. SHIFT to run. SPACE to jump. Try not to die immediately.")`. Implement a small local `_show_hint_once(id, title, body)` helper that consults GameManager.has_seen_hint and instantiates the hint scene.
+- [x] **DONE.** Added `_show_hint_once(id, title, body)` helper to `terminal_wastes.gd` — checks `GameManager.has_seen_hint(id)`, marks hint seen via `mark_hint_seen(id)`, instantiates `first_time_hint.tscn` on root, and calls `show_hint(title, body)`. Called at end of `_ready()` with movement hint. Preloaded `hint_scene`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 4.4 Fire glob-command hint on first aim-mode enter
 - [ ] In `scenes/player/abilities/glob_command.gd`, when aim mode activates for the first time, call the hint system with id "glob_aim", title "GLOB COMMAND", body "Right-click to aim. Pattern-match targets. Q cycles grab/push/absorb." Route through GameManager so the hint UI lookup works.
