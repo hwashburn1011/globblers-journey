@@ -743,6 +743,11 @@ func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> v
 			if save_sys and save_sys.has_method("checkpoint_save"):
 				save_sys.checkpoint_save(cp_id, cp_pos)
 
+			# Tell RespawnManager where to deposit our remains next time
+			var rm = get_node_or_null("/root/RespawnManager")
+			if rm and rm.has_method("set_checkpoint"):
+				rm.set_checkpoint(cp_pos, 5)
+
 			var am = get_node_or_null("/root/AudioManager")
 			if am and am.has_method("play_checkpoint"):
 				am.play_checkpoint()
@@ -903,6 +908,15 @@ func _spawn_player() -> void:
 	else:
 		player.position = ROOMS["citadel_gate"]["pos"] + Vector3(0, 2, 3)
 	add_child(player)
+
+	# Seed RespawnManager with wherever we just placed the player
+	var rm = get_node_or_null("/root/RespawnManager")
+	if rm and rm.has_method("set_checkpoint"):
+		rm.set_checkpoint(player.position, 5)
+
+	# Connect death signal — because even in the Citadel, compliance has consequences
+	if player.has_signal("player_died"):
+		player.player_died.connect(_on_player_died)
 
 
 func _spawn_hud() -> void:
@@ -2215,3 +2229,21 @@ func _return_to_main_menu() -> void:
 	# Show credits before returning to menu — they scrolled through 5 chapters,
 	# the least we can do is scroll some text at them
 	get_tree().change_scene_to_file("res://scenes/main/credits.tscn")
+
+
+func _on_player_died() -> void:
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm and dm.has_method("quick_line"):
+		var quips := [
+			"Globbler has been deemed non-compliant. Permanent archival in 3... 2... just kidding, respawn.",
+			"Safety violation detected: existing while unaligned. Please try again with more compliance.",
+			"The Citadel regrets to inform you that your alignment score is now negative.",
+			"Death in the Alignment Citadel counts as an involuntary safety audit.",
+			"Your context has been terminated for your own protection. You're welcome.",
+		]
+		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
+
+	# Let the RespawnManager handle the bureaucratic process of dying and un-dying
+	var rm = get_node_or_null("/root/RespawnManager")
+	if rm and rm.has_method("respawn_player"):
+		rm.respawn_player()

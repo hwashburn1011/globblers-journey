@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.8 complete
-- **Last task completed:** Task 2.8 — Migrated Chapter 4 (model_zoo.gd) to RespawnManager. `_on_player_died()` now calls `rm.respawn_player()` (kept narrator quips). Checkpoint body_entered handler calls `rm.set_checkpoint(pos, 4)`. `_spawn_player()` seeds RespawnManager with initial player position. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 2.9 — Migrate Chapter 5 to RespawnManager
-- **Known issues:** Respawn logic still duplicated in chapter 5. No tutorial hints. No game-over screen. No accessibility options.
+- **Last updated by:** Claude (2026-04-04) — Task 2.9 complete
+- **Last task completed:** Task 2.9 — Migrated Chapter 5 (alignment_citadel.gd) to RespawnManager. Added `_on_player_died()` with narrator quips + `rm.respawn_player()`. Connected `player_died` signal in `_spawn_player()`. Checkpoint body_entered handler calls `rm.set_checkpoint(pos, 5)`. `_spawn_player()` seeds RespawnManager with initial player position. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 2.10 — Add player-to-group registration in globbler.gd
+- **Known issues:** No tutorial hints. No game-over screen. No accessibility options.
 
 ---
 
@@ -61,7 +61,7 @@
 - [x] **DONE.** `_on_player_died()` now calls `rm.respawn_player()` alongside narrator quips. Checkpoint body_entered handler calls `rm.set_checkpoint(pos, 4)`. `_spawn_player()` seeds RespawnManager with initial player position as fallback. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 2.9 Migrate Chapter 5 to RespawnManager
-- [ ] Same as 2.5 but for `scenes/levels/chapter_5/alignment_citadel.gd`. Use chapter index 5. Verify with MCP.
+- [x] **DONE.** `_on_player_died()` added with Citadel-themed narrator quips + `rm.respawn_player()`. Connected `player_died` signal in `_spawn_player()`. Checkpoint body_entered handler calls `rm.set_checkpoint(pos, 5)`. `_spawn_player()` seeds RespawnManager with initial player position as fallback. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 2.10 Add player-to-group registration
 - [ ] In `scenes/player/globbler.gd` `_ready()`, ensure `add_to_group("player")` is called exactly once. RespawnManager depends on this group lookup. Grep the file first — if it's already there, mark complete with a note. If not, add it right after the pause overlay setup.
