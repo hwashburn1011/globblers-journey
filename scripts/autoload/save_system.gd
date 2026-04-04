@@ -99,6 +99,9 @@ func apply_loaded_data() -> void:
 		game_mgr.enemies_killed = int(gd.get("enemies_killed", 0))
 		game_mgr.context_changed.emit(game_mgr.context_window)
 		game_mgr.ending_choice = str(save_data.get("ending_choice", ""))
+		var loaded_hints = save_data.get("hints_seen", {})
+		if loaded_hints is Dictionary:
+			game_mgr.hints_seen = loaded_hints.duplicate()
 
 	# Restore progression upgrades
 	var prog = get_node_or_null("/root/ProgressionManager")
@@ -129,6 +132,7 @@ func _collect_current_state() -> void:
 		save_data["game"]["enemies_killed"] = game_mgr.enemies_killed
 		save_data["game"]["level_time"] = game_mgr.level_time
 		save_data["ending_choice"] = game_mgr.ending_choice
+		save_data["hints_seen"] = game_mgr.hints_seen.duplicate()
 
 	# Puzzle completion
 	var puzzles = get_tree().get_nodes_in_group("puzzles")

@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 4.1 complete
-- **Last task completed:** Task 4.1 — Created `scenes/ui/first_time_hint.gd` and `.tscn`. CanvasLayer (layer 100, PROCESS_MODE_ALWAYS) with terminal-style PanelContainer toast. Slides in from top with TRANS_BACK easing, auto-dismisses after 4s, dismissable early via any key/click/button press. Single public method `show_hint(title, body)`. Green-on-black styling matching existing UI (GREEN #39FF14, dark bg, bordered panel). MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 4.2 — Add hints_seen tracking to GameManager
+- **Last updated by:** Claude (2026-04-04) — Task 4.2 complete
+- **Last task completed:** Task 4.2 — Added `hints_seen` dict, `has_seen_hint(id)`, and `mark_hint_seen(id)` to `game_manager.gd`. Hooked into `save_system.gd` for persistence: `_collect_current_state()` saves `hints_seen` to save dict, `apply_loaded_data()` restores it on load. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 4.3 — Fire movement hint on Chapter 1 spawn
 - **Known issues:** No tutorial hints wired up yet. No accessibility options.
 
 ---
@@ -92,7 +92,7 @@
 - [x] **DONE.** Created `scenes/ui/first_time_hint.gd` and `.tscn`. CanvasLayer (layer 100, PROCESS_MODE_ALWAYS) with terminal-style PanelContainer that slides in from top using TRANS_BACK easing. Auto-dismisses after 4s, early dismiss via any key/click/gamepad button. Single public method `show_hint(title, body)`. Green-on-black styling (#39FF14, dark bg 0.04 alpha 0.95, bordered panel). MCP verified: zero script errors, zero runtime errors.
 
 ### 4.2 Add hints_seen tracking to GameManager
-- [ ] In `game_manager.gd`, add `var hints_seen := {}` dictionary, `func has_seen_hint(id: String) -> bool`, `func mark_hint_seen(id: String)`. Include `hints_seen` in the save dict returned by `get_save_data()` if that function exists (read `save_system.gd` first to find the right place to hook in).
+- [x] **DONE.** Added `var hints_seen := {}`, `func has_seen_hint(id: String) -> bool`, `func mark_hint_seen(id: String)` to `game_manager.gd`. SaveSystem has no `get_save_data()` on GameManager — instead hooked directly into `save_system.gd`: `_collect_current_state()` saves `hints_seen` to save dict, `apply_loaded_data()` restores it on load with type guard. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 4.3 Fire movement hint on Chapter 1 spawn
 - [ ] In `scenes/levels/chapter_1/terminal_wastes.gd` `_ready()` (end of function), call `_show_hint_once("movement", "MOVEMENT", "WASD to move. SHIFT to run. SPACE to jump. Try not to die immediately.")`. Implement a small local `_show_hint_once(id, title, body)` helper that consults GameManager.has_seen_hint and instantiates the hint scene.

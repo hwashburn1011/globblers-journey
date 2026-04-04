@@ -14,6 +14,9 @@ var sarcasm_level := 10  # Always at maximum
 const DEATH_THRESHOLD := 8
 var deaths_this_level := 0
 
+# Hints the player has already suffered through — no repeats, we're not that cruel
+var hints_seen := {}
+
 # Enemy tracking
 var enemies_killed := 0
 var total_enemies := 0
@@ -434,6 +437,16 @@ func register_death() -> void:
 	deaths_this_level += 1
 	if deaths_this_level >= DEATH_THRESHOLD:
 		game_over.emit("Too many retries — the gradient has descended permanently.")
+
+
+## Has the player already been patronized with this hint?
+func has_seen_hint(id: String) -> bool:
+	return hints_seen.has(id)
+
+
+## Mark a hint as seen so we don't nag. Saves are additive — we never un-learn sarcasm.
+func mark_hint_seen(id: String) -> void:
+	hints_seen[id] = true
 
 
 func collect_memory_token() -> void:
