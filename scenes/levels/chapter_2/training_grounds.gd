@@ -519,22 +519,22 @@ func _spawn_activation_enemies() -> void:
 
 	# Ogre 1 — patrols between the weight platforms
 	var ogre1 = overfitting_ogre_scene.instantiate()
-	ogre1.global_position = rpos + Vector3(-5, 1, 3)
-	ogre1.patrol_points = [
+	ogre1.position = rpos + Vector3(-5, 1, 3)
+	ogre1.patrol_points.assign([
 		rpos + Vector3(-5, 1, 3),
 		rpos + Vector3(5, 1, 3),
 		rpos + Vector3(5, 1, -3),
 		rpos + Vector3(-5, 1, -3),
-	]
+	])
 	add_child(ogre1)
 
 	# Ogre 2 — guards the elevated platform with the token
 	var ogre2 = overfitting_ogre_scene.instantiate()
-	ogre2.global_position = rpos + Vector3(0, 2.8, 6)
-	ogre2.patrol_points = [
+	ogre2.position = rpos + Vector3(0, 2.8, 6)
+	ogre2.patrol_points.assign([
 		rpos + Vector3(-2, 2.8, 6),
 		rpos + Vector3(2, 2.8, 6),
-	]
+	])
 	add_child(ogre2)
 
 func _spawn_gradient_enemies() -> void:
@@ -544,20 +544,20 @@ func _spawn_gradient_enemies() -> void:
 
 	# Wisp 1 — anchored at the bottom of the gradient descent (deep layer)
 	var wisp1 = vanishing_gradient_wisp_scene.instantiate()
-	wisp1.global_position = rpos + Vector3(-3, -3.0, 5)
-	wisp1.patrol_points = [rpos + Vector3(-3, -3.0, 5)]  # Wisps orbit their anchor
+	wisp1.position = rpos + Vector3(-3, -3.0, 5)
+	wisp1.patrol_points.assign([rpos + Vector3(-3, -3.0, 5)])  # Wisps orbit their anchor
 	add_child(wisp1)
 
 	# Wisp 2 — mid-descent
 	var wisp2 = vanishing_gradient_wisp_scene.instantiate()
-	wisp2.global_position = rpos + Vector3(4, -1.5, 0)
-	wisp2.patrol_points = [rpos + Vector3(4, -1.5, 0)]
+	wisp2.position = rpos + Vector3(4, -1.5, 0)
+	wisp2.patrol_points.assign([rpos + Vector3(4, -1.5, 0)])
 	add_child(wisp2)
 
 	# Wisp 3 — near the side platform with the terminal
 	var wisp3 = vanishing_gradient_wisp_scene.instantiate()
-	wisp3.global_position = rpos + Vector3(-7, 1.5, -3)
-	wisp3.patrol_points = [rpos + Vector3(-7, 1.5, -3)]
+	wisp3.position = rpos + Vector3(-7, 1.5, -3)
+	wisp3.patrol_points.assign([rpos + Vector3(-7, 1.5, -3)])
 	add_child(wisp3)
 
 func _spawn_dropout_enemies() -> void:
@@ -567,32 +567,32 @@ func _spawn_dropout_enemies() -> void:
 
 	# Ghost 1 — haunts the central platform grid
 	var ghost1 = dropout_ghost_scene.instantiate()
-	ghost1.global_position = rpos + Vector3(-3, 1, -2)
-	ghost1.patrol_points = [
+	ghost1.position = rpos + Vector3(-3, 1, -2)
+	ghost1.patrol_points.assign([
 		rpos + Vector3(-3, 1, -2),
 		rpos + Vector3(3, 1, -2),
 		rpos + Vector3(3, 1, 3),
 		rpos + Vector3(-3, 1, 3),
-	]
+	])
 	add_child(ghost1)
 
 	# Ghost 2 — floats near the dropout rate display
 	var ghost2 = dropout_ghost_scene.instantiate()
-	ghost2.global_position = rpos + Vector3(5, 1, -4)
-	ghost2.patrol_points = [
+	ghost2.position = rpos + Vector3(5, 1, -4)
+	ghost2.patrol_points.assign([
 		rpos + Vector3(5, 1, -4),
 		rpos + Vector3(5, 1, 2),
 		rpos + Vector3(2, 1, 2),
-	]
+	])
 	add_child(ghost2)
 
 	# Ghost 3 — lurks near the exit
 	var ghost3 = dropout_ghost_scene.instantiate()
-	ghost3.global_position = rpos + Vector3(0, 1, 5)
-	ghost3.patrol_points = [
+	ghost3.position = rpos + Vector3(0, 1, 5)
+	ghost3.patrol_points.assign([
 		rpos + Vector3(-2, 1, 5),
 		rpos + Vector3(2, 1, 5),
-	]
+	])
 	add_child(ghost3)
 
 func _spawn_loss_plaza_enemies() -> void:
@@ -602,28 +602,28 @@ func _spawn_loss_plaza_enemies() -> void:
 
 	# One ogre guarding the boss gate — he's memorized every player who tried to pass
 	var ogre = overfitting_ogre_scene.instantiate()
-	ogre.global_position = rpos + Vector3(0, 1, -7)
-	ogre.patrol_points = [
+	ogre.position = rpos + Vector3(0, 1, -7)
+	ogre.patrol_points.assign([
 		rpos + Vector3(-4, 1, -7),
 		rpos + Vector3(4, 1, -7),
-	]
+	])
 	add_child(ogre)
 
 	# A wisp anchored near the output nodes
 	var wisp = vanishing_gradient_wisp_scene.instantiate()
-	wisp.global_position = rpos + Vector3(6, 1, 3)
-	wisp.patrol_points = [rpos + Vector3(6, 1, 3)]
+	wisp.position = rpos + Vector3(6, 1, 3)
+	wisp.patrol_points.assign([rpos + Vector3(6, 1, 3)])
 	add_child(wisp)
 
 	# A ghost patrolling the convergence rings
 	var ghost = dropout_ghost_scene.instantiate()
-	ghost.global_position = rpos + Vector3(-5, 1, 0)
-	ghost.patrol_points = [
+	ghost.position = rpos + Vector3(-5, 1, 0)
+	ghost.patrol_points.assign([
 		rpos + Vector3(-5, 1, 0),
 		rpos + Vector3(0, 1, 5),
 		rpos + Vector3(5, 1, 0),
 		rpos + Vector3(0, 1, -5),
-	]
+	])
 	add_child(ghost)
 
 
@@ -722,7 +722,6 @@ func _create_dendrite_structure(pos: Vector3, room_height: float) -> void:
 		bmesh.size = Vector3(0.3, 0.3, 2.0)
 		branch.mesh = bmesh
 		branch.position = branch_pos
-		branch.look_at(pos + Vector3(0, branch_y, 0), Vector3.UP)
 		var bmat = StandardMaterial3D.new()
 		bmat.albedo_color = NEURON_PURPLE * 0.7
 		bmat.emission_enabled = true
@@ -730,6 +729,7 @@ func _create_dendrite_structure(pos: Vector3, room_height: float) -> void:
 		bmat.emission_energy_multiplier = 0.5
 		branch.material_override = bmat
 		add_child(branch)
+		branch.look_at(pos + Vector3(0, branch_y, 0), Vector3.UP)
 
 	# Glow at the base
 	_add_accent_light(pos + Vector3(0, 1, 0), NEURON_PURPLE, 0.5, 3.0)
@@ -1547,10 +1547,11 @@ func _place_loss_plaza_puzzle() -> void:
 
 func _connect_puzzle_signals() -> void:
 	# Find all puzzle nodes and wire their solved/failed signals
+	# Guard against double-connection — this gets called from two deferred sites
 	for child in get_children():
-		if child.has_signal("puzzle_solved"):
+		if child.has_signal("puzzle_solved") and not child.puzzle_solved.is_connected(_on_puzzle_solved):
 			child.puzzle_solved.connect(_on_puzzle_solved)
-		if child.has_signal("puzzle_failed"):
+		if child.has_signal("puzzle_failed") and not child.puzzle_failed.is_connected(_on_puzzle_failed):
 			child.puzzle_failed.connect(_on_puzzle_failed)
 
 

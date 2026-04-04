@@ -8,9 +8,9 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 4.1 — Smoke tested Chapter 1; fixed type inference errors in audio_manager.gd, SCREEN_TEXTURE shader error in all 5 chapters, typed array assignment in physical_puzzle.gd, CSGTorus3D ring_segments→ring_sides in parameter_pickup.gd, and @onready node-not-found in dialogue_box.gd
-- **Next task to do:** Task 4.2 — Smoke test Chapter 2
-- **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
+- **Last task completed:** Task 4.2 — Smoke tested Chapter 2; fixed typed array assignment (patrol_points .assign()), CylinderMesh .radius→.top_radius/.bottom_radius in overfitting_ogre.gd, look_at before add_child in training_grounds.gd, double signal connection guard, and global_position→position for pre-tree enemy spawns
+- **Next task to do:** Task 4.3 — Smoke test Chapter 3
+- **Known issues:** Chapters 3-5 have same typed array patrol_points bug (will be caught in their smoke tests). Remaining items are static analysis warnings only (unused params, variable shadowing).
 
 ---
 
@@ -114,7 +114,7 @@
 - [x] Fixed: audio_manager.gd type inference (bass_freq, pad_freq, arp_freq, target_db, category_vol), SCREEN_TEXTURE→uniform sampler2D in all 5 chapter shaders, physical_puzzle.gd typed array assign, parameter_pickup.gd CSGTorus3D ring_sides, dialogue_box.gd @onready→var. Zero runtime errors on launch.
 
 ### 4.2 Smoke test Chapter 2
-- [ ] Use Godot MCP: run_project with Chapter 2 scene. Wait 30 seconds, get_debug_output. Fix any errors. Then stop_project.
+- [x] Fixed: typed array assignment for all 11 patrol_points in training_grounds.gd (= [] → .assign([])), CylinderMesh .radius→.top_radius/.bottom_radius in overfitting_ogre.gd, look_at before add_child for neuron branches, double puzzle signal connection guard (is_connected check), and global_position→position for 11 enemy spawns before add_child. Zero runtime errors on launch.
 
 ### 4.3 Smoke test Chapter 3
 - [ ] Use Godot MCP: run_project with Chapter 3 scene. Wait 30 seconds, get_debug_output. Fix any errors. Then stop_project.

@@ -103,7 +103,8 @@ func _create_visual() -> void:
 	for side in [-1, 1]:
 		var arm = MeshInstance3D.new()
 		var arm_mesh = CylinderMesh.new()
-		arm_mesh.radius = 0.18
+		arm_mesh.top_radius = 0.18
+		arm_mesh.bottom_radius = 0.18
 		arm_mesh.height = 0.9
 		arm.mesh = arm_mesh
 		arm.position = Vector3(side * 0.75, 0.3, 0)
