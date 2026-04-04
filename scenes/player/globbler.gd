@@ -230,6 +230,17 @@ func _ready() -> void:
 	# Pause overlay — ESC to contemplate your choices
 	_setup_pause_overlay()
 
+	# Dash hint timer — 30 seconds of gameplay before we mention it, because hand-holding is for fine-tuned models
+	var gm = get_node_or_null("/root/GameManager")
+	if not gm or not gm.has_seen_hint("dash"):
+		var dash_hint_timer := Timer.new()
+		dash_hint_timer.name = "DashHintTimer"
+		dash_hint_timer.wait_time = 30.0
+		dash_hint_timer.one_shot = true
+		dash_hint_timer.timeout.connect(_on_dash_hint_timeout)
+		add_child(dash_hint_timer)
+		dash_hint_timer.start()
+
 	# Capture mouse
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -1254,3 +1265,7 @@ func _show_hint_once(id: String, title: String, body: String) -> void:
 		var hint = _HINT_SCENE.instantiate()
 		get_tree().root.add_child(hint)
 		hint.show_hint(title, body)
+
+func _on_dash_hint_timeout() -> void:
+	_show_hint_once("dash", "DASH",
+		"Double-tap movement or press SHIFT+direction to dash. Cooldown is real.")

@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 4.6 complete
-- **Last task completed:** Task 4.6 — Added hack hint to `terminal_hack.gd`. Preloaded `first_time_hint.tscn`, added `_show_hint_once` helper. Fires hint id "hack" at end of `_scan_for_hackables()` when `_nearby_hackable` is first detected. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 4.7 — Fire dash hint after 30 seconds of gameplay
-- **Known issues:** Movement, glob aim, wrench, and hack hints wired. No accessibility options.
+- **Last updated by:** Claude (2026-04-04) — Task 4.7 complete
+- **Last task completed:** Task 4.7 — Added 30-second one-shot timer in `globbler.gd` `_ready()` that fires dash hint. Timer only created if hint not already seen (no wasted resources). Callback `_on_dash_hint_timeout()` routes through existing `_show_hint_once` helper. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 4.8 — Fire agent-spawn hint on chapter 2 entry
+- **Known issues:** Movement, glob aim, wrench, hack, and dash hints wired. No accessibility options.
 
 ---
 
@@ -107,7 +107,7 @@
 - [x] **DONE.** Added `_HINT_SCENE` preload and `_show_hint_once` helper to `terminal_hack.gd`. Fires hint id "hack" at end of `_scan_for_hackables()` when `_nearby_hackable` is set. Routes through `GameManager.has_seen_hint()`/`mark_hint_seen()`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 4.7 Fire dash hint after 30 seconds of gameplay
-- [ ] In `scenes/player/globbler.gd` `_ready()`, start a 30-second one-shot timer. On timeout, show hint id "dash", title "DASH", body "Double-tap movement or press SHIFT+direction to dash. Cooldown is real."
+- [x] **DONE.** Added 30-second one-shot `DashHintTimer` in `globbler.gd` `_ready()`. Timer only created if "dash" hint not already seen. On timeout, `_on_dash_hint_timeout()` calls `_show_hint_once("dash", "DASH", "Double-tap movement or press SHIFT+direction to dash. Cooldown is real.")`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 4.8 Fire agent-spawn hint on chapter 2 entry
 - [ ] In `scenes/levels/chapter_2/training_grounds.gd` `_ready()` (end of function), show hint id "agent_spawn", title "SUB-AGENTS", body "G to spawn a mini-agent. They will fail you. That is expected." Only fires if agent_spawn ability is unlocked.
