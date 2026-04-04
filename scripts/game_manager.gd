@@ -11,6 +11,9 @@ var difficulty := Difficulty.NORMAL
 var reduce_motion := false
 signal reduce_motion_changed(enabled: bool)
 
+# Dialogue speed — seconds per character. 0.005 (impatient speedrunner) to 0.08 (savoring the sarcasm)
+var dialogue_char_delay := 0.03
+
 var current_level := 1
 var memory_tokens_collected := 0
 var total_memory_tokens := 0

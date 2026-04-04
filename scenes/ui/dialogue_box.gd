@@ -4,7 +4,7 @@ extends PanelContainer
 # "Dark background, green text, typing animation. Peak hacker aesthetic."
 # Looks like a retro terminal window because Globbler refuses to use modern UI.
 
-const TYPING_SPEED := 0.03  # Seconds per character — fast enough to not be annoying
+const DEFAULT_TYPING_SPEED := 0.03  # Fallback if GameManager is AWOL
 const FAST_TYPING_SPEED := 0.005  # When player is mashing through
 const TYPE_SFX_INTERVAL := 3  # Play a typing blip every N characters — not every one, we're not a typewriter factory
 
@@ -118,7 +118,11 @@ func _process(delta: float) -> void:
 	if not _typing:
 		return
 
-	var speed = FAST_TYPING_SPEED if _fast_mode else TYPING_SPEED
+	var base_speed := DEFAULT_TYPING_SPEED
+	var gm = get_node_or_null("/root/GameManager")
+	if gm:
+		base_speed = gm.dialogue_char_delay
+	var speed = FAST_TYPING_SPEED if _fast_mode else base_speed
 	_typing_timer += delta
 	while _typing_timer >= speed and _displayed_chars < _full_text.length():
 		_typing_timer -= speed
