@@ -561,8 +561,13 @@ func _victory_cutscene() -> void:
 	if save_sys and save_sys.has_method("checkpoint_save"):
 		save_sys.checkpoint_save()
 
-	# Finally remove the boss
+	# Finally remove the boss — your deletion days are over, pal
 	queue_free()
+
+	# Transition to Chapter 2 after a brief delay so the player can read dialogue
+	get_tree().create_timer(3.0).timeout.connect(func():
+		get_tree().change_scene_to_file("res://scenes/levels/chapter_2/training_grounds.tscn")
+	, CONNECT_ONE_SHOT)
 
 # Override base enemy damage handler — boss has phase-specific invulnerability
 func _on_damage_taken(amount: int, source: Node) -> void:

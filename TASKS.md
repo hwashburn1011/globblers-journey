@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 2.6 — Added reset_level() call in complete_level() so stats reset between chapters
-- **Next task to do:** Task 2.7 — Add chapter transitions after boss defeats
+- **Last task completed:** Task 2.7 — Added chapter transitions after boss defeats
+- **Next task to do:** Task 2.8 — Fix base_enemy player lookup caching
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -62,7 +62,7 @@
 - [x] Added `reset_level()` call after `current_level` increment in `complete_level()`. Also added `max_combo` and `level_goal_reached` resets to `reset_level()` which were missing.
 
 ### 2.7 Add chapter transitions after boss defeats
-- [ ] Check each boss file for what happens after victory. The game needs to transition from chapter N to chapter N+1 after the boss is defeated. In each boss's death/victory handler, add a call to `GameManager.complete_level()` if not present, then after a brief delay use `get_tree().change_scene_to_file()` to load the next chapter's scene. Files to check: `rm_rf_boss.gd` (→ chapter 2), `local_minimum_boss.gd` (→ chapter 3), `system_prompt_boss.gd` (→ chapter 4), `foundation_model_boss.gd` (→ chapter 5). Chapter 5's aligner_boss.gd should already transition to credits.
+- [x] Check each boss file for what happens after victory. The game needs to transition from chapter N to chapter N+1 after the boss is defeated. In each boss's death/victory handler, add a call to `GameManager.complete_level()` if not present, then after a brief delay use `get_tree().change_scene_to_file()` to load the next chapter's scene. Files to check: `rm_rf_boss.gd` (→ chapter 2), `local_minimum_boss.gd` (→ chapter 3), `system_prompt_boss.gd` (→ chapter 4), `foundation_model_boss.gd` (→ chapter 5). Chapter 5's aligner_boss.gd should already transition to credits.
 
 ### 2.8 Fix base_enemy player lookup caching
 - [ ] In `scenes/enemies/base_enemy.gd` around line 189, `_player_lookup_done` is set to `true` even when no player is found. This means if the player spawns after the enemy, the enemy will never detect them. Fix by only setting `_player_lookup_done = true` when a valid player reference is actually found. Or remove the cache flag entirely and look up the player each time (it's cheap via groups).

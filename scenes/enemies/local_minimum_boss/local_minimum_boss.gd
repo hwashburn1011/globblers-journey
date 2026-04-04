@@ -846,6 +846,11 @@ func _victory_cutscene() -> void:
 
 	queue_free()
 
+	# Transition to Chapter 3 — hope you like shopping, Globbler
+	get_tree().create_timer(3.0).timeout.connect(func():
+		get_tree().change_scene_to_file("res://scenes/levels/chapter_3/prompt_bazaar.tscn")
+	, CONNECT_ONE_SHOT)
+
 
 # Override base enemy damage handler — boss has phase-specific invulnerability
 func _on_damage_taken(amount: int, source: Node) -> void:

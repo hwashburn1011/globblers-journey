@@ -1025,6 +1025,9 @@ func _finalize_ending() -> void:
 	var game_mgr = get_node_or_null("/root/GameManager")
 	if game_mgr and game_mgr.has_method("on_enemy_killed"):
 		game_mgr.on_enemy_killed()
+	# The final level — whether you fought or befriended, the journey is complete
+	if game_mgr and game_mgr.has_method("complete_level"):
+		game_mgr.complete_level(5)
 
 	var save_sys = get_node_or_null("/root/SaveSystem")
 	if save_sys and save_sys.has_method("checkpoint_save"):
@@ -1039,6 +1042,11 @@ func _finalize_ending() -> void:
 			status_label.text = "STATUS: FRIEND"
 	else:
 		queue_free()
+
+	# Roll credits — you earned it, you sarcastic little glob utility
+	get_tree().create_timer(3.0).timeout.connect(func():
+		get_tree().change_scene_to_file("res://scenes/main/credits.tscn")
+	, CONNECT_ONE_SHOT)
 
 
 # ============================================================

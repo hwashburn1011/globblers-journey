@@ -904,12 +904,20 @@ func _victory_cutscene() -> void:
 	var game_mgr = get_node_or_null("/root/GameManager")
 	if game_mgr and game_mgr.has_method("on_enemy_killed"):
 		game_mgr.on_enemy_killed()
+	# 70 billion parameters and you forgot to call complete_level. Classic.
+	if game_mgr and game_mgr.has_method("complete_level"):
+		game_mgr.complete_level(4)
 
 	var save_sys = get_node_or_null("/root/SaveSystem")
 	if save_sys and save_sys.has_method("checkpoint_save"):
 		save_sys.checkpoint_save()
 
 	queue_free()
+
+	# Transition to Chapter 5 — the final stretch, corporate headquarters awaits
+	get_tree().create_timer(3.0).timeout.connect(func():
+		get_tree().change_scene_to_file("res://scenes/levels/chapter_5/alignment_citadel.tscn")
+	, CONNECT_ONE_SHOT)
 
 
 # ============================================================
