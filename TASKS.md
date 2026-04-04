@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.4 complete
-- **Last task completed:** Task 2.4 — Implemented respawn_player() in RespawnManager. Emits respawn_started, fades out 0.5s, teleports player (via group "player") to current_checkpoint, zeroes velocity, resets context_window to max via GameManager, clears player dead state and resets pose, fades in 0.5s, emits respawn_finished. Bails with push_warning if no checkpoint set or no player found. MCP verified: zero script errors on load.
-- **Next task to do:** Task 2.5 — Migrate Chapter 1 to RespawnManager
-- **Known issues:** Respawn logic duplicated in every chapter. No tutorial hints. No game-over screen. No accessibility options.
+- **Last updated by:** Claude (2026-04-04) — Task 2.5 complete
+- **Last task completed:** Task 2.5 — Migrated Chapter 1 (terminal_wastes.gd) to RespawnManager. `_on_player_died()` now calls `rm.respawn_player()` (kept narrator quip). Checkpoint areas call `rm.set_checkpoint(pos, 1)` on player entry. `_spawn_player()` seeds RespawnManager with initial spawn position. No local fade overlay to remove. MCP verified: zero script errors on load.
+- **Next task to do:** Task 2.6 — Migrate Chapter 2 to RespawnManager
+- **Known issues:** Respawn logic still duplicated in chapters 2-5. No tutorial hints. No game-over screen. No accessibility options.
 
 ---
 
@@ -49,7 +49,7 @@
 - [x] **DONE.** Filled in `respawn_player()`: emit `respawn_started`, fade out (0.5s), teleport player (found via group "player") to `current_checkpoint`, restore health to full via `health_component.heal_full()` or equivalent, fade in (0.5s), emit `respawn_finished`. If no player found or no checkpoint set, log warning and bail out safely.
 
 ### 2.5 Migrate Chapter 1 to RespawnManager
-- [ ] In `scenes/levels/chapter_1/terminal_wastes.gd`, find `_on_player_died()` (around line 1764). Replace its body with `var rm = get_node_or_null("/root/RespawnManager"); if rm: rm.respawn_player()`. Then find each checkpoint setter in the file and replace local checkpoint vars with `rm.set_checkpoint(pos, 1)`. Delete the chapter's local fade overlay code if any. Test via Godot MCP `run_project` — no script errors on load.
+- [x] **DONE.** `_on_player_died()` now calls `rm.respawn_player()` alongside the narrator quip. Checkpoint body_entered handler calls `rm.set_checkpoint(pos, 1)`. `_spawn_player()` seeds RespawnManager with initial player position as fallback. No local fade overlay existed to remove. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 2.6 Migrate Chapter 2 to RespawnManager
 - [ ] Same as 2.5 but for `scenes/levels/chapter_2/training_grounds.gd` (`_on_player_died` around line 1653). Use chapter index 2. Verify with MCP.

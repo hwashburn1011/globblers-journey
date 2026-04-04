@@ -1017,6 +1017,11 @@ func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> v
 				save_sys.checkpoint_save(checkpoint_id, pos)
 				print("[CHECKPOINT] '%s' — Progress saved. You're welcome." % checkpoint_id)
 
+			# Tell RespawnManager where to put us when we inevitably die
+			var rm = get_node_or_null("/root/RespawnManager")
+			if rm:
+				rm.set_checkpoint(pos, 1)
+
 			# Checkpoint chime — a brief moment of comfort in this digital wasteland
 			var am_ref = get_node_or_null("/root/AudioManager")
 			if am_ref:
@@ -1114,6 +1119,11 @@ func _spawn_player() -> void:
 	else:
 		player.position = ROOMS["spawn"]["pos"] + Vector3(0, 2, 3)
 	add_child(player)
+
+	# Seed RespawnManager with wherever we just placed the player
+	var rm = get_node_or_null("/root/RespawnManager")
+	if rm:
+		rm.set_checkpoint(player.position, 1)
 
 
 func _spawn_hud() -> void:
@@ -1764,11 +1774,14 @@ func _on_first_glob_fired() -> void:
 func _on_player_died() -> void:
 	# Narrator always has something to say about death — it's kind of their thing
 	var dm = get_node_or_null("/root/DialogueManager")
-	if not dm:
-		return
+	if dm:
+		var quip = dm.get_narrator_line("player_death")
+		dm.quick_line("NARRATOR", quip)
 
-	var quip = dm.get_narrator_line("player_death")
-	dm.quick_line("NARRATOR", quip)
+	# Let the RespawnManager handle the actual dying-and-coming-back ritual
+	var rm = get_node_or_null("/root/RespawnManager")
+	if rm:
+		rm.respawn_player()
 
 
 func _on_context_changed(new_value: int) -> void:
