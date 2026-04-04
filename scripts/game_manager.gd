@@ -426,6 +426,29 @@ func _register_input_actions() -> void:
 	mc_joy.button_index = JOY_BUTTON_A
 	InputMap.action_add_event("menu_confirm", mc_joy)
 
+	# --- Dialogue history: H / D-pad Left + Select (for the sarcasm archivists) ---
+	_add.call("dialogue_history")
+	var dh_key = InputEventKey.new()
+	dh_key.keycode = KEY_H
+	InputMap.action_add_event("dialogue_history", dh_key)
+
+var _dialogue_history_scene = preload("res://scenes/ui/dialogue_history.tscn")
+var _dialogue_history_open := false
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("dialogue_history") and not _dialogue_history_open:
+		_open_dialogue_history()
+		get_viewport().set_input_as_handled()
+
+
+func _open_dialogue_history() -> void:
+	_dialogue_history_open = true
+	var viewer = _dialogue_history_scene.instantiate()
+	viewer.tree_exited.connect(func(): _dialogue_history_open = false)
+	get_tree().root.add_child(viewer)
+
+
 func _process(delta: float) -> void:
 	if level_started:
 		level_time += delta

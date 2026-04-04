@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 6.2 complete
-- **Last task completed:** Task 6.2 — Added `var history: Array[Dictionary] = []` and `const MAX_HISTORY := 200` to `dialogue_manager.gd`. Added `_record_history(speaker, text)` helper that appends `{speaker, text, timestamp}` and pops oldest entry when over 200. Called from both `advance()` and `quick_line()` so every displayed line is captured. Added `get_history() -> Array` public accessor. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 6.3 — Add dialogue history viewer
+- **Last updated by:** Claude (2026-04-04) — Task 6.3 complete
+- **Last task completed:** Task 6.3 — Created `scenes/ui/dialogue_history.gd` and `.tscn`. CanvasLayer (layer 110, PROCESS_MODE_ALWAYS) with terminal-style scrollable backlog viewer. Shows last 30 history entries from DialogueManager with speaker tags in bright green and text in soft green. Opens with H key (registered as `dialogue_history` input action in GameManager). Closes with H or ESC (consumes input to prevent pause menu). Pauses game while open, restores previous pause state on close. GameManager preloads scene and gates on `_dialogue_history_open` flag to prevent stacking. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 7.1 — MCP smoke test all chapters
 - **Known issues:** None outstanding.
 
 ---
@@ -150,7 +150,7 @@
 - [x] **DONE.** Added `var history: Array[Dictionary] = []` and `const MAX_HISTORY := 200` to `dialogue_manager.gd`. Added `_record_history(speaker, text)` private helper that appends `{speaker, text, timestamp}` using `Time.get_unix_time_from_system()` and pops oldest entry when over 200. Called from both `advance()` (sequence lines) and `quick_line()` (one-off lines) so every displayed line is captured. Added `get_history() -> Array` public accessor for the backlog viewer (Task 6.3). MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 6.3 Add dialogue history viewer
-- [ ] Create `scenes/ui/dialogue_history.gd` and `.tscn`. Opens with H key (bind via GameManager input action "dialogue_history"). Scrollable list of last 30 history entries. Close with ESC or H. `process_mode = PROCESS_MODE_WHEN_PAUSED` and pauses the game while open.
+- [x] **DONE.** Created `scenes/ui/dialogue_history.gd` and `.tscn`. CanvasLayer (layer 110, PROCESS_MODE_ALWAYS) with terminal-green-on-black scrollable backlog. Shows last 30 entries from `DialogueManager.get_history()` with `[SPEAKER]` tags and dialogue text. Registered `dialogue_history` input action (H key) in `game_manager.gd`. GameManager preloads scene, opens on H press with `_dialogue_history_open` guard to prevent stacking. Viewer pauses tree on open, restores previous pause state on close (H or ESC, input consumed). MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ---
 
