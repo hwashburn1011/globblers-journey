@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 1.4 complete
-- **Last task completed:** Task 1.4 — Audited `test_level.gd`/`test_level.tscn`. Not referenced by main menu, chapter select, or project.godot. Dev-only sandbox. Added `# DEV ONLY` comment to script.
-- **Next task to do:** Task 2.1 — Create RespawnManager autoload skeleton
+- **Last updated by:** Claude (2026-04-04) — Task 2.1 complete
+- **Last task completed:** Task 2.1 — Created `scripts/autoload/respawn_manager.gd` with `current_checkpoint`, `current_chapter`, `set_checkpoint()`, `respawn_player()` stub, and `respawn_started`/`respawn_finished` signals.
+- **Next task to do:** Task 2.2 — Register RespawnManager in project.godot
 - **Known issues:** Respawn logic duplicated in every chapter. No tutorial hints. No game-over screen. No accessibility options.
 
 ---
@@ -37,7 +37,7 @@
 # Extract into a single RespawnManager so the behavior lives in one place.
 
 ### 2.1 Create RespawnManager autoload skeleton
-- [ ] Create `scripts/autoload/respawn_manager.gd` extending Node. Add: `var current_checkpoint: Vector3`, `var current_chapter: int`, `func set_checkpoint(pos: Vector3, chapter: int)`, `func respawn_player()` stub (just prints for now), `signal respawn_started`, `signal respawn_finished`. Do NOT wire it up yet.
+- [x] **DONE.** Created `scripts/autoload/respawn_manager.gd` extending Node. Has `current_checkpoint: Vector3`, `current_chapter: int`, `set_checkpoint(pos, chapter)`, `respawn_player()` stub (prints to console), signals `respawn_started` and `respawn_finished`. Not wired up yet — registration is Task 2.2.
 
 ### 2.2 Register RespawnManager in project.godot
 - [ ] Add `RespawnManager="*res://scripts/autoload/respawn_manager.gd"` to the `[autoload]` section of `project.godot`. Keep it AFTER GameManager and BEFORE SaveSystem. Verify via Godot MCP `run_project` that it loads without error (check debug output).
