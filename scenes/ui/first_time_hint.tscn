@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://c2hinttoast01"]
+
+[ext_resource type="Script" path="res://scenes/ui/first_time_hint.gd" id="1_hint"]
+
+[node name="FirstTimeHint" type="CanvasLayer"]
+layer = 100
+process_mode = 3
+script = ExtResource("1_hint")

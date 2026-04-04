@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 3.4 complete
-- **Last task completed:** Task 3.4 — MCP verification of game over flow. Project loads cleanly: zero script errors, zero runtime errors. Only pre-existing integer division warning. `game_over` signal wired in `game_manager.gd:70-71`, handler at `:544` loads `scenes/ui/game_over.tscn`, calls `set_reason()`, adds to root, pauses tree. Two trigger paths confirmed: context depletion (`:430`) and death threshold >= 8 (`:436`). Scene files `game_over.gd`/`.tscn` present. Manual test documented.
-- **Next task to do:** Task 4.1 — Create first_time_hint UI component
-- **Known issues:** No tutorial hints. No accessibility options.
+- **Last updated by:** Claude (2026-04-04) — Task 4.1 complete
+- **Last task completed:** Task 4.1 — Created `scenes/ui/first_time_hint.gd` and `.tscn`. CanvasLayer (layer 100, PROCESS_MODE_ALWAYS) with terminal-style PanelContainer toast. Slides in from top with TRANS_BACK easing, auto-dismisses after 4s, dismissable early via any key/click/button press. Single public method `show_hint(title, body)`. Green-on-black styling matching existing UI (GREEN #39FF14, dark bg, bordered panel). MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 4.2 — Add hints_seen tracking to GameManager
+- **Known issues:** No tutorial hints wired up yet. No accessibility options.
 
 ---
 
@@ -89,7 +89,7 @@
 # The game throws six abilities at the player with zero teaching. Add lightweight first-time toast hints.
 
 ### 4.1 Create first_time_hint UI component
-- [ ] Create `scenes/ui/first_time_hint.gd` and `.tscn`. Terminal-style toast that slides in from top, auto-dismisses after 4s, shows `hint_title` + `hint_body` + "press any key to continue" footer. Single public method `show_hint(title: String, body: String)`. Use existing green-on-black theme.
+- [x] **DONE.** Created `scenes/ui/first_time_hint.gd` and `.tscn`. CanvasLayer (layer 100, PROCESS_MODE_ALWAYS) with terminal-style PanelContainer that slides in from top using TRANS_BACK easing. Auto-dismisses after 4s, early dismiss via any key/click/gamepad button. Single public method `show_hint(title, body)`. Green-on-black styling (#39FF14, dark bg 0.04 alpha 0.95, bordered panel). MCP verified: zero script errors, zero runtime errors.
 
 ### 4.2 Add hints_seen tracking to GameManager
 - [ ] In `game_manager.gd`, add `var hints_seen := {}` dictionary, `func has_seen_hint(id: String) -> bool`, `func mark_hint_seen(id: String)`. Include `hints_seen` in the save dict returned by `get_save_data()` if that function exists (read `save_system.gd` first to find the right place to hook in).
