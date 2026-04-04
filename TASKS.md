@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 3.7 — Fixed chapter music track names across all levels
-- **Next task to do:** Task 3.8 — Fix glob_command hardcoded HUD paths
+- **Last task completed:** Task 3.8 — Removed hardcoded HUD paths from glob_command, added HUD to "hud" group
+- **Next task to do:** Task 3.9 — Clean up unused code
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -97,7 +97,7 @@
 - [x] Fixed all chapters to call correct music track: chapter_2, chapter_3, chapter_4, chapter_5. Added match branches for all chapter tracks in AudioManager.start_music(). Added _last_chapter_music tracking so stop_boss_music() resumes the correct chapter's music. Also fixed post-boss handlers in chapters 4 and 5 that hardcoded "chapter_1".
 
 ### 3.8 Fix glob_command hardcoded HUD paths
-- [ ] In `scenes/player/abilities/glob_command.gd`, find `_get_hud()` (around line 328-335). Remove the hardcoded fallback paths (`/root/TestLevel/HUD`, `/root/MainLevel/HUD`). Instead, only use the group-based lookup: `get_tree().get_nodes_in_group("hud")`. Make sure the HUD is added to the "hud" group in hud.gd's `_ready()`.
+- [x] Removed hardcoded `/root/TestLevel/HUD` and `/root/MainLevel/HUD` fallback paths from `_get_hud()` in glob_command.gd. Now uses group-based lookup only. Added `add_to_group("hud")` to hud.gd `_ready()`.
 
 ### 3.9 Clean up unused code
 - [ ] Remove `HIT_ARC` constant from `scenes/player/abilities/wrench_smash.gd` (declared but never used). Remove empty `_ready()` from `scenes/player/abilities/agent_spawn.gd`. Fix agent_spawn.gd task cycling to use `AgentTask.size()` instead of hardcoded `3` (around line 103).

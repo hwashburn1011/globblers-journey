@@ -323,15 +323,12 @@ func _update_aim() -> void:
 	glob_aimed.emit(reticle.global_position)
 
 func _get_hud() -> Node:
-	# Return cached HUD — it's not going anywhere, no need to search every call
+	# Return cached HUD — group lookup only, no hardcoded paths like some kind of animal
 	if _cached_hud and is_instance_valid(_cached_hud):
 		return _cached_hud
 	var hud_nodes = get_tree().get_nodes_in_group("hud")
 	if hud_nodes.size() > 0:
 		_cached_hud = hud_nodes[0]
-		return _cached_hud
-	# Try finding by name
-	_cached_hud = get_node_or_null("/root/TestLevel/HUD") if get_node_or_null("/root/TestLevel/HUD") else get_node_or_null("/root/MainLevel/HUD")
 	return _cached_hud
 
 func get_cooldown_percent() -> float:

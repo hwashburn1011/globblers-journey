@@ -35,6 +35,7 @@ var upgrade_hint: Label
 var player_ref: CharacterBody3D
 
 func _ready() -> void:
+	add_to_group("hud")  # So glob_command can find us without hardcoded paths — you're welcome
 	_build_hud()
 
 	# Connect game manager signals
