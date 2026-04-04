@@ -2164,5 +2164,6 @@ func _show_hint_once(id: String, title: String, body: String) -> void:
 	if gm:
 		gm.mark_hint_seen(id)
 	var hint = hint_scene.instantiate()
-	get_tree().root.add_child(hint)
-	hint.show_hint(title, body)
+	# Deferred so it works when called from _ready() — root might still be setting up kids
+	get_tree().root.add_child.call_deferred(hint)
+	hint.show_hint.call_deferred(title, body)

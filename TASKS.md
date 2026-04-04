@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 6.3 complete
-- **Last task completed:** Task 6.3 — Created `scenes/ui/dialogue_history.gd` and `.tscn`. CanvasLayer (layer 110, PROCESS_MODE_ALWAYS) with terminal-style scrollable backlog viewer. Shows last 30 history entries from DialogueManager with speaker tags in bright green and text in soft green. Opens with H key (registered as `dialogue_history` input action in GameManager). Closes with H or ESC (consumes input to prevent pause menu). Pauses game while open, restores previous pause state on close. GameManager preloads scene and gates on `_dialogue_history_open` flag to prevent stacking. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 7.1 — MCP smoke test all chapters
-- **Known issues:** None outstanding.
+- **Last updated by:** Claude (2026-04-04) — Task 7.1 complete
+- **Last task completed:** Task 7.1 — MCP smoke test all chapters. Main menu + all 5 chapters launched and verified. Found and fixed one runtime crash: `first_time_hint.gd` `add_child()` failed during `_ready()` because root was busy setting up children. Fixed by deferring `add_child` and `show_hint` calls in `terminal_wastes.gd` and `training_grounds.gd`. After fix: zero runtime errors, zero script errors across all chapters. All remaining "ERROR" lines are pre-existing GDScript warnings (unused params, variable shadowing, integer division, ternary type mismatch).
+- **Next task to do:** Task 7.2 — Commit final V1.2 tag
+- **Known issues:** None outstanding. All pre-existing warnings are cosmetic (unused params, integer division, variable shadowing).
 
 ---
 
@@ -158,7 +158,7 @@
 # Prove the polish pass did not break anything.
 
 ### 7.1 MCP smoke test all chapters
-- [ ] Use Godot MCP: run_project from main menu, capture debug output, verify zero script errors. Then load Chapter 1 from chapter select, capture output. Repeat for chapters 2-5. Stop project cleanly. List all warnings in the checkbox note.
+- [x] **DONE.** MCP smoke test: main menu + chapters 1–5 all launched cleanly. Fixed one runtime crash: `first_time_hint.gd:108` — `add_child()` on root failed during `_ready()` ("Parent node is busy setting up children"). Root cause: `_show_hint_once()` called synchronously from `_ready()` in `terminal_wastes.gd` and `training_grounds.gd`. Fix: changed `add_child(hint)` and `hint.show_hint()` to `call_deferred` variants. After fix: zero runtime errors, zero script errors across all scenes. Pre-existing warnings (all cosmetic, not introduced by V1.2): unused parameters (`_delta`, `_dist`, `_targets`, `_puzzle`, `_amount`, `_source`, `_killer`, `_reason`, `_idx`, `_room_key`, `_response_node`, `_option_node`, `_wave_width`), unused variables (`old_state`, `old_phase`, `total_show_time`, `damage_tick`, `orig_emission`, `bridge`, `backing`, `_main_panel`, `_category_tabs`, `_opening_narration_done`, `_room_dialogue_triggered`, `_low_health_warned`, `_first_glob_triggered`, `_pulse_nodes`), variable shadowing (`box`, `mat`, `dm`, `maxed`, `health_comp`), integer division warnings, ternary type mismatch, `sign` built-in name shadow, lambda capture reassignment, `glob_fired`/`tile_restored` unused signals.
 
 ### 7.2 Commit final V1.2 tag
 - [ ] Commit any remaining changes. Write completion summary at the top of TASKS.md CURRENT STATUS. Tag or note as "V1.2 — core polish complete".
