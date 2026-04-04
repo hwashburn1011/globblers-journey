@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.1 complete
-- **Last task completed:** Task 2.1 — Created `scripts/autoload/respawn_manager.gd` with `current_checkpoint`, `current_chapter`, `set_checkpoint()`, `respawn_player()` stub, and `respawn_started`/`respawn_finished` signals.
-- **Next task to do:** Task 2.2 — Register RespawnManager in project.godot
+- **Last updated by:** Claude (2026-04-04) — Task 2.2 complete
+- **Last task completed:** Task 2.2 — Registered RespawnManager in project.godot autoload section (after DialogueManager, before SaveSystem). MCP verified: project loads cleanly, no script errors.
+- **Next task to do:** Task 2.3 — Implement fade-to-black overlay in RespawnManager
 - **Known issues:** Respawn logic duplicated in every chapter. No tutorial hints. No game-over screen. No accessibility options.
 
 ---
@@ -40,7 +40,7 @@
 - [x] **DONE.** Created `scripts/autoload/respawn_manager.gd` extending Node. Has `current_checkpoint: Vector3`, `current_chapter: int`, `set_checkpoint(pos, chapter)`, `respawn_player()` stub (prints to console), signals `respawn_started` and `respawn_finished`. Not wired up yet — registration is Task 2.2.
 
 ### 2.2 Register RespawnManager in project.godot
-- [ ] Add `RespawnManager="*res://scripts/autoload/respawn_manager.gd"` to the `[autoload]` section of `project.godot`. Keep it AFTER GameManager and BEFORE SaveSystem. Verify via Godot MCP `run_project` that it loads without error (check debug output).
+- [x] **DONE.** Added `RespawnManager="*res://scripts/autoload/respawn_manager.gd"` to `[autoload]` in project.godot, after DialogueManager and before SaveSystem. MCP run_project verified: zero script errors, zero runtime errors. Only warnings are expected unused-signal notices for `respawn_started`/`respawn_finished` (wired in Task 2.4).
 
 ### 2.3 Implement fade-to-black overlay in RespawnManager
 - [ ] In `respawn_manager.gd`, add `_fade_overlay: CanvasLayer` built in `_ready()` with a ColorRect child (PRESET_FULL_RECT, black, modulate.a = 0, `process_mode = PROCESS_MODE_ALWAYS`, layer = 200). Add `_fade_out(duration: float)` and `_fade_in(duration: float)` helpers that tween modulate.a. Do NOT connect to any chapter yet.
