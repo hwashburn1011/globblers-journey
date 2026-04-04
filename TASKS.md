@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 1.1 audit complete
-- **Last task completed:** Task 1.1 — Audited legacy scripts/player.gd. It and scenes/player.tscn are orphaned; safe to delete.
-- **Next task to do:** Task 1.2 — Delete legacy scripts/player.gd (and its orphan scene scenes/player.tscn)
+- **Last updated by:** Claude (2026-04-04) — Task 1.2 complete
+- **Last task completed:** Task 1.2 — Deleted legacy `scripts/player.gd`. Zero production references; only `scenes/player.tscn` (orphan scene, Task 1.3) pointed to it.
+- **Next task to do:** Task 1.3 — Audit and remove legacy flat `scenes/player.tscn`
 - **Known issues:** Legacy `scripts/player.gd` shadows `scenes/player/globbler.gd`. Respawn logic duplicated in every chapter. No tutorial hints. No game-over screen. No accessibility options.
 
 ---
@@ -22,7 +22,7 @@
 - [x] **DONE.** `scripts/player.gd` is referenced only by `scenes/player.tscn` (a flat 7-line orphan scene). `scenes/player.tscn` itself has ZERO references from any .gd, .tscn, or .godot file. Meanwhile, `scenes/player/globbler.tscn` (using `scenes/player/globbler.gd`) is the canonical player — referenced by all 5 chapter level scripts, test_level.gd, and main_level.gd. Both `scripts/player.gd` and `scenes/player.tscn` are safe to delete in Task 1.2.
 
 ### 1.2 Delete legacy scripts/player.gd
-- [ ] Based on 1.1 findings, delete `scripts/player.gd` if it has zero references. If any reference exists, instead prepend a `# DEPRECATED — use scenes/player/globbler.gd` header and note which file still references it. Commit.
+- [x] **DONE.** Deleted `scripts/player.gd` — zero production references confirmed. Only `scenes/player.tscn` (orphan, Task 1.3) referenced it. No production .gd, .tscn, or project.godot file uses this script.
 
 ### 1.3 Audit and remove legacy flat player.tscn
 - [ ] Search for any `player.tscn` files under `scenes/` that are NOT `scenes/player/globbler.tscn`. If a flat `scenes/player/player.tscn` exists and is unreferenced, delete it. Check `project.godot` and every level script's instantiation paths first.
