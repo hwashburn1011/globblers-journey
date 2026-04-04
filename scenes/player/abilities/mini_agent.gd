@@ -302,7 +302,7 @@ func _physics_process(delta: float) -> void:
 	# Random insult timer
 	if state in [AgentState.IDLE, AgentState.MOVING, AgentState.WORKING]:
 		insult_timer += delta
-		if insult_timer >= INSULT_COOLDOWN and randf() < INSULT_CHANCE * delta:
+		if insult_timer >= INSULT_COOLDOWN and randf() < INSULT_CHANCE:
 			insult_timer = 0.0
 			agent_quip.emit(insults[randi() % insults.size()])
 

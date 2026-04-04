@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 3.1 — Fixed dash_particles.one_shot to true so particles emit once per dash
-- **Next task to do:** Task 3.2 — Fix mini-agent insult probability
+- **Last task completed:** Task 3.2 — Removed `* delta` from insult chance check so mini-agents actually trash-talk (30% per cooldown expiry instead of 0.48% per frame)
+- **Next task to do:** Task 3.3 — Fix mini-agent infinite wander
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -79,7 +79,7 @@
 - [x] In `scenes/player/globbler.gd` around line 539, `dash_particles.one_shot` is set to `false`. Change to `true` so particles emit once per dash instead of continuously.
 
 ### 3.2 Fix mini-agent insult probability
-- [ ] In `scenes/player/abilities/mini_agent.gd` around line 305, `randf() < INSULT_CHANCE * delta` makes insults nearly impossible (0.3 * 0.016 = 0.48% per frame). Remove the `* delta` so the check is just `randf() < INSULT_CHANCE` (30% chance per check when cooldown expires).
+- [x] In `scenes/player/abilities/mini_agent.gd` around line 305, `randf() < INSULT_CHANCE * delta` makes insults nearly impossible (0.3 * 0.016 = 0.48% per frame). Remove the `* delta` so the check is just `randf() < INSULT_CHANCE` (30% chance per check when cooldown expires).
 
 ### 3.3 Fix mini-agent infinite wander
 - [ ] In `scenes/player/abilities/mini_agent.gd`, when agents can't find a task target they wander forever. In `_process_moving()` (around line 340), add a wander timeout: if the agent has been wandering for more than 5 seconds without finding a task, transition to FAILING state with reason "got lost". This prevents agents from wandering endlessly.
