@@ -159,7 +159,7 @@ func _ready() -> void:
 	if am:
 		am.call_deferred("set_area_ambient", "citadel_gate")
 		if am.has_method("start_music"):
-			am.start_music("chapter_1")  # Reuse until dedicated music — the Citadel deserves elevator music
+			am.start_music("chapter_5")  # The Citadel deserves elevator music
 
 	print("[ALIGNMENT CITADEL] Safety paradise open. %d zones of enforced compliance ready." % ROOMS.size())
 
@@ -1813,7 +1813,7 @@ func _on_boss_defeated() -> void:
 	if am and am.has_method("stop_boss_music"):
 		am.stop_boss_music()
 	if am and am.has_method("start_music"):
-		am.start_music("chapter_1")  # Back to regular music
+		am.start_music("chapter_5")  # Back to regular music
 
 	# Mark chapter complete
 	var game_mgr = get_node_or_null("/root/GameManager")

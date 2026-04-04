@@ -149,7 +149,7 @@ func _ready() -> void:
 	if am:
 		am.call_deferred("set_area_ambient", "zoo_entrance")
 		if am.has_method("start_music"):
-			am.start_music("chapter_1")  # Reuse until dedicated music
+			am.start_music("chapter_4")
 
 	print("[MODEL ZOO] Safari park open. %d exhibits ready for visitors." % ROOMS.size())
 
@@ -2041,7 +2041,7 @@ func _on_boss_defeated() -> void:
 	if am and am.has_method("stop_boss_music"):
 		am.stop_boss_music()
 	if am and am.has_method("start_music"):
-		am.start_music("chapter_1")  # Back to regular music
+		am.start_music("chapter_4")  # Back to regular music
 
 	# Mark chapter complete
 	var game_mgr = get_node_or_null("/root/GameManager")

@@ -146,7 +146,7 @@ func _ready() -> void:
 	if am:
 		am.call_deferred("set_area_ambient", "bazaar_gate")
 		if am.has_method("start_music"):
-			am.start_music("chapter_1")  # Reuse music until ch3 music exists
+			am.start_music("chapter_3")
 
 	print("[PROMPT BAZAAR] Market open. %d districts ready for browsing." % ROOMS.size())
 

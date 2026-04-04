@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 3.6 — Fixed audio SFX pool round-robin stealing
-- **Next task to do:** Task 3.7 — Fix chapter 3 music
+- **Last task completed:** Task 3.7 — Fixed chapter music track names across all levels
+- **Next task to do:** Task 3.8 — Fix glob_command hardcoded HUD paths
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -94,7 +94,7 @@
 - [x] In `scripts/autoload/audio_manager.gd`, find the SFX pool steal logic (around line 524-536). Currently it always steals `_sfx_players[0]`. Add a `_sfx_steal_index := 0` variable and use round-robin: steal `_sfx_players[_sfx_steal_index]` then increment `_sfx_steal_index = (_sfx_steal_index + 1) % SFX_POOL_SIZE`.
 
 ### 3.7 Fix chapter 3 music
-- [ ] In `scenes/levels/chapter_3/prompt_bazaar.gd` around line 149, change `am.start_music("chapter_1")` to `am.start_music("chapter_3")`. Check if AudioManager handles unknown track names gracefully (it should fall back). Do the same check in chapters 2, 4, and 5 — make sure each chapter calls the right music track name.
+- [x] Fixed all chapters to call correct music track: chapter_2, chapter_3, chapter_4, chapter_5. Added match branches for all chapter tracks in AudioManager.start_music(). Added _last_chapter_music tracking so stop_boss_music() resumes the correct chapter's music. Also fixed post-boss handlers in chapters 4 and 5 that hardcoded "chapter_1".
 
 ### 3.8 Fix glob_command hardcoded HUD paths
 - [ ] In `scenes/player/abilities/glob_command.gd`, find `_get_hud()` (around line 328-335). Remove the hardcoded fallback paths (`/root/TestLevel/HUD`, `/root/MainLevel/HUD`). Instead, only use the group-based lookup: `get_tree().get_nodes_in_group("hud")`. Make sure the HUD is added to the "hud" group in hud.gd's `_ready()`.

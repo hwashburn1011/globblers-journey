@@ -29,6 +29,7 @@ const SFX_POOL_SIZE = 8  # Enough concurrent bleeps for a chaotic firefight
 
 # --- Music state ---
 var _current_music := ""
+var _last_chapter_music := "chapter_1"  # Remember which chapter track to resume after boss fights
 var _boss_fight_active := false
 var _menu_music_player: AudioStreamPlayer
 
@@ -545,7 +546,9 @@ func start_music(track_name: String) -> void:
 	_current_music = track_name
 
 	match track_name:
-		"chapter_1":
+		"chapter_1", "chapter_2", "chapter_3", "chapter_4", "chapter_5":
+			# All chapters reuse the same generated loop for now — unique tracks coming Soon™
+			_last_chapter_music = track_name
 			_music_player.stream = _generate_music_loop(false)
 			_music_player.volume_db = linear_to_db(music_volume) + BASE_VOLUME_DB
 			_music_player.play()
@@ -575,9 +578,9 @@ func stop_boss_music() -> void:
 	var tween = create_tween()
 	tween.tween_property(_boss_music_player, "volume_db", -40.0, 2.0)
 	tween.tween_callback(_boss_music_player.stop)
-	# Resume normal music
+	# Resume whatever chapter music was playing before the boss rudely interrupted
 	_current_music = ""
-	start_music("chapter_1")
+	start_music(_last_chapter_music)
 
 
 func start_ambient() -> void:

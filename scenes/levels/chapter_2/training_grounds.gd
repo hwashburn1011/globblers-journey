@@ -146,7 +146,7 @@ func _ready() -> void:
 	if am:
 		am.call_deferred("set_area_ambient", "input_layer")
 		if am.has_method("start_music"):
-			am.start_music("chapter_1")  # Reuse chapter music until ch2 music exists
+			am.start_music("chapter_2")
 
 	print("[TRAINING GROUNDS] Network loaded. %d neuron-rooms ready for traversal." % ROOMS.size())
 
