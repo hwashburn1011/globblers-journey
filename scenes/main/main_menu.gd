@@ -632,12 +632,18 @@ func _on_music_volume_changed(value: float) -> void:
 	var audio = get_node_or_null("/root/AudioManager")
 	if audio:
 		audio.set_music_volume(value)
+	var gm = get_node_or_null("/root/GameManager")
+	if gm:
+		gm.save_settings()
 
 
 func _on_sfx_volume_changed(value: float) -> void:
 	var audio = get_node_or_null("/root/AudioManager")
 	if audio:
 		audio.set_sfx_volume(value)
+	var gm = get_node_or_null("/root/GameManager")
+	if gm:
+		gm.save_settings()
 
 
 func _on_ambient_volume_changed(value: float) -> void:
@@ -657,12 +663,14 @@ func _on_difficulty_changed(index: int) -> void:
 	var gm = get_node_or_null("/root/GameManager")
 	if gm:
 		gm.difficulty = index
+		gm.save_settings()
 
 
 func _on_reduce_motion_toggled(toggled_on: bool) -> void:
 	var gm = get_node_or_null("/root/GameManager")
 	if gm:
 		gm.set_reduce_motion(toggled_on)
+		gm.save_settings()
 
 
 func _on_dialogue_speed_changed(value: float) -> void:
@@ -670,6 +678,7 @@ func _on_dialogue_speed_changed(value: float) -> void:
 	var gm = get_node_or_null("/root/GameManager")
 	if gm:
 		gm.dialogue_char_delay = _slider_to_dialogue_delay(value)
+		gm.save_settings()
 
 
 ## Convert dialogue_char_delay (0.005–0.08) to slider value (0.0–1.0). Lower delay = faster = higher slider.

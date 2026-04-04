@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 5.6 complete
-- **Last task completed:** Task 5.6 — Added three new controls to the settings panel in `main_menu.gd`: Difficulty OptionButton (Easy/Normal/Hard), Reduce Motion CheckBox, and Dialogue Speed HSlider (inverted: higher = faster). Each wired to GameManager on value change. Panel height expanded from 350→520 to fit. All controls read initial values from GameManager. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 5.7 — Persist settings to user://settings.cfg
-- **Known issues:** Settings controls are live but not persisted across sessions yet (Task 5.7).
+- **Last updated by:** Claude (2026-04-04) — Task 5.7 complete
+- **Last task completed:** Task 5.7 — Added `save_settings()` / `load_settings()` pair to `game_manager.gd` using ConfigFile at `user://settings.cfg`. Persists difficulty, reduce_motion, dialogue_char_delay, and audio volumes (music, sfx, ui). `load_settings()` called in `_ready()`. `save_settings()` called from all 5 settings callbacks in `main_menu.gd` (difficulty, reduce_motion, dialogue_speed, music_volume, sfx_volume). MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 6.1 — Add dialogue skip-all input
+- **Known issues:** None outstanding for settings persistence.
 
 ---
 
@@ -136,7 +136,7 @@
 - [x] **DONE.** Added three controls to existing settings panel in `main_menu.gd`: Difficulty OptionButton (Easy/Normal/Hard, wired to `gm.difficulty`), Reduce Motion CheckBox (wired to `gm.set_reduce_motion()`), Dialogue Speed HSlider (inverted mapping: 0.0=slow/0.08s delay, 1.0=fast/0.005s delay, wired to `gm.dialogue_char_delay`). All read initial values from GameManager. Panel min height expanded 350→520. Terminal-green styling consistent with existing controls. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 5.7 Persist settings to user://settings.cfg
-- [ ] Create a lightweight `save_settings()` / `load_settings()` pair on GameManager using ConfigFile to store difficulty, reduce_motion, dialogue_char_delay, and existing audio volumes (if not already persisted). Call `load_settings()` in GameManager `_ready()`. Call `save_settings()` when settings change.
+- [x] **DONE.** Added `save_settings()` / `load_settings()` to `game_manager.gd` using ConfigFile at `user://settings.cfg`. Stores difficulty, reduce_motion, dialogue_char_delay, music_volume, sfx_volume, ui_volume. `load_settings()` called in `_ready()` — gracefully handles missing file (first launch). `save_settings()` called from all settings callbacks in `main_menu.gd`: difficulty, reduce_motion, dialogue_speed, music_volume, sfx_volume. On load, fires `reduce_motion_changed` signal if enabled so shaders update. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ---
 

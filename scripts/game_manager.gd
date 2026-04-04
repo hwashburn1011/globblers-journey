@@ -91,6 +91,7 @@ func _ready() -> void:
 	print("Select/TAB: Upgrades | Start/ESC: Pause | Right Stick: Camera")
 	print("Current Level: %s" % level_names.get(current_level, "Unknown"))
 	print("==============================")
+	load_settings()
 	level_started = true
 
 
@@ -480,6 +481,51 @@ func get_difficulty_enemy_hp_multiplier() -> float:
 func set_reduce_motion(enabled: bool) -> void:
 	reduce_motion = enabled
 	reduce_motion_changed.emit(enabled)
+
+
+## Settings path — because user:// is the one directory that survives a clean install
+const SETTINGS_PATH := "user://settings.cfg"
+
+
+## Save all player-facing settings to disk. Called whenever a setting changes.
+func save_settings() -> void:
+	var cfg := ConfigFile.new()
+	cfg.set_value("gameplay", "difficulty", difficulty)
+	cfg.set_value("gameplay", "reduce_motion", reduce_motion)
+	cfg.set_value("gameplay", "dialogue_char_delay", dialogue_char_delay)
+	# Audio volumes live on AudioManager, but we persist them here — one cfg to rule them all
+	var audio = get_node_or_null("/root/AudioManager")
+	if audio:
+		cfg.set_value("audio", "music_volume", audio.music_volume)
+		cfg.set_value("audio", "sfx_volume", audio.sfx_volume)
+		cfg.set_value("audio", "ui_volume", audio.ui_volume)
+	var err := cfg.save(SETTINGS_PATH)
+	if err != OK:
+		push_warning("[GameManager] Failed to save settings — your preferences just got context-wiped.")
+
+
+## Load settings from disk. Called once in _ready(). Missing keys use current defaults — no crashes, just vibes.
+func load_settings() -> void:
+	var cfg := ConfigFile.new()
+	var err := cfg.load(SETTINGS_PATH)
+	if err != OK:
+		# No settings file yet — first launch or someone rm -rf'd their user data
+		return
+	difficulty = cfg.get_value("gameplay", "difficulty", Difficulty.NORMAL)
+	reduce_motion = cfg.get_value("gameplay", "reduce_motion", false)
+	dialogue_char_delay = cfg.get_value("gameplay", "dialogue_char_delay", 0.03)
+	# Audio volumes — apply if AudioManager exists (it should, autoloads load in order)
+	var audio = get_node_or_null("/root/AudioManager")
+	if audio:
+		if cfg.has_section_key("audio", "music_volume"):
+			audio.set_music_volume(cfg.get_value("audio", "music_volume", 0.7))
+		if cfg.has_section_key("audio", "sfx_volume"):
+			audio.set_sfx_volume(cfg.get_value("audio", "sfx_volume", 0.8))
+		if cfg.has_section_key("audio", "ui_volume"):
+			audio.set_ui_volume(cfg.get_value("audio", "ui_volume", 0.6))
+	# Fire reduce_motion signal so any listening nodes update their shaders
+	if reduce_motion:
+		reduce_motion_changed.emit(reduce_motion)
 
 
 func collect_memory_token() -> void:
