@@ -147,6 +147,15 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
 
+	# ESC during dialogue = skip the ENTIRE sequence, not just this line
+	# Consume the event so it doesn't also toggle the pause menu — Globbler's monologues are bad enough without freezing mid-sentence
+	if event.is_action_pressed("pause"):
+		var dm = get_node_or_null("/root/DialogueManager")
+		if dm and dm.is_dialogue_active():
+			dm.skip_all()
+			get_viewport().set_input_as_handled()
+			return
+
 	# Advance dialogue: SPACE / Enter / LClick / A button — all roads lead to "next line"
 	var clicked = event.is_action_pressed("dialogue_advance")
 

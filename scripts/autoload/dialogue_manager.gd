@@ -182,6 +182,11 @@ func _end_dialogue() -> void:
 	_current_index = -1
 	dialogue_ended.emit()
 
+## Skip the entire dialogue sequence — for players who've heard enough snark
+func skip_all() -> void:
+	if _is_active:
+		_end_dialogue()
+
 ## Check if dialogue is currently playing
 func is_dialogue_active() -> bool:
 	return _is_active

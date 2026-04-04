@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 5.7 complete
-- **Last task completed:** Task 5.7 — Added `save_settings()` / `load_settings()` pair to `game_manager.gd` using ConfigFile at `user://settings.cfg`. Persists difficulty, reduce_motion, dialogue_char_delay, and audio volumes (music, sfx, ui). `load_settings()` called in `_ready()`. `save_settings()` called from all 5 settings callbacks in `main_menu.gd` (difficulty, reduce_motion, dialogue_speed, music_volume, sfx_volume). MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 6.1 — Add dialogue skip-all input
-- **Known issues:** None outstanding for settings persistence.
+- **Last updated by:** Claude (2026-04-04) — Task 6.1 complete
+- **Last task completed:** Task 6.1 — Added ESC key handling to `dialogue_box.gd` to skip entire dialogue sequence during active dialogue. Added public `skip_all()` method to `dialogue_manager.gd` that calls `_end_dialogue()`. ESC press during dialogue consumes the input event (`set_input_as_handled()`) so it doesn't also trigger the pause menu. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 6.2 — Add dialogue backlog storage
+- **Known issues:** None outstanding.
 
 ---
 
@@ -144,7 +144,7 @@
 # For a dialogue-heavy sarcastic game, players will want to re-read and skip.
 
 ### 6.1 Add dialogue skip-all input
-- [ ] In `scenes/ui/dialogue_box.gd`, add handling for ESCAPE key during an active dialogue: end the entire dialogue sequence (not just the current line). Call DialogueManager to force `dialogue_ended`. Do NOT interfere with pause input.
+- [x] **DONE.** Added ESC handling in `dialogue_box.gd` `_unhandled_input()`: checks for "pause" action press, and if DialogueManager has active dialogue, calls `dm.skip_all()` and consumes the event via `set_input_as_handled()` so pause menu is not triggered. Added public `skip_all()` method to `dialogue_manager.gd` that calls `_end_dialogue()` to cleanly end the sequence and emit `dialogue_ended`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 6.2 Add dialogue backlog storage
 - [ ] In `scripts/autoload/dialogue_manager.gd`, add `var history: Array[Dictionary] = []` (max 200 entries). Each entry `{speaker, text, timestamp}`. Append every time a line is shown. Add `func get_history() -> Array` accessor.
