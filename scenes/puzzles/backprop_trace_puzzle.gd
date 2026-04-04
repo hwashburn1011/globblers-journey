@@ -400,7 +400,7 @@ func _on_solved() -> void:
 		if door_mesh and door_mesh.material_override:
 			var tween = create_tween()
 			tween.tween_property(door_mesh.material_override, "albedo_color:a", 0.0, 0.8)
-			tween.tween_callback(_door.queue_free)
+			tween.tween_callback(func(): _door.queue_free())
 		else:
 			_door.queue_free()
 
