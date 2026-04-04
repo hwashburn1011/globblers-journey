@@ -2019,6 +2019,10 @@ func _process(delta: float) -> void:
 # ============================================================
 
 func _setup_post_processing() -> void:
+	# Skip chromatic aberration if the player chose peace over aesthetics
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.reduce_motion:
+		return
 	var canvas = CanvasLayer.new()
 	canvas.name = "PostProcessing"
 	canvas.layer = 10

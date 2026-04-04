@@ -7,6 +7,10 @@ extends Node
 enum Difficulty { EASY, NORMAL, HARD }
 var difficulty := Difficulty.NORMAL
 
+# Reduce motion — for players who prefer their retinas unassaulted
+var reduce_motion := false
+signal reduce_motion_changed(enabled: bool)
+
 var current_level := 1
 var memory_tokens_collected := 0
 var total_memory_tokens := 0
@@ -467,6 +471,12 @@ func get_difficulty_enemy_hp_multiplier() -> float:
 		Difficulty.EASY: return 0.75
 		Difficulty.HARD: return 1.25
 		_: return 1.0
+
+
+## Toggle reduce_motion — kills glitch shaders, chromatic aberration, and anything else that hates eyeballs.
+func set_reduce_motion(enabled: bool) -> void:
+	reduce_motion = enabled
+	reduce_motion_changed.emit(enabled)
 
 
 func collect_memory_token() -> void:

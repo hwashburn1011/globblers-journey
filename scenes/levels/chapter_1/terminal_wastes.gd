@@ -1876,6 +1876,10 @@ func _process(delta: float) -> void:
 # ============================================================
 
 func _setup_post_processing() -> void:
+	# Skip chromatic aberration if the player chose peace over aesthetics
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.reduce_motion:
+		return
 	# Fullscreen quad with chromatic aberration + vignette shader
 	# Because nothing says "you're inside a computer" like distorted edges
 	var canvas = CanvasLayer.new()

@@ -44,10 +44,13 @@ func _process(delta: float) -> void:
 		_bg.queue_redraw()
 
 	# Occasional title glitch — your failure is aesthetically pleasing at least
-	_glitch_timer += delta
-	if _glitch_timer > 3.0 + randf() * 2.0:
-		_glitch_timer = 0.0
-		_glitch_title()
+	# (unless reduce_motion says otherwise — your failure can still be dignified)
+	var _gm = get_node_or_null("/root/GameManager")
+	if not (_gm and _gm.reduce_motion):
+		_glitch_timer += delta
+		if _glitch_timer > 3.0 + randf() * 2.0:
+			_glitch_timer = 0.0
+			_glitch_title()
 
 
 func _build_ui() -> void:

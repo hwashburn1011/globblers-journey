@@ -227,13 +227,16 @@ func _physics_process(delta: float) -> void:
 		strafe_timer = STRAFE_SWITCH_TIME
 
 	# Glitch part jitter — nothing stays still on a failed generation
-	for i in range(glitch_parts.size()):
-		if is_instance_valid(glitch_parts[i]):
-			glitch_parts[i].position += Vector3(
-				sin(Time.get_ticks_msec() * 0.008 + i * 2.0) * delta * 0.15,
-				cos(Time.get_ticks_msec() * 0.006 + i * 1.5) * delta * 0.1,
-				sin(Time.get_ticks_msec() * 0.01 + i * 3.0) * delta * 0.12
-			)
+	# (reduce_motion: hold still, you broken nightmare)
+	var _gm = get_node_or_null("/root/GameManager")
+	if not (_gm and _gm.reduce_motion):
+		for i in range(glitch_parts.size()):
+			if is_instance_valid(glitch_parts[i]):
+				glitch_parts[i].position += Vector3(
+					sin(Time.get_ticks_msec() * 0.008 + i * 2.0) * delta * 0.15,
+					cos(Time.get_ticks_msec() * 0.006 + i * 1.5) * delta * 0.1,
+					sin(Time.get_ticks_msec() * 0.01 + i * 3.0) * delta * 0.12
+				)
 
 	# Update label
 	if status_label:

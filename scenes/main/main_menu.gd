@@ -70,15 +70,18 @@ func _process(delta: float) -> void:
 		var cursor = "█" if fmod(_cursor_blink_timer, 1.0) < 0.5 else " "
 		_subtitle_label.text = "> An Agentic Action Puzzle Platformer " + cursor
 
-	# Subtle title glitch effect
-	_title_glitch_timer += delta
-	if _title_glitch_timer > 4.0 + randf() * 3.0:
-		_title_glitch_timer = 0.0
-		_glitch_title()
+	# Subtle title glitch effect — skipped if reduce_motion because seizures aren't features
+	var _gm = get_node_or_null("/root/GameManager")
+	var _motion_ok = not (_gm and _gm.reduce_motion)
+	if _motion_ok:
+		_title_glitch_timer += delta
+		if _title_glitch_timer > 4.0 + randf() * 3.0:
+			_title_glitch_timer = 0.0
+			_glitch_title()
 
-	# Scanline effect on background
-	_scanline_offset += delta * 30.0
-	queue_redraw()
+		# Scanline effect on background
+		_scanline_offset += delta * 30.0
+		queue_redraw()
 
 
 func _draw() -> void:

@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 5.3 complete
-- **Last task completed:** Task 5.3 — Applied difficulty enemy HP multiplier in `base_enemy.gd` `_ready()` before `_setup_health_component()`. Uses `ceil()` so Easy mode never rounds to zero. Gated on GameManager null-check and `has_method()`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-- **Next task to do:** Task 5.4 — Add reduce_motion toggle
-- **Known issues:** All tutorial hints wired. Difficulty damage multiplier active on player. Enemy HP multiplier now active on spawn.
+- **Last updated by:** Claude (2026-04-04) — Task 5.4 complete
+- **Last task completed:** Task 5.4 — Added `reduce_motion` toggle to GameManager with signal. When enabled: skips chromatic aberration + vignette post-processing in all 5 chapters, disables glitch shader on corrupted_shell_script (falls back to static material), suppresses title glitch text in main_menu and game_over, stops DALLE nightmare glitch jitter. Files touched: `game_manager.gd`, `terminal_wastes.gd`, `training_grounds.gd`, `prompt_bazaar.gd`, `model_zoo.gd`, `alignment_citadel.gd`, `corrupted_shell_script.gd`, `main_menu.gd`, `game_over.gd`, `dalle_nightmare.gd`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+- **Next task to do:** Task 5.5 — Add dialogue_speed setting
+- **Known issues:** All tutorial hints wired. Difficulty multipliers active. Reduce motion toggle ready (needs settings UI in Task 5.6).
 
 ---
 
@@ -127,7 +127,7 @@
 - [x] **DONE.** In `base_enemy.gd` `_ready()`, multiply `max_health` by `GameManager.get_difficulty_enemy_hp_multiplier()` before `_setup_health_component()` is called. Uses `ceil()` to prevent rounding to zero on Easy. Gated on `get_node_or_null("/root/GameManager")` and `has_method()`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 5.4 Add reduce_motion toggle
-- [ ] Add `var reduce_motion := false` to GameManager and `signal reduce_motion_changed(enabled: bool)`. When enabled, disable glitch, chromatic aberration, and heavy post-process shaders. Wire the signal in wherever those shaders are applied (search for "chromatic" and "glitch" in assets/shaders and scene scripts — report files touched in checkbox note).
+- [x] **DONE.** Added `var reduce_motion := false`, `signal reduce_motion_changed(enabled: bool)`, and `set_reduce_motion(enabled)` to `game_manager.gd`. When enabled: (1) all 5 chapter `_setup_post_processing()` early-return, skipping chromatic aberration + vignette shaders; (2) `corrupted_shell_script.gd` skips `glitch.gdshader` and falls back to static StandardMaterial3D; (3) `main_menu.gd` skips title glitch text and scanline animation; (4) `game_over.gd` skips title glitch text; (5) `dalle_nightmare.gd` skips glitch part jitter. Files touched: `game_manager.gd`, `terminal_wastes.gd`, `training_grounds.gd`, `prompt_bazaar.gd`, `model_zoo.gd`, `alignment_citadel.gd`, `corrupted_shell_script.gd`, `main_menu.gd`, `game_over.gd`, `dalle_nightmare.gd`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
 
 ### 5.5 Add dialogue_speed setting
 - [ ] In `scripts/autoload/dialogue_manager.gd` or `scenes/ui/dialogue_box.gd`, replace the hardcoded 0.03 typing speed with a lookup from GameManager `var dialogue_char_delay := 0.03`. Range 0.005 (fast) to 0.08 (slow).

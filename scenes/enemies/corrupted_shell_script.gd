@@ -50,7 +50,9 @@ func _create_visual() -> void:
 	mesh_node.mesh = cyl
 
 	# Glitch shader — because this script was corrupted long before we got here
-	var glitch_shader = load("res://assets/shaders/glitch.gdshader")
+	# (unless reduce_motion is on, then we play it cool with a static material)
+	var _gm = get_node_or_null("/root/GameManager")
+	var glitch_shader = null if (_gm and _gm.reduce_motion) else load("res://assets/shaders/glitch.gdshader")
 	if glitch_shader:
 		var glitch_mat = ShaderMaterial.new()
 		glitch_mat.shader = glitch_shader
