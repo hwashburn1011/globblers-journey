@@ -59,7 +59,42 @@ func _fade_in(duration: float) -> void:
 	await _fade_tween.finished
 
 
-## Actually respawn the player. Stub for now — full logic comes in Task 2.4.
+## Actually respawn the player. The full dramatic production:
+## fade out, teleport, heal, fade in, pretend nothing happened.
 func respawn_player() -> void:
-	# TODO: fade, teleport, heal, the whole dramatic production (Task 2.4)
-	print("[RespawnManager] respawn_player() called — checkpoint: %s, chapter: %d" % [current_checkpoint, current_chapter])
+	if current_checkpoint == Vector3.ZERO and current_chapter == 0:
+		push_warning("[RespawnManager] No checkpoint set — can't respawn into the void. That's nihilism, not game design.")
+		return
+
+	var player = get_tree().get_first_node_in_group("player")
+	if not player:
+		push_warning("[RespawnManager] No player found in group 'player'. Did they alt-F4 out of existence?")
+		return
+
+	respawn_started.emit()
+
+	# Act 1: The dramatic fade to black
+	await _fade_out(0.5)
+
+	# Act 2: Teleport — the coward's fast-travel
+	player.position = current_checkpoint
+	player.velocity = Vector3.ZERO
+
+	# Act 3: Heal — reset the context window like a bad memory wipe
+	var gm = get_node_or_null("/root/GameManager")
+	if gm:
+		gm.context_window = gm.max_context_window
+		gm.context_changed.emit(gm.context_window)
+
+	# Also clear the player's dead state if they have one
+	if player.has_method("_reset_pose"):
+		player._reset_pose()
+	if "is_dead" in player:
+		player.is_dead = false
+	if "death_count" in player:
+		pass  # Don't reset — let the shame accumulate
+
+	# Act 4: The triumphant return — or at least a return
+	await _fade_in(0.5)
+
+	respawn_finished.emit()

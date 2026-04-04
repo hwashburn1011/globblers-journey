@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.3 complete
-- **Last task completed:** Task 2.3 — Implemented fade-to-black overlay in RespawnManager. CanvasLayer (layer 200, PROCESS_MODE_ALWAYS) with black ColorRect (PRESET_FULL_RECT, modulate.a=0, mouse_filter=IGNORE). Added _fade_out() and _fade_in() async helpers using tweens with TWEEN_PAUSE_PROCESS. MCP verified: zero script errors on load.
-- **Next task to do:** Task 2.4 — Implement respawn_player() logic in RespawnManager
+- **Last updated by:** Claude (2026-04-04) — Task 2.4 complete
+- **Last task completed:** Task 2.4 — Implemented respawn_player() in RespawnManager. Emits respawn_started, fades out 0.5s, teleports player (via group "player") to current_checkpoint, zeroes velocity, resets context_window to max via GameManager, clears player dead state and resets pose, fades in 0.5s, emits respawn_finished. Bails with push_warning if no checkpoint set or no player found. MCP verified: zero script errors on load.
+- **Next task to do:** Task 2.5 — Migrate Chapter 1 to RespawnManager
 - **Known issues:** Respawn logic duplicated in every chapter. No tutorial hints. No game-over screen. No accessibility options.
 
 ---
@@ -46,7 +46,7 @@
 - [x] **DONE.** Added `_fade_overlay: CanvasLayer` (layer 200, `PROCESS_MODE_ALWAYS`) with black `ColorRect` child (`PRESET_FULL_RECT`, `modulate.a = 0`, `mouse_filter = IGNORE`) built in `_ready()`. Added `_fade_out(duration)` and `_fade_in(duration)` async helpers using tweens with `TWEEN_PAUSE_PROCESS`. Kills any active tween before starting a new one. MCP verified: project loads cleanly, zero script errors. Only warnings are expected unused-signal notices (wired in Task 2.4) and a pre-existing integer division warning.
 
 ### 2.4 Implement respawn_player() logic in RespawnManager
-- [ ] Fill in `respawn_player()`: emit `respawn_started`, fade out (0.5s), teleport player (found via group "player") to `current_checkpoint`, restore health to full via `health_component.heal_full()` or equivalent, fade in (0.5s), emit `respawn_finished`. If no player found or no checkpoint set, log warning and bail out safely.
+- [x] **DONE.** Filled in `respawn_player()`: emit `respawn_started`, fade out (0.5s), teleport player (found via group "player") to `current_checkpoint`, restore health to full via `health_component.heal_full()` or equivalent, fade in (0.5s), emit `respawn_finished`. If no player found or no checkpoint set, log warning and bail out safely.
 
 ### 2.5 Migrate Chapter 1 to RespawnManager
 - [ ] In `scenes/levels/chapter_1/terminal_wastes.gd`, find `_on_player_died()` (around line 1764). Replace its body with `var rm = get_node_or_null("/root/RespawnManager"); if rm: rm.respawn_player()`. Then find each checkpoint setter in the file and replace local checkpoint vars with `rm.set_checkpoint(pos, 1)`. Delete the chapter's local fade overlay code if any. Test via Godot MCP `run_project` — no script errors on load.
