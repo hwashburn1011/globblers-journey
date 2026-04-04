@@ -1880,6 +1880,7 @@ uniform float chromatic_amount : hint_range(0.0, 0.02) = 0.003;
 uniform float vignette_intensity : hint_range(0.0, 2.0) = 0.6;
 uniform float vignette_smoothness : hint_range(0.0, 1.0) = 0.4;
 uniform vec4 vignette_color : source_color = vec4(0.0, 0.02, 0.0, 1.0);
+uniform sampler2D SCREEN_TEXTURE : hint_screen_texture, filter_linear_mipmap;
 
 void fragment() {
 	vec2 uv = SCREEN_UV;

@@ -14,9 +14,9 @@ var _typing := false
 var _typing_timer := 0.0
 var _fast_mode := false
 
-@onready var speaker_label: Label = $VBox/SpeakerLabel
-@onready var text_label: RichTextLabel = $VBox/TextLabel
-@onready var advance_hint: Label = $VBox/AdvanceHint
+var speaker_label: Label
+var text_label: RichTextLabel
+var advance_hint: Label
 
 signal typing_finished()
 signal advanced()

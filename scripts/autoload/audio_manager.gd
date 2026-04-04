@@ -276,7 +276,7 @@ func _generate_music_loop(is_boss: bool = false) -> AudioStreamWAV:
 		var bar_index := int(beat / beats_per_bar) % pad_notes.size()
 
 		# Bass: square wave with slight detune for warmth
-		var bass_freq := bass_notes[beat_index]
+		var bass_freq: float = bass_notes[beat_index]
 		var bass_sample := 0.0
 		if fmod(bass_phase, 1.0) < 0.3:
 			bass_sample = 1.0
@@ -292,7 +292,7 @@ func _generate_music_loop(is_boss: bool = false) -> AudioStreamWAV:
 		bass_sample *= pump * 0.25
 
 		# Pad: detuned sine for atmosphere
-		var pad_freq := pad_notes[bar_index]
+		var pad_freq: float = pad_notes[bar_index]
 		var pad_sample := sin(pad_phase * TAU) * 0.12
 		pad_sample += sin(pad_phase * TAU * 1.003) * 0.08  # Slight detune chorus
 		pad_phase += pad_freq / SAMPLE_RATE
@@ -519,9 +519,9 @@ func play_sfx(sfx_name: String) -> void:
 
 	# Route UI sounds through ui_volume, everything else through sfx_volume
 	# "Separation of concerns: even our bleeps have a proper bus architecture."
-	var category_vol := ui_volume if sfx_name in _ui_sfx_names else sfx_volume
+	var category_vol: float = ui_volume if sfx_name in _ui_sfx_names else sfx_volume
 	var def: Dictionary = _sfx_defs[sfx_name]
-	var target_db := def.get("volume_db", BASE_VOLUME_DB) + linear_to_db(category_vol)
+	var target_db: float = def.get("volume_db", BASE_VOLUME_DB) + linear_to_db(category_vol)
 
 	# Find a free player from the pool
 	for p in _sfx_players:
@@ -684,19 +684,19 @@ func _generate_menu_music() -> AudioStreamWAV:
 		var arp_index := int(beat * 2.0) % arp_notes.size()
 
 		# Soft bass — sine wave, gentle
-		var bass_freq := bass_notes[beat_index]
+		var bass_freq: float = bass_notes[beat_index]
 		var bass_sample := sin(bass_phase * TAU) * 0.15
 		bass_phase += bass_freq / SAMPLE_RATE
 
 		# Warm pad — detuned sines with slow modulation
-		var pad_freq := pad_notes[bar_index]
+		var pad_freq: float = pad_notes[bar_index]
 		var pad_mod := sin(t * 0.3 * TAU) * 0.02
 		var pad_sample := sin(pad_phase * TAU) * (0.08 + pad_mod)
 		pad_sample += sin(pad_phase * TAU * 1.005) * 0.05  # Detune
 		pad_phase += pad_freq / SAMPLE_RATE
 
 		# Gentle arpeggio — quiet sine plinks
-		var arp_freq := arp_notes[arp_index]
+		var arp_freq: float = arp_notes[arp_index]
 		var arp_beat_frac := fmod(beat * 2.0, 1.0)
 		var arp_env := exp(-5.0 * arp_beat_frac) if arp_beat_frac < 0.5 else 0.0
 		var arp_sample := sin(arp_phase * TAU) * arp_env * 0.06

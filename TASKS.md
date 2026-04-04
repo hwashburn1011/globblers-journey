@@ -8,8 +8,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-04)
-- **Last task completed:** Task 3.10 — Added gravity wells to "gravity_wells" group so cleanup finds them; fixed bare queue_free tween callback
-- **Next task to do:** Task 4.1 — Smoke test Chapter 1
+- **Last task completed:** Task 4.1 — Smoke tested Chapter 1; fixed type inference errors in audio_manager.gd, SCREEN_TEXTURE shader error in all 5 chapters, typed array assignment in physical_puzzle.gd, CSGTorus3D ring_segments→ring_sides in parameter_pickup.gd, and @onready node-not-found in dialogue_box.gd
+- **Next task to do:** Task 4.2 — Smoke test Chapter 2
 - **Known issues:** 20 bugs identified in code review. Game is playable but has crashes, softlocks, and broken features.
 
 ---
@@ -111,7 +111,7 @@
 # Run the game and verify fixes work.
 
 ### 4.1 Smoke test Chapter 1
-- [ ] Use Godot MCP: run_project, wait 30 seconds, get_debug_output. Fix any errors. Then stop_project.
+- [x] Fixed: audio_manager.gd type inference (bass_freq, pad_freq, arp_freq, target_db, category_vol), SCREEN_TEXTURE→uniform sampler2D in all 5 chapter shaders, physical_puzzle.gd typed array assign, parameter_pickup.gd CSGTorus3D ring_sides, dialogue_box.gd @onready→var. Zero runtime errors on launch.
 
 ### 4.2 Smoke test Chapter 2
 - [ ] Use Godot MCP: run_project with Chapter 2 scene. Wait 30 seconds, get_debug_output. Fix any errors. Then stop_project.

@@ -146,7 +146,7 @@ func _create_blocks() -> void:
 		var glob_target = preload("res://scripts/components/glob_target.gd").new()
 		glob_target.glob_name = "block_%d" % i
 		glob_target.file_type = "block"
-		glob_target.tags = ["pushable", "physical"]
+		glob_target.tags.assign(["pushable", "physical"])
 		block.add_child(glob_target)
 
 		# Mark the reflector block with a special look — shinier, more green
