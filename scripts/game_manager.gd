@@ -472,6 +472,8 @@ func complete_level(_chapter_id = null) -> void:
 		prog.unlock_chapter_patterns(current_level)
 
 	current_level += 1
+	# Reset stats so the next chapter doesn't inherit stale murder counts
+	reset_level()
 
 func get_level_intro() -> String:
 	var level_name_text = level_names.get(current_level, "Unknown Level")
@@ -491,6 +493,8 @@ func reset_level() -> void:
 	level_time = 0.0
 	enemies_killed = 0
 	memory_tokens_collected = 0
+	max_combo = 0
+	level_goal_reached = false
 
 
 ## Return to the main menu — the coward's exit (or the wise one's)
