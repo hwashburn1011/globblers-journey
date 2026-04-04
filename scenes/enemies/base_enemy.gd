@@ -183,10 +183,12 @@ func _physics_process(delta: float) -> void:
 	# Find player (cached — only look up once, not every frame)
 	if not player_ref or not is_instance_valid(player_ref):
 		if not _player_lookup_done:
+			# Only mark lookup done when we actually find the player —
+			# otherwise keep looking, because Globbler might spawn fashionably late
 			var players = get_tree().get_nodes_in_group("player")
 			if players.size() > 0:
 				player_ref = players[0] as CharacterBody3D
-			_player_lookup_done = true
+				_player_lookup_done = true
 
 	# State machine
 	match state:
