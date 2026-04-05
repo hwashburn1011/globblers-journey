@@ -5,6 +5,7 @@ Only CC0 / CC-BY / royalty-free assets are permitted.
 
 | Asset Name | Source | License | URL | Used In |
 |---|---|---|---|---|
+| VT323 (Font) | Google Fonts | SIL OFL 1.1 | https://fonts.google.com/specimen/VT323 | UI terminal font (all menus, HUD, dialogue) |
 | empty_warehouse_01 (HDRI) | Poly Haven | CC0 | https://polyhaven.com/a/empty_warehouse_01 | Ch1 sky/lighting |
 | blue_photo_studio (HDRI) | Poly Haven | CC0 | https://polyhaven.com/a/blue_photo_studio | Ch2 sky/lighting |
 | carpentry_shop_02 (HDRI) | Poly Haven | CC0 | https://polyhaven.com/a/carpentry_shop_02 | Ch3 sky/lighting |

@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 8.8 complete
-- **Last task completed:** Task 8.8 — Checkpoint rune VFX
-- **Next task to do:** Task 9.1 (Add custom terminal font)
+- **Last updated by:** Claude (2026-04-05) — Task 9.1 complete
+- **Last task completed:** Task 9.1 — Custom terminal font
+- **Next task to do:** Task 9.2 (Animated dialogue-box scanlines)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 COMPLETE — all 5 boss visual upgrades done (rm -rf, System Prompt, Local Minimum, Foundation Model, Aligner). All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -284,7 +284,7 @@ assets/
 # HUD, menus, dialogue — match the new aesthetic.
 
 ### 9.1 Add custom terminal font
-- [ ] Download CC0 monospace font (e.g. "VT323", "Share Tech Mono", "IBM Plex Mono"). Save to `assets/fonts/terminal_mono.ttf`. Create `assets/ui_theme.tres` Theme resource setting it as default. Apply theme in `main_menu.tscn` and HUD.
+- [x] Download CC0 monospace font (e.g. "VT323", "Share Tech Mono", "IBM Plex Mono"). Save to `assets/fonts/terminal_mono.ttf`. Create `assets/ui_theme.tres` Theme resource setting it as default. Apply theme in `main_menu.tscn` and HUD. **Done: Downloaded VT323 (SIL OFL 1.1) from Google Fonts to `assets/fonts/terminal_mono.ttf`. Created `assets/ui_theme.tres` Theme resource with VT323 as default_font (size 16). Set as project-wide default theme in project.godot `[gui] theme/custom`. Also applied directly on MainMenu node in `main_menu.tscn`. All UI controls (menus, HUD, dialogue) now use the terminal font automatically. Zero new runtime errors. LICENSES.md updated.**
 
 ### 9.2 Animated dialogue-box scanlines
 - [ ] In `dialogue_box.gd` scene, add a ShaderMaterial with scanline+flicker shader. Respect reduce_motion toggle.

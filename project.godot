@@ -35,6 +35,10 @@ window/stretch/mode="canvas_items"
 
 project/assembly_name="Globblers Journey"
 
+[gui]
+
+theme/custom="res://assets/ui_theme.tres"
+
 [rendering]
 
 environment/defaults/default_clear_color=Color(0.05, 0.08, 0.05, 1)
