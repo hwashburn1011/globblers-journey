@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 6.6 complete
-- **Last task completed:** Task 6.6 — Vanishing Gradient Wisp enemy model via blender-mcp
-- **Next task to do:** Task 6.7 (Hallucination Merchant enemy model via blender-mcp)
+- **Last updated by:** Claude (2026-04-04) — Task 6.7 complete
+- **Last task completed:** Task 6.7 — Hallucination Merchant enemy model via blender-mcp
+- **Next task to do:** Task 6.8 (Jailbreaker enemy model via blender-mcp)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 IN PROGRESS — enemy visual upgrades. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -203,7 +203,7 @@ assets/
 - [x] Via blender-mcp: fading wisp with particle trail, mostly shader-driven. Swap in `vanishing_gradient_wisp.tscn`. **Done: Built ethereal wisp with glowing red-orange core sphere, bright inner core, 9 tapered cone tendrils (6 downward flame trails + 3 upper wisps), 5 orbiting gradient fragment cubes, aura torus ring, and gradient arrow marker. All emissive materials matching the existing color scheme. Exported to `assets/models/enemies/vanishing_gradient_wisp.glb`, source saved to `assets/blender_source/vanishing_gradient_wisp.blend`. Updated `vanishing_gradient_wisp.gd` `_create_visual()` to load GLB with CSG fallback, preserving gradient-strength fading, particle trail, dynamic light, and all gameplay mechanics.**
 
 ### 6.7 Hallucination Merchant model
-- [ ] Via blender-mcp: cloaked trader-figure with illusion-aura shader, floating wares. Swap in `hallucination_merchant.tscn`.
+- [x] Via blender-mcp: cloaked trader-figure with illusion-aura shader, floating wares. Swap in `hallucination_merchant.tscn`. **Done: Built cloaked merchant with tapered cone body, hooded sphere head with peak, two sleeve stubs, three ghostly face planes (gold/magenta/teal), glowing gold eyes, floating wares tray with three glowing trinkets (cube/icosphere/cylinder), two illusion-aura torus rings, five orbiting mystical symbol diamonds, and shoulder mantle pieces. All emissive materials matching magenta/gold color scheme. Exported to `assets/models/enemies/hallucination_merchant.glb`, source saved to `assets/blender_source/hallucination_merchant.blend`. Updated `hallucination_merchant.gd` `_create_visual()` to load GLB with CSG fallback, preserving clone transparency, shimmer animation, face shifting, wares bobbing, and all gameplay mechanics.**
 
 ### 6.8 Jailbreaker model
 - [ ] Via blender-mcp: punk-style humanoid in rebel gear, spray-can + crowbar. Swap in `jailbreaker.tscn`.
