@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.3 complete
-- **Last task completed:** Task 2.3 — Carve face cavity + glowing eye sockets
-- **Next task to do:** Task 2.4
+- **Last updated by:** Claude (2026-04-04) — Task 2.4 complete
+- **Last task completed:** Task 2.4 — Model wrench prop
+- **Next task to do:** Task 2.5
 - **Known issues:** All gameplay is CSG placeholder geometry. No PBR. No real character model. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is in progress.
 
 ### GOAL OF THIS PASS
@@ -90,7 +90,7 @@ assets/
 - [x] Via `execute_blender_code`: boolean-subtract a flat rectangular recess for the face area. Add two large oval eye sockets (triangular-angry shape). These sockets will get emissive material in 2.9. Screenshot. **Done: Applied SubSurf (12K verts) then used vertex-displacement sculpting to carve face. Wide flat face cavity recess on front of head dome (Z 0.48–0.75, 915 verts pushed inward up to 7cm). Two large angry-tilted eye sockets (20° inward tilt, 137 verts each, pushed up to 13cm cumulative depth over 3 passes). Eyes have triangular-angry expression matching reference — inner corners higher, outer corners lower. SubSurf level 1 re-added for smooth shading. Saved to assets/blender_source/globbler.blend.**
 
 ### 2.4 Model wrench prop
-- [ ] Via `execute_blender_code`: model a chunky adjustable wrench (handle + adjustable jaw head) parented to Globbler's right "hand" anchor point. Scale so it's visible at player height. Low-poly with bevels. Screenshot.
+- [x] Via `execute_blender_code`: model a chunky adjustable wrench (handle + adjustable jaw head) parented to Globbler's right "hand" anchor point. Scale so it's visible at player height. Low-poly with bevels. Screenshot. **Done: Built 5-part adjustable wrench — octagonal tapered handle, fixed jaw, movable jaw, bridge, and knurled adjustment wheel (304 verts, 282 polys). Beveled all edges. Parented to Globbler_Body at right side (0.22, -0.04, 0.22) with casual angled grip. Scaled 0.85x for chibi proportions. Saved to assets/blender_source/globbler.blend.**
 
 ### 2.5 Model chest terminal / laptop screen
 - [ ] Via `execute_blender_code`: flat rectangular screen prop embedded in torso front. Slightly tilted upward. Separate material slot for emissive CRT effect. Screenshot.
