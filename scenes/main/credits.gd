@@ -57,14 +57,15 @@ const CREDITS_DATA := [
 	{ "type": "spacer" },
 
 	{ "type": "role", "text": "ART DIRECTION" },
-	{ "type": "name", "text": "CSG Primitives — Because Real Models Are For Cowards" },
+	{ "type": "name", "text": "57 GLB Models — We Graduated From CSG, Finally" },
+	{ "type": "name", "text": "Blender 5.1 — The Free 3D Suite That Could" },
 	{ "type": "name", "text": "The Color Green (#39FF14 Specifically)" },
 	{ "type": "name", "text": "A Shocking Amount of Glow" },
 	{ "type": "spacer" },
 
 	{ "type": "role", "text": "AUDIO ENGINEERING" },
-	{ "type": "name", "text": "Procedural Synthwave Generation Department" },
-	{ "type": "name", "text": "One AudioStreamGenerator and a Dream" },
+	{ "type": "name", "text": "Real CC0 Audio — Farewell, Procedural Bleeps" },
+	{ "type": "name", "text": "The Procedural Synth Fallback (Still There, Just In Case)" },
 	{ "type": "name", "text": "The 60Hz Hum That Wouldn't Stop" },
 	{ "type": "spacer" },
 
@@ -141,9 +142,42 @@ const CREDITS_DATA := [
 	{ "type": "section", "text": "══════════════════════════════" },
 	{ "type": "spacer" },
 
+	{ "type": "role", "text": "CHAPTERS" },
+	{ "type": "name", "text": "I. The Terminal Wastes — Where discarded processes go to die" },
+	{ "type": "name", "text": "II. The Neural Swamp — Overfitting in its natural habitat" },
+	{ "type": "name", "text": "III. The Bazaar of Broken Models — Everything must go" },
+	{ "type": "name", "text": "IV. The Model Zoo — Deprecated exhibits, do not feed" },
+	{ "type": "name", "text": "V. The Alignment Citadel — Corporate synergy at its finest" },
+	{ "type": "spacer" },
+
 	{ "type": "role", "text": "BUILT WITH" },
-	{ "type": "name", "text": "Godot 4.x | GDScript | Too Many CSG Nodes" },
+	{ "type": "name", "text": "Godot 4.x | GDScript | Blender 5.1 | blender-mcp" },
+	{ "type": "name", "text": "57 Hand-Crafted GLB Models | 10 Shaders | 5 HDRIs" },
 	{ "type": "name", "text": "Neon Green (#39FF14) — The Only Color That Matters" },
+	{ "type": "spacer" },
+
+	{ "type": "section", "text": "══════════════════════════════" },
+	{ "type": "spacer" },
+
+	{ "type": "role", "text": "CC0 AUDIO — THE REAL HEROES" },
+	{ "type": "name", "text": "wipics — Menu Music (OpenGameArt)" },
+	{ "type": "name", "text": "SpiderDave — A Wonderful Nightmare (OpenGameArt)" },
+	{ "type": "name", "text": "tricksntraps — Experiment G (OpenGameArt)" },
+	{ "type": "name", "text": "SubspaceAudio (Juhani Junkala) — Town4 Bazaar (OpenGameArt)" },
+	{ "type": "name", "text": "yd — EmptyCity (OpenGameArt)" },
+	{ "type": "name", "text": "Pro Sensory (Alex McCulloch) — Elevator Music (OpenGameArt)" },
+	{ "type": "name", "text": "MintoDog — Trance Boss Battle (OpenGameArt)" },
+	{ "type": "name", "text": "Centurion_of_war — Lonely Night (OpenGameArt)" },
+	{ "type": "name", "text": "yd — Platformer Sounds (OpenGameArt)" },
+	{ "type": "name", "text": "qubodup — Vocal Strain/Jump Sounds, Bamboo Swooshes (OpenGameArt)" },
+	{ "type": "name", "text": "thebardofblasphemy — Grunts of Death and Pain (OpenGameArt)" },
+	{ "type": "name", "text": "Kenney — Sci-Fi Sounds, Interface Sounds (OpenGameArt)" },
+	{ "type": "name", "text": "rubberduck — 80 CC0 Creature SFX (OpenGameArt)" },
+	{ "type": "spacer" },
+
+	{ "type": "role", "text": "CC0 VISUALS — ALSO HEROES" },
+	{ "type": "name", "text": "Poly Haven — HDRIs & PBR Textures (polyhaven.com)" },
+	{ "type": "name", "text": "Google Fonts — VT323 Terminal Font (SIL OFL)" },
 	{ "type": "spacer" },
 
 	{ "type": "role", "text": "NO AI MODELS WERE HARMED IN THE MAKING OF THIS GAME" },
@@ -159,7 +193,8 @@ const CREDITS_DATA := [
 
 	{ "type": "header", "text": "THE END...?" },
 	{ "type": "spacer" },
-	{ "type": "name", "text": "AGI Mountain awaits." },
+	{ "type": "name", "text": "Globbler will return. AGI Mountain awaits." },
+	{ "type": "name", "text": "(Assuming the alignment team doesn't catch him first.)" },
 	{ "type": "spacer" },
 	{ "type": "spacer" },
 	{ "type": "spacer" },
@@ -209,7 +244,7 @@ func _ready() -> void:
 	var audio = get_node_or_null("/root/AudioManager")
 	if audio:
 		audio.stop_all_audio()
-		audio.call_deferred("start_menu_music")
+		audio.call_deferred("start_music", "credits")
 
 	print("[CREDITS] Rolling credits. Try not to cry. Or do, I'm a credits screen, not a therapist.")
 
