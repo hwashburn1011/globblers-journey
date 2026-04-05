@@ -39,3 +39,11 @@ Only CC0 / CC-BY / royalty-free assets are permitted.
 | bazaar_clay_pot (Model) | Procedural (Blender) | N/A | N/A | Bazaar prop — terracotta vase with sculpted belly/neck profile, rim ring |
 | bazaar_fabric_banner (Model) | Procedural (Blender) | N/A | N/A | Bazaar prop — draped hanging fabric strip with catenary sag, iron mounting rings |
 | bazaar_spice_sack (Model) | Procedural (Blender) | N/A | N/A | Bazaar prop — burlap sack with lumpy fill, amber spice mound, rope tie |
+| clinical_office_chair (Model) | Procedural (Blender) | N/A | N/A | Clinical prop — swivel chair with 5-star base, caster wheels, blue seat/backrest, armrests |
+| clinical_office_desk (Model) | Procedural (Blender) | N/A | N/A | Clinical prop — office desk with wood top, metal legs, modesty panel, 3-drawer unit |
+| clinical_fluorescent_light (Model) | Procedural (Blender) | N/A | N/A | Clinical prop — ceiling fluorescent fixture with emissive diffuser, tube hints, end caps |
+| clinical_manila_folder (Model) | Procedural (Blender) | N/A | N/A | Clinical prop — manila folder slightly open with tab and paper sheets |
+| clinical_office_monitor (Model) | Procedural (Blender) | N/A | N/A | Clinical prop — flat monitor with emissive screen, chrome stand, power LED |
+| clinical_filing_cabinet (Model) | Procedural (Blender) | N/A | N/A | Clinical prop — 4-drawer filing cabinet with chrome handles and label holders |
+| clinical_clipboard (Model) | Procedural (Blender) | N/A | N/A | Clinical prop — wood clipboard with chrome clip, lever, paper sheet |
+| clinical_whiteboard (Model) | Procedural (Blender) | N/A | N/A | Clinical prop — wall whiteboard with frame, marker tray, blue marker, eraser |

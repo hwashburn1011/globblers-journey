@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 4.5 complete
-- **Last task completed:** Task 4.5 — Build procedural bazaar/market prop pack (8 models)
-- **Next task to do:** Task 4.6 (Download CC0 clinical/office props)
+- **Last updated by:** Claude (2026-04-04) — Task 4.6 complete
+- **Last task completed:** Task 4.6 — Build procedural clinical/office prop pack (8 models)
+- **Next task to do:** Task 5.1 (Chapter 1 Terminal Wastes — prop pass)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 in progress — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -157,7 +157,7 @@ assets/
 - [x] Same but "lantern", "market stall", "rug", "crate", "oil drum" for Chapter 3 warm theme. 5–8 models. **Done: Sketchfab integration disabled — built 8 procedural bazaar/market props in Blender instead: bazaar_lantern (640v, octagonal iron frame with amber emissive glass panels, cone cap, hook ring), bazaar_market_stall (113v, wooden booth with 4 legs, 4 canopy posts, drooped canvas canopy, sign board with pink neon strip), bazaar_rug (80v, flat woven rug with wavy wrinkles, warm red pattern, gold fringes at ends), bazaar_crate (136v, wooden crate with 3-band horizontal slats, 4 corner posts, dark wood accents), bazaar_oil_drum (1824v, rusty barrel with bulged profile, top/bottom/middle rim rings, cap with bung plugs), bazaar_clay_pot (674v, terracotta vase with sculpted belly-neck-lip profile, SubSurf smooth, rim ring), bazaar_fabric_banner (1252v, draped fabric strip with catenary sag and wave detail, iron mounting rings), bazaar_spice_sack (803v, lumpy burlap sack with amber spice fill mound, rope tie). All use 10 shared PBR materials (wood, iron, amber glow, pink glow, fabric, clay, rust, canvas, rug pattern, spice amber). Exported as GLB to assets/models/environment/. Source blend saved to assets/blender_source/bazaar_props.blend. All attributions in LICENSES.md.**
 
 ### 4.6 Download CC0 clinical/office props
-- [ ] Same but "office chair", "desk", "fluorescent light", "folder", "monitor" for Chapter 5 clinical theme. 5–8 models.
+- [x] Same but "office chair", "desk", "fluorescent light", "folder", "monitor" for Chapter 5 clinical theme. 5–8 models. **Done: Built 8 procedural clinical/office props in Blender: clinical_office_chair (5-star base with caster wheels, gas cylinder, blue seat/backrest, armrests), clinical_office_desk (wood surface, 4 metal legs, modesty panel, 3-drawer unit with chrome handles, cable grommet), clinical_fluorescent_light (rectangular housing, emissive diffuser panel, 2 tube hints, end caps, mounting clips), clinical_manila_folder (2-flap folder slightly open, tab, 3 paper sheets), clinical_office_monitor (dark bezel, pale blue emissive screen, chrome neck, round base, green power LED), clinical_filing_cabinet (4-drawer body, chrome handles, label holders, top trim), clinical_clipboard (wood board, chrome clip with lever, paper sheet), clinical_whiteboard (gloss surface, 4-edge frame, marker tray, blue marker, eraser). All use 12 shared PBR materials (clinical white plastic, dark frame, blue accent, fluorescent emission, screen glow, desk wood, manila, rubber, chrome, whiteboard surface, LED green, screen off). Exported as GLB to assets/models/environment/. Source blend saved to assets/blender_source/clinical_props.blend. All attributions in LICENSES.md.**
 
 ---
 
