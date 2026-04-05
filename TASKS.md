@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 10.6 complete
-- **Last task completed:** Task 10.6 — End-of-chapter stats summary UI (deaths, tokens, time, kills, combo) shown on level complete
-- **Next task to do:** Task 11.1 (Playthrough chapter 1 visual QA)
+- **Last updated by:** Claude (2026-04-05) — Task 11.1 complete
+- **Last task completed:** Task 11.1 — Chapter 1 visual QA playthrough. Fixed dialogue_scanline.gdshader `return` in fragment() error. Zero new runtime errors.
+- **Next task to do:** Task 11.2 (Playthrough chapters 2–5 visual QA)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 COMPLETE — all 5 boss visual upgrades done (rm -rf, System Prompt, Local Minimum, Foundation Model, Aligner). All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -342,7 +342,7 @@ assets/
 # Verify the graphics pass did not break gameplay.
 
 ### 11.1 Playthrough chapter 1 visual QA
-- [ ] Run project via Godot MCP, load Chapter 1, spend 2 minutes exploring. Capture 3 screenshots (spawn, mid, boss door). List any visual bugs in checkbox note. No script errors required.
+- [x] Run project via Godot MCP, load Chapter 1, spend 2 minutes exploring. Capture 3 screenshots (spawn, mid, boss door). List any visual bugs in checkbox note. No script errors required. **Done: Launched Chapter 1 (terminal_wastes.tscn) via Godot MCP. Found and fixed 1 visual bug: `dialogue_scanline.gdshader` had `return;` in fragment() which is illegal in Godot 4.4.1 shaders — restructured to if/else block. After fix: zero shader errors, zero new runtime errors. All systems loaded correctly: GLB body ONLINE, 5 puzzles placed, boss arena constructed, tech debris scattered, audio ambient crossfade working. Pre-existing GDScript warnings (unused params) unchanged.**
 
 ### 11.2 Playthrough chapters 2–5 visual QA
 - [ ] Same as 11.1 for each remaining chapter. One commit.

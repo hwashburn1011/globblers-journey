@@ -23,35 +23,34 @@ void fragment() {
 
 	if (!animate) {
 		COLOR = tex;
-		return;
+	} else {
+		vec2 uv = UV;
+		float time = TIME;
+
+		// Scrolling horizontal scanlines
+		float scan_pos = uv.y * scanline_count + time * scroll_speed;
+		float scanline = 1.0 - scanline_intensity * (0.5 + 0.5 * sin(scan_pos * 6.28318));
+
+		// Subtle brightness flicker
+		float flicker = 1.0 - flicker_amount * (0.5 + 0.5 * sin(time * flicker_speed));
+
+		// Static noise grain
+		float noise = hash(uv * 200.0 + time * 5.0) * noise_amount;
+
+		// Vignette darkening at edges
+		vec2 center = uv - 0.5;
+		float dist = dot(center, center);
+		float vig = 1.0 - vignette_strength * dist * 4.0;
+		vig = clamp(vig, 0.0, 1.0);
+
+		// Apply effects to the underlying texture
+		vec3 color = tex.rgb;
+		color *= scanline * flicker * vig;
+		color += noise * tint_color.rgb;
+
+		// Subtle green tint push
+		color = mix(color, color * tint_color.rgb * 2.0, tint_strength);
+
+		COLOR = vec4(color, tex.a);
 	}
-
-	vec2 uv = UV;
-	float time = TIME;
-
-	// Scrolling horizontal scanlines
-	float scan_pos = uv.y * scanline_count + time * scroll_speed;
-	float scanline = 1.0 - scanline_intensity * (0.5 + 0.5 * sin(scan_pos * 6.28318));
-
-	// Subtle brightness flicker
-	float flicker = 1.0 - flicker_amount * (0.5 + 0.5 * sin(time * flicker_speed));
-
-	// Static noise grain
-	float noise = hash(uv * 200.0 + time * 5.0) * noise_amount;
-
-	// Vignette darkening at edges
-	vec2 center = uv - 0.5;
-	float dist = dot(center, center);
-	float vig = 1.0 - vignette_strength * dist * 4.0;
-	vig = clamp(vig, 0.0, 1.0);
-
-	// Apply effects to the underlying texture
-	vec3 color = tex.rgb;
-	color *= scanline * flicker * vig;
-	color += noise * tint_color.rgb;
-
-	// Subtle green tint push
-	color = mix(color, color * tint_color.rgb * 2.0, tint_strength);
-
-	COLOR = vec4(color, tex.a);
 }
