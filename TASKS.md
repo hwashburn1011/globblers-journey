@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 3.2 — Add .export-ignore patterns
-- **Next task to do:** Task 3.3 — Build Windows export
+- **Last task completed:** Task 3.3 — Build Windows export
+- **Next task to do:** Task 3.4 — Verify exported build runs standalone
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -130,7 +130,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Added `ai-archive/*`, `*.blend`, `*.blend1`, `.claude/*` to `exclude_filter` on both Windows Desktop and Linux presets. `tools/*` already covered `tools/blender-mcp/`, and `build_log_*` was already present. Full exclude filter now: `*.txt,*.md,*.ps1,*.py,prompt.md,build_log_*,globbler_loop.ps1,tools/*,ai-archive/*,*.blend,*.blend1,.claude/*`.
 
 ### 3.3 Build Windows export
-- [ ] Run `export_game.ps1` or `export_game.sh` (whichever exists). Capture full build output. Report: did it complete? Where is the output? How big is it?
+- [x] **DONE:** Ran `export_game.sh windows` with Godot 4.4.1 mono. Had to first install export templates (downloaded mono-specific `Godot_v4.4.1-stable_mono_export_templates.tpz` from GitHub, extracted to `AppData/Roaming/Godot/export_templates/4.4.1.stable.mono/`). Export completed successfully with minor warnings: rcedit not installed (no custom icon/version metadata embedded in .exe — cosmetic only). Output: `build/windows/GlobblersJourney.exe` (200MB, debug mode, embed_pck=true) + `GlobblersJourney.console.exe` (185KB console companion). All audio, shaders, models, and scenes packed correctly.
 
 ### 3.4 Verify exported build runs standalone
 - [ ] Launch the exported .exe from outside the project directory. Confirm main menu appears, no missing resource errors, a chapter can be loaded. Capture first 30s of stdout/stderr. Note any issues.
