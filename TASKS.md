@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 5.8 — Achievement popup UI
-- **Next task to do:** Task 5.9 — Wire achievement triggers
+- **Last task completed:** Task 5.9 — Wire achievement triggers
+- **Next task to do:** Task 6.1 — Final MCP smoke test all chapters
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -203,7 +203,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Created `scenes/ui/achievement_popup.tscn` + `achievement_popup.gd` (CanvasLayer, layer 110, PROCESS_MODE_ALWAYS). Popup is a PanelContainer anchored bottom-right with terminal-green border, ★ icon, title ("ACHIEVEMENT: <name>"), and description. Slides in from below using Tween (TRANS_BACK ease-out), holds 3s, slides out (TRANS_QUAD ease-in). Supports queue — if multiple achievements fire simultaneously, they display sequentially. Plays `ui_click` SFX on show. Instantiated automatically by GameManager in `_ready()` via `load("res://scenes/ui/achievement_popup.tscn")`. Connected to `GameManager.achievement_unlocked` signal. Verified via Godot MCP — zero runtime errors.
 
 ### 5.9 Wire achievement triggers
-- [ ] Wire the 10 achievement IDs to actual game events: first kill, first death, first puzzle solved, chapter complete (5 achievements), boss defeat (5 achievements), max combo >= 10, all lore docs found.
+- [x] **DONE:** Wired all 10 achievement triggers in `game_manager.gd`: (1) `first_blood` — in `on_enemy_killed()` when `enemies_killed == 1`. (2) `first_death` — in `register_death()` on every death (unlock_achievement ignores duplicates). (3) `first_puzzle` — in `expand_context_window()` which is only called by puzzle_terminal on solve. (4) `ch1_complete` through `ch5_complete` — in `complete_level()` using `"ch%d_complete" % current_level` with ACHIEVEMENT_DEFS.has() guard. (5) `combo_master` — in `on_enemy_killed()` when `combo_count >= 10`. (6) `lore_completionist` — in `add_lore_doc()` when `lore_docs_found.size() >= 15`. All calls use `unlock_achievement()` which silently ignores duplicates and emits signal for popup UI. Note: task description mentioned "boss defeat (5 achievements)" but ACHIEVEMENT_DEFS only has ch1-5_complete (chapter completion), not separate boss defeat achievements — wired to chapter completion as defined. Verified Ch1 via Godot MCP — zero runtime errors.
 
 ---
 

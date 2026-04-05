@@ -519,6 +519,7 @@ func take_context_damage(amount: int) -> void:
 ## Another death, another data point. After DEATH_THRESHOLD the gradient has fully descended.
 func register_death() -> void:
 	deaths_this_level += 1
+	unlock_achievement("first_death")
 	if deaths_this_level >= DEATH_THRESHOLD:
 		game_over.emit("Too many retries — the gradient has descended permanently.")
 
@@ -545,6 +546,8 @@ func add_lore_doc(id: String, title: String, body: String) -> void:
 	lore_docs_found[id] = { "title": title, "body": body }
 	lore_doc_collected.emit(id)
 	print("[LORE] Found: '%s' (%d / 15). Another fragment of forbidden knowledge." % [title, lore_docs_found.size()])
+	if lore_docs_found.size() >= 15:
+		unlock_achievement("lore_completionist")
 
 
 ## Unlock an achievement by ID. Duplicates are silently ignored.
@@ -668,10 +671,15 @@ func expand_context_window(amount: int) -> void:
 	max_context_window += amount
 	context_window += amount
 	context_changed.emit(context_window)
+	unlock_achievement("first_puzzle")
 	print("[SYSTEM] Context window expanded to %d. The Globbler can think harder now." % max_context_window)
 
 func on_enemy_killed() -> void:
 	enemies_killed += 1
+
+	# Achievement: first kill
+	if enemies_killed == 1:
+		unlock_achievement("first_blood")
 
 	# Combo system
 	combo_count += 1
@@ -679,6 +687,10 @@ func on_enemy_killed() -> void:
 	if combo_count > max_combo:
 		max_combo = combo_count
 	combo_updated.emit(combo_count)
+
+	# Achievement: combo of 10+
+	if combo_count >= 10:
+		unlock_achievement("combo_master")
 
 	# Combo bonus
 	if combo_count >= 3:
@@ -696,6 +708,11 @@ func complete_level(_chapter_id = null) -> void:
 	print("[STATS] Time: %.1fs | Tokens: %d | Kills: %d | Max Combo: x%d" % [
 		level_time, memory_tokens_collected, enemies_killed, max_combo
 	])
+
+	# Achievement: chapter completion
+	var ch_achievement = "ch%d_complete" % current_level
+	if ACHIEVEMENT_DEFS.has(ch_achievement):
+		unlock_achievement(ch_achievement)
 
 	# Show end-of-chapter stats summary before resetting
 	_show_chapter_summary(chapter_name)
