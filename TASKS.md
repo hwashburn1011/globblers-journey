@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 1.3 — Gitignore verification pass
-- **Next task to do:** Task 1.4 — Verify .gdkeep placeholders removed where unneeded
+- **Last task completed:** Task 1.4 — Remove unnecessary .gdkeep placeholders
+- **Next task to do:** Task 2.1 — Create audio asset folders
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -63,7 +63,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Ran `git status` — no temp/generated artifacts tracked except one `.blend1` backup file (`assets/blender_source/globbler.blend1`). Removed it from tracking via `git rm --cached` and added `*.blend1` to `.gitignore`. Verified all `.import` files have corresponding source assets (no orphans). No `.tmp`, `.bak`, `.swp`, `.pyc`, or `.DS_Store` files tracked. `tools/blender-mcp/` correctly untracked.
 
 ### 1.4 Verify .gdkeep placeholders removed where unneeded
-- [ ] Grep for `.gdkeep` files in `assets/`. If the folder now contains real assets, delete the `.gdkeep`. Keep only in genuinely empty scaffolding folders. Commit.
+- [x] **DONE:** Found 8 `.gdkeep` files across `assets/` — all in directories now containing real assets (models/player, models/enemies, models/bosses, models/environment, blender_source, hdri, textures/pbr, environments). Removed all 8 via `git rm`. No genuinely empty scaffolding folders remain that need .gdkeep. Audio folders don't exist yet (created in Pass 2).
 
 ---
 
