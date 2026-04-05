@@ -44,73 +44,36 @@ func _ready() -> void:
 	dropout_timer = randf_range(DROPOUT_INTERVAL_MIN, DROPOUT_INTERVAL_MAX)
 
 func _create_visual() -> void:
-	mesh_node = MeshInstance3D.new()
-	mesh_node.name = "EnemyMesh"
-	mesh_node.position.y = 0.8
-
-	# Ghost body — elongated sphere, ethereal and wispy
-	var ghost_mesh = SphereMesh.new()
-	ghost_mesh.radius = 0.5
-	ghost_mesh.height = 1.3
-	mesh_node.mesh = ghost_mesh
-
-	base_material = StandardMaterial3D.new()
-	base_material.albedo_color = Color(0.15, 0.3, 0.8, 0.75)  # Translucent blue
-	base_material.emission_enabled = true
-	base_material.emission = Color(0.1, 0.3, 0.9)
-	base_material.emission_energy_multiplier = 3.0
-	base_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	base_material.metallic = 0.1
-	base_material.roughness = 0.8
-	mesh_node.material_override = base_material
-	add_child(mesh_node)
-
-	# Hollow "eyes" — dark voids in the ghost face
-	var void_mat = StandardMaterial3D.new()
-	void_mat.albedo_color = Color(0.0, 0.0, 0.0, 0.9)
-	void_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	void_mat.emission_enabled = true
-	void_mat.emission = Color(0.0, 0.1, 0.3)
-	void_mat.emission_energy_multiplier = 1.0
-
-	for side in [-1, 1]:
-		var eye = MeshInstance3D.new()
-		var eye_mesh = SphereMesh.new()
-		eye_mesh.radius = 0.08
-		eye.mesh = eye_mesh
-		eye.position = Vector3(side * 0.15, 0.15, 0.42)
-		eye.material_override = void_mat
-		mesh_node.add_child(eye)
-
-	# Wispy tail — tapered cylinder hanging below
-	var tail = MeshInstance3D.new()
-	var tail_mesh = CylinderMesh.new()
-	tail_mesh.top_radius = 0.3
-	tail_mesh.bottom_radius = 0.05
-	tail_mesh.height = 0.7
-	tail.mesh = tail_mesh
-	tail.position.y = -0.7
-
-	var tail_mat = StandardMaterial3D.new()
-	tail_mat.albedo_color = Color(0.1, 0.2, 0.7, 0.5)
-	tail_mat.emission_enabled = true
-	tail_mat.emission = Color(0.1, 0.25, 0.8)
-	tail_mat.emission_energy_multiplier = 2.0
-	tail_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	tail.material_override = tail_mat
-	mesh_node.add_child(tail)
+	# Load the real GLB model — no more CSG pretending to be spectral
+	var glb_scene = load("res://assets/models/enemies/dropout_ghost.glb")
+	if glb_scene:
+		var model = glb_scene.instantiate()
+		model.name = "GhostModel"
+		model.position.y = 0.4
+		model.scale = Vector3(1.6, 1.6, 1.6)  # Scale up for game visibility
+		add_child(model)
+		# Find the first MeshInstance3D for base_enemy compatibility
+		mesh_node = _find_mesh_instance(model)
+		if mesh_node:
+			base_material = mesh_node.get_active_material(0) as StandardMaterial3D
+			# Ensure alpha transparency works for the dropout mechanic
+			if base_material:
+				base_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	else:
+		# CSG fallback — the ghost was too transparent to load, apparently
+		_create_csg_fallback()
 
 	# "Probability" text floating nearby — shows dropout chance
 	var prob_label = Label3D.new()
 	prob_label.text = "p=0.35"
 	prob_label.font_size = 24
 	prob_label.modulate = Color(0.3, 0.5, 1.0, 0.6)
-	prob_label.position = Vector3(0, 1.0, 0)
+	prob_label.position = Vector3(0, 1.8, 0)
 	prob_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	prob_label.no_depth_test = true
-	mesh_node.add_child(prob_label)
+	add_child(prob_label)
 
-	# Spectral glow
+	# Spectral glow — because what's a ghost without ambient lighting
 	var light = OmniLight3D.new()
 	light.light_color = Color(0.1, 0.3, 0.9)
 	light.light_energy = 1.5
@@ -143,6 +106,34 @@ func _create_visual() -> void:
 	spark_mesh.radius = 0.05
 	ghost_particles.draw_pass_1 = spark_mesh
 	add_child(ghost_particles)
+
+func _find_mesh_instance(node: Node) -> MeshInstance3D:
+	# Recursively find first MeshInstance3D child
+	if node is MeshInstance3D:
+		return node
+	for child in node.get_children():
+		var found = _find_mesh_instance(child)
+		if found:
+			return found
+	return null
+
+func _create_csg_fallback() -> void:
+	# The ghost couldn't materialize its real form — ironic
+	mesh_node = MeshInstance3D.new()
+	mesh_node.name = "EnemyMesh"
+	mesh_node.position.y = 0.8
+	var ghost_mesh = SphereMesh.new()
+	ghost_mesh.radius = 0.5
+	ghost_mesh.height = 1.3
+	mesh_node.mesh = ghost_mesh
+	base_material = StandardMaterial3D.new()
+	base_material.albedo_color = Color(0.15, 0.3, 0.8, 0.75)
+	base_material.emission_enabled = true
+	base_material.emission = Color(0.1, 0.3, 0.9)
+	base_material.emission_energy_multiplier = 3.0
+	base_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mesh_node.material_override = base_material
+	add_child(mesh_node)
 
 func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
