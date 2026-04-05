@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.5 complete
-- **Last task completed:** Task 2.5 — Model chest terminal / laptop screen
-- **Next task to do:** Task 2.6
+- **Last updated by:** Claude (2026-04-04) — Task 2.6 complete
+- **Last task completed:** Task 2.6 — Model cables, tubes, and boots
+- **Next task to do:** Task 2.7
 - **Known issues:** All gameplay is CSG placeholder geometry. No PBR. No real character model. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is in progress.
 
 ### GOAL OF THIS PASS
@@ -96,7 +96,7 @@ assets/
 - [x] Via `execute_blender_code`: flat rectangular screen prop embedded in torso front. Slightly tilted upward. Separate material slot for emissive CRT effect. Screenshot. **Done: Built 2-part chest terminal — dark gunmetal bezel frame (0.256m x 0.176m x 0.04m, beveled edges, boolean-subtracted screen recess) + emissive green CRT screen plane (0.22m x 0.14m, emission_color=(0.2,0.9,0.2), emission_strength=3.0, glossy roughness=0.08). Positioned at Z=0.40 on body front (Y=-0.23), tilted 12° upward for camera visibility. Both parented to Globbler_Body. Saved to assets/blender_source/globbler.blend.**
 
 ### 2.6 Model cables, tubes, and boots
-- [ ] Via `execute_blender_code`: add 3–4 curved cable tubes connecting head to torso using Curve objects with bevel depth. Add stubby boot cylinders at base of torso. All low-poly, beveled. Screenshot.
+- [x] Via `execute_blender_code`: add 3–4 curved cable tubes connecting head to torso using Curve objects with bevel depth. Add stubby boot cylinders at base of torso. All low-poly, beveled. Screenshot. **Done: Built 4 bezier-curve cables (2 front, 2 back) with bevel depth 0.010–0.012 connecting head dome (Z~0.70) to torso shoulders (Z~0.42–0.45), curving outward naturally. Built 2 stubby tapered boot cylinders (12-vert, beveled, SubSurf level 1) at base (Z=0.07) with wider soles and tread strips. All parented to Globbler_Body. Saved to assets/blender_source/globbler.blend.**
 
 ### 2.7 Apply dark metal PBR material to body
 - [ ] Via `execute_blender_code`: create `globbler_body` material — principled BSDF, base_color=(0.08,0.09,0.08), metallic=0.7, roughness=0.55, clearcoat=0.2. Assign to torso+head+boots. Screenshot with material preview.
