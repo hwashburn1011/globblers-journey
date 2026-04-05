@@ -161,6 +161,11 @@ func _setup_environment() -> void:
 	dir_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	dir_light.shadow_bias = 0.1
 	dir_light.shadow_normal_bias = 2.0
+	dir_light.directional_shadow_max_distance = 40.0  # Tight corridors — no need to shadow the void
+	dir_light.directional_shadow_split_1 = 0.1
+	dir_light.directional_shadow_split_2 = 0.3
+	dir_light.directional_shadow_split_3 = 0.6
+	dir_light.shadow_blur = 1.5  # Softer shadows — CRT glow eats hard edges
 	add_child(dir_light)
 
 	# Fill — dim teal from the opposite side, like leaking coolant glow
@@ -173,6 +178,11 @@ func _setup_environment() -> void:
 	fill.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	fill.shadow_bias = 0.1
 	fill.shadow_normal_bias = 2.0
+	fill.directional_shadow_max_distance = 40.0
+	fill.directional_shadow_split_1 = 0.1
+	fill.directional_shadow_split_2 = 0.3
+	fill.directional_shadow_split_3 = 0.6
+	fill.shadow_blur = 1.5
 	add_child(fill)
 
 	# World environment — now powered by a proper .tres resource with HDRI sky,

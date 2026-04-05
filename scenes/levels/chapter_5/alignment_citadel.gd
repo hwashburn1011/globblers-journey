@@ -200,6 +200,11 @@ func _setup_environment() -> void:
 	dir_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	dir_light.shadow_bias = 0.08
 	dir_light.shadow_normal_bias = 1.5
+	dir_light.directional_shadow_max_distance = 80.0  # Grand open halls — compliance sees everything
+	dir_light.directional_shadow_split_1 = 0.08
+	dir_light.directional_shadow_split_2 = 0.2
+	dir_light.directional_shadow_split_3 = 0.5
+	dir_light.shadow_blur = 0.8  # Sharp clinical shadows — nothing blurry about regulation
 	add_child(dir_light)
 
 	# Fill — cool blue uplighting, like floor-embedded LED strips
@@ -212,6 +217,11 @@ func _setup_environment() -> void:
 	fill.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	fill.shadow_bias = 0.08
 	fill.shadow_normal_bias = 1.5
+	fill.directional_shadow_max_distance = 80.0
+	fill.directional_shadow_split_1 = 0.08
+	fill.directional_shadow_split_2 = 0.2
+	fill.directional_shadow_split_3 = 0.5
+	fill.shadow_blur = 0.8
 	add_child(fill)
 
 	# World environment — preloaded .tres because hand-rolling 20 lines of env

@@ -194,6 +194,11 @@ func _setup_environment() -> void:
 	dir_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	dir_light.shadow_bias = 0.1
 	dir_light.shadow_normal_bias = 2.0
+	dir_light.directional_shadow_max_distance = 50.0  # Mid-range — open training arenas but not huge
+	dir_light.directional_shadow_split_1 = 0.1
+	dir_light.directional_shadow_split_2 = 0.25
+	dir_light.directional_shadow_split_3 = 0.55
+	dir_light.shadow_blur = 1.2  # Crisp-ish — neural precision demands clean edges
 	add_child(dir_light)
 
 	# Fill — purple-blue from below-left, neural glow bounce
@@ -206,6 +211,11 @@ func _setup_environment() -> void:
 	fill.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	fill.shadow_bias = 0.1
 	fill.shadow_normal_bias = 2.0
+	fill.directional_shadow_max_distance = 50.0
+	fill.directional_shadow_split_1 = 0.1
+	fill.directional_shadow_split_2 = 0.25
+	fill.directional_shadow_split_3 = 0.55
+	fill.shadow_blur = 1.2
 	add_child(fill)
 
 	# World environment — now loaded from .tres like civilized code

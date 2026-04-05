@@ -186,6 +186,11 @@ func _setup_environment() -> void:
 	dir_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	dir_light.shadow_bias = 0.1
 	dir_light.shadow_normal_bias = 2.0
+	dir_light.directional_shadow_max_distance = 50.0  # Market stalls don't stretch to infinity
+	dir_light.directional_shadow_split_1 = 0.08
+	dir_light.directional_shadow_split_2 = 0.25
+	dir_light.directional_shadow_split_3 = 0.5
+	dir_light.shadow_blur = 1.8  # Soft lantern shadows — amber haze diffuses everything
 	add_child(dir_light)
 
 	# Fill — cool purple-magenta from the opposite side, neon sign bounce
@@ -198,6 +203,11 @@ func _setup_environment() -> void:
 	fill.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	fill.shadow_bias = 0.1
 	fill.shadow_normal_bias = 2.0
+	fill.directional_shadow_max_distance = 50.0
+	fill.directional_shadow_split_1 = 0.08
+	fill.directional_shadow_split_2 = 0.25
+	fill.directional_shadow_split_3 = 0.5
+	fill.shadow_blur = 1.8
 	add_child(fill)
 
 	# World environment — preloaded .tres with HDRI sky, amber fog, the works

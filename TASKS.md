@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 15.12 complete
-- **Last task completed:** Task 15.12 — Ability cast VFX at player hand. Created `scenes/vfx/ability_cast.tscn` with fire-and-forget GPUParticles3D burst (15 particles, 0.3s one-shot) using per-ability color theming (green glob, white wrench, purple hack, cyan dash, orange agent). Hooked into all 5 ability activation points: `wrench_smash.gd:swing()`, `glob_command.gd:fire_glob()`, `terminal_hack.gd:try_interact()`, `agent_spawn.gd:try_spawn()`, and `globbler.gd` dash. All respect reduce_motion. Zero new runtime errors.
-- **Next task to do:** Task 15.13 (Shadow distance + CSM tuning per chapter)
+- **Last updated by:** Claude (2026-04-05) — Task 15.13 complete
+- **Last task completed:** Task 15.13 — Shadow distance + CSM tuning per chapter. Added `directional_shadow_max_distance`, `directional_shadow_split_1/2/3`, and `shadow_blur` to both MainLight and FillLight in all 5 chapter scripts. Ch1=40m/blur1.5 (tight corridors), Ch2=50m/blur1.2, Ch3=50m/blur1.8 (soft lantern), Ch4=60m/blur1.0 (crisp museum), Ch5=80m/blur0.8 (sharp clinical). CSM splits tuned per-chapter for optimal near/far shadow distribution.
+- **Next task to do:** Task 15.14 (Per-chapter color grade)
 - **V2.0 MILESTONE SUMMARY (Passes 1–11):**
   - **Pass 1 — Lighting:** 5 Poly Haven HDRIs, 5 WorldEnvironment .tres resources, DirectionalLight3D tuning (4-split shadows, per-chapter color temp). All chapters have FILMIC tonemap, SSAO, SSIL, SDFGI, volumetric fog.
   - **Pass 2 — Globbler Hero:** Custom Blender-built chibi robot GLB (dark metal + neon green), tuned scale (1.4x), collision capsule (r=0.35, h=1.3), third-person camera (distance=6.0, pitch=-0.3, height=1.1m).
@@ -484,7 +484,7 @@ assets/
 - [x] Create `scenes/vfx/ability_cast.tscn` — small GPUParticles3D burst (15 particles, 0.3s) in matching color per ability (green glob, white wrench, purple hack, cyan dash, orange agent). Triggered on ability activation from each ability script. Spawns at Globbler's hand bone position (or approximate offset if no bone). **Done: Created `scenes/vfx/ability_cast.gd` + `.tscn` — fire-and-forget Node3D with 15-particle 0.3s one-shot GPUParticles3D burst. 5 ability colors defined in ABILITY_COLORS dict. Sphere mesh particles with emissive glow, white-core-to-ability-color gradient. Spawned at hand-approximate offsets: wrench (0.8m up + 0.6m forward), glob (1.0m up), hack (0.8m up + 0.4m forward), dash (0.6m up), agent (0.9m up). All 5 ability scripts updated with `_spawn_cast_vfx()` helper gated by reduce_motion. Zero new runtime errors.**
 
 ### 15.13 Shadow distance + CSM tuning per chapter
-- [ ] In each chapter WorldEnvironment / DirectionalLight3D: tune `shadow_max_distance` (Ch1 smaller=40, Ch5 larger=80), `directional_shadow_split_1/2/3` splits, and `shadow_blur` per chapter. Short chapters with tight corridors don't need 200m shadow distance.
+- [x] In each chapter WorldEnvironment / DirectionalLight3D: tune `shadow_max_distance` (Ch1 smaller=40, Ch5 larger=80), `directional_shadow_split_1/2/3` splits, and `shadow_blur` per chapter. Short chapters with tight corridors don't need 200m shadow distance. **Done: Added shadow_max_distance (Ch1=40, Ch2=50, Ch3=50, Ch4=60, Ch5=80), CSM splits, and shadow_blur (Ch1=1.5, Ch2=1.2, Ch3=1.8, Ch4=1.0, Ch5=0.8) to both MainLight and FillLight in all 5 chapter scripts.**
 
 ### 15.14 Per-chapter color grade
 - [ ] Add `adjustment_color_correction` curve texture to each chapter_n.tres Environment: slight warm lift (Ch1/3), cool lift (Ch2/5), desaturated lift (Ch4). Hand-authored Gradient or GradientTexture1D resource. Subtle — 5% shift max.

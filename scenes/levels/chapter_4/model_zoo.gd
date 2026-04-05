@@ -198,6 +198,11 @@ func _setup_environment() -> void:
 	dir_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	dir_light.shadow_bias = 0.1
 	dir_light.shadow_normal_bias = 2.0
+	dir_light.directional_shadow_max_distance = 60.0  # Museum halls are long but not outdoor-long
+	dir_light.directional_shadow_split_1 = 0.1
+	dir_light.directional_shadow_split_2 = 0.3
+	dir_light.directional_shadow_split_3 = 0.55
+	dir_light.shadow_blur = 1.0  # Crisp institutional shadows — the exhibits demand precision
 	add_child(dir_light)
 
 	# Fill — warm amber uplighting from exhibit cases below
@@ -210,6 +215,11 @@ func _setup_environment() -> void:
 	fill.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	fill.shadow_bias = 0.1
 	fill.shadow_normal_bias = 2.0
+	fill.directional_shadow_max_distance = 60.0
+	fill.directional_shadow_split_1 = 0.1
+	fill.directional_shadow_split_2 = 0.3
+	fill.directional_shadow_split_3 = 0.55
+	fill.shadow_blur = 1.0
 	add_child(fill)
 
 	# World environment — preloaded .tres because we're civilized now
