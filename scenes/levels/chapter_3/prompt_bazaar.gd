@@ -172,31 +172,11 @@ func _setup_environment() -> void:
 	fill.light_energy = 0.1
 	add_child(fill)
 
-	# World environment — dark warm void, like a night market floating in space
-	var env = Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color(0.02, 0.015, 0.01)
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color(0.08, 0.06, 0.04)
-	env.ambient_light_energy = 0.3
-	env.glow_enabled = true
-	env.glow_intensity = 1.2
-	env.glow_bloom = 0.8
-	env.fog_enabled = true
-	env.fog_light_color = Color(0.04, 0.03, 0.02)
-	env.fog_density = 0.01
-	env.volumetric_fog_enabled = true
-	env.volumetric_fog_density = 0.02
-	env.volumetric_fog_albedo = Color(0.04, 0.03, 0.02)
-	env.volumetric_fog_emission = Color(0.02, 0.015, 0.01)
-
-	env.adjustment_enabled = true
-	env.adjustment_contrast = 1.1
-	env.adjustment_saturation = 1.2
-
+	# World environment — preloaded .tres with HDRI sky, amber fog, the works
+	# (because hand-rolling 20 env properties was SO last chapter)
 	var world_env = WorldEnvironment.new()
 	world_env.name = "Environment"
-	world_env.environment = env
+	world_env.environment = preload("res://assets/environments/chapter_3.tres")
 	add_child(world_env)
 
 	_setup_post_processing()
