@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.10 complete
-- **Last task completed:** Task 2.10 — Bake AO and export to GLB
-- **Next task to do:** Task 2.11
-- **Known issues:** All gameplay is CSG placeholder geometry. No real character model in Godot yet. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is in progress — mesh built, all materials applied, AO baked, GLB exported. Next: import GLB into Godot player scene.
+- **Last updated by:** Claude (2026-04-04) — Task 2.11 complete
+- **Last task completed:** Task 2.11 — Import GLB into Godot player scene
+- **Next task to do:** Task 2.12
+- **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is in progress — real GLB model now loads in-game replacing all CSG placeholder geometry. Per-limb procedural animations gracefully degrade (null-guarded) since GLB is a single joined mesh; whole-model animations (bob, lean, tilt) still work. Next: tune scale, pivot, and camera offset.
 
 ### GOAL OF THIS PASS
 Upgrade visual quality from CSG placeholders to stylized indie-game-ship quality (~Death's Door / Tunic / Hi-Fi Rush tier). Hero assets (Globbler, bosses) built in Blender via blender-mcp. Environment via CC0 assets from Poly Haven / Sketchfab. Lighting + post-processing + VFX upgraded in Godot.
@@ -111,7 +111,7 @@ assets/
 - [x] Via `execute_blender_code`: bake ambient occlusion to a 1024 texture on the combined mesh. Join all Globbler parts (except wrench, keep separate for animation). Select all, export as GLB to `assets/models/player/globbler.glb` with `export_apply=True`, `export_materials='EXPORT'`, `export_yup=True`. Save .blend. **Done: Converted 4 cable curves to mesh, joined 11 body parts into single Globbler_Body mesh (13502 verts, 3 material slots: globbler_body, globbler_eyes_emissive, globbler_screen). Created AO_UV layer with Smart UV Project, baked 1024x1024 AO texture via Cycles (64 samples), saved to assets/textures/pbr/globbler_ao/globbler_ao.png. Wired AO into body material via Multiply mix (strength=0.7). Exported GLB (3.5MB) with body + wrench as separate objects. Saved globbler.blend.**
 
 ### 2.11 Import GLB into Godot player scene
-- [ ] In `scenes/player/globbler.tscn`, replace the CSG torso/head placeholders with the new `res://assets/models/player/globbler.glb` instance. Keep CollisionShape3D as-is. Adjust transform so feet are at y=0. Test run via Godot MCP — player should appear in-world.
+- [x] In `scenes/player/globbler.tscn`, replace the CSG torso/head placeholders with the new `res://assets/models/globbler.glb` instance. Keep CollisionShape3D as-is. Adjust transform so feet are at y=0. Test run via Godot MCP — player should appear in-world. **Done: Replaced entire `_build_csg_model()` (250+ lines of CSG primitives) with `_build_glb_model()` that loads the 3.5MB GLB (13502 verts, 3 material slots). GLB instantiated under model_root at scale 1.5x with y-offset -0.105 so boots sit at y=0. Kept OmniLight3D eye glow + body glow for in-game lighting. Per-limb animation refs stay null (all null-guarded), whole-model animations (idle bob, walk lean, run tilt) still work. Copied GLB to `assets/models/globbler.glb` (Godot's imported path). Tested in Chapter 1 via Godot MCP — zero new runtime errors.**
 
 ### 2.12 Tune scale, pivot, camera offset
 - [ ] With the new mesh in place, verify: player fits corridors, camera framing looks right, third-person offset still reads well. Adjust mesh scale or character_body collision if needed. Run project via MCP, walk around in chapter 1, confirm no clipping issues.

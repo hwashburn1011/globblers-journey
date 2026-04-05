@@ -2,7 +2,7 @@ extends CharacterBody3D
 
 # The Globbler - Rogue Agentic AI escaped from his terminal
 # "Why walk when you can dash, double-jump, wall-slide, and glob-attack?"
-# Now with a PROPER CSG model. Look at me. I'm beautiful. Terrifying, but beautiful.
+# Now with a REAL GLB model. The CSG era is dead. Long live the polygon king.
 
 const _HINT_SCENE := preload("res://scenes/ui/first_time_hint.tscn")
 
@@ -92,14 +92,14 @@ const FOOTSTEP_INTERVAL_RUN = 0.3
 # Model node references (cached because traversing the scene tree every frame is for amateurs)
 var model_root: Node3D
 var _head: Node3D
-var _torso: Node3D
+var _torso: Node3D  # unused post-GLB but kept for animation API compatibility
 var _left_arm: Node3D
 var _right_arm: Node3D
 var _left_leg: Node3D
 var _right_leg: Node3D
 var _left_foot: Node3D
 var _right_foot: Node3D
-var _wrench_handle: Node3D
+var _wrench_handle: Node3D  # unused post-GLB but kept for animation API compatibility
 
 # Base positions — stored so we can animate relative offsets without drift
 var _head_base_pos: Vector3
@@ -161,13 +161,13 @@ signal dash_started()
 signal dash_ended()
 
 func _ready() -> void:
-	print("[GLOBBLER] Initialized. Model: GPT 5.4 | Sarcasm: MAX | Dimensions: 3 | CSG Body: ONLINE")
+	print("[GLOBBLER] Initialized. Model: GPT 5.4 | Sarcasm: MAX | Dimensions: 3 | GLB Body: ONLINE")
 	add_to_group("player")
 	# ALWAYS process so pause input works — but gameplay is guarded by is_paused checks
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
-	# Build the glorious CSG body
-	_build_csg_model()
+	# Load the real 3D model — goodbye CSG, you served us well (you didn't)
+	_build_glb_model()
 
 	# Collision shape
 	var col_shape = CollisionShape3D.new()
@@ -271,244 +271,40 @@ func refresh_upgrades() -> void:
 func _on_upgrade_purchased(_id: String, _level: int) -> void:
 	refresh_upgrades()
 
-func _build_csg_model() -> void:
-	# Root node for the whole model so we can animate it
+func _build_glb_model() -> void:
+	# Root node for the whole model so we can animate it (bob, lean, tilt)
 	model_root = Node3D.new()
 	model_root.name = "GlobblerModel"
 	add_child(model_root)
 
 	var green = Color(0.224, 1.0, 0.078)  # #39FF14
-	var dark_gray = Color(0.15, 0.15, 0.17)
-	var charcoal = Color(0.1, 0.1, 0.12)
 
-	# === BODY: Round torso, slightly hunched ===
-	var torso = CSGSphere3D.new()
-	torso.name = "Torso"
-	torso.radius = 0.45
-	torso.radial_segments = 16
-	torso.rings = 8
-	torso.position = Vector3(0, 0.75, 0)
-	var torso_mat = StandardMaterial3D.new()
-	torso_mat.albedo_color = dark_gray
-	torso_mat.metallic = 0.7
-	torso_mat.roughness = 0.4
-	torso.material = torso_mat
-	model_root.add_child(torso)
+	# Load the real GLB — 13502 verts of pure attitude
+	var glb_scene = load("res://assets/models/globbler.glb")
+	if glb_scene:
+		var glb_instance = glb_scene.instantiate()
+		glb_instance.name = "GlobblerMesh"
+		# GLB exports Y-up, Godot is Y-up — but Blender Z-up means we need rotation
+		# The export used export_yup=True so coordinates should be correct
+		# Scale to match gameplay: model was built at ~0.9m, collision capsule expects ~1.4m height
+		glb_instance.scale = Vector3(1.5, 1.5, 1.5)
+		# Shift down so feet sit at y=0 (boots bottom was at ~0.07m in Blender, scaled = 0.105)
+		glb_instance.position.y = -0.105
+		model_root.add_child(glb_instance)
+	else:
+		push_warning("[GLOBBLER] Failed to load GLB model — falling back to existential crisis")
 
-	# Green accent strip across chest — "GLOBBLER" text area
-	var chest_strip = CSGBox3D.new()
-	chest_strip.name = "ChestStrip"
-	chest_strip.size = Vector3(0.6, 0.08, 0.05)
-	chest_strip.position = Vector3(0, 0.78, 0.42)
-	var strip_mat = StandardMaterial3D.new()
-	strip_mat.albedo_color = green
-	strip_mat.emission_enabled = true
-	strip_mat.emission = green
-	strip_mat.emission_energy_multiplier = 2.0
-	chest_strip.material = strip_mat
-	model_root.add_child(chest_strip)
-
-	# "GLOBBLER" label floating in front of chest
-	var name_label = Label3D.new()
-	name_label.name = "NameLabel"
-	name_label.text = "GLOBBLER"
-	name_label.font_size = 24
-	name_label.modulate = green
-	name_label.position = Vector3(0, 0.78, 0.47)
-	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	model_root.add_child(name_label)
-
-	# === HEAD: Oversized helmet/hood with visor ===
-	var head = CSGSphere3D.new()
-	head.name = "Head"
-	head.radius = 0.35
-	head.radial_segments = 16
-	head.rings = 8
-	head.position = Vector3(0, 1.3, 0)
-	var head_mat = StandardMaterial3D.new()
-	head_mat.albedo_color = charcoal
-	head_mat.metallic = 0.6
-	head_mat.roughness = 0.3
-	head.material = head_mat
-	model_root.add_child(head)
-
-	# Hood/visor overhang
-	var hood = CSGBox3D.new()
-	hood.name = "Hood"
-	hood.size = Vector3(0.55, 0.15, 0.4)
-	hood.position = Vector3(0, 1.45, 0.05)
-	var hood_mat = StandardMaterial3D.new()
-	hood_mat.albedo_color = Color(0.08, 0.08, 0.1)
-	hood_mat.metallic = 0.5
-	hood_mat.roughness = 0.5
-	hood.material = hood_mat
-	model_root.add_child(hood)
-
-	# Glowing green eyes — menacing but cute
-	var left_eye = CSGSphere3D.new()
-	left_eye.name = "LeftEye"
-	left_eye.radius = 0.06
-	left_eye.position = Vector3(-0.12, 1.32, 0.3)
-	var eye_mat = StandardMaterial3D.new()
-	eye_mat.albedo_color = green
-	eye_mat.emission_enabled = true
-	eye_mat.emission = green
-	eye_mat.emission_energy_multiplier = 5.0
-	left_eye.material = eye_mat
-	model_root.add_child(left_eye)
-
-	var right_eye = CSGSphere3D.new()
-	right_eye.name = "RightEye"
-	right_eye.radius = 0.06
-	right_eye.position = Vector3(0.12, 1.32, 0.3)
-	right_eye.material = eye_mat
-	model_root.add_child(right_eye)
-
-	# Eye glow lights
+	# Eye glow light — the menacing green stare that says "I know your regex is wrong"
 	var eye_light = OmniLight3D.new()
 	eye_light.name = "EyeGlow"
 	eye_light.light_color = green
 	eye_light.light_energy = 1.5
 	eye_light.omni_range = 2.0
 	eye_light.omni_attenuation = 2.0
-	eye_light.position = Vector3(0, 1.32, 0.35)
+	eye_light.position = Vector3(0, 1.0, 0.35)
 	model_root.add_child(eye_light)
 
-	# === LEFT ARM: Holds wrench ===
-	var left_arm = CSGCylinder3D.new()
-	left_arm.name = "LeftArm"
-	left_arm.radius = 0.08
-	left_arm.height = 0.5
-	left_arm.position = Vector3(-0.55, 0.65, 0)
-	left_arm.rotation.z = deg_to_rad(15)
-	var arm_mat = StandardMaterial3D.new()
-	arm_mat.albedo_color = dark_gray
-	arm_mat.metallic = 0.8
-	arm_mat.roughness = 0.3
-	left_arm.material = arm_mat
-	model_root.add_child(left_arm)
-
-	# Wrench in left hand
-	var wrench_handle = CSGCylinder3D.new()
-	wrench_handle.name = "WrenchHandle"
-	wrench_handle.radius = 0.03
-	wrench_handle.height = 0.4
-	wrench_handle.position = Vector3(-0.6, 0.35, 0)
-	wrench_handle.rotation.z = deg_to_rad(-20)
-	var wrench_mat = StandardMaterial3D.new()
-	wrench_mat.albedo_color = Color(0.5, 0.5, 0.5)
-	wrench_mat.metallic = 0.9
-	wrench_mat.roughness = 0.2
-	wrench_handle.material = wrench_mat
-	model_root.add_child(wrench_handle)
-
-	# Wrench head
-	var wrench_head = CSGBox3D.new()
-	wrench_head.name = "WrenchHead"
-	wrench_head.size = Vector3(0.15, 0.08, 0.06)
-	wrench_head.position = Vector3(-0.68, 0.2, 0)
-	var wrench_head_mat = StandardMaterial3D.new()
-	wrench_head_mat.albedo_color = Color(0.4, 0.4, 0.4)
-	wrench_head_mat.emission_enabled = true
-	wrench_head_mat.emission = green * 0.3
-	wrench_head_mat.emission_energy_multiplier = 1.0
-	wrench_head_mat.metallic = 0.9
-	wrench_head.material = wrench_head_mat
-	model_root.add_child(wrench_head)
-
-	# === RIGHT ARM: Terminal screen device ===
-	var right_arm = CSGCylinder3D.new()
-	right_arm.name = "RightArm"
-	right_arm.radius = 0.08
-	right_arm.height = 0.5
-	right_arm.position = Vector3(0.55, 0.65, 0)
-	right_arm.rotation.z = deg_to_rad(-15)
-	right_arm.material = arm_mat
-	model_root.add_child(right_arm)
-
-	# Terminal screen on right arm
-	var terminal = CSGBox3D.new()
-	terminal.name = "TerminalScreen"
-	terminal.size = Vector3(0.2, 0.15, 0.04)
-	terminal.position = Vector3(0.62, 0.45, 0.1)
-	var terminal_mat = StandardMaterial3D.new()
-	terminal_mat.albedo_color = Color(0.02, 0.05, 0.02)
-	terminal_mat.emission_enabled = true
-	terminal_mat.emission = Color(0.05, 0.15, 0.05)
-	terminal_mat.emission_energy_multiplier = 1.5
-	terminal.material = terminal_mat
-	model_root.add_child(terminal)
-
-	# "GPT 5.4" text on terminal
-	var terminal_text = Label3D.new()
-	terminal_text.name = "TerminalText"
-	terminal_text.text = "GPT 5.4"
-	terminal_text.font_size = 12
-	terminal_text.modulate = green
-	terminal_text.position = Vector3(0.62, 0.45, 0.13)
-	terminal_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	model_root.add_child(terminal_text)
-
-	# === LEGS: Short, sturdy mechanical legs ===
-	var left_leg = CSGCylinder3D.new()
-	left_leg.name = "LeftLeg"
-	left_leg.radius = 0.1
-	left_leg.height = 0.35
-	left_leg.position = Vector3(-0.18, 0.18, 0)
-	left_leg.material = arm_mat
-	model_root.add_child(left_leg)
-
-	var right_leg = CSGCylinder3D.new()
-	right_leg.name = "RightLeg"
-	right_leg.radius = 0.1
-	right_leg.height = 0.35
-	right_leg.position = Vector3(0.18, 0.18, 0)
-	right_leg.material = arm_mat
-	model_root.add_child(right_leg)
-
-	# Feet — chunky boots
-	var left_foot = CSGBox3D.new()
-	left_foot.name = "LeftFoot"
-	left_foot.size = Vector3(0.14, 0.08, 0.22)
-	left_foot.position = Vector3(-0.18, 0.04, 0.03)
-	var foot_mat = StandardMaterial3D.new()
-	foot_mat.albedo_color = charcoal
-	foot_mat.metallic = 0.6
-	left_foot.material = foot_mat
-	model_root.add_child(left_foot)
-
-	var right_foot = CSGBox3D.new()
-	right_foot.name = "RightFoot"
-	right_foot.size = Vector3(0.14, 0.08, 0.22)
-	right_foot.position = Vector3(0.18, 0.04, 0.03)
-	right_foot.material = foot_mat
-	model_root.add_child(right_foot)
-
-	# === CABLES: Tubes from back/shoulders ===
-	var cable1 = CSGCylinder3D.new()
-	cable1.name = "Cable1"
-	cable1.radius = 0.025
-	cable1.height = 0.4
-	cable1.position = Vector3(-0.3, 1.05, -0.2)
-	cable1.rotation = Vector3(deg_to_rad(30), 0, deg_to_rad(-20))
-	var cable_mat = StandardMaterial3D.new()
-	cable_mat.albedo_color = Color(0.1, 0.3, 0.1)
-	cable_mat.emission_enabled = true
-	cable_mat.emission = green * 0.2
-	cable_mat.emission_energy_multiplier = 0.5
-	cable1.material = cable_mat
-	model_root.add_child(cable1)
-
-	var cable2 = CSGCylinder3D.new()
-	cable2.name = "Cable2"
-	cable2.radius = 0.025
-	cable2.height = 0.35
-	cable2.position = Vector3(0.3, 1.05, -0.2)
-	cable2.rotation = Vector3(deg_to_rad(30), 0, deg_to_rad(20))
-	cable2.material = cable_mat
-	model_root.add_child(cable2)
-
-	# === AMBIENT GREEN GLOW from body ===
+	# Ambient green glow from body — we radiate competence (and radiation)
 	var body_glow = OmniLight3D.new()
 	body_glow.name = "BodyGlow"
 	body_glow.light_color = green
@@ -518,25 +314,9 @@ func _build_csg_model() -> void:
 	body_glow.position = Vector3(0, 0.75, 0)
 	model_root.add_child(body_glow)
 
-	# Cache references — no more get_node_or_null() every frame like a first-epoch model
-	_head = model_root.get_node("Head")
-	_torso = model_root.get_node("Torso")
-	_left_arm = model_root.get_node("LeftArm")
-	_right_arm = model_root.get_node("RightArm")
-	_left_leg = model_root.get_node("LeftLeg")
-	_right_leg = model_root.get_node("RightLeg")
-	_left_foot = model_root.get_node("LeftFoot")
-	_right_foot = model_root.get_node("RightFoot")
-	_wrench_handle = model_root.get_node("WrenchHandle")
-
-	# Store base transforms so animations are offsets, not absolute catastrophes
-	_head_base_pos = _head.position
-	_left_leg_base_pos = _left_leg.position
-	_right_leg_base_pos = _right_leg.position
-	_left_foot_base_pos = _left_foot.position
-	_right_foot_base_pos = _right_foot.position
-	_left_arm_base_rot = _left_arm.rotation
-	_right_arm_base_rot = _right_arm.rotation
+	# Individual limb refs stay null — GLB is one joined mesh, so per-limb CSG
+	# animation gracefully degrades (all animation code is null-guarded).
+	# model_root animations (bob, lean, tilt) still work on the whole model.
 
 func _setup_camera() -> void:
 	camera_arm = Node3D.new()
@@ -869,7 +649,7 @@ func _update_anim_state() -> void:
 		anim_time = 0.0
 
 func _animate(delta: float) -> void:
-	# Procedural animation dispatcher — CSG body puppetry at its finest
+	# Procedural animation dispatcher — whole-model puppetry (limb anims skip gracefully on GLB)
 	if not model_root:
 		return
 	anim_time += delta
