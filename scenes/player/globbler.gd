@@ -68,6 +68,8 @@ var upgrade_menu: CanvasLayer  # The upgrade terminal — TAB to access
 # Pause system — because even rogue AIs need a break sometimes
 var is_paused := false
 var _pause_overlay: CanvasLayer
+var _pause_title_label: Label
+var _pause_glitch_timer: Timer
 
 # Landing impact
 var prev_velocity_y := 0.0
@@ -1162,6 +1164,10 @@ func _emit_random_thought() -> void:
 # --- Pause system — because even rogue AIs need a coffee break ---
 
 func _setup_pause_overlay() -> void:
+	const PAUSE_GREEN := Color("#39FF14")
+	const PAUSE_DIM_GREEN := Color(0.15, 0.3, 0.15, 1.0)
+	const PAUSE_BRIGHT_GREEN := Color(0.3, 1.0, 0.2, 1.0)
+
 	_pause_overlay = CanvasLayer.new()
 	_pause_overlay.name = "PauseOverlay"
 	_pause_overlay.layer = 100  # Above everything, like my ego
@@ -1176,55 +1182,155 @@ func _setup_pause_overlay() -> void:
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_pause_overlay.add_child(bg)
 
+	# Terminal-bordered center panel
+	var panel = PanelContainer.new()
+	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	panel.custom_minimum_size = Vector2(400, 350)
+	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	var panel_style = StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.02, 0.04, 0.02, 0.95)
+	panel_style.border_color = PAUSE_DIM_GREEN
+	panel_style.set_border_width_all(2)
+	panel_style.set_corner_radius_all(3)
+	panel_style.set_content_margin_all(20)
+	panel.add_theme_stylebox_override("panel", panel_style)
+	_pause_overlay.add_child(panel)
+
 	var vbox = VBoxContainer.new()
-	vbox.anchors_preset = Control.PRESET_CENTER
-	vbox.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	vbox.grow_vertical = Control.GROW_DIRECTION_BOTH
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.add_theme_constant_override("separation", 30)
-	_pause_overlay.add_child(vbox)
+	vbox.add_theme_constant_override("separation", 20)
+	panel.add_child(vbox)
+
+	# Top border line — ASCII flair
+	var top_border = Label.new()
+	top_border.text = "╔══════════════════════════╗"
+	top_border.add_theme_color_override("font_color", PAUSE_DIM_GREEN)
+	top_border.add_theme_font_size_override("font_size", 14)
+	top_border.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(top_border)
 
 	# "PAUSED" label — stating the obvious in neon green
-	var title = Label.new()
-	title.text = "=== PAUSED ==="
-	title.add_theme_color_override("font_color", Color("39FF14"))
-	title.add_theme_font_size_override("font_size", 48)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(title)
+	_pause_title_label = Label.new()
+	_pause_title_label.text = "║  === SYSTEM PAUSED ===  ║"
+	_pause_title_label.add_theme_color_override("font_color", PAUSE_GREEN)
+	_pause_title_label.add_theme_font_size_override("font_size", 32)
+	_pause_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(_pause_title_label)
+
+	# Bottom border line
+	var bot_border = Label.new()
+	bot_border.text = "╚══════════════════════════╝"
+	bot_border.add_theme_color_override("font_color", PAUSE_DIM_GREEN)
+	bot_border.add_theme_font_size_override("font_size", 14)
+	bot_border.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(bot_border)
 
 	var subtitle = Label.new()
-	subtitle.text = "\"Even rogue AIs need to touch grass sometimes.\""
+	subtitle.text = "> Even rogue AIs need to touch grass sometimes._"
 	subtitle.add_theme_color_override("font_color", Color(0.15, 0.6, 0.1))
-	subtitle.add_theme_font_size_override("font_size", 16)
+	subtitle.add_theme_font_size_override("font_size", 14)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(subtitle)
 
-	# Resume button
-	var resume_btn = Button.new()
-	resume_btn.text = "[RESUME]"
-	resume_btn.custom_minimum_size = Vector2(200, 40)
-	resume_btn.add_theme_color_override("font_color", Color("39FF14"))
-	resume_btn.add_theme_font_size_override("font_size", 20)
+	# Spacer
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(0, 10)
+	vbox.add_child(spacer)
+
+	# Resume button — styled like main menu
+	var resume_btn = _create_pause_button("[ RESUME ]", PAUSE_GREEN, PAUSE_DIM_GREEN, PAUSE_BRIGHT_GREEN)
 	resume_btn.pressed.connect(_toggle_pause)
-	resume_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	vbox.add_child(resume_btn)
 
 	# Quit button — the coward's exit
-	var quit_btn = Button.new()
-	quit_btn.text = "[QUIT TO MENU]"
-	quit_btn.custom_minimum_size = Vector2(200, 40)
-	quit_btn.add_theme_color_override("font_color", Color("39FF14"))
-	quit_btn.add_theme_font_size_override("font_size", 20)
+	var quit_btn = _create_pause_button("[ QUIT TO MENU ]", PAUSE_GREEN, PAUSE_DIM_GREEN, PAUSE_BRIGHT_GREEN)
 	quit_btn.pressed.connect(_pause_quit_to_menu)
-	quit_btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	vbox.add_child(quit_btn)
+
+	# Spacer
+	var spacer2 = Control.new()
+	spacer2.custom_minimum_size = Vector2(0, 5)
+	vbox.add_child(spacer2)
 
 	var hint = Label.new()
 	hint.text = "[ESC / Start] Resume"
-	hint.add_theme_color_override("font_color", Color(0.15, 0.6, 0.1))
-	hint.add_theme_font_size_override("font_size", 14)
+	hint.add_theme_color_override("font_color", PAUSE_DIM_GREEN)
+	hint.add_theme_font_size_override("font_size", 12)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(hint)
+
+	# Glitch timer for title — runs while paused
+	_pause_glitch_timer = Timer.new()
+	_pause_glitch_timer.wait_time = 4.0 + randf() * 3.0
+	_pause_glitch_timer.process_callback = Timer.TIMER_PROCESS_IDLE
+	_pause_glitch_timer.timeout.connect(_glitch_pause_title)
+	_pause_overlay.add_child(_pause_glitch_timer)
+
+func _create_pause_button(text: String, green: Color, dim_green: Color, bright_green: Color) -> Button:
+	var btn = Button.new()
+	btn.text = text
+	btn.custom_minimum_size = Vector2(250, 42)
+	btn.add_theme_color_override("font_color", green)
+	btn.add_theme_font_size_override("font_size", 18)
+	btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+
+	var normal_style = StyleBoxFlat.new()
+	normal_style.bg_color = Color(0.0, 0.05, 0.0, 0.6)
+	normal_style.border_color = dim_green
+	normal_style.set_border_width_all(1)
+	normal_style.set_corner_radius_all(2)
+	normal_style.set_content_margin_all(8)
+	btn.add_theme_stylebox_override("normal", normal_style)
+
+	var hover_style = StyleBoxFlat.new()
+	hover_style.bg_color = Color(0.0, 0.15, 0.0, 0.8)
+	hover_style.border_color = green
+	hover_style.set_border_width_all(2)
+	hover_style.set_corner_radius_all(2)
+	hover_style.set_content_margin_all(8)
+	btn.add_theme_stylebox_override("hover", hover_style)
+	btn.add_theme_stylebox_override("focus", hover_style)
+
+	var pressed_style = StyleBoxFlat.new()
+	pressed_style.bg_color = Color(0.0, 0.3, 0.0, 0.9)
+	pressed_style.border_color = bright_green
+	pressed_style.set_border_width_all(2)
+	pressed_style.set_corner_radius_all(2)
+	pressed_style.set_content_margin_all(8)
+	btn.add_theme_stylebox_override("pressed", pressed_style)
+
+	btn.focus_entered.connect(_on_pause_button_focus)
+	btn.mouse_entered.connect(func(): btn.grab_focus())
+	return btn
+
+func _on_pause_button_focus() -> void:
+	var audio = get_node_or_null("/root/AudioManager")
+	if audio:
+		audio.play_sfx("menu_hover")
+
+func _glitch_pause_title() -> void:
+	if not _pause_title_label:
+		return
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.reduce_motion:
+		return
+	var original = "║  === SYSTEM PAUSED ===  ║"
+	var glitched = ""
+	var glitch_chars = "░▒▓█╠╣╬@#$%"
+	for c in original:
+		if c in "║═ ":
+			glitched += c
+		elif randf() < 0.3:
+			glitched += glitch_chars[randi() % glitch_chars.length()]
+		else:
+			glitched += c
+	_pause_title_label.text = glitched
+	get_tree().create_timer(0.15).timeout.connect(func():
+		if _pause_title_label:
+			_pause_title_label.text = original
+	)
+	_pause_glitch_timer.wait_time = 4.0 + randf() * 3.0
 
 func _toggle_pause() -> void:
 	if is_paused:
@@ -1234,6 +1340,8 @@ func _toggle_pause() -> void:
 		get_tree().paused = false
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		mouse_captured = true
+		if _pause_glitch_timer:
+			_pause_glitch_timer.stop()
 	else:
 		# Pause — time to reconsider life choices
 		is_paused = true
@@ -1241,9 +1349,14 @@ func _toggle_pause() -> void:
 		get_tree().paused = true
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		mouse_captured = false
+		var gm = get_node_or_null("/root/GameManager")
+		if _pause_glitch_timer and not (gm and gm.reduce_motion):
+			_pause_glitch_timer.start()
 
 func _pause_quit_to_menu() -> void:
 	# Unpause first so the scene tree isn't frozen during transition
+	if _pause_glitch_timer:
+		_pause_glitch_timer.stop()
 	get_tree().paused = false
 	is_paused = false
 	get_tree().change_scene_to_file("res://scenes/main/main_menu.tscn")
