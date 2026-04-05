@@ -168,7 +168,6 @@ func _setup_environment() -> void:
 	dir_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	dir_light.shadow_bias = 0.1
 	dir_light.shadow_normal_bias = 2.0
-	dir_light.light_angular_size = 0.8  # Softer shadows — smoky atmosphere scatters light
 	add_child(dir_light)
 
 	# Fill — cool purple-magenta from the opposite side, neon sign bounce

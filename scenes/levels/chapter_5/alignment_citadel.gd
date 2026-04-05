@@ -182,7 +182,6 @@ func _setup_environment() -> void:
 	dir_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	dir_light.shadow_bias = 0.08
 	dir_light.shadow_normal_bias = 1.5
-	dir_light.light_angular_size = 0.1  # Hard crisp shadows — no ambiguity permitted
 	add_child(dir_light)
 
 	# Fill — cool blue uplighting, like floor-embedded LED strips

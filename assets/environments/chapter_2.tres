@@ -1,6 +1,6 @@
-[gd_resource type="Environment" load_steps=3 format=3 uid="uid://ch2_training_grounds_env"]
+[gd_resource type="Environment" load_steps=3 format=3]
 
-[ext_resource type="Texture2D" uid="uid://ch2_sky_hdri" path="res://assets/hdri/ch2_sky.hdr" id="1_ch2sky"]
+[ext_resource type="CompressedTexture2D" uid="uid://bqypifr56pb71" path="res://assets/hdri/ch2_sky.hdr" id="1_ch2sky"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ch2"]
 panorama = ExtResource("1_ch2sky")

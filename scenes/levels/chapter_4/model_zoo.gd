@@ -171,7 +171,6 @@ func _setup_environment() -> void:
 	dir_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	dir_light.shadow_bias = 0.1
 	dir_light.shadow_normal_bias = 2.0
-	dir_light.light_angular_size = 0.4  # Museum track lighting — reasonably defined shadows
 	add_child(dir_light)
 
 	# Fill — warm amber uplighting from exhibit cases below

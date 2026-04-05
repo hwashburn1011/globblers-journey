@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 1.9 complete
-- **Last task completed:** Task 1.9 — Global sun/directional light pass across all 5 chapters
-- **Next task to do:** Task 1.10
-- **Known issues:** All gameplay is CSG placeholder geometry. No PBR. No real character model. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows.
+- **Last updated by:** Claude (2026-04-04) — Task 1.10 complete
+- **Last task completed:** Task 1.10 — MCP lighting smoke test all chapters
+- **Next task to do:** Task 2.1
+- **Known issues:** All gameplay is CSG placeholder geometry. No PBR. No real character model. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete.
 
 ### GOAL OF THIS PASS
 Upgrade visual quality from CSG placeholders to stylized indie-game-ship quality (~Death's Door / Tunic / Hi-Fi Rush tier). Hero assets (Globbler, bosses) built in Blender via blender-mcp. Environment via CC0 assets from Poly Haven / Sketchfab. Lighting + post-processing + VFX upgraded in Godot.
@@ -73,7 +73,7 @@ assets/
 - [x] Each chapter has a DirectionalLight3D. Tune angle, color temp, shadow quality per chapter. Chapter 1 low warm-green rim, Chapter 5 high cool overhead. Enable shadows with `shadow_enabled=true`, `directional_shadow_mode=PARALLEL_4_SPLITS`. **Done: Tuned both MainLight and FillLight in all 5 chapters. Ch1: low-angle green rim (temp 4500K, angular_size 0.5), Ch2: cool teal overhead (7000K, angular_size 0.3), Ch3: warm amber golden-hour (3500K, angular_size 0.8 for smoky diffusion), Ch4: neutral museum overhead (5500K, angular_size 0.4), Ch5: harsh clinical near-vertical (8500K, angular_size 0.1 for hard shadows). All lights now use SHADOW_PARALLEL_4_SPLITS with tuned bias/normal_bias. Fill lights also get shadows enabled.**
 
 ### 1.10 MCP lighting smoke test all chapters
-- [ ] Run project via Godot MCP, load each chapter from chapter select, capture screenshot via Blender MCP `get_viewport_screenshot` (if showing Godot window) or Godot screen capture. Save to `build_log_<date>_lighting.md` with findings per chapter. No script errors required.
+- [x] Run project via Godot MCP, load each chapter from chapter select, capture screenshot via Blender MCP `get_viewport_screenshot` (if showing Godot window) or Godot screen capture. Save to `build_log_<date>_lighting.md` with findings per chapter. No script errors required. **Done: Ran all 5 chapters via Godot MCP. Found and fixed 2 critical bugs: (1) all .tres files had fake UIDs that Godot couldn't resolve — launched editor to trigger HDR imports, updated all UIDs to real Godot-assigned values; (2) `light_angular_size` property doesn't exist on DirectionalLight3D in Godot 4.4.1 — removed from all 5 chapter scripts. After fixes, all 5 chapters load cleanly with no new runtime errors. Results logged to `build_log_2026-04-04_lighting.md`. PASS 1 COMPLETE.**
 
 ---
 

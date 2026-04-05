@@ -174,7 +174,6 @@ func _setup_environment() -> void:
 	dir_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	dir_light.shadow_bias = 0.1
 	dir_light.shadow_normal_bias = 2.0
-	dir_light.light_angular_size = 0.3  # Slightly sharper shadows — this place has structure
 	add_child(dir_light)
 
 	# Fill — purple-blue from below-left, neural glow bounce

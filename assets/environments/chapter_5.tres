@@ -1,6 +1,6 @@
-[gd_resource type="Environment" load_steps=3 format=3 uid="uid://ch5_alignment_env"]
+[gd_resource type="Environment" load_steps=3 format=3]
 
-[ext_resource type="Texture2D" uid="uid://ch5_sky_hdri" path="res://assets/hdri/ch5_sky.hdr" id="1_ch5sky"]
+[ext_resource type="CompressedTexture2D" uid="uid://bk2ctyy3hwtww" path="res://assets/hdri/ch5_sky.hdr" id="1_ch5sky"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ch5"]
 panorama = ExtResource("1_ch5sky")
