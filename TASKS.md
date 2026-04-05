@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 9.6 complete
-- **Last task completed:** Task 9.6 — Loading screen art
-- **Next task to do:** Task 9.7 (Credits background)
+- **Last updated by:** Claude (2026-04-05) — Task 9.7 complete
+- **Last task completed:** Task 9.7 — Credits background
+- **Next task to do:** Task 9.8 (Pause menu restyle)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 COMPLETE — all 5 boss visual upgrades done (rm -rf, System Prompt, Local Minimum, Foundation Model, Aligner). All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -302,7 +302,7 @@ assets/
 - [x] In `loading_screen.gd`, replace placeholder with rotating 3D Globbler head + loading-bar scanline + tip rotation. Reuse tips from V1.1. **Done: replaced ASCII art with 3D SubViewport showing rotating+bobbing Globbler model (green-tinted lighting, 400x400 viewport, MSAA 4X). Added scrolling scanline shader overlay on progress bar. VT323 font applied to all labels. All 28 original tips preserved. Zero new runtime errors.**
 
 ### 9.7 Credits background
-- [ ] In `credits.tscn`, add subtle scrolling particle field + dim HDRI background. Keep terminal text readable.
+- [x] Added 3D SubViewport background to `credits.gd` with dark terminal-green environment, 200-particle GPUParticles3D field (glowing green data motes drifting upward), floating tech debris (CPU, floppy, RAM, keyboard, CRT, HDD), slow camera orbit/drift, fog + glow post-processing. Semi-transparent overlay keeps scrolling text readable. Zero new runtime errors.
 
 ### 9.8 Pause menu restyle
 - [ ] Restyle the pause overlay in `globbler.gd` `_setup_pause_overlay()` — add terminal borders, glitch title if reduce_motion disabled, button hover sfx.
