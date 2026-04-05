@@ -565,6 +565,9 @@ func _on_damage_taken(amount: int, source: Node) -> void:
 
 func start_boss_fight() -> void:
 	# Called by the arena when the player enters
+	BossIntroCamera.play(self, _begin_phase_1)
+
+func _begin_phase_1() -> void:
 	_transition_to_phase(BossPhase.PHASE_1)
 
 func _animate_eyes(delta: float) -> void:

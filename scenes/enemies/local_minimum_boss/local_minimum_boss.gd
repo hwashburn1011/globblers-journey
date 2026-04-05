@@ -826,6 +826,9 @@ func _on_damage_taken(amount: int, source: Node) -> void:
 
 
 func start_boss_fight() -> void:
+	BossIntroCamera.play(self, _begin_phase_1)
+
+func _begin_phase_1() -> void:
 	_transition_to_phase(BossPhase.PHASE_1)
 
 
