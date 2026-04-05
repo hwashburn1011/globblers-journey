@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 6.14 complete
-- **Last task completed:** Task 6.14 — RLHF Drone enemy model via blender-mcp
-- **Next task to do:** Task 6.15 (Constitutional Cop enemy model via blender-mcp)
+- **Last updated by:** Claude (2026-04-04) — Task 6.15 complete
+- **Last task completed:** Task 6.15 — Constitutional Cop enemy model via blender-mcp
+- **Next task to do:** Task 7.1 (rm -rf Boss model via blender-mcp)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 IN PROGRESS — enemy visual upgrades. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -227,7 +227,7 @@ assets/
 - [x] Via blender-mcp: small quad-rotor clipboard-bot with 4 rotor arms/discs, flattened lavender body sphere, cyclopean green eye, 3 antenna spikes with glowing tips, compliance clipboard with checklist lines and checkmarks, reward beam emitter cone, side thrusters, dark belly plate. Exported to `assets/models/enemies/rlhf_drone.glb`, source at `assets/blender_source/rlhf_drone.blend`. Script updated to load GLB with CSG fallback. Removed old propeller_ring/antenna_array CSG nodes (baked into GLB). Swapped in `rlhf_drone.tscn`.
 
 ### 6.15 Constitutional Cop model
-- [ ] Via blender-mcp: authority-figure humanoid with law-scroll shield. Swap in `constitutional_cop.tscn`.
+- [x] Via blender-mcp: authority-figure humanoid with peaked cap, blue visor slit, shoulder pads with gold epaulettes, chest badge, blue uniform stripe, utility belt with pouches, law-scroll shield with scroll curls and policy text lines plus gold seal emblem, citation baton with energy tip and ring, knee pads, radio unit with antenna, chunky boots. ~4900 tris. Exported to `assets/models/enemies/constitutional_cop.glb`, source at `assets/blender_source/constitutional_cop.blend`. Script updated to load GLB with CSG fallback. Old CSG body/head/hat/stripe/badge nodes removed (baked into GLB). Shield, baton, sparks, labels, and amendment aura remain as gameplay overlays. Swapped in `constitutional_cop.tscn`.
 
 ---
 
