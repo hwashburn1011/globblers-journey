@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cshatter_vfx"]
+
+[ext_resource type="Script" path="res://scenes/vfx/enemy_shatter.gd" id="1_shatter"]
+
+[node name="EnemyShatter" type="Node3D"]
+script = ExtResource("1_shatter")

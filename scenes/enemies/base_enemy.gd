@@ -338,6 +338,13 @@ func _on_died(killer: Node) -> void:
 
 	enemy_died.emit(self)
 
+	# Spawn shatter VFX — one last fireworks show before the process table forgets we existed
+	var shatter_scene = load("res://scenes/vfx/enemy_shatter.tscn")
+	if shatter_scene:
+		var shatter = shatter_scene.instantiate()
+		shatter.global_position = global_position + Vector3(0, 0.7, 0)
+		get_tree().current_scene.call_deferred("add_child", shatter)
+
 	# Shrink and disappear
 	var tween = create_tween()
 	tween.tween_property(self, "scale", Vector3(0.01, 0.01, 0.01), 0.5)
