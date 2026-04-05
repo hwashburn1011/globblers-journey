@@ -129,32 +129,11 @@ func _setup_environment() -> void:
 	fill.light_energy = 0.15
 	add_child(fill)
 
-	# World environment — oppressively dark with green fog
-	var env = Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color(0.01, 0.02, 0.01)
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color(0.04, 0.1, 0.04)
-	env.ambient_light_energy = 0.3
-	env.glow_enabled = true
-	env.glow_intensity = 0.8
-	env.glow_bloom = 0.6
-	env.fog_enabled = true
-	env.fog_light_color = Color(0.02, 0.06, 0.02)
-	env.fog_density = 0.015
-	env.volumetric_fog_enabled = true
-	env.volumetric_fog_density = 0.03
-	env.volumetric_fog_albedo = Color(0.02, 0.08, 0.03)
-	env.volumetric_fog_emission = Color(0.01, 0.04, 0.01)
-
-	# Post-processing — the finishing touches on our digital dystopia
-	env.adjustment_enabled = true
-	env.adjustment_contrast = 1.05
-	env.adjustment_saturation = 1.1
-
+	# World environment — now powered by a proper .tres resource with HDRI sky,
+	# because hand-coding Environment properties like it's 2004 was getting old
 	var world_env = WorldEnvironment.new()
 	world_env.name = "Environment"
-	world_env.environment = env
+	world_env.environment = preload("res://assets/environments/chapter_1.tres")
 	add_child(world_env)
 
 	# Chromatic aberration + vignette via fullscreen quad — the engine doesn't

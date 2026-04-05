@@ -1,0 +1,70 @@
+[gd_resource type="Environment" load_steps=3 format=3 uid="uid://ch1_terminal_wastes_env"]
+
+[ext_resource type="Texture2D" uid="uid://ch1_sky_hdri" path="res://assets/hdri/ch1_sky.hdr" id="1_ch1sky"]
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ch1"]
+panorama = ExtResource("1_ch1sky")
+
+[sub_resource type="Sky" id="Sky_ch1"]
+sky_material = SubResource("PanoramaSkyMaterial_ch1")
+
+[resource]
+; ============================================================
+; Chapter 1: Terminal Wastes — WorldEnvironment
+; "Where deprecated code goes to rot under a sickly green sky.
+;  The fog isn't atmospheric, it's the memory leaks condensing."
+; Extends base_env values with dark CRT + neon green theming.
+; ============================================================
+
+; --- Sky (dark industrial HDRI, barely visible — it's a dungeon, not a beach) ---
+background_mode = 2
+sky = SubResource("Sky_ch1")
+sky_custom_fov = 0.0
+background_energy_multiplier = 0.3
+
+; --- Ambient light — the faintest hint that photons once existed here ---
+ambient_light_source = 1
+ambient_light_color = Color(0.04, 0.1, 0.04, 1)
+ambient_light_energy = 0.3
+
+; --- Tonemap (FILMIC = 3, because we're cinematic like that) ---
+tonemap_mode = 3
+tonemap_exposure = 1.0
+
+; --- Glow (bloom) — tinted toward green for that CRT phosphor vibe ---
+glow_enabled = true
+glow_intensity = 0.8
+glow_strength = 1.0
+glow_bloom = 0.6
+glow_hdr_threshold = 0.8
+glow_blend_mode = 0
+
+; --- SSAO (screen-space ambient occlusion — shadows in every crevice) ---
+ssao_enabled = true
+ssao_radius = 1.5
+ssao_intensity = 2.0
+
+; --- SSIL (screen-space indirect lighting — bounce that green around) ---
+ssil_enabled = true
+ssil_radius = 5.0
+ssil_intensity = 1.0
+
+; --- SDFGI (the expensive one that makes everything look dramatically better) ---
+sdfgi_enabled = true
+sdfgi_use_occlusion = true
+
+; --- Fog — green-tinted, because even the air is deprecated ---
+fog_enabled = true
+fog_light_color = Color(0.1, 0.4, 0.15, 1)
+fog_density = 0.015
+
+; --- Volumetric Fog (the cinematic mist that says "this place is haunted by dead processes") ---
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.03
+volumetric_fog_albedo = Color(0.02, 0.08, 0.03, 1)
+volumetric_fog_emission = Color(0.01, 0.04, 0.01, 1)
+
+; --- Post-processing adjustments — punch up the contrast, boost the greens ---
+adjustment_enabled = true
+adjustment_contrast = 1.05
+adjustment_saturation = 1.1

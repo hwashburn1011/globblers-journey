@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 1.3 complete
-- **Last task completed:** Task 1.3 — created base WorldEnvironment template resource
-- **Next task to do:** Task 1.4
-- **Known issues:** All gameplay is CSG placeholder geometry. No HDRIs applied yet. No PBR. No real character model. Lighting is default Godot. Post-processing template created but not yet applied to chapters.
+- **Last updated by:** Claude (2026-04-04) — Task 1.4 complete
+- **Last task completed:** Task 1.4 — Chapter 1 WorldEnvironment with HDRI sky + green fog
+- **Next task to do:** Task 1.5
+- **Known issues:** All gameplay is CSG placeholder geometry. No PBR. No real character model. Ch1 now has HDRI lighting + proper WorldEnvironment. Chapters 2–5 still use ad-hoc environments.
 
 ### GOAL OF THIS PASS
 Upgrade visual quality from CSG placeholders to stylized indie-game-ship quality (~Death's Door / Tunic / Hi-Fi Rush tier). Hero assets (Globbler, bosses) built in Blender via blender-mcp. Environment via CC0 assets from Poly Haven / Sketchfab. Lighting + post-processing + VFX upgraded in Godot.
@@ -55,7 +55,7 @@ assets/
 - [x] Create `assets/environments/base_env.tres` — Environment resource with: tonemap_mode=FILMIC, exposure=1.0, glow_enabled=true, glow_bloom=0.2, glow_hdr_threshold=1.0, ssao_enabled=true, ssao_radius=1.5, ssil_enabled=true, sdfgi_enabled=true, fog_enabled=true, fog_density=0.01, volumetric_fog_enabled=true. This is the template all chapters will extend. **Done: base_env.tres created with FILMIC tonemap, glow (bloom=0.2, HDR threshold=1.0), SSAO (radius=1.5), SSIL, SDFGI with occlusion, fog (density=0.01), and volumetric fog (density=0.02). Chapter-specific overrides will adjust sky, fog color, and density.**
 
 ### 1.4 Chapter 1 WorldEnvironment
-- [ ] Create `assets/environments/chapter_1.tres` from base. Load `ch1_sky.hdr` as sky texture, sky_energy=0.3 (dark), fog_light_color=Color(0.1,0.4,0.15), volumetric_fog_density=0.03, tint glow toward green. In `terminal_wastes.gd`, in `_ready()`, instantiate a WorldEnvironment node with environment=`preload("res://assets/environments/chapter_1.tres")` before CSG geometry builds. Remove any existing ad-hoc Environment setup. MCP screenshot via `get_viewport_screenshot` and compare.
+- [x] Create `assets/environments/chapter_1.tres` from base. Load `ch1_sky.hdr` as sky texture, sky_energy=0.3 (dark), fog_light_color=Color(0.1,0.4,0.15), volumetric_fog_density=0.03, tint glow toward green. In `terminal_wastes.gd`, in `_ready()`, instantiate a WorldEnvironment node with environment=`preload("res://assets/environments/chapter_1.tres")` before CSG geometry builds. Remove any existing ad-hoc Environment setup. MCP screenshot via `get_viewport_screenshot` and compare. **Done: Created chapter_1.tres with empty_warehouse_01 HDRI sky (energy=0.3), green fog (0.1,0.4,0.15), volumetric fog density=0.03, SSAO/SSIL/SDFGI, FILMIC tonemap. Replaced 20-line ad-hoc Environment.new() block in terminal_wastes.gd _setup_environment() with a 4-line preload of the .tres resource.**
 
 ### 1.5 Chapter 2 WorldEnvironment
 - [ ] Same as 1.4 but `chapter_2.tres` — cool blue-green (`fog_light_color=Color(0.3,0.7,0.6)`, brighter sky_energy=0.5). Apply in `training_grounds.gd` `_ready()`.
