@@ -323,7 +323,12 @@ func _build_ui() -> void:
 
 	# Version tag at bottom
 	var version_label = Label.new()
-	version_label.text = "v%s | Globbler Engine | \"Still in beta, like all of us.\"" % GameManager.GAME_VERSION
+	var _version_text := "v%s" % GameManager.GAME_VERSION
+	if OS.is_debug_build():
+		var _commit_hash := _get_short_commit_hash()
+		if _commit_hash != "":
+			_version_text += " (%s)" % _commit_hash
+	version_label.text = "%s | Globbler Engine | \"Still in beta, like all of us.\"" % _version_text
 	version_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	version_label.add_theme_color_override("font_color", Color(GREEN, 0.5))
 	version_label.add_theme_font_size_override("font_size", 12)
@@ -1095,6 +1100,29 @@ func _show_loading_screen(scene_path: String) -> void:
 	get_tree().root.add_child(loading)
 	# Remove the menu so the loading screen takes over
 	queue_free()
+
+
+func _get_short_commit_hash() -> String:
+	var head_path := "res://.git/HEAD"
+	if not FileAccess.file_exists(head_path):
+		return ""
+	var head_file := FileAccess.open(head_path, FileAccess.READ)
+	if head_file == null:
+		return ""
+	var head_content := head_file.get_as_text().strip_edges()
+	head_file.close()
+	if head_content.begins_with("ref: "):
+		var ref_path := "res://.git/" + head_content.substr(5)
+		if not FileAccess.file_exists(ref_path):
+			return ""
+		var ref_file := FileAccess.open(ref_path, FileAccess.READ)
+		if ref_file == null:
+			return ""
+		head_content = ref_file.get_as_text().strip_edges()
+		ref_file.close()
+	if head_content.length() >= 7:
+		return head_content.substr(0, 7)
+	return ""
 
 
 func _input(event: InputEvent) -> void:

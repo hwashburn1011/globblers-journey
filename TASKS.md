@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 3.5 — Add version display to main menu
-- **Next task to do:** Task 3.6 — Add commit hash display (dev builds only)
+- **Last task completed:** Task 3.6 — Add commit hash display (dev builds only)
+- **Next task to do:** Task 3.7 — Finalize credits roll
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -139,7 +139,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Added `const GAME_VERSION := "2.1.0"` to `scripts/game_manager.gd`. Updated existing version label in `scenes/main/main_menu.gd` (was hardcoded "v0.4.3-alpha") to use `GameManager.GAME_VERSION` via format string. Label already had dim green color (0.5 alpha), centered, font size 12, with shadow — no layout changes needed. Verified via Godot MCP — zero runtime errors, menu loads cleanly with real music.
 
 ### 3.6 Add commit hash display (dev builds only)
-- [ ] If a `.git/HEAD` file exists at runtime, read the short commit hash and append to the version label (e.g. `v2.1.0 (a009cf1)`). Wrap in `OS.is_debug_build()` check so it only shows in editor/debug builds.
+- [x] **DONE:** Added `_get_short_commit_hash()` helper to `main_menu.gd` that reads `.git/HEAD`, follows ref symlinks to get the full SHA, and returns the first 7 characters. Version label now shows e.g. `v2.1.0 (0d319ef)` in debug/editor builds. Wrapped in `OS.is_debug_build()` so release exports show clean `v2.1.0` only. Gracefully returns empty string if `.git/HEAD` is missing (exported builds). Verified via Godot MCP — zero runtime errors.
 
 ### 3.7 Finalize credits roll
 - [ ] Read `scenes/main/credits.gd`. Ensure it lists: all CC0 attributions from `assets/LICENSES.md`, tools used (Godot 4.x, Blender 5.1, blender-mcp), project chapters, and sequel tease. Update if any V2.0/V2.1 contributors are missing.
