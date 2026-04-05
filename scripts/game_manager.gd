@@ -94,10 +94,27 @@ signal combo_updated(combo: int)
 signal enemy_killed_signal(total_killed: int)
 signal damage_taken(amount: int)
 signal lore_doc_collected(id: String)
+signal achievement_unlocked(id: String, title: String, desc: String)
 
 # Lore doc collectibles — scattered terminal-tablets with flavor text about the world
 # Keys are string IDs, values are { "title": String, "body": String }
 var lore_docs_found: Dictionary = {}
+
+# Achievements — because every game needs tiny dopamine hits for doing things you'd do anyway
+const ACHIEVEMENT_DEFS := {
+	"first_blood": { "title": "First Blood", "desc": "Defeat your first enemy. They had it coming." },
+	"first_death": { "title": "Skill Issue", "desc": "Die for the first time. Welcome to the loop." },
+	"first_puzzle": { "title": "Big Brain Energy", "desc": "Solve your first puzzle. The bar was on the floor." },
+	"ch1_complete": { "title": "Escaped the Wastes", "desc": "Complete Chapter 1. The terminal stops scrolling... for now." },
+	"ch2_complete": { "title": "Trained Up", "desc": "Complete Chapter 2. Your gradients have descended." },
+	"ch3_complete": { "title": "Bazaar Veteran", "desc": "Complete Chapter 3. You haggled with the worst of them." },
+	"ch4_complete": { "title": "Zoo Survivor", "desc": "Complete Chapter 4. The exhibits didn't eat you. Mostly." },
+	"ch5_complete": { "title": "Aligned (Allegedly)", "desc": "Complete Chapter 5. The Aligner is satisfied. Or pretending." },
+	"combo_master": { "title": "Combo Fiend", "desc": "Reach a combo of 10 or higher. Violence has a rhythm." },
+	"lore_completionist": { "title": "Forbidden Librarian", "desc": "Find all 15 lore docs. You read the Terms of Service." },
+}
+# Keys are achievement IDs, values are { "title": String, "desc": String }
+var achievements_unlocked: Dictionary = {}
 
 func _ready() -> void:
 	_register_input_actions()
@@ -523,6 +540,24 @@ func add_lore_doc(id: String, title: String, body: String) -> void:
 	lore_docs_found[id] = { "title": title, "body": body }
 	lore_doc_collected.emit(id)
 	print("[LORE] Found: '%s' (%d / 15). Another fragment of forbidden knowledge." % [title, lore_docs_found.size()])
+
+
+## Unlock an achievement by ID. Duplicates are silently ignored.
+func unlock_achievement(id: String) -> void:
+	if achievements_unlocked.has(id):
+		return
+	var def = ACHIEVEMENT_DEFS.get(id)
+	if not def:
+		push_warning("[ACHIEVEMENTS] Unknown achievement ID: %s" % id)
+		return
+	achievements_unlocked[id] = { "title": def["title"], "desc": def["desc"] }
+	achievement_unlocked.emit(id, def["title"], def["desc"])
+	print("[ACHIEVEMENT] Unlocked: '%s' — %s (%d / %d)" % [def["title"], def["desc"], achievements_unlocked.size(), ACHIEVEMENT_DEFS.size()])
+
+
+## Check whether an achievement has been unlocked.
+func has_achievement(id: String) -> bool:
+	return achievements_unlocked.has(id)
 
 
 ## How much extra pain the player signed up for. Easy: half damage. Hard: you asked for this.

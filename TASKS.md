@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 5.6 — Lore doc viewer in pause menu
-- **Next task to do:** Task 5.7 — Simple achievements framework
+- **Last task completed:** Task 5.7 — Simple achievements framework
+- **Next task to do:** Task 5.8 — Achievement popup UI
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -197,7 +197,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Created `scenes/ui/lore_viewer.tscn` + `lore_viewer.gd` (CanvasLayer, layer 101, processes when paused). Full terminal-green UI: left scrollable list of collected doc titles as buttons, right panel with selected doc title + body (RichTextLabel with scroll). Header shows "LORE ARCHIVE" + "N / 15 collected" counter. Empty state shows sarcastic prompt. Doc list sorted alphabetically by ID. Added `[ LORE ARCHIVE ]` button to pause menu in `globbler.gd` between Resume and Quit. Opens lore viewer via `_open_lore_archive()` which instantiates the scene; ESC closes it (queue_free). Play `pause_open` SFX on open, `pause_close` on close, `ui_click` on doc select. Added `_lore_viewer` var to track open state (prevents double-open). Verified via Godot MCP — zero runtime errors.
 
 ### 5.7 Simple achievements framework
-- [ ] Add `achievements: Dictionary` to GameManager + `unlock_achievement(id, title, desc)`. Persist in save data. Signal `achievement_unlocked(id, title, desc)`. Define 10 achievement IDs in a constant dict.
+- [x] **DONE:** Added `ACHIEVEMENT_DEFS` constant dict with 10 achievements (first_blood, first_death, first_puzzle, ch1-5_complete, combo_master, lore_completionist) with sarcastic titles/descriptions. Added `achievements_unlocked: Dictionary` var, `unlock_achievement(id)` (looks up title/desc from ACHIEVEMENT_DEFS, ignores duplicates, emits signal), `has_achievement(id)` query, and `achievement_unlocked(id, title, desc)` signal to GameManager. Wired into SaveSystem: `save_data["achievements"]` added to default schema, `_collect_current_state()` deep-copies from GameManager, `apply_loaded_data()` restores on load. Save format is additive. Verified via Godot MCP — zero runtime errors.
 
 ### 5.8 Achievement popup UI
 - [ ] Create `scenes/ui/achievement_popup.tscn` — slides in from bottom-right, 3s display, shows title + desc + icon. Triggered by `achievement_unlocked` signal.
