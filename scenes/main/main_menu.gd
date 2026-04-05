@@ -323,7 +323,7 @@ func _build_ui() -> void:
 
 	# Version tag at bottom
 	var version_label = Label.new()
-	version_label.text = "v0.4.3-alpha | Globbler Engine | \"Still in beta, like all of us.\""
+	version_label.text = "v%s | Globbler Engine | \"Still in beta, like all of us.\"" % GameManager.GAME_VERSION
 	version_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	version_label.add_theme_color_override("font_color", Color(GREEN, 0.5))
 	version_label.add_theme_font_size_override("font_size", 12)

@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 3.4 — Verify exported build runs standalone
-- **Next task to do:** Task 3.5 — Add version display to main menu
+- **Last task completed:** Task 3.5 — Add version display to main menu
+- **Next task to do:** Task 3.6 — Add commit hash display (dev builds only)
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -136,7 +136,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Launched `build/windows/GlobblersJourney.exe` (200MB, embed_pck=true) from `/tmp` and `C:/Users/hwash` — both outside the project directory. Results: (1) Main menu appears correctly — Vulkan 1.4.312 Forward+ on NVIDIA RTX 3070. (2) All 7 autoloads initialize cleanly (GlobEngine, DialogueManager, SaveSystem, AudioManager, ProgressionManager, GameManager, RespawnManager). (3) Real music loaded: AudioManager found and played `menu.ogg` ("farewell, procedural bleeps"). (4) Zero missing resource errors, zero script errors in 15s of runtime. (5) Headless `--quit-after` run confirmed same clean output; only standard Godot exit-cleanup warnings ("ObjectDB instances leaked at exit", "2 resources still in use") which are harmless forced-quit artifacts. (6) Save system loaded existing save data successfully. Build is verified runnable standalone.
 
 ### 3.5 Add version display to main menu
-- [ ] Add `GAME_VERSION := "2.1.0"` constant to GameManager. Add a small version label (bottom-right corner) on `main_menu.tscn` showing `v2.1.0`. Subtle dim color.
+- [x] **DONE:** Added `const GAME_VERSION := "2.1.0"` to `scripts/game_manager.gd`. Updated existing version label in `scenes/main/main_menu.gd` (was hardcoded "v0.4.3-alpha") to use `GameManager.GAME_VERSION` via format string. Label already had dim green color (0.5 alpha), centered, font size 12, with shadow — no layout changes needed. Verified via Godot MCP — zero runtime errors, menu loads cleanly with real music.
 
 ### 3.6 Add commit hash display (dev builds only)
 - [ ] If a `.git/HEAD` file exists at runtime, read the short commit hash and append to the version label (e.g. `v2.1.0 (a009cf1)`). Wrap in `OS.is_debug_build()` check so it only shows in editor/debug builds.

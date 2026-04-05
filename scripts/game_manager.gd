@@ -3,6 +3,8 @@ extends Node
 # Game Manager - The orchestration layer for The Globbler's Journey
 # Now with enemy tracking, combos, time tracking, and actual game flow
 
+const GAME_VERSION := "2.1.0"
+
 # Difficulty — because some players want a challenge and others just want the sarcasm
 enum Difficulty { EASY, NORMAL, HARD }
 var difficulty := Difficulty.NORMAL
