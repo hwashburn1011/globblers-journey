@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 6.15 complete
-- **Last task completed:** Task 6.15 — Constitutional Cop enemy model via blender-mcp
-- **Next task to do:** Task 7.1 (rm -rf Boss model via blender-mcp)
-- **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 IN PROGRESS — enemy visual upgrades. All pre-existing warnings unchanged, zero new runtime errors.
+- **Last updated by:** Claude (2026-04-04) — Task 7.1 complete
+- **Last task completed:** Task 7.1 — rm -rf Boss model via blender-mcp
+- **Next task to do:** Task 7.2 (Local Minimum Boss model via blender-mcp)
+- **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 IN PROGRESS — boss visual upgrades. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
 Upgrade visual quality from CSG placeholders to stylized indie-game-ship quality (~Death's Door / Tunic / Hi-Fi Rush tier). Hero assets (Globbler, bosses) built in Blender via blender-mcp. Environment via CC0 assets from Poly Haven / Sketchfab. Lighting + post-processing + VFX upgraded in Godot.
@@ -235,7 +235,7 @@ assets/
 # 5 bosses — each gets a detailed hero-asset pass.
 
 ### 7.1 rm -rf Boss model
-- [ ] Via blender-mcp: massive clawed delete-daemon, red glow, jagged armor plates. ~2500 tris. Export to `assets/models/bosses/rm_rf_boss.glb`. Swap in `rm_rf_boss/rm_rf_boss.tscn`. Keep phase-transition scripts intact.
+- [x] Via blender-mcp: massive clawed delete-daemon with angular head, horns, red glowing eyes, jagged shoulder/back spikes, big claws (3 per hand), chest armor plates, glowing red emission cracks, belt, tail. 2058 tris. Exported to `assets/models/bosses/rm_rf_boss.glb`, source at `assets/blender_source/rm_rf_boss.blend`. Updated `rm_rf_boss.gd` _create_visual() to load GLB model; shield/core/eyes remain procedural for gameplay control.
 
 ### 7.2 Local Minimum Boss model
 - [ ] Via blender-mcp: swirling gravity-well entity, distorted body with orbiting energy nodes. Dark-purple emission core. Swap in boss scene.
