@@ -71,7 +71,7 @@ func _create_visual() -> void:
 		mesh_node.scale = Vector3(1.4, 1.4, 1.4)
 		add_child(mesh_node)
 		# Find the first MeshInstance3D for material overrides (damage flash, dissolve, etc.)
-		for child in mesh_node.get_children_recursive():
+		for child in mesh_node.find_children("*", "MeshInstance3D"):
 			if child is MeshInstance3D:
 				base_material = child.get_active_material(0) as StandardMaterial3D
 				break

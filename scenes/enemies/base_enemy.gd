@@ -38,7 +38,7 @@ var gravity_force := 20.0
 var _player_lookup_done := false  # Don't re-query the tree every frame like some kind of O(n) maniac
 
 # Visual
-var mesh_node: MeshInstance3D
+var mesh_node: Node3D
 var base_material: StandardMaterial3D
 var alert_indicator: MeshInstance3D
 
