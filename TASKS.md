@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.4 complete
-- **Last task completed:** Task 2.4 — Model wrench prop
-- **Next task to do:** Task 2.5
+- **Last updated by:** Claude (2026-04-04) — Task 2.5 complete
+- **Last task completed:** Task 2.5 — Model chest terminal / laptop screen
+- **Next task to do:** Task 2.6
 - **Known issues:** All gameplay is CSG placeholder geometry. No PBR. No real character model. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is in progress.
 
 ### GOAL OF THIS PASS
@@ -93,7 +93,7 @@ assets/
 - [x] Via `execute_blender_code`: model a chunky adjustable wrench (handle + adjustable jaw head) parented to Globbler's right "hand" anchor point. Scale so it's visible at player height. Low-poly with bevels. Screenshot. **Done: Built 5-part adjustable wrench — octagonal tapered handle, fixed jaw, movable jaw, bridge, and knurled adjustment wheel (304 verts, 282 polys). Beveled all edges. Parented to Globbler_Body at right side (0.22, -0.04, 0.22) with casual angled grip. Scaled 0.85x for chibi proportions. Saved to assets/blender_source/globbler.blend.**
 
 ### 2.5 Model chest terminal / laptop screen
-- [ ] Via `execute_blender_code`: flat rectangular screen prop embedded in torso front. Slightly tilted upward. Separate material slot for emissive CRT effect. Screenshot.
+- [x] Via `execute_blender_code`: flat rectangular screen prop embedded in torso front. Slightly tilted upward. Separate material slot for emissive CRT effect. Screenshot. **Done: Built 2-part chest terminal — dark gunmetal bezel frame (0.256m x 0.176m x 0.04m, beveled edges, boolean-subtracted screen recess) + emissive green CRT screen plane (0.22m x 0.14m, emission_color=(0.2,0.9,0.2), emission_strength=3.0, glossy roughness=0.08). Positioned at Z=0.40 on body front (Y=-0.23), tilted 12° upward for camera visibility. Both parented to Globbler_Body. Saved to assets/blender_source/globbler.blend.**
 
 ### 2.6 Model cables, tubes, and boots
 - [ ] Via `execute_blender_code`: add 3–4 curved cable tubes connecting head to torso using Curve objects with bevel depth. Add stubby boot cylinders at base of torso. All low-poly, beveled. Screenshot.
