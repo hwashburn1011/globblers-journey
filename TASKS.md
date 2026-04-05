@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 9.10 complete
-- **Last task completed:** Task 9.10 — Settings menu restyle
-- **Next task to do:** Task 10.1 (Add fullscreen / windowed toggle)
+- **Last updated by:** Claude (2026-04-05) — Task 10.1 complete
+- **Last task completed:** Task 10.1 — Fullscreen/windowed toggle persisted to settings.cfg
+- **Next task to do:** Task 10.2 (Add resolution setting)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 COMPLETE — all 5 boss visual upgrades done (rm -rf, System Prompt, Local Minimum, Foundation Model, Aligner). All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -319,7 +319,7 @@ assets/
 # Companion UX polish alongside graphics upgrade.
 
 ### 10.1 Add fullscreen / windowed toggle
-- [ ] Add display_mode setting to GameManager + settings menu + persist to settings.cfg. DisplayServer.window_set_mode switches between WINDOWED/FULLSCREEN.
+- [x] Added `display_fullscreen` bool to GameManager (line 15). Persisted in `[display]` section of settings.cfg. `load_settings()` applies mode on startup via `DisplayServer.window_set_mode`. Main menu callback (`_on_fullscreen_toggled`) now saves to GameManager + calls `save_settings()`. Checkbox reads from `gm.display_fullscreen` on init.
 
 ### 10.2 Add resolution setting
 - [ ] Add resolution OptionButton (1280x720, 1920x1080, 2560x1440, 3840x2160) to settings menu. Persist. Apply via `DisplayServer.window_set_size`.

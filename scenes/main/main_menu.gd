@@ -489,13 +489,13 @@ func _build_settings_panel() -> void:
 	var display_header = _create_section_header("── DISPLAY ──")
 	vbox.add_child(display_header)
 
+	var gm = get_node_or_null("/root/GameManager")
+
 	var fs_row = _create_toggle_row("Fullscreen")
 	_fullscreen_check = fs_row.get_meta("checkbox") as CheckBox
-	_fullscreen_check.button_pressed = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+	_fullscreen_check.button_pressed = gm.display_fullscreen if gm else (DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN)
 	_fullscreen_check.toggled.connect(_on_fullscreen_toggled)
 	vbox.add_child(fs_row)
-
-	var gm = get_node_or_null("/root/GameManager")
 
 	var rm_row = _create_toggle_row("Reduce Motion")
 	_reduce_motion_check = rm_row.get_meta("checkbox") as CheckBox
@@ -874,6 +874,10 @@ func _on_fullscreen_toggled(toggled_on: bool) -> void:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 	else:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	var gm = get_node_or_null("/root/GameManager")
+	if gm:
+		gm.display_fullscreen = toggled_on
+		gm.save_settings()
 
 
 func _on_difficulty_changed(index: int) -> void:

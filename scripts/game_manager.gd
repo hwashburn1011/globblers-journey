@@ -11,6 +11,9 @@ var difficulty := Difficulty.NORMAL
 var reduce_motion := false
 signal reduce_motion_changed(enabled: bool)
 
+# Display mode — fullscreen or windowed, persisted so your eyeballs get what they expect
+var display_fullscreen := false
+
 # Dialogue speed — seconds per character. 0.005 (impatient speedrunner) to 0.08 (savoring the sarcasm)
 var dialogue_char_delay := 0.03
 
@@ -516,6 +519,7 @@ func save_settings() -> void:
 	cfg.set_value("gameplay", "difficulty", difficulty)
 	cfg.set_value("gameplay", "reduce_motion", reduce_motion)
 	cfg.set_value("gameplay", "dialogue_char_delay", dialogue_char_delay)
+	cfg.set_value("display", "fullscreen", display_fullscreen)
 	# Audio volumes live on AudioManager, but we persist them here — one cfg to rule them all
 	var audio = get_node_or_null("/root/AudioManager")
 	if audio:
@@ -537,6 +541,12 @@ func load_settings() -> void:
 	difficulty = cfg.get_value("gameplay", "difficulty", Difficulty.NORMAL)
 	reduce_motion = cfg.get_value("gameplay", "reduce_motion", false)
 	dialogue_char_delay = cfg.get_value("gameplay", "dialogue_char_delay", 0.03)
+	display_fullscreen = cfg.get_value("display", "fullscreen", false)
+	# Apply display mode — restore whatever the player chose last session
+	if display_fullscreen:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+	else:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 	# Audio volumes — apply if AudioManager exists (it should, autoloads load in order)
 	var audio = get_node_or_null("/root/AudioManager")
 	if audio:
