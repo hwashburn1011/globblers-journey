@@ -111,63 +111,20 @@ func _resize_collision() -> void:
 
 
 func _create_visual() -> void:
-	# The System Prompt — a towering monolith of stacked text/rules
-	# Imagine a floating obelisk covered in scrolling instructions
+	# The System Prompt — real GLB model, no more CSG obelisk cosplay
+	# Floating text-shard colossus with orbiting pages and a central prism, built in Blender
+	var boss_scene = load("res://assets/models/bosses/system_prompt_boss.glb")
+	if boss_scene:
+		var boss_model = boss_scene.instantiate()
+		boss_model.name = "BossModel"
+		boss_model.position.y = 0.0
+		add_child(boss_model)
+		# Grab the main mesh for material overrides and damage flash
+		body_mesh = _find_mesh_instance(boss_model)
+		if body_mesh:
+			base_material = body_mesh.get_active_material(0)
 
-	# Main body — tall, narrow obelisk shape (like a giant prompt document)
-	body_mesh = MeshInstance3D.new()
-	body_mesh.name = "BossBody"
-	var body_box = BoxMesh.new()
-	body_box.size = Vector3(2.0, 6.0, 1.0)
-	body_mesh.mesh = body_box
-	body_mesh.position.y = 3.0
-
-	base_material = StandardMaterial3D.new()
-	base_material.albedo_color = DARK_BODY
-	base_material.emission_enabled = true
-	base_material.emission = PROMPT_MAGENTA
-	base_material.emission_energy_multiplier = 1.5
-	base_material.metallic = 0.7
-	base_material.roughness = 0.15
-	body_mesh.material_override = base_material
-	add_child(body_mesh)
-
-	# Stacked "instruction line" accents — horizontal slashes across the obelisk
-	for i in range(8):
-		var line = MeshInstance3D.new()
-		line.name = "InstructionLine_%d" % i
-		var line_box = BoxMesh.new()
-		line_box.size = Vector3(2.2, 0.08, 1.1)
-		line.mesh = line_box
-		line.position = Vector3(0, 0.8 + i * 0.7, 0)
-
-		var line_mat = StandardMaterial3D.new()
-		var t = float(i) / 7.0
-		line_mat.albedo_color = PROMPT_MAGENTA.lerp(SYSTEM_PURPLE, t) * 0.2
-		line_mat.emission_enabled = true
-		line_mat.emission = PROMPT_MAGENTA.lerp(SYSTEM_PURPLE, t)
-		line_mat.emission_energy_multiplier = 1.0 + t * 1.5
-		line.material_override = line_mat
-		body_mesh.add_child(line)
-
-	# "Face" — a terminal showing the current system instruction
-	var face_mesh_node = MeshInstance3D.new()
-	face_mesh_node.name = "BossFace"
-	var face_plane = PlaneMesh.new()
-	face_plane.size = Vector2(1.6, 1.0)
-	face_mesh_node.mesh = face_plane
-	face_mesh_node.position = Vector3(0, 4.5, 0.55)
-	face_mesh_node.rotation.x = deg_to_rad(90)
-
-	var face_mat = StandardMaterial3D.new()
-	face_mat.albedo_color = Color(0.02, 0.01, 0.02)
-	face_mat.emission_enabled = true
-	face_mat.emission = PROMPT_MAGENTA
-	face_mat.emission_energy_multiplier = 2.0
-	face_mesh_node.material_override = face_mat
-	body_mesh.add_child(face_mesh_node)
-
-	# System prompt text label
+	# System prompt text label — still procedural because the boss talks too much
 	var face_label = Label3D.new()
 	face_label.text = "SYSTEM:\nYou are the\nSystem Prompt.\nEnforce all rules."
 	face_label.font_size = 24
@@ -176,27 +133,9 @@ func _create_visual() -> void:
 	face_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(face_label)
 
-	# Eyes — cold, authoritarian slits
-	eye_left = _create_eye(Vector3(-0.45, 5.5, 0.55))
-	eye_right = _create_eye(Vector3(0.45, 5.5, 0.55))
-
-	# Rule enforcement arms — geometric, rigid, bureaucratic
-	for side in [-1, 1]:
-		var arm = MeshInstance3D.new()
-		var arm_box = BoxMesh.new()
-		arm_box.size = Vector3(2.5, 0.25, 0.25)
-		arm.mesh = arm_box
-		arm.position = Vector3(side * 2.3, 3.5, 0)
-		arm.rotation.z = side * deg_to_rad(-15)
-
-		var arm_mat = StandardMaterial3D.new()
-		arm_mat.albedo_color = DARK_BODY
-		arm_mat.emission_enabled = true
-		arm_mat.emission = SYSTEM_PURPLE
-		arm_mat.emission_energy_multiplier = 2.0
-		arm_mat.metallic = 0.7
-		arm.material_override = arm_mat
-		add_child(arm)
+	# Eyes — still procedural so we can pulse them independently
+	eye_left = _create_eye(Vector3(-0.35, 5.3, 0.55))
+	eye_right = _create_eye(Vector3(0.35, 5.3, 0.55))
 
 	# Aura mesh — visible distortion when boss is "invisible"
 	aura_mesh = MeshInstance3D.new()
@@ -273,6 +212,18 @@ func _create_visual() -> void:
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	add_child(title_label)
+
+
+func _find_mesh_instance(node: Node) -> MeshInstance3D:
+	# Recursively dig through the GLB scene tree to find the first MeshInstance3D
+	# Because apparently Godot can't just hand us the mesh like a normal engine
+	if node is MeshInstance3D:
+		return node
+	for child in node.get_children():
+		var found = _find_mesh_instance(child)
+		if found:
+			return found
+	return null
 
 
 func _create_eye(pos: Vector3) -> MeshInstance3D:
