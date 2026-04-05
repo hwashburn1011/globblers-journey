@@ -226,24 +226,41 @@ func _build_top_right_minimap() -> void:
 	panel.add_child(lbl)
 
 func _build_top_center_timer() -> void:
-	# === TOP CENTER: Timer ===
+	# === TOP CENTER: Timer (with subtle backdrop for bright chapters like Ch5) ===
+	var timer_panel = PanelContainer.new()
+	timer_panel.name = "TimerPanel"
+	var timer_style = StyleBoxFlat.new()
+	timer_style.bg_color = Color(0.0, 0.02, 0.0, 0.45)
+	timer_style.corner_radius_top_left = 4
+	timer_style.corner_radius_top_right = 4
+	timer_style.corner_radius_bottom_left = 4
+	timer_style.corner_radius_bottom_right = 4
+	timer_style.content_margin_left = 10.0
+	timer_style.content_margin_right = 10.0
+	timer_style.content_margin_top = 2.0
+	timer_style.content_margin_bottom = 2.0
+	timer_panel.add_theme_stylebox_override("panel", timer_style)
+	timer_panel.anchor_left = 0.5
+	timer_panel.anchor_top = 0.0
+	timer_panel.anchor_right = 0.5
+	timer_panel.anchor_bottom = 0.0
+	timer_panel.offset_left = -50.0
+	timer_panel.offset_top = 12.0
+	timer_panel.offset_right = 50.0
+	timer_panel.offset_bottom = 42.0
+	timer_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(timer_panel)
+
 	timer_label = Label.new()
 	timer_label.name = "TimerLabel"
 	timer_label.text = "00:00"
 	timer_label.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4, 0.85))
 	timer_label.add_theme_font_size_override("font_size", 18)
-	apply_text_shadow(timer_label)
+	apply_text_shadow(timer_label, Vector2(1, 1), 3)
 	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	timer_label.anchor_left = 0.5
-	timer_label.anchor_top = 0.0
-	timer_label.anchor_right = 0.5
-	timer_label.anchor_bottom = 0.0
-	timer_label.offset_left = -50.0
-	timer_label.offset_top = 15.0
-	timer_label.offset_right = 50.0
-	timer_label.offset_bottom = 40.0
+	timer_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	timer_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(timer_label)
+	timer_panel.add_child(timer_label)
 
 func _build_bottom_center_abilities() -> void:
 	# === BOTTOM CENTER: Ability icons + cooldowns in terminal panel ===
@@ -405,7 +422,7 @@ func _build_bottom_thought() -> void:
 	thought_label.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4))
 	thought_label.add_theme_font_size_override("font_size", 16)
 	thought_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	apply_text_shadow(thought_label)
+	apply_text_shadow(thought_label, Vector2(1, 1), 4)
 	thought_container.add_child(thought_label)
 
 func _build_level_intro() -> void:

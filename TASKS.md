@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 0.3 — Text contrast audit — global pass
-- **Next task to do:** Task 0.4 — Verify text contrast per chapter HUD
+- **Last task completed:** Task 0.4 — Verify text contrast per chapter HUD
+- **Next task to do:** Task 1.1 — Delete duplicate globbler.glb at project root
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -46,7 +46,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Audited all UI screens for text contrast. Added dark drop-shadows (font_shadow_color + shadow_outline_size=2) to all dim/secondary text labels across 13 files. Brightened low-alpha and too-dim green colors (e.g. DIM_GREEN from 0.15→0.2+, alpha from 0.3-0.5→0.5-0.85) while preserving terminal-green aesthetic. Screens touched: **HUD** (hud.gd — upgrade hint, timer, combo, thought, level intro, minimap, ability labels, stat counters), **main menu** (main_menu.gd — subtitle, version label, settings subtitle, controls text, ESC hint, chapter descriptions), **pause menu** (globbler.gd — subtitle, ESC hint), **game over** (game_over.gd — error line, skull art, death count, input hint), **chapter summary** (chapter_summary.gd — stat names, dot leaders, sarcastic comment), **dialogue box** (dialogue_box.gd — advance hint), **dialogue history** (dialogue_history.gd — line numbers, entry count, footer), **upgrade menu** (upgrade_menu.gd — DIM_GREEN brightened, all labels get shadow via _make_label, close hint), **first-time hint** (first_time_hint.gd — border labels, footer), **loading screen** (loading_screen.gd — tip label), **credits** (credits.gd — DIM_GREEN brightened, all labels get shadow), **context window bar** (context_window_bar.gd — value label), **glob pattern input** (glob_pattern_input.gd — result label). Verified via Godot MCP — zero runtime errors.
 
 ### 0.4 Verify text contrast per chapter HUD
-- [ ] In each chapter's _ready(), the HUD renders over the chapter's fog/lighting. Chapters 3 (warm amber) and 5 (clinical white-blue) likely clash with terminal-green HUD text. Test each chapter via Godot MCP, capture HUD screenshot, confirm text is readable. Add chapter-appropriate drop-shadow or background panel if any chapter HUD is unreadable.
+- [x] **DONE:** Tested all 5 chapters via Godot MCP (run_project with each chapter scene). All load with zero runtime errors. Analyzed HUD elements against each chapter's environment: paneled elements (top-left stats, minimap, abilities) are safe everywhere due to TERMINAL_BG dark backing. Floating elements (timer, combo, thought, level intro) are at risk in Ch5 (bg_energy=1.2, nearly-white fog). Fix: added subtle semi-transparent dark backdrop panel behind the always-visible timer label; strengthened thought label shadow outline from 2→4. Combo and level_intro already had outline=3 and are temporary/large text. Ch1 (dark green), Ch2 (blue-green, moderate), Ch3 (warm amber — complementary hue to green = good contrast), Ch4 (dark dusty) all fine. Verified Ch5 + Ch3 post-fix via Godot MCP — zero new errors.
 
 ---
 
