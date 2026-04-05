@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 4.1 complete
-- **Last task completed:** Task 4.1 — MultiMesh scatter utility
-- **Next task to do:** Task 4.2 (Download Poly Haven tech-waste textures)
+- **Last updated by:** Claude (2026-04-04) — Task 4.2 complete
+- **Last task completed:** Task 4.2 — Download Poly Haven tech-waste textures
+- **Next task to do:** Task 4.3 (Download CC0 electronic prop pack)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 in progress — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -145,7 +145,7 @@ assets/
 - [x] Create `scripts/utils/prop_scatter.gd` — static helper: `scatter_props(scene_root, mesh: Mesh, positions: Array[Vector3], rotations: Array[float], scales: Array[float])` builds a MultiMeshInstance3D. Use for performant clutter placement. **Done: Created PropScatter class (class_name, extends RefCounted) with 3 static methods: scatter_props() (builds MMI from explicit positions/rotations/scales arrays), scatter_random() (convenience wrapper with random Y rotation + uniform scale range), generate_grid_positions() (grid layout with optional jitter for rectangular fill). All methods return MultiMeshInstance3D. Tested via Godot MCP — zero new runtime errors.**
 
 ### 4.2 Download Poly Haven tech-waste textures
-- [ ] Search Poly Haven textures via MCP for: rusted metal, scratched plastic, circuit board, concrete wall. Download 2K for each. Place under `assets/textures/pbr/{material_name}/`. Record in LICENSES.md.
+- [x] Search Poly Haven textures via MCP for: rusted metal, scratched plastic, circuit board, concrete wall. Download 2K for each. Place under `assets/textures/pbr/{material_name}/`. Record in LICENSES.md. **Done: Downloaded 3 Poly Haven CC0 textures (rust_coarse_01, rusty_metal_02, concrete_wall_004) at 2K via API — diff/normal/roughness/ARM maps (JPG for metal, PNG for concrete + AO). Generated 2 procedural textures in Blender (circuit_board with copper traces/solder/IC chips/legs, scratched_plastic with directional scratch marks/gouges/grain). Total: 5 texture sets, 19 files across assets/textures/pbr/. All attributions recorded in LICENSES.md.**
 
 ### 4.3 Download CC0 electronic prop pack
 - [ ] Via Sketchfab MCP, search for CC0 "electronics", "motherboard", "CPU chip", "floppy disk", "keyboard". Download 5–8 models. Import to Blender, export individually as .glb to `assets/models/environment/prop_{name}.glb`. Record sources.
