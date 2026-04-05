@@ -49,3 +49,6 @@ Only CC0 / CC-BY / royalty-free assets are permitted.
 | clinical_clipboard (Model) | Procedural (Blender) | N/A | N/A | Clinical prop — wood clipboard with chrome clip, lever, paper sheet |
 | clinical_whiteboard (Model) | Procedural (Blender) | N/A | N/A | Clinical prop — wall whiteboard with frame, marker tray, blue marker, eraser |
 | rlhf_drone (Model) | Procedural (Blender) | N/A | N/A | Ch5 enemy — quad-rotor clipboard-bot with antennas, eye, reward beam emitter, compliance checklist |
+| *(Audio — music)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Menu, Ch1–5, boss, credits music — assets/audio/music/* |
+| *(Audio — SFX)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Player, ability, UI, enemy SFX — assets/audio/sfx/* |
+| *(Audio — ambient)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Ambient loops — assets/audio/ambient/* |

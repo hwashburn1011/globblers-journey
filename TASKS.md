@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 1.4 — Remove unnecessary .gdkeep placeholders
-- **Next task to do:** Task 2.1 — Create audio asset folders
+- **Last task completed:** Task 2.1 — Create audio asset folders
+- **Next task to do:** Task 2.2 — Download CC0 main menu music
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -71,7 +71,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 # Replace procedural synth with real CC0 music + SFX.
 
 ### 2.1 Create audio asset folders
-- [ ] Create `assets/audio/music/`, `assets/audio/sfx/`, `assets/audio/ambient/`. Add rows to `assets/LICENSES.md` as placeholders for tracks to be downloaded. Commit.
+- [x] **DONE:** Created `assets/audio/music/`, `assets/audio/sfx/`, `assets/audio/ambient/` with `.gdkeep` files so git tracks them. Added 3 placeholder rows to `assets/LICENSES.md` for upcoming music, SFX, and ambient audio assets.
 
 ### 2.2 Download CC0 main menu music
 - [ ] Find a CC0 / royalty-free ambient electronic track (~2 min loop) suitable for a sarcastic AI-themed terminal game. Sources: Pixabay Music CC0, FreeMusicArchive, OpenGameArt.org. Download to `assets/audio/music/menu.ogg`. Record attribution in LICENSES.md.
