@@ -3,6 +3,7 @@ extends Control
 # Main Menu — The Globbler's front door
 # "Welcome to the main menu. The only place where I can't hurt you. Yet."
 # Terminal-aesthetic green-on-dark menu with title, buttons, settings, and chapter select.
+# Now with a 3D background because ASCII art alone wasn't cutting it.
 
 const GREEN := Color("#39FF14")
 const DARK_BG := Color(0.04, 0.06, 0.04, 1.0)
@@ -22,6 +23,12 @@ var _continue_btn: Button
 var _cursor_blink_timer := 0.0
 var _title_glitch_timer := 0.0
 var _scanline_offset := 0.0
+
+# 3D background
+var _bg_viewport: SubViewport
+var _bg_camera: Camera3D
+var _camera_angle := 0.0
+var _debris_nodes: Array[Node3D] = []
 
 # Settings sliders
 var _music_slider: HSlider
@@ -86,6 +93,28 @@ func _process(delta: float) -> void:
 		_scanline_offset += delta * 30.0
 		queue_redraw()
 
+		# Slow camera orbit around the Globbler
+		if _bg_camera:
+			_camera_angle += delta * 0.08
+			var orbit_radius := 3.5
+			var orbit_height := 0.8 + sin(_camera_angle * 0.5) * 0.15
+			_bg_camera.position = Vector3(
+				cos(_camera_angle) * orbit_radius,
+				orbit_height,
+				sin(_camera_angle) * orbit_radius
+			)
+			_bg_camera.look_at(Vector3(0, 0.3, 0))
+
+		# Gently bob the floating debris
+		for i in range(_debris_nodes.size()):
+			var node = _debris_nodes[i]
+			if is_instance_valid(node):
+				node.position.y += sin(Time.get_ticks_msec() * 0.001 + i * 1.5) * delta * 0.08
+				node.rotation_degrees.y += delta * (5.0 + i * 2.0)
+	elif _bg_camera:
+		# Even with reduce_motion, keep camera static but still render the 3D scene
+		pass
+
 
 func _draw() -> void:
 	# Subtle scanlines over the whole screen — peak terminal aesthetic
@@ -115,10 +144,112 @@ func _glitch_title() -> void:
 	)
 
 
+func _build_3d_background() -> void:
+	# SubViewportContainer fills the screen behind all 2D UI
+	var container = SubViewportContainer.new()
+	container.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	container.stretch = true
+	container.z_index = -1
+	add_child(container)
+
+	_bg_viewport = SubViewport.new()
+	_bg_viewport.size = Vector2i(1280, 720)
+	_bg_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	_bg_viewport.transparent_bg = false
+	_bg_viewport.msaa_3d = SubViewport.MSAA_2X
+	container.add_child(_bg_viewport)
+
+	# Dark background environment with terminal-green fog
+	var env := Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color(0.02, 0.04, 0.02)
+	env.ambient_light_color = Color(0.05, 0.15, 0.05)
+	env.ambient_light_energy = 0.3
+	env.fog_enabled = true
+	env.fog_light_color = Color(0.1, 0.4, 0.15)
+	env.fog_density = 0.02
+	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.glow_enabled = true
+	env.glow_intensity = 0.4
+	env.glow_bloom = 0.1
+
+	var world_env := WorldEnvironment.new()
+	world_env.environment = env
+	_bg_viewport.add_child(world_env)
+
+	# Camera — orbits slowly around the scene
+	_bg_camera = Camera3D.new()
+	_bg_camera.fov = 50.0
+	_bg_camera.position = Vector3(0, 0.8, 3.5)
+	_bg_viewport.add_child(_bg_camera)
+	_bg_camera.look_at(Vector3(0, 0.3, 0))
+
+	# Key light — green-tinted from above-right
+	var key_light := DirectionalLight3D.new()
+	key_light.light_color = Color(0.6, 1.0, 0.6)
+	key_light.light_energy = 0.8
+	key_light.rotation_degrees = Vector3(-35, -30, 0)
+	_bg_viewport.add_child(key_light)
+
+	# Rim/back light — strong green for that terminal glow silhouette
+	var rim_light := DirectionalLight3D.new()
+	rim_light.light_color = Color(0.2, 1.0, 0.1)
+	rim_light.light_energy = 0.5
+	rim_light.rotation_degrees = Vector3(-20, 160, 0)
+	_bg_viewport.add_child(rim_light)
+
+	# Load and place Globbler model
+	var globbler_scene = load("res://assets/models/player/globbler.glb")
+	if globbler_scene:
+		var globbler_inst: Node3D = globbler_scene.instantiate()
+		globbler_inst.position = Vector3(0, -0.3, 0)
+		globbler_inst.rotation_degrees.y = -15.0
+		_bg_viewport.add_child(globbler_inst)
+
+	# Floating tech debris — scattered around the scene
+	var debris_paths := [
+		"res://assets/models/environment/prop_cpu_chip.glb",
+		"res://assets/models/environment/prop_floppy_disk.glb",
+		"res://assets/models/environment/prop_ram_stick.glb",
+		"res://assets/models/environment/prop_keyboard.glb",
+		"res://assets/models/environment/prop_crt_monitor.glb",
+		"res://assets/models/environment/prop_hard_drive.glb",
+	]
+
+	# Place debris in a scattered ring around the Globbler
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 42  # Deterministic so it looks the same every launch
+	for i in range(debris_paths.size()):
+		var scene = load(debris_paths[i])
+		if not scene:
+			continue
+		var inst: Node3D = scene.instantiate()
+		var angle = (TAU / debris_paths.size()) * i + rng.randf_range(-0.3, 0.3)
+		var radius = rng.randf_range(1.8, 3.2)
+		var height = rng.randf_range(-0.2, 1.2)
+		inst.position = Vector3(cos(angle) * radius, height, sin(angle) * radius)
+		inst.rotation_degrees = Vector3(rng.randf_range(-30, 30), rng.randf_range(0, 360), rng.randf_range(-20, 20))
+		inst.scale = Vector3.ONE * rng.randf_range(0.4, 0.7)
+		_bg_viewport.add_child(inst)
+		_debris_nodes.append(inst)
+
+	# Point light near Globbler for extra green glow
+	var point_light := OmniLight3D.new()
+	point_light.light_color = Color(0.2, 1.0, 0.1)
+	point_light.light_energy = 1.5
+	point_light.omni_range = 4.0
+	point_light.omni_attenuation = 1.5
+	point_light.position = Vector3(0, 1.0, 1.5)
+	_bg_viewport.add_child(point_light)
+
+
 func _build_ui() -> void:
-	# Full-screen dark background
+	# 3D background viewport behind everything
+	_build_3d_background()
+
+	# Semi-transparent dark overlay so UI text remains readable
 	var bg = ColorRect.new()
-	bg.color = DARK_BG
+	bg.color = Color(0.02, 0.04, 0.02, 0.55)
 	bg.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	add_child(bg)
 

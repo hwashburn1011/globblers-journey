@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 9.4 complete
-- **Last task completed:** Task 9.4 — HUD layout redesign
-- **Next task to do:** Task 9.5 (Main menu 3D background)
+- **Last updated by:** Claude (2026-04-05) — Task 9.5 complete
+- **Last task completed:** Task 9.5 — Main menu 3D background
+- **Next task to do:** Task 9.6 (Loading screen art)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 COMPLETE — all 5 boss visual upgrades done (rm -rf, System Prompt, Local Minimum, Foundation Model, Aligner). All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -296,7 +296,7 @@ assets/
 - [x] Revise `hud.tscn` layout: top-left context bar + health, top-right minimap slot (leave empty for now), bottom-center ability icons, bottom-left pattern input. Match terminal-green aesthetic with borders. **Done: Fully redesigned both `scenes/ui/hud.gd` and `scripts/hud.gd`. New layout: top-left PanelContainer with context bar + health stats (tokens, kills, params) + separator + upgrade hint; top-right 160x160 minimap placeholder panel; top-center timer with anchors; bottom-center ability panel with 6 icons (32x32) + dash/glob cooldown bars; bottom-left glob pattern input (repositioned via anchor overrides). All panels use consistent terminal-green bordered StyleBoxFlat (dark bg #020402, green border #158015). Anchors used throughout for responsive scaling. Zero new runtime errors.**
 
 ### 9.5 Main menu 3D background
-- [ ] In `main_menu.tscn`, add a Viewport rendering a 3D scene with Globbler idle-posed + floating tech debris. Scrolling camera. Replace any flat background.
+- [x] In `main_menu.gd`, replaced flat ColorRect background with SubViewportContainer+SubViewport rendering a 3D scene. Contains: Globbler GLB model (idle-posed, slightly angled), 6 floating tech debris props (CPU, floppy, RAM, keyboard, CRT, hard drive) in a scattered ring, green-tinted directional + omni lighting, fog, glow, filmic tonemapping. Camera slowly orbits the scene. Debris gently bobs and rotates. All animation respects reduce_motion setting. Semi-transparent dark overlay keeps UI text readable. Zero new runtime errors.
 
 ### 9.6 Loading screen art
 - [ ] In `loading_screen.gd`, replace placeholder with rotating 3D Globbler head + loading-bar scanline + tip rotation. Reuse tips from V1.1.
