@@ -14,6 +14,15 @@ signal reduce_motion_changed(enabled: bool)
 # Display mode — fullscreen or windowed, persisted so your eyeballs get what they expect
 var display_fullscreen := false
 
+# Resolution — index into [1280x720, 1920x1080, 2560x1440, 3840x2160], default 1080p
+const RESOLUTIONS := [
+	Vector2i(1280, 720),
+	Vector2i(1920, 1080),
+	Vector2i(2560, 1440),
+	Vector2i(3840, 2160),
+]
+var display_resolution_index := 1
+
 # Dialogue speed — seconds per character. 0.005 (impatient speedrunner) to 0.08 (savoring the sarcasm)
 var dialogue_char_delay := 0.03
 
@@ -520,6 +529,7 @@ func save_settings() -> void:
 	cfg.set_value("gameplay", "reduce_motion", reduce_motion)
 	cfg.set_value("gameplay", "dialogue_char_delay", dialogue_char_delay)
 	cfg.set_value("display", "fullscreen", display_fullscreen)
+	cfg.set_value("display", "resolution_index", display_resolution_index)
 	# Audio volumes live on AudioManager, but we persist them here — one cfg to rule them all
 	var audio = get_node_or_null("/root/AudioManager")
 	if audio:
@@ -542,11 +552,15 @@ func load_settings() -> void:
 	reduce_motion = cfg.get_value("gameplay", "reduce_motion", false)
 	dialogue_char_delay = cfg.get_value("gameplay", "dialogue_char_delay", 0.03)
 	display_fullscreen = cfg.get_value("display", "fullscreen", false)
+	display_resolution_index = cfg.get_value("display", "resolution_index", 1)
 	# Apply display mode — restore whatever the player chose last session
 	if display_fullscreen:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 	else:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	# Apply resolution — only when windowed, fullscreen uses native res
+	if not display_fullscreen and display_resolution_index >= 0 and display_resolution_index < RESOLUTIONS.size():
+		DisplayServer.window_set_size(RESOLUTIONS[display_resolution_index])
 	# Audio volumes — apply if AudioManager exists (it should, autoloads load in order)
 	var audio = get_node_or_null("/root/AudioManager")
 	if audio:

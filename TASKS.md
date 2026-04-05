@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 10.1 complete
-- **Last task completed:** Task 10.1 — Fullscreen/windowed toggle persisted to settings.cfg
-- **Next task to do:** Task 10.2 (Add resolution setting)
+- **Last updated by:** Claude (2026-04-05) — Task 10.2 complete
+- **Last task completed:** Task 10.2 — Resolution OptionButton (720p/1080p/1440p/4K) in settings menu, persisted to settings.cfg
+- **Next task to do:** Task 10.3 (Add mouse sensitivity slider)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 COMPLETE — all 5 boss visual upgrades done (rm -rf, System Prompt, Local Minimum, Foundation Model, Aligner). All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -322,7 +322,7 @@ assets/
 - [x] Added `display_fullscreen` bool to GameManager (line 15). Persisted in `[display]` section of settings.cfg. `load_settings()` applies mode on startup via `DisplayServer.window_set_mode`. Main menu callback (`_on_fullscreen_toggled`) now saves to GameManager + calls `save_settings()`. Checkbox reads from `gm.display_fullscreen` on init.
 
 ### 10.2 Add resolution setting
-- [ ] Add resolution OptionButton (1280x720, 1920x1080, 2560x1440, 3840x2160) to settings menu. Persist. Apply via `DisplayServer.window_set_size`.
+- [x] Add resolution OptionButton (1280x720, 1920x1080, 2560x1440, 3840x2160) to settings menu. Persist. Apply via `DisplayServer.window_set_size`. **Done: Added `RESOLUTIONS` constant array and `display_resolution_index` (default 1=1080p) to GameManager. Persisted in `[display]` section of settings.cfg. `load_settings()` applies resolution on startup (windowed only — fullscreen uses native). Resolution OptionButton added to Display section of settings menu between Fullscreen and Reduce Motion. Callback `_on_resolution_changed` saves to GameManager + applies immediately when windowed. Zero new runtime errors.**
 
 ### 10.3 Add mouse sensitivity slider
 - [ ] Add mouse_sensitivity float (range 0.1–3.0, default 1.0) to GameManager. Multiply against existing camera rotation speed in `globbler.gd` mouse input handling. Persist.

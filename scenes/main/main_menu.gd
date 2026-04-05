@@ -35,6 +35,7 @@ var _music_slider: HSlider
 var _sfx_slider: HSlider
 var _ambient_slider: HSlider
 var _fullscreen_check: CheckBox
+var _resolution_option: OptionButton
 var _difficulty_option: OptionButton
 var _reduce_motion_check: CheckBox
 var _dialogue_speed_slider: HSlider
@@ -497,6 +498,29 @@ func _build_settings_panel() -> void:
 	_fullscreen_check.toggled.connect(_on_fullscreen_toggled)
 	vbox.add_child(fs_row)
 
+	# Resolution selector
+	var res_row = HBoxContainer.new()
+	res_row.add_theme_constant_override("separation", 12)
+	var res_label = Label.new()
+	res_label.text = "Resolution"
+	res_label.add_theme_color_override("font_color", GREEN)
+	res_label.add_theme_font_size_override("font_size", 16)
+	res_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	res_row.add_child(res_label)
+
+	_resolution_option = OptionButton.new()
+	_resolution_option.add_item("1280x720", 0)
+	_resolution_option.add_item("1920x1080", 1)
+	_resolution_option.add_item("2560x1440", 2)
+	_resolution_option.add_item("3840x2160", 3)
+	_resolution_option.selected = gm.display_resolution_index if gm else 1
+	_resolution_option.add_theme_color_override("font_color", GREEN)
+	_resolution_option.add_theme_font_size_override("font_size", 15)
+	_resolution_option.custom_minimum_size = Vector2(140, 0)
+	_resolution_option.item_selected.connect(_on_resolution_changed)
+	res_row.add_child(_resolution_option)
+	vbox.add_child(res_row)
+
 	var rm_row = _create_toggle_row("Reduce Motion")
 	_reduce_motion_check = rm_row.get_meta("checkbox") as CheckBox
 	_reduce_motion_check.button_pressed = gm.reduce_motion if gm else false
@@ -877,6 +901,16 @@ func _on_fullscreen_toggled(toggled_on: bool) -> void:
 	var gm = get_node_or_null("/root/GameManager")
 	if gm:
 		gm.display_fullscreen = toggled_on
+		gm.save_settings()
+
+
+func _on_resolution_changed(index: int) -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm:
+		gm.display_resolution_index = index
+		# Only resize when windowed — fullscreen uses native resolution
+		if not gm.display_fullscreen and index >= 0 and index < gm.RESOLUTIONS.size():
+			DisplayServer.window_set_size(gm.RESOLUTIONS[index])
 		gm.save_settings()
 
 
