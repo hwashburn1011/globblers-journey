@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 0.4 — Verify text contrast per chapter HUD
-- **Next task to do:** Task 1.1 — Delete duplicate globbler.glb at project root
+- **Last task completed:** Task 1.1 — Delete duplicate globbler.glb (already clean)
+- **Next task to do:** Task 1.2 — Gitignore build logs and generated artifacts
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -54,7 +54,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 # Fix the documented debt before anything else.
 
 ### 1.1 Delete duplicate globbler.glb at project root
-- [ ] Remove `assets/globbler.glb` and `assets/globbler.glb.import` and `assets/globbler_globbler_ao.png`+.import at the `assets/` root (the canonical copy lives at `assets/models/player/globbler.glb`). Verify nothing references the duplicate path via `grep -r "assets/globbler.glb" .`. Commit.
+- [x] **DONE:** Duplicate files (`assets/globbler.glb`, `.import`, `globbler_globbler_ao.png`+`.import`) already absent from `assets/` root — cleaned up in a prior iteration. Canonical copy confirmed at `assets/models/player/globbler.glb`. Grep confirms no stale references. No action needed.
 
 ### 1.2 Gitignore build logs and generated artifacts
 - [ ] Add to `.gitignore`: `build_log_*.txt`, `build_log_*.md`, `/build/`, `*.pdb`. Then `git rm --cached` any already-tracked `build_log_*.txt`. Commit.
