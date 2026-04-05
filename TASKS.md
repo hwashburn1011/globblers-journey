@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 1.1 — Delete duplicate globbler.glb (already clean)
-- **Next task to do:** Task 1.2 — Gitignore build logs and generated artifacts
+- **Last task completed:** Task 1.2 — Gitignore build logs and generated artifacts
+- **Next task to do:** Task 1.3 — Gitignore verification pass
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -57,7 +57,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Duplicate files (`assets/globbler.glb`, `.import`, `globbler_globbler_ao.png`+`.import`) already absent from `assets/` root — cleaned up in a prior iteration. Canonical copy confirmed at `assets/models/player/globbler.glb`. Grep confirms no stale references. No action needed.
 
 ### 1.2 Gitignore build logs and generated artifacts
-- [ ] Add to `.gitignore`: `build_log_*.txt`, `build_log_*.md`, `/build/`, `*.pdb`. Then `git rm --cached` any already-tracked `build_log_*.txt`. Commit.
+- [x] **DONE:** `.gitignore` already had `build_log_*.txt` and `/build/`. Added `build_log_*.md` and `*.pdb`. Ran `git rm --cached` on two tracked build log .md files (`build_log_2026-04-04_lighting.md`, `build_log_2026-04-05_performance.md`). All build artifacts now properly ignored.
 
 ### 1.3 Gitignore verification pass
 - [ ] Run `git status` and verify no generated/temp artifacts are tracked. Check for `.import` files that reference deleted source assets. Delete orphans. Commit any remaining cleanup.

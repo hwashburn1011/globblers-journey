@@ -7,3 +7,7 @@
 
 # Build loop logs — evidence of the grind
 build_log_*.txt
+build_log_*.md
+
+# Debug symbols
+*.pdb
