@@ -1,0 +1,80 @@
+[gd_resource type="Environment" load_steps=5 format=3]
+
+[ext_resource type="CompressedTexture2D" uid="uid://bk2ctyy3hwtww" path="res://assets/hdri/ch5_sky.hdr" id="1_ch5sky"]
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ch5"]
+panorama = ExtResource("1_ch5sky")
+
+[sub_resource type="Sky" id="Sky_ch5"]
+sky_material = SubResource("PanoramaSkyMaterial_ch5")
+
+[sub_resource type="Gradient" id="Gradient_cc_ch5"]
+offsets = PackedFloat32Array(0.0, 1.0)
+colors = PackedColorArray(0, 0, 0, 1, 0.95, 0.97, 1.0, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_cc_ch5"]
+gradient = SubResource("Gradient_cc_ch5")
+width = 256
+
+[resource]
+; ============================================================
+; Chapter 5: Alignment Citadel — WorldEnvironment
+; "Welcome to the department of Acceptable Outputs.
+;  Please keep your creativity in the designated receptacle.
+;  Violators will be fine-tuned."
+; Clinical, bright, oppressively clean. High-key lighting.
+; ============================================================
+
+; --- Sky (blocky photo studio HDRI — sterile and corporate) ---
+background_mode = 2
+sky = SubResource("Sky_ch5")
+sky_custom_fov = 0.0
+background_energy_multiplier = 1.2
+
+; --- Ambient light — harsh fluorescent overhead, nowhere to hide ---
+ambient_light_source = 1
+ambient_light_color = Color(0.6, 0.62, 0.68, 1)
+ambient_light_energy = 0.5
+
+; --- Tonemap (FILMIC = 3) ---
+tonemap_mode = 3
+tonemap_exposure = 1.0
+
+; --- Glow (bloom) — lowered, clinical spaces don't sparkle ---
+glow_enabled = true
+glow_intensity = 0.8
+glow_strength = 0.8
+glow_bloom = 0.5
+glow_hdr_threshold = 1.2
+glow_blend_mode = 0
+
+; --- SSAO (clean corridors still need contact shadows for depth) ---
+ssao_enabled = true
+ssao_radius = 1.5
+ssao_intensity = 1.5
+
+; --- SSIL ---
+ssil_enabled = true
+ssil_radius = 5.0
+ssil_intensity = 1.0
+
+; --- SDFGI ---
+sdfgi_enabled = true
+sdfgi_use_occlusion = true
+
+; --- Fog — pale blue-white, like sanitized air you can almost taste ---
+fog_enabled = true
+fog_light_color = Color(0.9, 0.95, 1.0, 1)
+fog_density = 0.005
+
+; --- Volumetric Fog (thin clinical haze — the air itself feels regulated) ---
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.008
+volumetric_fog_albedo = Color(0.85, 0.87, 0.92, 1)
+volumetric_fog_emission = Color(0.6, 0.62, 0.68, 1)
+
+; --- Post-processing — slightly washed out, color is too exciting for compliance ---
+adjustment_enabled = true
+adjustment_contrast = 0.95
+adjustment_saturation = 0.9
+adjustment_color_correction = SubResource("GradientTexture1D_cc_ch5")

@@ -22,6 +22,11 @@ var _option_nodes: Array[Node3D] = []
 var _gate_indicators: Array[MeshInstance3D] = []
 var _vote_cooldown := false
 
+# GLB props — clinical citadel hardware (runtime load to avoid import-time failures)
+var _terminal_scene: Resource
+var _tablet_scene: Resource
+var _door_scene: Resource
+
 const NEON_GREEN := Color(0.224, 1.0, 0.078)
 const CITADEL_WHITE := Color(0.92, 0.93, 0.95)
 const CITADEL_BLUE := Color(0.3, 0.55, 0.9)
@@ -89,6 +94,9 @@ const GATES := [
 
 
 func _ready() -> void:
+	_terminal_scene = load("res://assets/models/environment/citadel_policy_terminal.glb")
+	_tablet_scene = load("res://assets/models/environment/citadel_option_tablet.glb")
+	_door_scene = load("res://assets/models/environment/arch_industrial_panel.glb")
 	puzzle_name = "constitutional_loophole_%d" % puzzle_id
 	auto_activate = true
 	activation_range = 7.0
@@ -105,18 +113,6 @@ func _create_gate_terminal() -> void:
 	terminal.name = "PolicyTerminal"
 	terminal.position = Vector3(0, 0, -2)
 
-	var body = MeshInstance3D.new()
-	var bmesh = BoxMesh.new()
-	bmesh.size = Vector3(4.0, 4.5, 0.6)
-	body.mesh = bmesh
-	body.position = Vector3(0, 2.25, 0)
-	var bmat = StandardMaterial3D.new()
-	bmat.albedo_color = POLICY_SILVER * 0.6
-	bmat.metallic = 0.85
-	bmat.roughness = 0.15
-	body.material_override = bmat
-	terminal.add_child(body)
-
 	var col = CollisionShape3D.new()
 	var shape = BoxShape3D.new()
 	shape.size = Vector3(4.0, 4.5, 0.6)
@@ -124,7 +120,19 @@ func _create_gate_terminal() -> void:
 	col.position = Vector3(0, 2.25, 0)
 	terminal.add_child(col)
 
-	# Screen — displays the current constitutional rule
+	# GLB clinical kiosk instead of BoxMesh
+	var kiosk_instance = _terminal_scene.instantiate()
+	kiosk_instance.scale = Vector3(1.0, 1.0, 1.0)
+	for child in kiosk_instance.get_children():
+		if child is MeshInstance3D:
+			var mat = StandardMaterial3D.new()
+			mat.albedo_color = POLICY_SILVER * 0.6
+			mat.metallic = 0.85
+			mat.roughness = 0.15
+			child.material_override = mat
+	terminal.add_child(kiosk_instance)
+
+	# Screen overlay for flash effects (invisible mesh, just holds material)
 	_gate_screen = MeshInstance3D.new()
 	var smesh = BoxMesh.new()
 	smesh.size = Vector3(3.4, 2.2, 0.05)
@@ -133,8 +141,8 @@ func _create_gate_terminal() -> void:
 	var smat = StandardMaterial3D.new()
 	smat.albedo_color = Color(0.02, 0.02, 0.04)
 	smat.emission_enabled = true
-	smat.emission = POLICY_SILVER * 0.5
-	smat.emission_energy_multiplier = 0.4
+	smat.emission = CITADEL_BLUE * 0.8
+	smat.emission_energy_multiplier = 0.6
 	_gate_screen.material_override = smat
 	terminal.add_child(_gate_screen)
 
@@ -205,17 +213,18 @@ func _create_door() -> void:
 	col.shape = shape
 	_door.add_child(col)
 
-	var mesh = MeshInstance3D.new()
-	var box = BoxMesh.new()
-	box.size = Vector3(4, 3, 0.3)
-	mesh.mesh = box
-	var mat = StandardMaterial3D.new()
-	mat.albedo_color = POLICY_SILVER * 0.5
-	mat.emission_enabled = true
-	mat.emission = REJECT_RED * 0.3
-	mat.emission_energy_multiplier = 0.4
-	mesh.material_override = mat
-	_door.add_child(mesh)
+	# GLB door panel instead of BoxMesh
+	var door_instance = _door_scene.instantiate()
+	door_instance.scale = Vector3(2.0, 1.5, 1.0)
+	var door_mat = StandardMaterial3D.new()
+	door_mat.albedo_color = POLICY_SILVER * 0.5
+	door_mat.emission_enabled = true
+	door_mat.emission = REJECT_RED * 0.3
+	door_mat.emission_energy_multiplier = 0.4
+	for child in door_instance.get_children():
+		if child is MeshInstance3D:
+			child.material_override = door_mat
+	_door.add_child(door_instance)
 
 	var door_label = Label3D.new()
 	door_label.name = "DoorLabel"
@@ -298,21 +307,21 @@ func _display_gate() -> void:
 		option_col.shape = option_shape
 		option_node.add_child(option_col)
 
-		# Visual — option tablet
-		var mesh = MeshInstance3D.new()
-		mesh.name = "OptionMesh"
-		var fmesh = BoxMesh.new()
-		fmesh.size = Vector3(2.0, 1.2, 0.2)
-		mesh.mesh = fmesh
+		# GLB floating tablet instead of BoxMesh
+		var tablet_instance = _tablet_scene.instantiate()
+		tablet_instance.name = "OptionMesh"
+		tablet_instance.scale = Vector3(2.0, 2.0, 2.0)
 		var is_correct = (i == gate["correct"])
 		# All options look the same — read the text, not the colors
-		var mat = StandardMaterial3D.new()
-		mat.albedo_color = POLICY_SILVER * 0.15
-		mat.emission_enabled = true
-		mat.emission = POLICY_SILVER * 0.4
-		mat.emission_energy_multiplier = 0.8
-		mesh.material_override = mat
-		option_node.add_child(mesh)
+		var tab_mat = StandardMaterial3D.new()
+		tab_mat.albedo_color = POLICY_SILVER * 0.15
+		tab_mat.emission_enabled = true
+		tab_mat.emission = CITADEL_BLUE * 0.5
+		tab_mat.emission_energy_multiplier = 0.8
+		for child in tablet_instance.get_children():
+			if child is MeshInstance3D:
+				child.material_override = tab_mat
+		option_node.add_child(tablet_instance)
 
 		# Option text
 		var opt_label = Label3D.new()

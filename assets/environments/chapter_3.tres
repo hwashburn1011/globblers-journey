@@ -1,0 +1,79 @@
+[gd_resource type="Environment" load_steps=5 format=3]
+
+[ext_resource type="CompressedTexture2D" uid="uid://dxrtulaes1vgb" path="res://assets/hdri/ch3_sky.hdr" id="1_ch3sky"]
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ch3"]
+panorama = ExtResource("1_ch3sky")
+
+[sub_resource type="Sky" id="Sky_ch3"]
+sky_material = SubResource("PanoramaSkyMaterial_ch3")
+
+[sub_resource type="Gradient" id="Gradient_cc_ch3"]
+offsets = PackedFloat32Array(0.0, 1.0)
+colors = PackedColorArray(0, 0, 0, 1, 1.0, 0.97, 0.93, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_cc_ch3"]
+gradient = SubResource("Gradient_cc_ch3")
+width = 256
+
+[resource]
+; ============================================================
+; Chapter 3: Prompt Bazaar — WorldEnvironment
+; "A smoky night market where you can buy anything except
+;  a straight answer. The amber haze smells like burning tokens."
+; Warm amber fog, heavier volumetric fog for that marketplace steam.
+; ============================================================
+
+; --- Sky (warm carpentry shop HDRI — closest thing to a bazaar at midnight) ---
+background_mode = 2
+sky = SubResource("Sky_ch3")
+sky_custom_fov = 0.0
+background_energy_multiplier = 0.7
+
+; --- Ambient light — warm amber glow from all those dubious lanterns ---
+ambient_light_source = 1
+ambient_light_color = Color(0.1, 0.07, 0.04, 1)
+ambient_light_energy = 0.35
+
+; --- Tonemap (FILMIC = 3) ---
+tonemap_mode = 3
+tonemap_exposure = 1.0
+
+; --- Glow (bloom) — cranked up for neon signs and lantern halos ---
+glow_enabled = true
+glow_intensity = 1.2
+glow_strength = 1.1
+glow_bloom = 0.8
+glow_hdr_threshold = 0.8
+glow_blend_mode = 0
+
+; --- SSAO (market clutter needs contact shadows) ---
+ssao_enabled = true
+ssao_radius = 1.5
+ssao_intensity = 2.0
+
+; --- SSIL ---
+ssil_enabled = true
+ssil_radius = 5.0
+ssil_intensity = 1.0
+
+; --- SDFGI ---
+sdfgi_enabled = true
+sdfgi_use_occlusion = true
+
+; --- Fog — warm amber, the color of questionable prompt engineering ---
+fog_enabled = true
+fog_light_color = Color(0.9, 0.6, 0.3, 1)
+fog_density = 0.015
+
+; --- Volumetric Fog (heavier than other chapters — smoky market vibes) ---
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.04
+volumetric_fog_albedo = Color(0.08, 0.05, 0.03, 1)
+volumetric_fog_emission = Color(0.06, 0.04, 0.02, 1)
+
+; --- Post-processing — warm and saturated, everything's for sale ---
+adjustment_enabled = true
+adjustment_contrast = 1.1
+adjustment_saturation = 1.2
+adjustment_color_correction = SubResource("GradientTexture1D_cc_ch3")

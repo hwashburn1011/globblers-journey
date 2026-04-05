@@ -35,10 +35,11 @@ var attack_timer := 0.0
 var damage_cooldown := 0.0
 var damage_flash_timer := 0.0
 var gravity_force := 20.0
+var _hp_pip: Node3D  # overhead health pip (non-boss enemies only)
 var _player_lookup_done := false  # Don't re-query the tree every frame like some kind of O(n) maniac
 
 # Visual
-var mesh_node: MeshInstance3D
+var mesh_node: Node3D
 var base_material: StandardMaterial3D
 var alert_indicator: MeshInstance3D
 
@@ -51,9 +52,15 @@ func _ready() -> void:
 	add_to_group("enemies")
 	add_to_group("hackable_objects")
 
+	# Scale enemy HP by difficulty — because Easy mode enemies deserve less health insurance
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.has_method("get_difficulty_enemy_hp_multiplier"):
+		max_health = int(ceil(max_health * gm.get_difficulty_enemy_hp_multiplier()))
+
 	_setup_collision()
 	_create_visual()
 	_setup_health_component()
+	_setup_hp_pip()
 	_setup_glob_target()
 	_setup_damage_area()
 	_setup_alert_indicator()
@@ -111,6 +118,20 @@ func _setup_health_component() -> void:
 		health_comp.died.connect(_on_died)
 	if health_comp.has_signal("damage_taken"):
 		health_comp.damage_taken.connect(_on_damage_taken)
+
+func _setup_hp_pip() -> void:
+	# Bosses use the full boss_health_bar UI — no overhead pip for them
+	if "boss" in enemy_tags:
+		return
+	var pip_scene = load("res://scenes/ui/enemy_hp_pip.tscn")
+	if not pip_scene:
+		return
+	_hp_pip = pip_scene.instantiate()
+	_hp_pip.position = Vector3(0, 1.8, 0)  # above enemy head
+	add_child(_hp_pip)
+	_hp_pip.setup(max_health, max_health)
+	if health_comp and health_comp.has_signal("health_changed"):
+		health_comp.health_changed.connect(_hp_pip.on_health_changed)
 
 func _setup_glob_target() -> void:
 	glob_target_comp = Node.new()
@@ -183,10 +204,12 @@ func _physics_process(delta: float) -> void:
 	# Find player (cached — only look up once, not every frame)
 	if not player_ref or not is_instance_valid(player_ref):
 		if not _player_lookup_done:
+			# Only mark lookup done when we actually find the player —
+			# otherwise keep looking, because Globbler might spawn fashionably late
 			var players = get_tree().get_nodes_in_group("player")
 			if players.size() > 0:
 				player_ref = players[0] as CharacterBody3D
-			_player_lookup_done = true
+				_player_lookup_done = true
 
 	# State machine
 	match state:
@@ -330,6 +353,13 @@ func _on_died(killer: Node) -> void:
 	_drop_tokens()
 
 	enemy_died.emit(self)
+
+	# Spawn shatter VFX — one last fireworks show before the process table forgets we existed
+	var shatter_scene = load("res://scenes/vfx/enemy_shatter.tscn")
+	if shatter_scene:
+		var shatter = shatter_scene.instantiate()
+		shatter.global_position = global_position + Vector3(0, 0.7, 0)
+		get_tree().current_scene.call_deferred("add_child", shatter)
 
 	# Shrink and disappear
 	var tween = create_tween()

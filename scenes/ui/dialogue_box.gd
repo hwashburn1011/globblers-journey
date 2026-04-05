@@ -4,7 +4,7 @@ extends PanelContainer
 # "Dark background, green text, typing animation. Peak hacker aesthetic."
 # Looks like a retro terminal window because Globbler refuses to use modern UI.
 
-const TYPING_SPEED := 0.03  # Seconds per character — fast enough to not be annoying
+const DEFAULT_TYPING_SPEED := 0.03  # Fallback if GameManager is AWOL
 const FAST_TYPING_SPEED := 0.005  # When player is mashing through
 const TYPE_SFX_INTERVAL := 3  # Play a typing blip every N characters — not every one, we're not a typewriter factory
 
@@ -14,9 +14,10 @@ var _typing := false
 var _typing_timer := 0.0
 var _fast_mode := false
 
-@onready var speaker_label: Label = $VBox/SpeakerLabel
-@onready var text_label: RichTextLabel = $VBox/TextLabel
-@onready var advance_hint: Label = $VBox/AdvanceHint
+var speaker_label: Label
+var text_label: RichTextLabel
+var advance_hint: Label
+var scanline_overlay: ColorRect
 
 signal typing_finished()
 signal advanced()
@@ -24,6 +25,12 @@ signal advanced()
 func _ready() -> void:
 	visible = false
 	_build_ui()
+	# Wire up to DialogueManager signals — the typing animation was built but never plugged in.
+	# Classic "the code exists but nobody told it to run" situation.
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm:
+		dm.dialogue_started.connect(show_line)
+		dm.dialogue_ended.connect(hide_box)
 
 func _build_ui() -> void:
 	# Terminal-style panel
@@ -83,11 +90,32 @@ func _build_ui() -> void:
 	advance_hint = Label.new()
 	advance_hint.name = "AdvanceHint"
 	advance_hint.text = "> click / SPACE / A button to continue..."
-	advance_hint.add_theme_color_override("font_color", Color(0.2, 0.6, 0.2, 0.6))
+	advance_hint.add_theme_color_override("font_color", Color(0.25, 0.65, 0.25, 0.8))
 	advance_hint.add_theme_font_size_override("font_size", 12)
 	advance_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	advance_hint.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
+	advance_hint.add_theme_constant_override("shadow_offset_x", 1)
+	advance_hint.add_theme_constant_override("shadow_offset_y", 1)
+	advance_hint.add_theme_constant_override("shadow_outline_size", 2)
 	advance_hint.visible = false
 	vbox.add_child(advance_hint)
+
+	# Scanline + flicker overlay — CRT aesthetic for the dialogue panel
+	scanline_overlay = ColorRect.new()
+	scanline_overlay.name = "ScanlineOverlay"
+	scanline_overlay.color = Color(1, 1, 1, 1)
+	scanline_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	scanline_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var shader_res = load("res://assets/shaders/dialogue_scanline.gdshader")
+	if shader_res:
+		var mat := ShaderMaterial.new()
+		mat.shader = shader_res
+		scanline_overlay.material = mat
+		# Respect reduce_motion toggle
+		var gm = get_node_or_null("/root/GameManager")
+		if gm and gm.get("reduce_motion"):
+			mat.set_shader_parameter("animate", false)
+	add_child(scanline_overlay)
 
 func show_line(speaker: String, text: String) -> void:
 	visible = true
@@ -112,7 +140,11 @@ func _process(delta: float) -> void:
 	if not _typing:
 		return
 
-	var speed = FAST_TYPING_SPEED if _fast_mode else TYPING_SPEED
+	var base_speed := DEFAULT_TYPING_SPEED
+	var gm = get_node_or_null("/root/GameManager")
+	if gm:
+		base_speed = gm.dialogue_char_delay
+	var speed = FAST_TYPING_SPEED if _fast_mode else base_speed
 	_typing_timer += delta
 	while _typing_timer >= speed and _displayed_chars < _full_text.length():
 		_typing_timer -= speed
@@ -136,6 +168,15 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
+
+	# ESC during dialogue = skip the ENTIRE sequence, not just this line
+	# Consume the event so it doesn't also toggle the pause menu — Globbler's monologues are bad enough without freezing mid-sentence
+	if event.is_action_pressed("pause"):
+		var dm = get_node_or_null("/root/DialogueManager")
+		if dm and dm.is_dialogue_active():
+			dm.skip_all()
+			get_viewport().set_input_as_handled()
+			return
 
 	# Advance dialogue: SPACE / Enter / LClick / A button — all roads lead to "next line"
 	var clicked = event.is_action_pressed("dialogue_advance")

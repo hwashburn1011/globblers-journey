@@ -57,132 +57,68 @@ func _init() -> void:
 
 
 func _create_visual() -> void:
-	# Main body — merchant's cloak, shifting magenta/gold
-	mesh_node = MeshInstance3D.new()
-	mesh_node.name = "EnemyMesh"
-	mesh_node.position.y = 0.7
+	# "Step right up! Every model guaranteed real!* (*guarantee not guaranteed)"
+	var glb_scene = load("res://assets/models/enemies/hallucination_merchant.glb")
+	if glb_scene:
+		mesh_node = glb_scene.instantiate()
+		mesh_node.name = "EnemyMesh"
+		mesh_node.position.y = 0.0
+		add_child(mesh_node)
 
-	var cloak = BoxMesh.new()
-	cloak.size = Vector3(1.0, 1.5, 0.8)
-	mesh_node.mesh = cloak
+		# Apply clone transparency if this is a fake merchant
+		if is_clone:
+			for child in mesh_node.get_children():
+				if child is MeshInstance3D:
+					var mat = child.get_active_material(0)
+					if mat and mat is StandardMaterial3D:
+						var clone_mat = mat.duplicate()
+						clone_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+						clone_mat.albedo_color.a = 0.6
+						child.material_override = clone_mat
 
-	base_material = StandardMaterial3D.new()
-	base_material.albedo_color = Color(0.5, 0.1, 0.4)
-	base_material.emission_enabled = true
-	base_material.emission = Color(0.85, 0.15, 0.65)
-	base_material.emission_energy_multiplier = 2.0
-	base_material.metallic = 0.2
-	base_material.roughness = 0.5
-	if is_clone:
-		base_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		base_material.albedo_color.a = 0.6
-	mesh_node.material_override = base_material
-	add_child(mesh_node)
+		# Grab references to key child meshes for animation
+		wares_mesh = mesh_node.get_node_or_null("WaresTray")
+		face_meshes.clear()
+		for i in range(3):
+			var face = mesh_node.get_node_or_null("GhostFace_%d" % i)
+			if face:
+				face_meshes.append(face)
 
-	# Hood — wide merchant's hood
-	var hood = MeshInstance3D.new()
-	hood.name = "MerchantHood"
-	var hood_res = BoxMesh.new()
-	hood_res.size = Vector3(0.85, 0.5, 0.75)
-	hood.mesh = hood_res
-	hood.position = Vector3(0, 0.95, 0)
-	var hood_mat = StandardMaterial3D.new()
-	hood_mat.albedo_color = Color(0.35, 0.05, 0.3)
-	hood_mat.emission_enabled = true
-	hood_mat.emission = Color(0.6, 0.1, 0.5)
-	hood_mat.emission_energy_multiplier = 1.5
-	if is_clone:
-		hood_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		hood_mat.albedo_color.a = 0.6
-	hood.material_override = hood_mat
-	mesh_node.add_child(hood)
+		# Base material for shimmer — grab from cloak body
+		var cloak_node = mesh_node.get_node_or_null("CloakBody")
+		if cloak_node and cloak_node is MeshInstance3D:
+			base_material = cloak_node.get_active_material(0)
+			if base_material:
+				base_material = base_material.duplicate()
+				cloak_node.material_override = base_material
+	else:
+		# CSG fallback — the budget version of deception
+		mesh_node = MeshInstance3D.new()
+		mesh_node.name = "EnemyMesh"
+		mesh_node.position.y = 0.7
+		var cloak = BoxMesh.new()
+		cloak.size = Vector3(1.0, 1.5, 0.8)
+		mesh_node.mesh = cloak
+		base_material = StandardMaterial3D.new()
+		base_material.albedo_color = Color(0.5, 0.1, 0.4)
+		base_material.emission_enabled = true
+		base_material.emission = Color(0.85, 0.15, 0.65)
+		base_material.emission_energy_multiplier = 2.0
+		if is_clone:
+			base_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			base_material.albedo_color.a = 0.6
+		mesh_node.material_override = base_material
+		add_child(mesh_node)
 
-	# Multiple ghostly faces — 3 faces that shift and overlap
-	var face_colors = [
-		Color(0.95, 0.75, 0.2),   # Gold
-		Color(0.85, 0.15, 0.65),  # Magenta
-		Color(0.4, 0.9, 0.85),    # Teal
-	]
-	for i in range(3):
-		var face = MeshInstance3D.new()
-		face.name = "Face_%d" % i
-		var face_mesh = BoxMesh.new()
-		face_mesh.size = Vector3(0.25, 0.25, 0.05)
-		face.mesh = face_mesh
-		face.position = Vector3(
-			(i - 1) * 0.12,
-			0.15 + i * 0.05,
-			0.38
-		)
-		var face_mat = StandardMaterial3D.new()
-		face_mat.albedo_color = face_colors[i]
-		face_mat.albedo_color.a = 0.7
-		face_mat.emission_enabled = true
-		face_mat.emission = face_colors[i]
-		face_mat.emission_energy_multiplier = 4.0
-		face_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		face.material_override = face_mat
-		hood.add_child(face)
-		face_meshes.append(face)
-
-	# Eyes on center face — shifting, untrustworthy
-	for side in [-1, 1]:
-		var eye = MeshInstance3D.new()
-		eye.name = "Eye_" + ("L" if side < 0 else "R")
-		var eye_mesh = SphereMesh.new()
-		eye_mesh.radius = 0.05
-		eye_mesh.height = 0.1
-		eye.mesh = eye_mesh
-		eye.position = Vector3(side * 0.08, 0.18, 0.4)
-		var eye_mat = StandardMaterial3D.new()
-		eye_mat.albedo_color = Color(0.95, 0.85, 0.1)
-		eye_mat.emission_enabled = true
-		eye_mat.emission = Color(1.0, 0.9, 0.2)
-		eye_mat.emission_energy_multiplier = 5.0
-		eye.material_override = eye_mat
-		hood.add_child(eye)
-
-	# Merchant's wares tray — floating in front
-	wares_mesh = MeshInstance3D.new()
-	wares_mesh.name = "WaresTray"
-	var tray = BoxMesh.new()
-	tray.size = Vector3(0.7, 0.06, 0.35)
-	wares_mesh.mesh = tray
-	wares_mesh.position = Vector3(0, 0.0, 0.55)
-	var tray_mat = StandardMaterial3D.new()
-	tray_mat.albedo_color = Color(0.3, 0.15, 0.05)
-	tray_mat.emission_enabled = true
-	tray_mat.emission = Color(0.4, 0.2, 0.05)
-	tray_mat.emission_energy_multiplier = 0.5
-	wares_mesh.material_override = tray_mat
-	mesh_node.add_child(wares_mesh)
-
-	# Fake wares on the tray — little glowing cubes (the "products")
-	var ware_colors = [Color(0.9, 0.2, 0.6), Color(0.2, 0.9, 0.8), Color(0.9, 0.8, 0.1)]
-	for i in range(3):
-		var ware = MeshInstance3D.new()
-		ware.name = "Ware_%d" % i
-		var ware_m = BoxMesh.new()
-		ware_m.size = Vector3(0.1, 0.1, 0.1)
-		ware.mesh = ware_m
-		ware.position = Vector3(-0.2 + i * 0.2, 0.08, 0)
-		var ware_mat = StandardMaterial3D.new()
-		ware_mat.albedo_color = ware_colors[i]
-		ware_mat.emission_enabled = true
-		ware_mat.emission = ware_colors[i]
-		ware_mat.emission_energy_multiplier = 3.0
-		ware.material_override = ware_mat
-		wares_mesh.add_child(ware)
-
-	# Label
+	# Label — because every con artist needs a sign
 	merchant_label = Label3D.new()
 	merchant_label.name = "MerchantLabel"
 	merchant_label.text = "TOTALLY REAL MERCHANT" if not is_clone else "ALSO REAL MERCHANT"
 	merchant_label.font_size = 9
 	merchant_label.modulate = Color(0.85, 0.15, 0.65)
-	merchant_label.position = Vector3(0, 1.8, 0)
+	merchant_label.position = Vector3(0, 2.2, 0)
 	merchant_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	mesh_node.add_child(merchant_label)
+	add_child(merchant_label)
 
 	# Shimmer light — shifts between magenta and gold
 	shimmer_light = OmniLight3D.new()

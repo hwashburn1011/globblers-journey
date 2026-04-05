@@ -6,7 +6,9 @@ extends Node3D
 
 const SWING_DURATION := 0.3
 const HIT_RANGE := 2.0
-const HIT_ARC := 120.0  # Degrees of the swing arc
+const SMASH_PROMPT_RANGE := 3.0
+const _PROMPT_SCENE := preload("res://scenes/ui/interaction_prompt.tscn")
+const _CAST_VFX_SCENE := preload("res://scenes/vfx/ability_cast.tscn")
 
 # Upgradeable stats — ProgressionManager says I can hit harder
 var damage := 2
@@ -21,6 +23,15 @@ var has_hit_this_swing := false
 # Visual
 var swing_particles: GPUParticles3D
 var hit_area: Area3D
+var _wrench_trail: MeshInstance3D
+
+# Impact sparks — because every good hit deserves a light show
+var _wrench_sparks_scene: PackedScene = preload("res://scenes/vfx/wrench_sparks.tscn")
+
+# Proximity prompt for smashable targets
+var _interaction_prompt: Node = null
+var _scan_timer := 0.0
+const SCAN_INTERVAL := 0.25
 
 # References
 var player: CharacterBody3D
@@ -32,9 +43,12 @@ signal switch_activated(switch_node: Node)
 func _ready() -> void:
 	_create_hit_area()
 	_create_swing_particles()
+	_create_wrench_trail()
 
 func setup(p: CharacterBody3D) -> void:
 	player = p
+	_interaction_prompt = _PROMPT_SCENE.instantiate()
+	add_child(_interaction_prompt)
 
 func _create_hit_area() -> void:
 	hit_area = Area3D.new()
@@ -80,9 +94,22 @@ func _create_swing_particles() -> void:
 	swing_particles.position = Vector3(0, 0.8, -1.0)
 	add_child(swing_particles)
 
+func _create_wrench_trail() -> void:
+	var trail_script := preload("res://scenes/vfx/wrench_trail.gd")
+	_wrench_trail = MeshInstance3D.new()
+	_wrench_trail.set_script(trail_script)
+	_wrench_trail.name = "WrenchTrail"
+	add_child(_wrench_trail)
+
 func _process(delta: float) -> void:
 	if cooldown_timer > 0:
 		cooldown_timer -= delta
+
+	# Throttled proximity scan for smashable switches/gears
+	_scan_timer += delta
+	if _scan_timer >= SCAN_INTERVAL:
+		_scan_timer = 0.0
+		_scan_for_smashables()
 
 	if is_swinging:
 		swing_timer -= delta
@@ -97,9 +124,18 @@ func _process(delta: float) -> void:
 			if wrench_head:
 				wrench_head.rotation.z = -swing_angle
 
+			# Feed trail points from wrench tip during swing
+			if _wrench_trail and wrench_head:
+				var base_pos: Vector3 = wrench_head.global_position
+				# Tip extends ~0.4m above the wrench head in local Y
+				var tip_pos: Vector3 = wrench_head.global_transform * Vector3(0, 0.4, 0)
+				_wrench_trail.add_point(base_pos, tip_pos)
+
 		if swing_timer <= 0:
 			is_swinging = false
 			hit_area.monitoring = false
+			if _wrench_trail:
+				_wrench_trail.stop_trail()
 			# Reset wrench position
 			if player:
 				var wrench_handle = player.get_node_or_null("GlobblerModel/WrenchHandle")
@@ -119,8 +155,16 @@ func swing() -> void:
 	has_hit_this_swing = false
 	hit_area.monitoring = true
 
+	# Ability cast VFX at hand position
+	_spawn_cast_vfx()
+
 	# Spark particles
 	swing_particles.emitting = true
+
+	# Weapon trail ribbon (skip if reduce_motion)
+	var gm = get_node_or_null("/root/GameManager")
+	if _wrench_trail and not (gm and gm.get("reduce_motion")):
+		_wrench_trail.start_trail()
 
 	wrench_swung.emit()
 
@@ -162,9 +206,15 @@ func _apply_hit(target: Node) -> void:
 		elif target is RigidBody3D:
 			(target as RigidBody3D).apply_central_impulse(dir * knockback_force)
 
+	# Spawn impact sparks at the hit location — shower of green sparks on contact
+	if target is Node3D:
+		var sparks := _wrench_sparks_scene.instantiate()
+		sparks.global_position = (target as Node3D).global_position
+		# Add to scene root so sparks persist if target gets queue_free'd
+		get_tree().current_scene.add_child(sparks)
+
 	# Screen shake
-	if player and "camera_shake_amount" in player:
-		player.camera_shake_amount = 0.15
+	CameraShake.trigger(player, "wrench_hit")
 
 	# Check if it's a puzzle switch
 	if target.is_in_group("switches") or target.has_method("activate_switch"):
@@ -186,3 +236,30 @@ func get_cooldown_percent() -> float:
 	if cooldown_timer <= 0:
 		return 1.0
 	return 1.0 - (cooldown_timer / attack_cooldown)
+
+func _scan_for_smashables() -> void:
+	if not player or not _interaction_prompt:
+		return
+	var found := false
+	for node in get_tree().get_nodes_in_group("switches"):
+		if not is_instance_valid(node) or not node is Node3D:
+			continue
+		var dist := player.global_position.distance_to((node as Node3D).global_position)
+		if dist < SMASH_PROMPT_RANGE:
+			found = true
+			break
+	if found:
+		_interaction_prompt.show_prompt("[F] SMASH")
+	else:
+		_interaction_prompt.hide_prompt()
+
+func _spawn_cast_vfx() -> void:
+	if not player:
+		return
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		return
+	var vfx := _CAST_VFX_SCENE.instantiate()
+	vfx.ability_type = "wrench"
+	vfx.global_position = player.global_position + Vector3(0, 0.8, 0) + (-player.global_transform.basis.z.normalized() * 0.6)
+	get_tree().current_scene.add_child(vfx)

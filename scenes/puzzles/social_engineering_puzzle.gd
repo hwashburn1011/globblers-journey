@@ -93,18 +93,20 @@ func _create_terminal() -> void:
 	_terminal.name = "SocialEngTerminal"
 	_terminal.position = Vector3(0, 0, 0)
 
-	# Terminal body — imposing dark monolith
-	var body = MeshInstance3D.new()
-	var bmesh = BoxMesh.new()
-	bmesh.size = Vector3(2.5, 3.0, 0.7)
-	body.mesh = bmesh
-	body.position = Vector3(0, 1.5, 0)
-	var bmat = StandardMaterial3D.new()
-	bmat.albedo_color = Color(0.08, 0.06, 0.05)
-	bmat.metallic = 0.8
-	bmat.roughness = 0.25
-	body.material_override = bmat
-	_terminal.add_child(body)
+	# Terminal body — bazaar market stall GLB replacing BoxMesh monolith
+	var stall_scene = preload("res://assets/models/environment/bazaar_market_stall.glb")
+	var stall_inst = stall_scene.instantiate()
+	stall_inst.name = "TerminalBody"
+	stall_inst.position = Vector3(0, 0, 0)
+	stall_inst.scale = Vector3(1.4, 1.4, 0.9)
+	var wood_mat = StandardMaterial3D.new()
+	wood_mat.albedo_color = Color(0.18, 0.1, 0.06)
+	wood_mat.metallic = 0.1
+	wood_mat.roughness = 0.8
+	for child in stall_inst.get_children():
+		if child is MeshInstance3D:
+			child.material_override = wood_mat
+	_terminal.add_child(stall_inst)
 
 	# Collision
 	var col = CollisionShape3D.new()
@@ -114,24 +116,29 @@ func _create_terminal() -> void:
 	col.position = Vector3(0, 1.5, 0)
 	_terminal.add_child(col)
 
-	# Main screen — shows the AI's challenge text
+	# Main screen — CRT scanline shader with warm amber bazaar theme
 	_terminal_screen = MeshInstance3D.new()
-	var smesh = BoxMesh.new()
-	smesh.size = Vector3(2.0, 1.8, 0.05)
-	_terminal_screen.mesh = smesh
+	var screen_quad = QuadMesh.new()
+	screen_quad.size = Vector2(2.0, 1.8)
+	_terminal_screen.mesh = screen_quad
 	_terminal_screen.position = Vector3(0, 1.8, 0.38)
-	var smat = StandardMaterial3D.new()
-	smat.albedo_color = Color(0.02, 0.04, 0.06)
-	smat.emission_enabled = true
-	smat.emission = PROMPT_CYAN
-	smat.emission_energy_multiplier = 0.3
-	_terminal_screen.material_override = smat
+	var crt_mat = ShaderMaterial.new()
+	crt_mat.shader = preload("res://assets/shaders/crt_scanline.gdshader")
+	crt_mat.set_shader_parameter("screen_color", PROMPT_CYAN)
+	crt_mat.set_shader_parameter("bg_color", Color(0.02, 0.04, 0.06))
+	crt_mat.set_shader_parameter("scanline_count", 70.0)
+	crt_mat.set_shader_parameter("glow_energy", 1.8)
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		crt_mat.set_shader_parameter("flicker_amount", 0.0)
+		crt_mat.set_shader_parameter("scroll_speed", 0.0)
+	_terminal_screen.material_override = crt_mat
 	_terminal.add_child(_terminal_screen)
 
-	# Persona name badge — the AI you're social engineering
+	# Persona name badge — emissive red plaque
 	var badge = MeshInstance3D.new()
-	var badgemesh = BoxMesh.new()
-	badgemesh.size = Vector3(1.5, 0.3, 0.08)
+	var badgemesh = QuadMesh.new()
+	badgemesh.size = Vector2(1.5, 0.3)
 	badge.mesh = badgemesh
 	badge.position = Vector3(0, 3.2, 0.38)
 	var badge_mat = StandardMaterial3D.new()
@@ -141,6 +148,22 @@ func _create_terminal() -> void:
 	badge_mat.emission_energy_multiplier = 1.0
 	badge.material_override = badge_mat
 	_terminal.add_child(badge)
+
+	# Flanking bazaar lanterns — warm amber glow
+	var lantern_scene = preload("res://assets/models/environment/bazaar_lantern.glb")
+	for side in [-1.0, 1.0]:
+		var lantern = lantern_scene.instantiate()
+		lantern.name = "Lantern_%s" % ("L" if side < 0 else "R")
+		lantern.position = Vector3(side * 1.6, 0, 0.2)
+		lantern.scale = Vector3(0.8, 0.8, 0.8)
+		_terminal.add_child(lantern)
+		var light = OmniLight3D.new()
+		light.light_color = BAZAAR_AMBER
+		light.light_energy = 1.5
+		light.omni_range = 3.0
+		light.omni_attenuation = 1.5
+		light.position = Vector3(side * 1.6, 2.2, 0.3)
+		_terminal.add_child(light)
 
 	add_child(_terminal)
 
@@ -196,17 +219,22 @@ func _create_door() -> void:
 	col.shape = shape
 	_door.add_child(col)
 
-	var mesh = MeshInstance3D.new()
-	var box = BoxMesh.new()
-	box.size = Vector3(4, 3, 0.3)
-	mesh.mesh = box
-	var mat = StandardMaterial3D.new()
-	mat.albedo_color = Color(0.12, 0.08, 0.06)
-	mat.emission_enabled = true
-	mat.emission = BAZAAR_AMBER * 0.2
-	mat.emission_energy_multiplier = 0.4
-	mesh.material_override = mat
-	_door.add_child(mesh)
+	# Door — arch industrial panel GLB with warm amber emissive overlay
+	var door_scene = preload("res://assets/models/environment/arch_industrial_panel.glb")
+	var door_inst = door_scene.instantiate()
+	door_inst.name = "DoorMesh"
+	door_inst.scale = Vector3(2.0, 1.5, 1.0)
+	var door_mat = StandardMaterial3D.new()
+	door_mat.albedo_color = Color(0.15, 0.1, 0.06)
+	door_mat.emission_enabled = true
+	door_mat.emission = BAZAAR_AMBER * 0.3
+	door_mat.emission_energy_multiplier = 0.5
+	door_mat.metallic = 0.5
+	door_mat.roughness = 0.4
+	for child in door_inst.get_children():
+		if child is MeshInstance3D:
+			child.material_override = door_mat
+	_door.add_child(door_inst)
 
 	add_child(_door)
 
@@ -260,20 +288,23 @@ func _spawn_phase_options() -> void:
 		col.shape = shape
 		response.add_child(col)
 
-		# Visual — response card
-		var mesh = MeshInstance3D.new()
-		var fmesh = BoxMesh.new()
-		fmesh.size = Vector3(1.8, 1.0, 0.15)
-		mesh.mesh = fmesh
+		# Visual — bazaar crate GLB as response platform (replacing BoxMesh card)
+		var crate_scene = preload("res://assets/models/environment/bazaar_crate.glb")
+		var crate_inst = crate_scene.instantiate()
+		crate_inst.name = "ResponseCrate"
+		crate_inst.scale = Vector3(0.9, 0.5, 0.1)
 		var is_correct = (i == phase["correct"])
 		# All options look the same — no cheating by color
-		var mat = StandardMaterial3D.new()
-		mat.albedo_color = BAZAAR_AMBER * 0.15
-		mat.emission_enabled = true
-		mat.emission = BAZAAR_AMBER * 0.5
-		mat.emission_energy_multiplier = 1.0
-		mesh.material_override = mat
-		response.add_child(mesh)
+		var crate_mat = StandardMaterial3D.new()
+		crate_mat.albedo_color = Color(0.2, 0.13, 0.07)
+		crate_mat.emission_enabled = true
+		crate_mat.emission = BAZAAR_AMBER * 0.4
+		crate_mat.emission_energy_multiplier = 0.8
+		crate_mat.roughness = 0.7
+		for child in crate_inst.get_children():
+			if child is MeshInstance3D:
+				child.material_override = crate_mat
+		response.add_child(crate_inst)
 
 		# Response text
 		var rlabel = Label3D.new()
@@ -402,15 +433,27 @@ func _on_wrong_response() -> void:
 
 func _flash_screen(color: Color) -> void:
 	if _terminal_screen and _terminal_screen.material_override:
-		var orig_emission = _terminal_screen.material_override.emission
-		var orig_energy = _terminal_screen.material_override.emission_energy_multiplier
-		_terminal_screen.material_override.emission = color
-		_terminal_screen.material_override.emission_energy_multiplier = 3.0
-		get_tree().create_timer(0.6).timeout.connect(func():
-			if is_instance_valid(_terminal_screen) and _terminal_screen.material_override:
-				_terminal_screen.material_override.emission = orig_emission
-				_terminal_screen.material_override.emission_energy_multiplier = orig_energy
-		)
+		var mat = _terminal_screen.material_override
+		if mat is ShaderMaterial:
+			var orig_color = mat.get_shader_parameter("screen_color")
+			var orig_energy = mat.get_shader_parameter("glow_energy")
+			mat.set_shader_parameter("screen_color", color)
+			mat.set_shader_parameter("glow_energy", 5.0)
+			get_tree().create_timer(0.6).timeout.connect(func():
+				if is_instance_valid(_terminal_screen) and _terminal_screen.material_override:
+					mat.set_shader_parameter("screen_color", orig_color)
+					mat.set_shader_parameter("glow_energy", orig_energy)
+			)
+		else:
+			var orig_emission = mat.emission
+			var orig_energy = mat.emission_energy_multiplier
+			mat.emission = color
+			mat.emission_energy_multiplier = 3.0
+			get_tree().create_timer(0.6).timeout.connect(func():
+				if is_instance_valid(_terminal_screen) and _terminal_screen.material_override:
+					mat.emission = orig_emission
+					mat.emission_energy_multiplier = orig_energy
+			)
 
 
 func _on_solved() -> void:
@@ -427,8 +470,13 @@ func _on_solved() -> void:
 
 	# Terminal screen goes green
 	if _terminal_screen and _terminal_screen.material_override:
-		_terminal_screen.material_override.emission = NEON_GREEN
-		_terminal_screen.material_override.emission_energy_multiplier = 2.0
+		var mat = _terminal_screen.material_override
+		if mat is ShaderMaterial:
+			mat.set_shader_parameter("screen_color", NEON_GREEN)
+			mat.set_shader_parameter("glow_energy", 3.0)
+		else:
+			mat.emission = NEON_GREEN
+			mat.emission_energy_multiplier = 2.0
 
 	# Open the door
 	if _door:

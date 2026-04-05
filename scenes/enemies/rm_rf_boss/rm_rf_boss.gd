@@ -85,43 +85,33 @@ func _resize_collision() -> void:
 				child.position.y = 2.5
 
 func _create_visual() -> void:
-	# Override base enemy visual — we're building a BOSS here
-	# Main body: towering dark monolith with crimson cracks
-	body_mesh = MeshInstance3D.new()
-	body_mesh.name = "BossBody"
-	var body_box = BoxMesh.new()
-	body_box.size = Vector3(3, 5, 2)
-	body_mesh.mesh = body_box
-	body_mesh.position.y = 2.5
+	# Override base enemy visual — real GLB model, not CSG peasantry
+	# Load the delete-daemon model built in Blender
+	var boss_scene = load("res://assets/models/bosses/rm_rf_boss.glb")
+	if boss_scene:
+		var boss_model = boss_scene.instantiate()
+		boss_model.name = "BossModel"
+		boss_model.position.y = 0.0
+		add_child(boss_model)
+		# Grab the main mesh for material overrides and damage flash
+		body_mesh = _find_mesh_instance(boss_model)
+		if body_mesh:
+			base_material = body_mesh.get_active_material(0)
+		# LOD: hi-res visible 0–25m, low-poly beyond 25m
+		_apply_lod_ranges(boss_model, 0.0, 25.0)
+	var lod_scene = load("res://assets/models/bosses/rm_rf_boss_lod1.glb")
+	if lod_scene:
+		var lod_model = lod_scene.instantiate()
+		lod_model.name = "BossModel_LOD1"
+		lod_model.position.y = 0.0
+		add_child(lod_model)
+		_apply_lod_ranges(lod_model, 25.0, 0.0)
 
-	base_material = StandardMaterial3D.new()
-	base_material.albedo_color = Color(0.08, 0.02, 0.02)
-	base_material.emission_enabled = true
-	base_material.emission = DELETE_RED
-	base_material.emission_energy_multiplier = 1.5
-	base_material.metallic = 0.9
-	base_material.roughness = 0.2
-	body_mesh.material_override = base_material
-	add_child(body_mesh)
+	# Eyes — still procedural so we can pulse them independently
+	eye_left = _create_eye(Vector3(-0.35, 4.6, 0.46))
+	eye_right = _create_eye(Vector3(0.35, 4.6, 0.46))
 
-	# "Face" — a terminal screen showing "rm -rf /"
-	var face_mesh = MeshInstance3D.new()
-	face_mesh.name = "BossFace"
-	var face_plane = PlaneMesh.new()
-	face_plane.size = Vector2(2.0, 1.2)
-	face_mesh.mesh = face_plane
-	face_mesh.position = Vector3(0, 4.0, 1.05)
-	face_mesh.rotation.x = deg_to_rad(90)
-
-	var face_mat = StandardMaterial3D.new()
-	face_mat.albedo_color = Color(0.02, 0.02, 0.02)
-	face_mat.emission_enabled = true
-	face_mat.emission = DELETE_RED
-	face_mat.emission_energy_multiplier = 3.0
-	face_mesh.material_override = face_mat
-	body_mesh.add_child(face_mesh)
-
-	# Label on the face
+	# "rm -rf /" label — floating above like a death sentence
 	var face_label = Label3D.new()
 	face_label.text = "rm -rf /"
 	face_label.font_size = 48
@@ -130,29 +120,7 @@ func _create_visual() -> void:
 	face_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(face_label)
 
-	# Glowing red eyes
-	eye_left = _create_eye(Vector3(-0.5, 4.5, 1.05))
-	eye_right = _create_eye(Vector3(0.5, 4.5, 1.05))
-
-	# "Arms" — jagged deletion beams extending from sides
-	for side in [-1, 1]:
-		var arm = MeshInstance3D.new()
-		var arm_box = BoxMesh.new()
-		arm_box.size = Vector3(2.5, 0.4, 0.4)
-		arm.mesh = arm_box
-		arm.position = Vector3(side * 2.7, 3.5, 0)
-		arm.rotation.z = side * deg_to_rad(15)
-
-		var arm_mat = StandardMaterial3D.new()
-		arm_mat.albedo_color = DARK_CRIMSON
-		arm_mat.emission_enabled = true
-		arm_mat.emission = DELETE_RED
-		arm_mat.emission_energy_multiplier = 2.0
-		arm_mat.metallic = 0.7
-		arm.material_override = arm_mat
-		add_child(arm)
-
-	# Shield mesh (invisible until phase 2)
+	# Shield mesh (invisible until phase 2) — keeps CSG, it's supposed to look ethereal
 	shield_mesh = MeshInstance3D.new()
 	shield_mesh.name = "BossShield"
 	var shield_sphere = SphereMesh.new()
@@ -172,7 +140,7 @@ func _create_visual() -> void:
 	shield_mesh.visible = false
 	add_child(shield_mesh)
 
-	# Core mesh (invisible until phase 3)
+	# Core mesh (invisible until phase 3) — the hackable weak point
 	core_mesh = MeshInstance3D.new()
 	core_mesh.name = "BossCore"
 	var core_sphere = SphereMesh.new()
@@ -190,7 +158,7 @@ func _create_visual() -> void:
 	core_mesh.visible = false
 	add_child(core_mesh)
 
-	# Boss glow light
+	# Boss glow light — the ambient 'everything is on fire' vibe
 	boss_light = OmniLight3D.new()
 	boss_light.light_color = DELETE_RED
 	boss_light.light_energy = 3.0
@@ -198,7 +166,7 @@ func _create_visual() -> void:
 	boss_light.position.y = 3.0
 	add_child(boss_light)
 
-	# Menacing floating text
+	# Menacing floating title
 	var title_label = Label3D.new()
 	title_label.text = "< rm -rf / >"
 	title_label.font_size = 32
@@ -207,6 +175,24 @@ func _create_visual() -> void:
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	add_child(title_label)
+
+func _apply_lod_ranges(root: Node, begin: float, end: float) -> void:
+	for child in root.get_children():
+		if child is MeshInstance3D:
+			child.visibility_range_begin = begin
+			child.visibility_range_end = end
+			child.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+		_apply_lod_ranges(child, begin, end)
+
+func _find_mesh_instance(node: Node) -> MeshInstance3D:
+	# Recursively dig through the GLB scene tree to find the first MeshInstance3D
+	if node is MeshInstance3D:
+		return node
+	for child in node.get_children():
+		var found = _find_mesh_instance(child)
+		if found:
+			return found
+	return null
 
 func _create_eye(pos: Vector3) -> MeshInstance3D:
 	var eye = MeshInstance3D.new()
@@ -311,6 +297,10 @@ func _process_phase_3(delta: float) -> void:
 		shield_mesh.visible = true
 		shield_active = true
 		reflected_hits = 0
+		# Clean up the hack terminal — can't leave ghost terminals floating around
+		if hack_terminal and is_instance_valid(hack_terminal):
+			hack_terminal.queue_free()
+			hack_terminal = null
 		# Heal a bit — punishment for slow hacking
 		if health_comp and health_comp.has_method("heal"):
 			health_comp.heal(5)
@@ -383,6 +373,10 @@ func _spawn_delete_command() -> void:
 
 func on_reflected_hit() -> void:
 	# Called when a delete command is reflected back at the boss
+	# Guard against double-triggers — can't break what's already broken
+	if not shield_active:
+		return
+
 	reflected_hits += 1
 	if health_comp and health_comp.has_method("take_damage"):
 		health_comp.take_damage(4, player_ref)
@@ -403,6 +397,14 @@ func _transition_to_phase(new_phase: BossPhase) -> void:
 	var old_phase = boss_phase
 	boss_phase = new_phase
 	boss_phase_changed.emit(new_phase)
+
+	# Spawn phase flash VFX for dramatic transitions — skip the opening handshake
+	if new_phase != BossPhase.INTRO and new_phase != BossPhase.PHASE_1:
+		var flash_scene := preload("res://scenes/vfx/boss_phase_flash.tscn")
+		var flash_inst := flash_scene.instantiate()
+		flash_inst.global_position = global_position
+		get_tree().current_scene.add_child.call_deferred(flash_inst)
+		CameraShake.trigger(player_ref, "boss_phase")
 
 	match new_phase:
 		BossPhase.PHASE_1:
@@ -553,8 +555,13 @@ func _victory_cutscene() -> void:
 	if save_sys and save_sys.has_method("checkpoint_save"):
 		save_sys.checkpoint_save()
 
-	# Finally remove the boss
+	# Finally remove the boss — your deletion days are over, pal
 	queue_free()
+
+	# Transition to Chapter 2 after a brief delay so the player can read dialogue
+	get_tree().create_timer(3.0).timeout.connect(func():
+		ChapterTransition.transition_to(get_tree(), "res://scenes/levels/chapter_2/training_grounds.tscn")
+	, CONNECT_ONE_SHOT)
 
 # Override base enemy damage handler — boss has phase-specific invulnerability
 func _on_damage_taken(amount: int, source: Node) -> void:
@@ -576,6 +583,9 @@ func _on_damage_taken(amount: int, source: Node) -> void:
 
 func start_boss_fight() -> void:
 	# Called by the arena when the player enters
+	BossIntroCamera.play(self, _begin_phase_1)
+
+func _begin_phase_1() -> void:
 	_transition_to_phase(BossPhase.PHASE_1)
 
 func _animate_eyes(delta: float) -> void:

@@ -1,4 +1,6 @@
 extends Node3D
+# DEV ONLY — not wired into any shipping path (main menu, chapter select, project.godot).
+# Safe to keep for dev testing; not loaded in production builds.
 
 # Test Level - A compact sandbox for verifying all core systems
 # "The staging environment. Where bugs come to die. Or multiply."

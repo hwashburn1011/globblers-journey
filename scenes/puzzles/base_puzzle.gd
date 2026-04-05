@@ -60,6 +60,13 @@ func solve() -> void:
 	puzzle_solved.emit(self)
 	_on_solved()
 
+	# Spawn solve burst VFX — rising green rings + sparks to reward the player's galaxy brain
+	var solve_scene = load("res://scenes/vfx/puzzle_solve.tscn")
+	if solve_scene:
+		var solve_vfx = solve_scene.instantiate()
+		solve_vfx.global_position = global_position + Vector3(0, 0.5, 0)
+		get_tree().current_scene.call_deferred("add_child", solve_vfx)
+
 	var dm = get_node_or_null("/root/DialogueManager")
 	if dm:
 		var line = dm.get_narrator_line("puzzle_solved")

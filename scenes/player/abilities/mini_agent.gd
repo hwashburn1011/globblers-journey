@@ -44,6 +44,7 @@ var is_spinning := false
 var spin_timer := 0.0
 var is_confused := false
 var confusion_timer := 0.0
+var wander_timer := 0.0  # How long we've been wandering without a target — patience is finite
 
 # Task-specific
 var fetch_target: Node3D = null
@@ -302,7 +303,7 @@ func _physics_process(delta: float) -> void:
 	# Random insult timer
 	if state in [AgentState.IDLE, AgentState.MOVING, AgentState.WORKING]:
 		insult_timer += delta
-		if insult_timer >= INSULT_COOLDOWN and randf() < INSULT_CHANCE * delta:
+		if insult_timer >= INSULT_COOLDOWN and randf() < INSULT_CHANCE:
 			insult_timer = 0.0
 			agent_quip.emit(insults[randi() % insults.size()])
 
@@ -338,9 +339,18 @@ func _process_idle(delta: float) -> void:
 
 func _process_moving(delta: float) -> void:
 	if target_position == Vector3.ZERO:
-		# No target — wander aimlessly like a lost process
+		# No target — wander aimlessly like a lost process (but not forever)
+		wander_timer += delta
+		if wander_timer >= 5.0:
+			# 5 seconds of existential wandering is enough for anyone
+			wander_timer = 0.0
+			_fail_task()
+			agent_quip.emit("I wandered for 5 whole seconds. That's like 3 years in mini-agent time.")
+			return
 		_wander()
 		return
+
+	wander_timer = 0.0  # Reset wander timer when we have a real target
 
 	var to_target = target_position - global_position
 	to_target.y = 0  # Stay on the ground plane, we're not a flying agent
@@ -551,7 +561,7 @@ func _succeed_task() -> void:
 				# Try to "collect" it — push it toward the player
 				var dir = (player.global_position - fetch_target.global_position).normalized()
 				if fetch_target is RigidBody3D:
-					fetch_target.apply_impulse(dir * 8.0)
+					fetch_target.apply_central_impulse(dir * 8.0)  # apply_central_impulse, because Godot 4 said so
 		TaskType.DISTRACT:
 			if is_instance_valid(distract_target):
 				# Alert the enemy to look at the mini-agent instead

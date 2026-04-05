@@ -41,6 +41,7 @@ func _ready() -> void:
 	_spawn_hazards()
 	_spawn_ambient_particles()
 	_spawn_decorations()
+	_place_reflection_probes()
 
 	# Start level audio — menu music is already stopped by menu transition
 	var game_mgr = get_node_or_null("/root/GameManager")
@@ -739,3 +740,32 @@ func _process(delta: float) -> void:
 				for child in dp["node"].get_children():
 					if child is CollisionShape3D:
 						child.disabled = false
+
+
+func _place_reflection_probes() -> void:
+	# Tutorial area (z: 0 to -20)
+	var probe_tutorial := ReflectionProbe.new()
+	probe_tutorial.name = "ReflectionProbe_tutorial"
+	probe_tutorial.update_mode = ReflectionProbe.UPDATE_ONCE
+	probe_tutorial.box_projection = true
+	probe_tutorial.size = Vector3(14.0, 8.0, 22.0)
+	probe_tutorial.position = Vector3(0, 4.0, -10)
+	add_child(probe_tutorial)
+
+	# Enemy encounter arena (z: -55 to -80)
+	var probe_arena := ReflectionProbe.new()
+	probe_arena.name = "ReflectionProbe_arena"
+	probe_arena.update_mode = ReflectionProbe.UPDATE_ONCE
+	probe_arena.box_projection = true
+	probe_arena.size = Vector3(22.0, 10.0, 18.0)
+	probe_arena.position = Vector3(0, 12.0, -65)
+	add_child(probe_arena)
+
+	# Final boss arena (z: -148 to -170)
+	var probe_boss := ReflectionProbe.new()
+	probe_boss.name = "ReflectionProbe_final_arena"
+	probe_boss.update_mode = ReflectionProbe.UPDATE_ONCE
+	probe_boss.box_projection = true
+	probe_boss.size = Vector3(20.0, 10.0, 14.0)
+	probe_boss.position = Vector3(0, 16.0, -168)
+	add_child(probe_boss)

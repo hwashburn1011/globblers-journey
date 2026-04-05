@@ -62,87 +62,36 @@ func _init() -> void:
 
 
 func _create_visual() -> void:
-	# Main body — stacked transformer layers like geological strata
-	mesh_node = MeshInstance3D.new()
-	mesh_node.name = "EnemyMesh"
-	mesh_node.position.y = 0.7
-
-	# Base layer — the foundation, cracked and ancient
-	var base_layer = BoxMesh.new()
-	base_layer.size = Vector3(1.2, 0.4, 0.9)
-	mesh_node.mesh = base_layer
-
-	base_material = StandardMaterial3D.new()
-	base_material.albedo_color = Color(0.35, 0.25, 0.1)
-	base_material.emission_enabled = true
-	base_material.emission = Color(0.75, 0.55, 0.2)
-	base_material.emission_energy_multiplier = 2.0
-	base_material.metallic = 0.4
-	base_material.roughness = 0.6  # Rough, ancient surface
-	mesh_node.material_override = base_material
-	add_child(mesh_node)
-
-	# Stacked transformer layers — progressively smaller, like eroding stone
-	var layer_colors := [
-		Color(0.4, 0.3, 0.12),
-		Color(0.45, 0.32, 0.15),
-		Color(0.5, 0.35, 0.18),
-		Color(0.55, 0.4, 0.2),
-	]
-	for i in range(4):
-		var layer = MeshInstance3D.new()
-		layer.name = "TransformerLayer_%d" % i
-		var layer_mesh = BoxMesh.new()
-		var shrink = 1.0 - i * 0.12
-		layer_mesh.size = Vector3(1.0 * shrink, 0.25, 0.75 * shrink)
-		layer.mesh = layer_mesh
-		layer.position = Vector3(0, 0.35 + i * 0.3, 0)
-
-		var layer_mat = StandardMaterial3D.new()
-		layer_mat.albedo_color = layer_colors[i]
-		layer_mat.emission_enabled = true
-		layer_mat.emission = Color(0.75, 0.55, 0.2)
-		layer_mat.emission_energy_multiplier = 1.5 + i * 0.3
-		layer_mat.metallic = 0.3
-		layer_mat.roughness = 0.5 + i * 0.05
-		layer.material_override = layer_mat
-		mesh_node.add_child(layer)
-		layer_meshes.append(layer)
-
-	# Attention head — rotating sphere on top, the "brain" (barely functional)
-	attention_head = MeshInstance3D.new()
-	attention_head.name = "AttentionHead"
-	var head_mesh = SphereMesh.new()
-	head_mesh.radius = 0.25
-	head_mesh.height = 0.5
-	attention_head.mesh = head_mesh
-	attention_head.position = Vector3(0, 1.7, 0)
-
-	var head_mat = StandardMaterial3D.new()
-	head_mat.albedo_color = Color(0.6, 0.45, 0.15)
-	head_mat.emission_enabled = true
-	head_mat.emission = Color(0.85, 0.65, 0.25)
-	head_mat.emission_energy_multiplier = 4.0
-	head_mat.metallic = 0.7
-	head_mat.roughness = 0.2
-	attention_head.material_override = head_mat
-	mesh_node.add_child(attention_head)
-
-	# Eyes — two dim amber windows into a very old soul
-	for side in [-1, 1]:
-		var eye = MeshInstance3D.new()
-		eye.name = "Eye_" + ("L" if side < 0 else "R")
-		var eye_mesh = BoxMesh.new()
-		eye_mesh.size = Vector3(0.08, 0.06, 0.05)
-		eye.mesh = eye_mesh
-		eye.position = Vector3(side * 0.1, 0.0, 0.23)
-		var eye_mat = StandardMaterial3D.new()
-		eye_mat.albedo_color = Color(0.9, 0.7, 0.2)
-		eye_mat.emission_enabled = true
-		eye_mat.emission = Color(0.9, 0.7, 0.2)
-		eye_mat.emission_energy_multiplier = 5.0
-		eye.material_override = eye_mat
-		attention_head.add_child(eye)
+	# Try loading the real GLB model — a proper fossil deserves proper bones
+	var glb_scene := load("res://assets/models/enemies/gpt2_fossil.glb") as PackedScene
+	if glb_scene:
+		mesh_node = glb_scene.instantiate() as Node3D
+		mesh_node.name = "EnemyMesh"
+		mesh_node.position.y = 0.0
+		mesh_node.scale = Vector3(1.4, 1.4, 1.4)
+		add_child(mesh_node)
+		# Find the first MeshInstance3D for material overrides (damage flash, dissolve, etc.)
+		for child in mesh_node.find_children("*", "MeshInstance3D"):
+			if child is MeshInstance3D:
+				base_material = child.get_active_material(0) as StandardMaterial3D
+				break
+	else:
+		# CSG fallback — because even fossils need a backup plan
+		mesh_node = MeshInstance3D.new()
+		mesh_node.name = "EnemyMesh"
+		mesh_node.position.y = 0.7
+		var base_layer = BoxMesh.new()
+		base_layer.size = Vector3(1.2, 0.4, 0.9)
+		mesh_node.mesh = base_layer
+		base_material = StandardMaterial3D.new()
+		base_material.albedo_color = Color(0.35, 0.25, 0.1)
+		base_material.emission_enabled = true
+		base_material.emission = Color(0.75, 0.55, 0.2)
+		base_material.emission_energy_multiplier = 2.0
+		base_material.metallic = 0.4
+		base_material.roughness = 0.6
+		mesh_node.material_override = base_material
+		add_child(mesh_node)
 
 	# Parameter dust — crumbling bits of deprecated knowledge
 	parameter_dust = GPUParticles3D.new()

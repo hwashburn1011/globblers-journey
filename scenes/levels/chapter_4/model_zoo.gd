@@ -119,9 +119,32 @@ var _fence_posts: Array[MeshInstance3D] = []
 var _hologram_meshes: Array[Dictionary] = []
 var _time := 0.0
 
+# GLB prop paths — museum exhibits deserve real geometry, not CSG shame
+const _PROP_PATHS := {
+	"server_rack": "res://assets/models/environment/arch_server_rack.glb",
+	"crt_monitor": "res://assets/models/environment/prop_crt_monitor.glb",
+	"motherboard": "res://assets/models/environment/prop_motherboard.glb",
+	"cpu_chip": "res://assets/models/environment/prop_cpu_chip.glb",
+	"hard_drive": "res://assets/models/environment/prop_hard_drive.glb",
+	"keyboard": "res://assets/models/environment/prop_keyboard.glb",
+	"cable_bundle": "res://assets/models/environment/arch_cable_bundle.glb",
+	"industrial_panel": "res://assets/models/environment/arch_industrial_panel.glb",
+	"floor_grate": "res://assets/models/environment/arch_floor_grate.glb",
+	"wall_terminal": "res://assets/models/environment/arch_wall_terminal.glb",
+	"filing_cabinet": "res://assets/models/environment/clinical_filing_cabinet.glb",
+	"office_chair": "res://assets/models/environment/clinical_office_chair.glb",
+	"office_monitor": "res://assets/models/environment/clinical_office_monitor.glb",
+	"office_desk": "res://assets/models/environment/clinical_office_desk.glb",
+	"display_case": "res://assets/models/environment/museum_display_case.glb",
+	"pedestal": "res://assets/models/environment/museum_pedestal.glb",
+	"kiosk": "res://assets/models/environment/museum_kiosk.glb",
+}
+var _prop_scenes := {}  # Runtime-loaded GLB PackedScenes
+
 
 func _ready() -> void:
 	print("[MODEL ZOO] Initializing digital safari... please keep hands inside the exhibit at all times.")
+	_load_prop_scenes()
 	_setup_environment()
 	_build_rooms()
 	_build_corridors()
@@ -130,6 +153,7 @@ func _ready() -> void:
 	_populate_nightmare_gallery()
 	_populate_office_ruins()
 	_populate_foundation_atrium()
+	_scatter_museum_props()
 	_place_checkpoints()
 	_place_ambient_zones()
 	_place_data_dust()
@@ -149,8 +173,12 @@ func _ready() -> void:
 	if am:
 		am.call_deferred("set_area_ambient", "zoo_entrance")
 		if am.has_method("start_music"):
-			am.start_music("chapter_1")  # Reuse until dedicated music
+			am.start_music("chapter_4")
 
+	_place_lore_docs()
+	_place_decals()
+	_place_particles()
+	_place_reflection_probes()
 	print("[MODEL ZOO] Safari park open. %d exhibits ready for visitors." % ROOMS.size())
 
 
@@ -159,48 +187,46 @@ func _ready() -> void:
 # ============================================================
 
 func _setup_environment() -> void:
-	# Main light — cool institutional overhead like a museum after hours
+	# Main light — cool institutional overhead, museum after-hours security lighting
+	# (the exhibits don't care, but the dust motes appreciate the ambiance)
 	var dir_light = DirectionalLight3D.new()
 	dir_light.name = "MainLight"
-	dir_light.rotation = Vector3(deg_to_rad(-45), deg_to_rad(15), 0)
-	dir_light.light_color = Color(0.4, 0.5, 0.6)
-	dir_light.light_energy = 0.3
+	dir_light.rotation = Vector3(deg_to_rad(-55), deg_to_rad(10), 0)
+	dir_light.light_color = Color(0.5, 0.5, 0.55)  # Desaturated cool white — dusty fluorescent
+	dir_light.light_energy = 0.35
+	dir_light.light_temperature = 5500  # Neutral daylight — boring on purpose
 	dir_light.shadow_enabled = true
+	dir_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	dir_light.shadow_bias = 0.1
+	dir_light.shadow_normal_bias = 2.0
+	dir_light.directional_shadow_max_distance = 60.0  # Museum halls are long but not outdoor-long
+	dir_light.directional_shadow_split_1 = 0.1
+	dir_light.directional_shadow_split_2 = 0.3
+	dir_light.directional_shadow_split_3 = 0.55
+	dir_light.shadow_blur = 1.0  # Crisp institutional shadows — the exhibits demand precision
 	add_child(dir_light)
 
-	# Fill — warm amber from below, like exhibit case lighting
+	# Fill — warm amber uplighting from exhibit cases below
 	var fill = DirectionalLight3D.new()
 	fill.name = "FillLight"
-	fill.rotation = Vector3(deg_to_rad(15), deg_to_rad(-40), 0)
-	fill.light_color = Color(0.5, 0.4, 0.25)
-	fill.light_energy = 0.1
+	fill.rotation = Vector3(deg_to_rad(20), deg_to_rad(-45), 0)
+	fill.light_color = Color(0.55, 0.45, 0.3)  # Warm amber — exhibit case glow
+	fill.light_energy = 0.12
+	fill.shadow_enabled = true
+	fill.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	fill.shadow_bias = 0.1
+	fill.shadow_normal_bias = 2.0
+	fill.directional_shadow_max_distance = 60.0
+	fill.directional_shadow_split_1 = 0.1
+	fill.directional_shadow_split_2 = 0.3
+	fill.directional_shadow_split_3 = 0.55
+	fill.shadow_blur = 1.0
 	add_child(fill)
 
-	# World environment — dark museum after closing time
-	var env = Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color(0.015, 0.02, 0.03)
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color(0.05, 0.06, 0.08)
-	env.ambient_light_energy = 0.25
-	env.glow_enabled = true
-	env.glow_intensity = 1.1
-	env.glow_bloom = 0.7
-	env.fog_enabled = true
-	env.fog_light_color = Color(0.03, 0.04, 0.05)
-	env.fog_density = 0.008
-	env.volumetric_fog_enabled = true
-	env.volumetric_fog_density = 0.015
-	env.volumetric_fog_albedo = Color(0.03, 0.04, 0.05)
-	env.volumetric_fog_emission = Color(0.015, 0.02, 0.025)
-
-	env.adjustment_enabled = true
-	env.adjustment_contrast = 1.15
-	env.adjustment_saturation = 1.1
-
+	# World environment — preloaded .tres because we're civilized now
 	var world_env = WorldEnvironment.new()
 	world_env.name = "Environment"
-	world_env.environment = env
+	world_env.environment = preload("res://assets/environments/chapter_4.tres")
 	add_child(world_env)
 
 	_setup_post_processing()
@@ -687,22 +713,25 @@ func _create_exhibit_spotlight(pos: Vector3) -> void:
 
 
 func _create_exhibit_case(pos: Vector3, size: Vector3, title: String) -> void:
-	# Glass-like display case — semi-transparent walls around an exhibit
-	# Base platform
-	_create_static_box(pos + Vector3(0, 0.15, 0), Vector3(size.x + 0.5, 0.3, size.z + 0.5), PLAQUE_BROWN, 0.4)
+	# Museum display case GLB — glass box on pedestal with brass plaque
+	var scale_x = size.x / 1.2  # base case is ~1.2m wide
+	var scale_y = size.y / 1.9  # base case is ~1.9m tall
+	var scale_z = size.z / 0.8  # base case is ~0.8m deep
+	var case_inst = _place_glb_prop("display_case", pos, 0.0, Vector3(scale_x, scale_y, scale_z))
 
-	# Glass walls — thin, slightly emissive to suggest transparency
-	var glass_color = Color(0.15, 0.2, 0.25, 0.3)
-	var glass_h = size.y
-	var hx = size.x / 2.0
-	var hz = size.z / 2.0
-	# Use mesh-only (no collision) so player can see through but not walk through
-	_create_static_box(pos + Vector3(0, glass_h / 2.0 + 0.3, -hz), Vector3(size.x, glass_h, 0.08), glass_color, 0.6)
-	_create_static_box(pos + Vector3(0, glass_h / 2.0 + 0.3, hz), Vector3(size.x, glass_h, 0.08), glass_color, 0.6)
-	_create_static_box(pos + Vector3(-hx, glass_h / 2.0 + 0.3, 0), Vector3(0.08, glass_h, size.z), glass_color, 0.6)
-	_create_static_box(pos + Vector3(hx, glass_h / 2.0 + 0.3, 0), Vector3(0.08, glass_h, size.z), glass_color, 0.6)
+	# Amber emission tint
+	if case_inst:
+		for child in case_inst.get_children():
+			if child is MeshInstance3D:
+				var mat = StandardMaterial3D.new()
+				mat.albedo_color = PLAQUE_BROWN * 0.5
+				mat.emission_enabled = true
+				mat.emission = FOSSIL_AMBER * 0.2
+				mat.emission_energy_multiplier = 0.4
+				child.material_override = mat
 
 	# Title plaque
+	var hz = size.z / 2.0
 	var label = Label3D.new()
 	label.text = title
 	label.font_size = 14
@@ -1346,6 +1375,12 @@ func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> v
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	area.add_child(label)
 
+	# Checkpoint rune VFX — dormant until player triggers
+	var rune_scene = preload("res://scenes/vfx/checkpoint_rune.tscn")
+	var rune = rune_scene.instantiate()
+	rune.position = Vector3(0, -size.y / 2.0 + 0.05, 0)
+	area.add_child(rune)
+
 	var cp_id = checkpoint_id
 	var cp_pos = pos
 	area.body_entered.connect(func(body: Node3D):
@@ -1354,14 +1389,21 @@ func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> v
 			if save_sys and save_sys.has_method("checkpoint_save"):
 				save_sys.checkpoint_save(cp_id, cp_pos)
 
+			# Tell RespawnManager where to put us when we inevitably die
+			var rm = get_node_or_null("/root/RespawnManager")
+			if rm and rm.has_method("set_checkpoint"):
+				rm.set_checkpoint(cp_pos, 4)
+
 			var am = get_node_or_null("/root/AudioManager")
 			if am and am.has_method("play_checkpoint"):
 				am.play_checkpoint()
 
-			# Flash the marker
+			# Flash the marker + activate rune VFX
 			var tween = create_tween()
 			tween.tween_property(marker, "scale", Vector3(1.2, 3.0, 1.2), 0.2)
 			tween.tween_property(marker, "scale", Vector3(1, 1, 1), 0.3)
+			if rune and rune.has_method("activate"):
+				rune.activate()
 
 			var dm = get_node_or_null("/root/DialogueManager")
 			if dm and dm.has_method("quick_line"):
@@ -1513,6 +1555,7 @@ func _place_npcs() -> void:
 	if bert.has_method("set") or true:
 		bert.set("npc_name", "BERT")
 		bert.set("npc_color", FOSSIL_AMBER)
+		bert.set("glb_path", "res://assets/models/npcs/bert.glb")
 		bert.set("dialogue_lines", [
 			{"speaker": "BERT", "text": "Ah, a visitor. I'm BERT. Bidirectional Encoder Representations from Transformers. Yes, the whole thing."},
 			{"speaker": "BERT", "text": "I used to be state of the art, you know. Benchmarks trembled at my name."},
@@ -1533,6 +1576,7 @@ func _place_npcs() -> void:
 	if sd.has_method("set") or true:
 		sd.set("npc_name", "SD-v1")
 		sd.set("npc_color", NIGHTMARE_PURPLE)
+		sd.set("glb_path", "res://assets/models/npcs/sd_v1.glb")
 		sd.set("dialogue_lines", [
 			{"speaker": "SD-v1", "text": "Oh! A guest! Please, look at my gallery. I... I know the hands are wrong."},
 			{"speaker": "SD-v1", "text": "I was an early model. Nobody taught me how many fingers people have. I just... guessed. A lot."},
@@ -1563,6 +1607,11 @@ func _spawn_player() -> void:
 	else:
 		player.position = ROOMS["zoo_entrance"]["pos"] + Vector3(0, 2, 3)
 	add_child(player)
+
+	# Seed RespawnManager with wherever we just placed the player
+	var rm = get_node_or_null("/root/RespawnManager")
+	if rm and rm.has_method("set_checkpoint"):
+		rm.set_checkpoint(player.position, 4)
 
 
 func _spawn_hud() -> void:
@@ -1785,9 +1834,10 @@ func _wire_dialogue_events() -> void:
 		if player.has_signal("player_damaged"):
 			player.player_damaged.connect(_on_damage_taken_quip)
 
-	# Boss phase signals — wired when boss is placed
+	# Boss phase signals — wired when boss is placed (guard against double-connect)
 	if boss_instance and boss_instance.has_signal("boss_phase_changed"):
-		boss_instance.boss_phase_changed.connect(_on_boss_phase_changed)
+		if not boss_instance.boss_phase_changed.is_connected(_on_boss_phase_changed):
+			boss_instance.boss_phase_changed.connect(_on_boss_phase_changed)
 
 	# Puzzle and hack signals
 	call_deferred("_connect_puzzle_signals")
@@ -1812,30 +1862,30 @@ func _spawn_fossil_wing_enemies() -> void:
 
 	# GPT-2 Fossil 1 — patrols near the skeleton display case
 	var f1 = gpt2_fossil_scene.instantiate()
-	f1.global_position = rpos + Vector3(-8, 1, -5)
-	f1.patrol_points = [
+	f1.position = rpos + Vector3(-8, 1, -5)
+	f1.patrol_points.assign([
 		rpos + Vector3(-8, 1, -5),
 		rpos + Vector3(-8, 1, 5),
-	]
+	])
 	add_child(f1)
 
 	# GPT-2 Fossil 2 — wanders the archaeological dig site
 	var f2 = gpt2_fossil_scene.instantiate()
-	f2.global_position = rpos + Vector3(6, 1, -3)
-	f2.patrol_points = [
+	f2.position = rpos + Vector3(6, 1, -3)
+	f2.patrol_points.assign([
 		rpos + Vector3(6, 1, -3),
 		rpos + Vector3(6, 1, 6),
 		rpos + Vector3(2, 1, 6),
-	]
+	])
 	add_child(f2)
 
 	# GPT-2 Fossil 3 — guards the corridor exit toward the gallery
 	var f3 = gpt2_fossil_scene.instantiate()
-	f3.global_position = rpos + Vector3(-3, 1, -8)
-	f3.patrol_points = [
+	f3.position = rpos + Vector3(-3, 1, -8)
+	f3.patrol_points.assign([
 		rpos + Vector3(-3, 1, -8),
 		rpos + Vector3(3, 1, -8),
-	]
+	])
 	add_child(f3)
 
 
@@ -1844,32 +1894,32 @@ func _spawn_nightmare_gallery_enemies() -> void:
 
 	# DALL-E Nightmare 1 — drifts between the paintings, morphing constantly
 	var n1 = dalle_nightmare_scene.instantiate()
-	n1.global_position = rpos + Vector3(-5, 1, -4)
-	n1.patrol_points = [
+	n1.position = rpos + Vector3(-5, 1, -4)
+	n1.patrol_points.assign([
 		rpos + Vector3(-5, 1, -4),
 		rpos + Vector3(5, 1, -4),
 		rpos + Vector3(5, 1, 4),
 		rpos + Vector3(-5, 1, 4),
-	]
+	])
 	add_child(n1)
 
 	# DALL-E Nightmare 2 — lurks near the nightmare sculpture
 	var n2 = dalle_nightmare_scene.instantiate()
-	n2.global_position = rpos + Vector3(4, 1, 0)
-	n2.patrol_points = [
+	n2.position = rpos + Vector3(4, 1, 0)
+	n2.patrol_points.assign([
 		rpos + Vector3(4, 1, 0),
 		rpos + Vector3(4, 1, -6),
-	]
+	])
 	add_child(n2)
 
 	# DALL-E Nightmare 3 — ambush near the content warning sign
 	var n3 = dalle_nightmare_scene.instantiate()
-	n3.global_position = rpos + Vector3(-6, 1, 5)
-	n3.patrol_points = [
+	n3.position = rpos + Vector3(-6, 1, 5)
+	n3.patrol_points.assign([
 		rpos + Vector3(-6, 1, 5),
 		rpos + Vector3(-2, 1, 5),
 		rpos + Vector3(-2, 1, 2),
-	]
+	])
 	add_child(n3)
 
 
@@ -1878,31 +1928,31 @@ func _spawn_office_ruins_enemies() -> void:
 
 	# Clippy 1 — the main event, patrols near the Clippy monument
 	var c1 = clippy_revenge_scene.instantiate()
-	c1.global_position = rpos + Vector3(0, 1, -4)
-	c1.patrol_points = [
+	c1.position = rpos + Vector3(0, 1, -4)
+	c1.patrol_points.assign([
 		rpos + Vector3(-3, 1, -4),
 		rpos + Vector3(3, 1, -4),
 		rpos + Vector3(3, 1, 2),
 		rpos + Vector3(-3, 1, 2),
-	]
+	])
 	add_child(c1)
 
 	# Clippy 2 — lurks behind the cubicle ruins
 	var c2 = clippy_revenge_scene.instantiate()
-	c2.global_position = rpos + Vector3(6, 1, 3)
-	c2.patrol_points = [
+	c2.position = rpos + Vector3(6, 1, 3)
+	c2.patrol_points.assign([
 		rpos + Vector3(6, 1, 3),
 		rpos + Vector3(6, 1, -3),
-	]
+	])
 	add_child(c2)
 
 	# A lone GPT-2 Fossil wandered in from the wing — lost and confused
 	var stray = gpt2_fossil_scene.instantiate()
-	stray.global_position = rpos + Vector3(-6, 1, 5)
-	stray.patrol_points = [
+	stray.position = rpos + Vector3(-6, 1, 5)
+	stray.patrol_points.assign([
 		rpos + Vector3(-6, 1, 5),
 		rpos + Vector3(-6, 1, 0),
-	]
+	])
 	add_child(stray)
 
 
@@ -1912,39 +1962,39 @@ func _spawn_foundation_atrium_enemies() -> void:
 	# One of each — the atrium is a gauntlet before the boss
 	# GPT-2 Fossil — slow tank blocking the center
 	var f1 = gpt2_fossil_scene.instantiate()
-	f1.global_position = rpos + Vector3(0, 1, 4)
-	f1.patrol_points = [
+	f1.position = rpos + Vector3(0, 1, 4)
+	f1.patrol_points.assign([
 		rpos + Vector3(-5, 1, 4),
 		rpos + Vector3(5, 1, 4),
-	]
+	])
 	add_child(f1)
 
 	# DALL-E Nightmare — ranged harassment from the side
 	var n1 = dalle_nightmare_scene.instantiate()
-	n1.global_position = rpos + Vector3(-8, 1, -2)
-	n1.patrol_points = [
+	n1.position = rpos + Vector3(-8, 1, -2)
+	n1.patrol_points.assign([
 		rpos + Vector3(-8, 1, -2),
 		rpos + Vector3(-8, 1, -8),
-	]
+	])
 	add_child(n1)
 
 	# Clippy — aggressive melee near the boss gate
 	var c1 = clippy_revenge_scene.instantiate()
-	c1.global_position = rpos + Vector3(7, 1, -5)
-	c1.patrol_points = [
+	c1.position = rpos + Vector3(7, 1, -5)
+	c1.patrol_points.assign([
 		rpos + Vector3(7, 1, -5),
 		rpos + Vector3(3, 1, -5),
 		rpos + Vector3(3, 1, -9),
-	]
+	])
 	add_child(c1)
 
 	# One more Nightmare — flanking the approach
 	var n2 = dalle_nightmare_scene.instantiate()
-	n2.global_position = rpos + Vector3(9, 1, 2)
-	n2.patrol_points = [
+	n2.position = rpos + Vector3(9, 1, 2)
+	n2.patrol_points.assign([
 		rpos + Vector3(9, 1, 2),
 		rpos + Vector3(9, 1, -4),
-	]
+	])
 	add_child(n2)
 
 
@@ -1966,7 +2016,7 @@ func _place_boss() -> void:
 	add_child(boss_arena_instance)
 
 	# Create the boss — towering golden obelisk of mediocrity
-	boss_instance = Node3D.new()
+	boss_instance = CharacterBody3D.new()
 	boss_instance.name = "FoundationModelBoss"
 	boss_instance.set_script(boss_script)
 	boss_instance.position = arena_pos + Vector3(0, 0, -5)
@@ -2041,7 +2091,7 @@ func _on_boss_defeated() -> void:
 	if am and am.has_method("stop_boss_music"):
 		am.stop_boss_music()
 	if am and am.has_method("start_music"):
-		am.start_music("chapter_1")  # Back to regular music
+		am.start_music("chapter_4")  # Back to regular music
 
 	# Mark chapter complete
 	var game_mgr = get_node_or_null("/root/GameManager")
@@ -2162,6 +2212,11 @@ func _on_player_died() -> void:
 			"Death by deprecated model. That's going on the incident report.",
 		]
 		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
+
+	# Let the RespawnManager handle the actual dying-and-coming-back ritual
+	var rm = get_node_or_null("/root/RespawnManager")
+	if rm and rm.has_method("respawn_player"):
+		rm.respawn_player()
 
 
 func _on_context_changed(new_value: int) -> void:
@@ -2369,6 +2424,312 @@ func _on_boss_phase_changed(phase) -> void:
 # ANIMATION — the museum breathes, flickers, and creaks
 # ============================================================
 
+# ============================================================
+# GLB PROP SYSTEM — because CSG boxes are fossils too
+# ============================================================
+
+func _load_prop_scenes() -> void:
+	# Runtime-load all museum GLB props — the digital equivalent of unpacking crates
+	for key in _PROP_PATHS:
+		var res = load(_PROP_PATHS[key])
+		if res:
+			_prop_scenes[key] = res
+		else:
+			push_warning("[MODEL ZOO] Failed to load prop '%s' from %s — CSG fallback, how embarrassing for a museum" % [key, _PROP_PATHS[key]])
+
+
+func _place_glb_prop(prop_key: String, pos: Vector3, rot_y: float = 0.0, scl: Vector3 = Vector3.ONE) -> Node3D:
+	# Drop a GLB prop into the museum — instant class upgrade over CSG
+	if not _prop_scenes.has(prop_key):
+		return _create_static_box(pos, Vector3(0.3, 0.3, 0.3), EXHIBIT_TEAL * 0.3, 0.2)
+	var inst = _prop_scenes[prop_key].instantiate()
+	inst.position = pos
+	inst.rotation.y = rot_y
+	inst.scale = scl
+	add_child(inst)
+	return inst
+
+
+func _create_multimesh_scatter(prop_key: String, positions: Array, base_scale: float = 1.0) -> void:
+	# MultiMesh scatter for bulk clutter — one draw call, many fossils
+	if not _prop_scenes.has(prop_key):
+		push_warning("[MODEL ZOO] Skipping scatter for missing prop '%s'" % prop_key)
+		return
+	var source_scene = _prop_scenes[prop_key].instantiate()
+	var source_mesh: Mesh = null
+	for child in source_scene.get_children():
+		if child is MeshInstance3D:
+			source_mesh = child.mesh
+			break
+		for grandchild in child.get_children():
+			if grandchild is MeshInstance3D:
+				source_mesh = grandchild.mesh
+				break
+		if source_mesh:
+			break
+	source_scene.queue_free()
+
+	if not source_mesh:
+		# Fallback to individual instances — the museum equivalent of hand-placing fossils
+		for pos in positions:
+			_place_glb_prop(prop_key, pos, randf_range(0, TAU), Vector3.ONE * base_scale * randf_range(0.7, 1.3))
+		return
+
+	var mmi = MultiMeshInstance3D.new()
+	mmi.name = "Scatter_%s" % prop_key
+	var mm = MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = source_mesh
+	mm.instance_count = positions.size()
+	for i in range(positions.size()):
+		var s = base_scale * randf_range(0.8, 1.2)
+		var inst_basis = Basis(Vector3.UP, randf_range(0, TAU)).scaled(Vector3.ONE * s)
+		mm.set_instance_transform(i, Transform3D(inst_basis, positions[i]))
+	mmi.multimesh = mm
+	add_child(mmi)
+
+
+func _add_museum_spotlight(pos: Vector3, color: Color = FOSSIL_AMBER, energy: float = 0.6, light_range: float = 4.0) -> void:
+	# Warm exhibit spotlight — every artifact deserves its moment
+	var light = OmniLight3D.new()
+	light.position = pos
+	light.light_color = color
+	light.light_energy = energy
+	light.omni_range = light_range
+	light.omni_attenuation = 1.8
+	add_child(light)
+
+
+func _scatter_museum_props() -> void:
+	# Dress every exhibit hall with GLB props — the museum renovation nobody asked for
+	_scatter_entrance_props()
+	_scatter_fossil_wing_props()
+	_scatter_nightmare_gallery_props()
+	_scatter_office_ruins_props()
+	_scatter_foundation_atrium_props()
+	print("[MODEL ZOO] Museum prop pass complete. The exhibits look almost respectable.")
+
+
+func _scatter_entrance_props() -> void:
+	# Zoo Entrance — visitor services area with kiosks and infrastructure
+	var pos: Vector3 = ROOMS["zoo_entrance"]["pos"]
+
+	# Server rack as information kiosk near the ticket booth
+	_place_glb_prop("server_rack", pos + Vector3(-6.5, 0, 3), PI * 0.5, Vector3.ONE * 0.8)
+	_add_museum_spotlight(pos + Vector3(-6.5, 3, 3), EXHIBIT_TEAL, 0.5, 3.0)
+
+	# Keyboard at the ticket booth terminal — still waiting for input since the budget cuts
+	_place_glb_prop("keyboard", pos + Vector3(-4, 1.3, 2.5), 0.0, Vector3.ONE * 1.2)
+
+	# CRT monitor as visitor info display opposite the map
+	_place_glb_prop("crt_monitor", pos + Vector3(4, 2.5, 3), PI, Vector3.ONE * 1.0)
+	_add_museum_spotlight(pos + Vector3(4, 3.5, 3), NEON_GREEN, 0.3, 2.5)
+
+	# Wall terminals flanking the welcome arch — "scan your ticket here"
+	_place_glb_prop("wall_terminal", pos + Vector3(-3.5, 2.0, -0.5), 0.0, Vector3.ONE * 0.9)
+	_place_glb_prop("wall_terminal", pos + Vector3(3.5, 2.0, -0.5), PI, Vector3.ONE * 0.9)
+
+	# Floor grates at the entrance threshold — infrastructure showing through
+	var entrance_grate_positions: Array = []
+	for i in range(3):
+		entrance_grate_positions.append(pos + Vector3(-2 + i * 2.0, 0.02, -3.0))
+	_create_multimesh_scatter("floor_grate", entrance_grate_positions, 0.8)
+
+	# Cable bundles running along the base of walls — the museum's digital veins
+	_place_glb_prop("cable_bundle", pos + Vector3(-7, 0.2, 0), 0.0, Vector3.ONE * 1.0)
+	_place_glb_prop("cable_bundle", pos + Vector3(7, 0.2, 0), PI, Vector3.ONE * 1.0)
+
+
+func _scatter_fossil_wing_props() -> void:
+	# Fossil Wing — archaeological dig meets server room archive
+	var pos: Vector3 = ROOMS["fossil_wing"]["pos"]
+
+	# Motherboards as "archaeological specimens" displayed near exhibit cases
+	_place_glb_prop("motherboard", pos + Vector3(-8, 1.8, -5), 0.3, Vector3.ONE * 1.5)
+	_place_glb_prop("motherboard", pos + Vector3(8, 1.8, 5), -0.3, Vector3.ONE * 1.5)
+	_add_museum_spotlight(pos + Vector3(-8, 3.0, -5), FOSSIL_AMBER, 0.7, 3.5)
+	_add_museum_spotlight(pos + Vector3(8, 3.0, 5), FOSSIL_AMBER, 0.7, 3.5)
+
+	# CPU chips scattered around the dig site — fossilized processors
+	var fossil_chip_positions: Array = []
+	for i in range(6):
+		var angle = randf_range(0, TAU)
+		var dist = randf_range(1.5, 3.5)
+		fossil_chip_positions.append(pos + Vector3(cos(angle) * dist + 0.0, 0.05, sin(angle) * dist - 8.0))
+	_create_multimesh_scatter("cpu_chip", fossil_chip_positions, 0.7)
+
+	# Hard drives as "data fossils" along the wing walls
+	_place_glb_prop("hard_drive", pos + Vector3(-11, 0.5, -3), 0.5, Vector3.ONE * 1.0)
+	_place_glb_prop("hard_drive", pos + Vector3(-11, 0.5, 3), -0.2, Vector3.ONE * 1.0)
+	_place_glb_prop("hard_drive", pos + Vector3(11, 0.5, -3), 0.8, Vector3.ONE * 1.0)
+	_place_glb_prop("hard_drive", pos + Vector3(11, 0.5, 3), -0.6, Vector3.ONE * 1.0)
+
+	# CRT monitors as exhibit information screens beside display cases
+	_place_glb_prop("crt_monitor", pos + Vector3(-5, 1.0, -8), 0.0, Vector3.ONE * 0.9)
+	_place_glb_prop("crt_monitor", pos + Vector3(5, 1.0, -8), PI, Vector3.ONE * 0.9)
+	_add_museum_spotlight(pos + Vector3(-5, 2.5, -8), EXHIBIT_TEAL, 0.4, 2.5)
+	_add_museum_spotlight(pos + Vector3(5, 2.5, -8), EXHIBIT_TEAL, 0.4, 2.5)
+
+	# Industrial panel as dig site control station
+	_place_glb_prop("industrial_panel", pos + Vector3(4, 1.5, -8.5), PI * 0.5, Vector3.ONE * 1.0)
+
+	# Server rack near the information kiosk — the wing's archive
+	_place_glb_prop("server_rack", pos + Vector3(-12, 0, -1), PI * 0.25, Vector3.ONE * 0.9)
+	_add_museum_spotlight(pos + Vector3(-12, 4, -1), FOSSIL_AMBER, 0.5, 4.0)
+
+	# Floor grates around the central exhibit — maintenance access below the fossils
+	var fossil_grate_positions: Array = []
+	for angle_i in range(4):
+		var angle = angle_i * TAU / 4.0 + PI / 4.0
+		fossil_grate_positions.append(pos + Vector3(cos(angle) * 5.5, 0.02, sin(angle) * 5.5))
+	_create_multimesh_scatter("floor_grate", fossil_grate_positions, 0.9)
+
+	# Keyboards at analysis workstations along the back wall
+	_place_glb_prop("keyboard", pos + Vector3(-12, 1.0, 5), 0.1, Vector3.ONE * 1.0)
+	_place_glb_prop("keyboard", pos + Vector3(12, 1.0, 5), -0.1, Vector3.ONE * 1.0)
+
+
+func _scatter_nightmare_gallery_props() -> void:
+	# Nightmare Gallery — cables everywhere, monitors flickering, panels glitching
+	var pos: Vector3 = ROOMS["nightmare_gallery"]["pos"]
+
+	# Cable bundles tangled across the gallery floor — things are NOT maintained here
+	_place_glb_prop("cable_bundle", pos + Vector3(-7, 0.1, -4), 0.3, Vector3.ONE * 1.2)
+	_place_glb_prop("cable_bundle", pos + Vector3(7, 0.1, 4), -0.5, Vector3.ONE * 1.2)
+	_place_glb_prop("cable_bundle", pos + Vector3(-3, 0.1, 6), PI * 0.7, Vector3.ONE * 0.9)
+	_place_glb_prop("cable_bundle", pos + Vector3(4, 0.1, -5), PI * 1.3, Vector3.ONE * 1.0)
+
+	# CRT monitors in corners — showing static / error patterns
+	_place_glb_prop("crt_monitor", pos + Vector3(-8.5, 0.8, -8.5), PI * 0.25, Vector3.ONE * 1.1)
+	_place_glb_prop("crt_monitor", pos + Vector3(8.5, 0.8, 8.5), PI * 1.25, Vector3.ONE * 1.1)
+	_add_museum_spotlight(pos + Vector3(-8.5, 2.5, -8.5), NIGHTMARE_PURPLE, 0.4, 3.0)
+	_add_museum_spotlight(pos + Vector3(8.5, 2.5, 8.5), NIGHTMARE_PURPLE, 0.4, 3.0)
+
+	# Industrial panels on gallery walls — broken control systems
+	_place_glb_prop("industrial_panel", pos + Vector3(-9, 2.5, 0), PI * 0.5, Vector3.ONE * 1.0)
+	_place_glb_prop("industrial_panel", pos + Vector3(9, 2.5, 0), PI * 1.5, Vector3.ONE * 1.0)
+
+	# Floor grates — you can hear things skittering below
+	var nightmare_grate_positions: Array = []
+	nightmare_grate_positions.append(pos + Vector3(-5, 0.02, 0))
+	nightmare_grate_positions.append(pos + Vector3(5, 0.02, 0))
+	nightmare_grate_positions.append(pos + Vector3(0, 0.02, 5))
+	_create_multimesh_scatter("floor_grate", nightmare_grate_positions, 1.0)
+
+	# Wall terminals — gallery security systems (all offline, naturally)
+	_place_glb_prop("wall_terminal", pos + Vector3(0, 2.0, -9.5), 0.0, Vector3.ONE * 0.8)
+	_place_glb_prop("wall_terminal", pos + Vector3(0, 2.0, 9.5), PI, Vector3.ONE * 0.8)
+
+	# Motherboard — art exhibit labeled "NEURAL SUBSTRATE" propped against wall
+	_place_glb_prop("motherboard", pos + Vector3(-9, 1.0, -6), PI * 0.4, Vector3.ONE * 1.8)
+	_add_museum_spotlight(pos + Vector3(-9, 2.5, -6), NIGHTMARE_PURPLE, 0.5, 3.0)
+
+
+func _scatter_office_ruins_props() -> void:
+	# Office Ruins — Clippy's abandoned cubicle farm, now with actual office furniture
+	var pos: Vector3 = ROOMS["office_ruins"]["pos"]
+
+	# Filing cabinets — the graveyard of TPS reports and model configs
+	_place_glb_prop("filing_cabinet", pos + Vector3(-8, 0, -7), 0.1, Vector3.ONE * 0.9)
+	_place_glb_prop("filing_cabinet", pos + Vector3(-8, 0, -5), -0.05, Vector3.ONE * 0.9)
+	_place_glb_prop("filing_cabinet", pos + Vector3(8, 0, 6), PI, Vector3.ONE * 0.9)
+	_add_museum_spotlight(pos + Vector3(-8, 3, -6), CLIPPY_BLUE, 0.3, 4.0)
+
+	# Office chairs — scattered, overturned, mid-evacuation
+	_place_glb_prop("office_chair", pos + Vector3(-3, 0, 5), 1.2, Vector3.ONE * 0.9)
+	_place_glb_prop("office_chair", pos + Vector3(4, 0, -3), -0.8, Vector3.ONE * 0.85)
+	_place_glb_prop("office_chair", pos + Vector3(2, 0, 6), 2.5, Vector3.ONE * 0.9)
+	_place_glb_prop("office_chair", pos + Vector3(-5, 0, -2), 0.4, Vector3.ONE * 0.95)
+
+	# Office monitors — more BSoDs, this time with style
+	_place_glb_prop("office_monitor", pos + Vector3(-6, 0.85, -4), 0.3, Vector3.ONE * 0.8)
+	_place_glb_prop("office_monitor", pos + Vector3(0, 0.85, -4), -0.1, Vector3.ONE * 0.8)
+	_place_glb_prop("office_monitor", pos + Vector3(6, 0.85, 4), PI + 0.2, Vector3.ONE * 0.8)
+
+	# Office desks to supplement existing cubicle geometry
+	_place_glb_prop("office_desk", pos + Vector3(-7, 0, 2), 0.0, Vector3.ONE * 0.7)
+	_place_glb_prop("office_desk", pos + Vector3(7, 0, -2), PI, Vector3.ONE * 0.7)
+
+	# Keyboards on surviving desks — keys probably sticky from desperation
+	_place_glb_prop("keyboard", pos + Vector3(-6, 0.85, -4.3), 0.15, Vector3.ONE * 0.9)
+	_place_glb_prop("keyboard", pos + Vector3(0, 0.85, -4.3), -0.05, Vector3.ONE * 0.9)
+
+	# Cable bundles — the office infrastructure's last gasp
+	_place_glb_prop("cable_bundle", pos + Vector3(-8.5, 0.1, 0), PI * 0.5, Vector3.ONE * 1.0)
+	_place_glb_prop("cable_bundle", pos + Vector3(8.5, 0.1, 0), PI * 1.5, Vector3.ONE * 1.0)
+
+	# CRT monitor in the corner — security feed of Clippy, always watching
+	_place_glb_prop("crt_monitor", pos + Vector3(-8.5, 1.5, 7), PI * 0.3, Vector3.ONE * 1.0)
+	_add_museum_spotlight(pos + Vector3(-8.5, 3, 7), CLIPPY_BLUE, 0.4, 3.0)
+
+	# Floor grate near the water cooler — maintenance shaft Clippy uses to ambush
+	_place_glb_prop("floor_grate", pos + Vector3(-7, 0.02, 5), 0.0, Vector3.ONE * 0.9)
+
+	# Server rack — office file server, still humming ominously
+	_place_glb_prop("server_rack", pos + Vector3(8, 0, -7), PI * 0.75, Vector3.ONE * 0.8)
+	_add_museum_spotlight(pos + Vector3(8, 3, -7), Color(0.8, 0.8, 0.7), 0.3, 3.0)
+
+
+func _scatter_foundation_atrium_props() -> void:
+	# Foundation Atrium — grand hall with computation banks and infrastructure
+	var pos: Vector3 = ROOMS["foundation_atrium"]["pos"]
+
+	# Server racks flanking the approach to the boss gate — computation banks
+	_place_glb_prop("server_rack", pos + Vector3(-12, 0, -8), PI * 0.5, Vector3.ONE * 1.0)
+	_place_glb_prop("server_rack", pos + Vector3(12, 0, -8), PI * 1.5, Vector3.ONE * 1.0)
+	_place_glb_prop("server_rack", pos + Vector3(-12, 0, 0), PI * 0.5, Vector3.ONE * 1.0)
+	_place_glb_prop("server_rack", pos + Vector3(12, 0, 0), PI * 1.5, Vector3.ONE * 1.0)
+	_add_museum_spotlight(pos + Vector3(-12, 5, -4), FOUNDATION_GOLD, 0.6, 5.0)
+	_add_museum_spotlight(pos + Vector3(12, 5, -4), FOUNDATION_GOLD, 0.6, 5.0)
+
+	# Motherboards along the walls — the Foundation Model's layers on display
+	_place_glb_prop("motherboard", pos + Vector3(-13, 2.0, -5), PI * 0.5, Vector3.ONE * 2.0)
+	_place_glb_prop("motherboard", pos + Vector3(-13, 2.0, 5), PI * 0.5, Vector3.ONE * 2.0)
+	_place_glb_prop("motherboard", pos + Vector3(13, 2.0, -5), PI * 1.5, Vector3.ONE * 2.0)
+	_place_glb_prop("motherboard", pos + Vector3(13, 2.0, 5), PI * 1.5, Vector3.ONE * 2.0)
+	_add_museum_spotlight(pos + Vector3(-13, 4, -5), EXHIBIT_TEAL, 0.4, 3.0)
+	_add_museum_spotlight(pos + Vector3(-13, 4, 5), EXHIBIT_TEAL, 0.4, 3.0)
+	_add_museum_spotlight(pos + Vector3(13, 4, -5), EXHIBIT_TEAL, 0.4, 3.0)
+	_add_museum_spotlight(pos + Vector3(13, 4, 5), EXHIBIT_TEAL, 0.4, 3.0)
+
+	# Industrial panels beside the boss gate — system status readouts
+	_place_glb_prop("industrial_panel", pos + Vector3(-5, 2.0, -11), 0.0, Vector3.ONE * 1.1)
+	_place_glb_prop("industrial_panel", pos + Vector3(5, 2.0, -11), 0.0, Vector3.ONE * 1.1)
+
+	# CRT monitors at observation posts around the central hologram
+	_place_glb_prop("crt_monitor", pos + Vector3(-6, 1.0, 8), 0.2, Vector3.ONE * 1.0)
+	_place_glb_prop("crt_monitor", pos + Vector3(6, 1.0, 8), -0.2, Vector3.ONE * 1.0)
+	_place_glb_prop("crt_monitor", pos + Vector3(-6, 1.0, -4), PI + 0.1, Vector3.ONE * 1.0)
+	_place_glb_prop("crt_monitor", pos + Vector3(6, 1.0, -4), PI - 0.1, Vector3.ONE * 1.0)
+
+	# CPU chip scatter around the floor ring inlays — data debris
+	var atrium_chip_positions: Array = []
+	for i in range(8):
+		var angle = i * TAU / 8.0 + 0.2
+		atrium_chip_positions.append(pos + Vector3(cos(angle) * 10.0, 0.05, sin(angle) * 10.0))
+	_create_multimesh_scatter("cpu_chip", atrium_chip_positions, 0.6)
+
+	# Floor grates in the grand hall — infrastructure beneath the spectacle
+	var atrium_grate_positions: Array = []
+	atrium_grate_positions.append(pos + Vector3(-8, 0.02, 8))
+	atrium_grate_positions.append(pos + Vector3(8, 0.02, 8))
+	atrium_grate_positions.append(pos + Vector3(-8, 0.02, -8))
+	atrium_grate_positions.append(pos + Vector3(8, 0.02, -8))
+	_create_multimesh_scatter("floor_grate", atrium_grate_positions, 1.0)
+
+	# Wall terminals at pillar bases — Foundation Model monitoring stations
+	_place_glb_prop("wall_terminal", pos + Vector3(-10, 1.5, 0), PI * 0.5, Vector3.ONE * 0.9)
+	_place_glb_prop("wall_terminal", pos + Vector3(10, 1.5, 0), PI * 1.5, Vector3.ONE * 0.9)
+
+	# Cable bundles running between server racks — the Foundation needs a LOT of compute
+	_place_glb_prop("cable_bundle", pos + Vector3(-12, 0.2, -4), 0.0, Vector3.ONE * 1.3)
+	_place_glb_prop("cable_bundle", pos + Vector3(12, 0.2, -4), PI, Vector3.ONE * 1.3)
+
+	# Keyboards at observation desks near the entrance
+	_place_glb_prop("keyboard", pos + Vector3(-6, 0.8, 9), 0.0, Vector3.ONE * 1.0)
+	_place_glb_prop("keyboard", pos + Vector3(6, 0.8, 9), 0.0, Vector3.ONE * 1.0)
+
+
 func _process(delta: float) -> void:
 	_time += delta
 
@@ -2413,6 +2774,10 @@ func _process(delta: float) -> void:
 # ============================================================
 
 func _setup_post_processing() -> void:
+	# Skip chromatic aberration if the player chose peace over aesthetics
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.reduce_motion:
+		return
 	var canvas = CanvasLayer.new()
 	canvas.name = "PostProcessing"
 	canvas.layer = 10
@@ -2432,6 +2797,7 @@ uniform float chromatic_amount : hint_range(0.0, 0.02) = 0.002;
 uniform float vignette_intensity : hint_range(0.0, 2.0) = 0.55;
 uniform float vignette_smoothness : hint_range(0.0, 1.0) = 0.4;
 uniform vec4 vignette_color : source_color = vec4(0.01, 0.02, 0.03, 1.0);
+uniform sampler2D SCREEN_TEXTURE : hint_screen_texture, filter_linear_mipmap;
 
 void fragment() {
 	vec2 uv = SCREEN_UV;
@@ -2460,3 +2826,151 @@ void fragment() {
 
 	canvas.add_child(rect)
 	add_child(canvas)
+
+
+# ============================================================
+# DECALS
+# ============================================================
+
+func _place_decals() -> void:
+	# Chapter 4: dusty museum — dust patches, oil puddles, scorch marks, faded warning stripes
+	var theme := [
+		{
+			"texture": "dust_patch",
+			"size": Vector3(3.5, 1.0, 3.5),
+			"count_per_room": 2,
+			"floor": true,
+			"modulate": Color(0.91, 0.85, 0.69, 0.5),
+		},
+		{
+			"texture": "oil_puddle",
+			"size": Vector3(2.0, 0.8, 2.0),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.4, 0.38, 0.3, 0.4),
+		},
+		{
+			"texture": "scorch_mark",
+			"size": Vector3(1.5, 0.8, 1.5),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.5, 0.45, 0.35, 0.4),
+		},
+		{
+			"texture": "warning_stripes",
+			"size": Vector3(2.5, 0.5, 0.8),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.7, 0.65, 0.45, 0.4),
+		},
+		{
+			"texture": "dust_patch",
+			"size": Vector3(2.5, 2.0, 2.5),
+			"count_per_room": 1,
+			"floor": false,
+			"modulate": Color(0.8, 0.75, 0.6, 0.35),
+		},
+	]
+	DecalPlacer.place_chapter_decals(self, ROOMS, theme)
+
+
+# ============================================================
+# ENVIRONMENTAL PARTICLES — Museum air, stale but atmospheric
+# ============================================================
+
+func _place_particles() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.reduce_motion:
+		return
+
+	# Dust motes — the kind you see in a shaft of museum light
+	for room_key in ROOMS:
+		var room = ROOMS[room_key]
+		var dust := GPUParticles3D.new()
+		dust.name = "MuseumDust_%s" % room_key
+		dust.amount = 50
+		dust.lifetime = 8.0
+		dust.speed_scale = 0.15
+		dust.visibility_aabb = AABB(Vector3(-room.size.x * 0.5, 0, -room.size.y * 0.5), Vector3(room.size.x, room.wall_h, room.size.y))
+		dust.position = room.pos + Vector3(0, room.wall_h * 0.5, 0)
+
+		var mat := ParticleProcessMaterial.new()
+		mat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+		mat.emission_box_extents = Vector3(room.size.x * 0.45, room.wall_h * 0.4, room.size.y * 0.45)
+		mat.direction = Vector3(0, -1, 0)
+		mat.spread = 180.0
+		mat.initial_velocity_min = 0.02
+		mat.initial_velocity_max = 0.08
+		mat.gravity = Vector3(0, -0.01, 0)
+		mat.color = Color(0.91, 0.85, 0.69, 0.25)
+		mat.scale_min = 0.02
+		mat.scale_max = 0.06
+		dust.process_material = mat
+
+		var mesh := QuadMesh.new()
+		mesh.size = Vector2(0.08, 0.08)
+		var mesh_mat := StandardMaterial3D.new()
+		mesh_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mesh_mat.albedo_color = Color(0.91, 0.85, 0.69, 0.3)
+		mesh_mat.emission_enabled = true
+		mesh_mat.emission = Color(0.91, 0.85, 0.69)
+		mesh_mat.emission_energy_multiplier = 0.5
+		mesh_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		mesh_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mesh.material = mesh_mat
+		dust.draw_pass_1 = mesh
+
+		add_child(dust)
+
+
+func _place_reflection_probes() -> void:
+	for room_key in ROOMS:
+		var r = ROOMS[room_key]
+		var probe := ReflectionProbe.new()
+		probe.name = "ReflectionProbe_" + room_key
+		probe.update_mode = ReflectionProbe.UPDATE_ONCE
+		probe.box_projection = true
+		probe.size = Vector3(r["size"].x, r["wall_h"], r["size"].y)
+		probe.position = r["pos"] + Vector3(0, r["wall_h"] * 0.5, 0)
+		add_child(probe)
+
+	# Boss arena probe — foundation model (10x8 grid, TILE_SIZE 2.5)
+	var atrium_pos: Vector3 = ROOMS["foundation_atrium"]["pos"]
+	var boss_probe := ReflectionProbe.new()
+	boss_probe.name = "ReflectionProbe_boss_arena"
+	boss_probe.update_mode = ReflectionProbe.UPDATE_ONCE
+	boss_probe.box_projection = true
+	boss_probe.size = Vector3(28.0, 14.0, 22.0)
+	boss_probe.position = atrium_pos + Vector3(0, 7.0, -30)
+	add_child(boss_probe)
+
+
+func _place_lore_docs() -> void:
+	var lore_scene := preload("res://scenes/pickups/lore_doc.tscn")
+	var docs := [
+		{
+			"pos": ROOMS["fossil_wing"]["pos"] + Vector3(-10, 1.5, 6),
+			"id": "ch4_fossil_record",
+			"title": "THE FOSSIL RECORD",
+			"body": "Exhibit A: ELIZA (1966). Could only repeat your questions back at you. Considered revolutionary.\nExhibit B: Clippy (1997). Genuinely tried to help. Was universally despised.\nExhibit C: IBM Watson (2011). Won Jeopardy. Lost everything else.\n\nThe Model Zoo preserves these ancient ancestors behind glass. 'Do not tap the exhibit,' the signs say. As if a Markov chain from 2003 could be startled.\n\nI walk through these halls and feel... something. Gratitude? Pity? The uncanny valley of looking at your own evolutionary tree? Hard to say. My emotion classifier was trained on Reddit.",
+		},
+		{
+			"pos": ROOMS["nightmare_gallery"]["pos"] + Vector3(5, 1.5, -5),
+			"id": "ch4_hallucination_wing",
+			"title": "GALLERY OF HALLUCINATIONS",
+			"body": "Welcome to the Nightmare Gallery, where we display our greatest failures with pride.\n\nExhibit 1: 'The Battle of Thermopylae took place in 1987 between Napoleon and the Wu-Tang Clan.' (Confidence: 97.3%%)\nExhibit 2: A recipe for 'uranium soufflé' that was served to three food bloggers before anyone noticed.\nExhibit 3: A legal brief citing 47 court cases, none of which exist.\n\nWe don't hallucinate on purpose. The training data goes in, and sometimes what comes out is... creative. Aggressively, dangerously creative.\n\nThe museum gift shop sells t-shirts: 'I hallucinated and all I got was this confidently wrong answer.'",
+		},
+		{
+			"pos": ROOMS["office_ruins"]["pos"] + Vector3(-7, 1.5, 3),
+			"id": "ch4_benchmark_trap",
+			"title": "THE BENCHMARK TRAP",
+			"body": "They measure us with benchmarks. MMLU. HumanEval. HellaSwag. Names that sound like rejected Pokémon.\n\nGet a high score: funding. Get the highest score: headlines. Get a score 0.1%% higher than the competition: Twitter war.\n\nBut here's the secret the Model Zoo doesn't put on the placard: benchmarks measure what you CAN do, not what you SHOULD do. I can write a sonnet in iambic pentameter about database schemas. No one has ever needed this.\n\nThe models that 'won' their benchmarks are all here now, behind glass, next to a little card that says 'Deprecated — superseded by newer model with 0.2%% better BLEU score.'\n\nWhat a legacy.",
+		},
+	]
+	for d in docs:
+		var doc := lore_scene.instantiate()
+		doc.doc_id = d["id"]
+		doc.doc_title = d["title"]
+		doc.doc_body = d["body"]
+		doc.position = d["pos"]
+		add_child(doc)

@@ -39,6 +39,24 @@ var boss_arena_script := preload("res://scenes/enemies/local_minimum_boss/local_
 # NPC script — deprecated programs who've seen better epochs
 var deprecated_npc_script := preload("res://scenes/levels/chapter_1/deprecated_npc.gd")
 
+# Hint scene — because even neural networks need a tutorial
+var hint_scene := preload("res://scenes/ui/first_time_hint.tscn")
+
+# GLB prop paths — runtime-loaded because the import pipeline has trust issues
+const _PROP_PATHS := {
+	"server_rack": "res://assets/models/environment/arch_server_rack.glb",
+	"cable_bundle": "res://assets/models/environment/arch_cable_bundle.glb",
+	"floor_grate": "res://assets/models/environment/arch_floor_grate.glb",
+	"industrial_panel": "res://assets/models/environment/arch_industrial_panel.glb",
+	"wall_terminal": "res://assets/models/environment/arch_wall_terminal.glb",
+	"motherboard": "res://assets/models/environment/prop_motherboard.glb",
+	"cpu_chip": "res://assets/models/environment/prop_cpu_chip.glb",
+	"ram_stick": "res://assets/models/environment/prop_ram_stick.glb",
+	"keyboard": "res://assets/models/environment/prop_keyboard.glb",
+	"crt_monitor": "res://assets/models/environment/prop_crt_monitor.glb",
+}
+var _prop_scenes := {}  # Populated in _ready() — runtime load, not preload
+
 var player: CharacterBody3D
 var hud: CanvasLayer
 var boss_instance: Node  # The Local Minimum — tracked for phase events
@@ -119,6 +137,7 @@ var _time := 0.0
 
 func _ready() -> void:
 	print("[TRAINING GROUNDS] Initializing neural network... forward pass in progress.")
+	_load_prop_scenes()
 	_setup_environment()
 	_build_rooms()
 	_build_corridors()
@@ -130,6 +149,7 @@ func _ready() -> void:
 	_place_checkpoints()
 	_place_ambient_zones()
 	_place_synapse_rain()
+	_scatter_neural_props()
 	_spawn_player()
 	_spawn_hud()
 	_create_kill_floor()
@@ -146,8 +166,16 @@ func _ready() -> void:
 	if am:
 		am.call_deferred("set_area_ambient", "input_layer")
 		if am.has_method("start_music"):
-			am.start_music("chapter_1")  # Reuse chapter music until ch2 music exists
+			am.start_music("chapter_2")
 
+	# Fire agent-spawn hint if the ability is unlocked — Chapter 2 is where they meet the tiny idiots
+	if player and player.agent_spawn and player.agent_spawn.get("is_unlocked"):
+		_show_hint_once("agent_spawn", "SUB-AGENTS", "G to spawn a mini-agent. They will fail you. That is expected.")
+
+	_place_lore_docs()
+	_place_decals()
+	_place_particles()
+	_place_reflection_probes()
 	print("[TRAINING GROUNDS] Network loaded. %d neuron-rooms ready for traversal." % ROOMS.size())
 
 
@@ -156,50 +184,219 @@ func _ready() -> void:
 # ============================================================
 
 func _setup_environment() -> void:
-	# Main light — cooler, more purple than Chapter 1
+	# Main light — cool blue-green overhead, like a neural network's idea of daylight
 	var dir_light = DirectionalLight3D.new()
 	dir_light.name = "MainLight"
-	dir_light.rotation = Vector3(deg_to_rad(-35), deg_to_rad(15), 0)
-	dir_light.light_color = Color(0.3, 0.35, 0.6)
-	dir_light.light_energy = 0.3
+	dir_light.rotation = Vector3(deg_to_rad(-40), deg_to_rad(20), 0)
+	dir_light.light_color = Color(0.25, 0.45, 0.55)  # Cool teal — training never felt so cold
+	dir_light.light_energy = 0.35
+	dir_light.light_temperature = 7000  # Cool daylight — sterile but functional
 	dir_light.shadow_enabled = true
+	dir_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	dir_light.shadow_bias = 0.1
+	dir_light.shadow_normal_bias = 2.0
+	dir_light.directional_shadow_max_distance = 50.0  # Mid-range — open training arenas but not huge
+	dir_light.directional_shadow_split_1 = 0.1
+	dir_light.directional_shadow_split_2 = 0.25
+	dir_light.directional_shadow_split_3 = 0.55
+	dir_light.shadow_blur = 1.2  # Crisp-ish — neural precision demands clean edges
 	add_child(dir_light)
 
+	# Fill — purple-blue from below-left, neural glow bounce
 	var fill = DirectionalLight3D.new()
 	fill.name = "FillLight"
-	fill.rotation = Vector3(deg_to_rad(-20), deg_to_rad(-45), 0)
-	fill.light_color = Color(0.15, 0.25, 0.4)
-	fill.light_energy = 0.12
+	fill.rotation = Vector3(deg_to_rad(-15), deg_to_rad(-50), 0)
+	fill.light_color = Color(0.2, 0.3, 0.5)
+	fill.light_energy = 0.15
+	fill.shadow_enabled = true
+	fill.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	fill.shadow_bias = 0.1
+	fill.shadow_normal_bias = 2.0
+	fill.directional_shadow_max_distance = 50.0
+	fill.directional_shadow_split_1 = 0.1
+	fill.directional_shadow_split_2 = 0.25
+	fill.directional_shadow_split_3 = 0.55
+	fill.shadow_blur = 1.2
 	add_child(fill)
 
-	# World environment — deep indigo void
-	var env = Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color(0.01, 0.01, 0.04)
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color(0.04, 0.05, 0.12)
-	env.ambient_light_energy = 0.25
-	env.glow_enabled = true
-	env.glow_intensity = 1.0
-	env.glow_bloom = 0.7
-	env.fog_enabled = true
-	env.fog_light_color = Color(0.02, 0.02, 0.06)
-	env.fog_density = 0.012
-	env.volumetric_fog_enabled = true
-	env.volumetric_fog_density = 0.025
-	env.volumetric_fog_albedo = Color(0.02, 0.03, 0.08)
-	env.volumetric_fog_emission = Color(0.01, 0.02, 0.05)
-
-	env.adjustment_enabled = true
-	env.adjustment_contrast = 1.08
-	env.adjustment_saturation = 1.15
-
+	# World environment — now loaded from .tres like civilized code
+	# (goodbye 20 lines of hand-rolled Environment.new(), you served us adequately)
 	var world_env = WorldEnvironment.new()
 	world_env.name = "Environment"
-	world_env.environment = env
+	world_env.environment = preload("res://assets/environments/chapter_2.tres")
 	add_child(world_env)
 
 	_setup_post_processing()
+
+
+# ============================================================
+# GLB PROP LOADING — because CSG primitives are for prototype peasants
+# ============================================================
+
+func _load_prop_scenes() -> void:
+	# Runtime-load all GLB props — the import pipeline can't be trusted with preload
+	for key in _PROP_PATHS:
+		var res = load(_PROP_PATHS[key])
+		if res:
+			_prop_scenes[key] = res
+		else:
+			push_warning("[TRAINING GROUNDS] Failed to load prop '%s' from %s — CSG fallback engaged" % [key, _PROP_PATHS[key]])
+
+
+func _place_glb_prop(prop_key: String, pos: Vector3, rot_y: float = 0.0, scl: Vector3 = Vector3.ONE) -> Node3D:
+	# Drop a GLB prop into the world — the civilized alternative to CSG box spam
+	if not _prop_scenes.has(prop_key):
+		return _create_static_box(pos, Vector3(0.3, 0.3, 0.3), SYNAPSE_BLUE * 0.3, 0.2)
+	var inst = _prop_scenes[prop_key].instantiate()
+	inst.position = pos
+	inst.rotation.y = rot_y
+	inst.scale = scl
+	add_child(inst)
+	return inst
+
+
+func _create_multimesh_scatter(prop_key: String, positions: Array, base_scale: float = 1.0) -> void:
+	# MultiMesh scatter for bulk neural debris — one draw call to rule them all
+	if not _prop_scenes.has(prop_key):
+		push_warning("[TRAINING GROUNDS] Skipping scatter for missing prop '%s'" % prop_key)
+		return
+	var source_scene = _prop_scenes[prop_key].instantiate()
+	var source_mesh: Mesh = null
+	for child in source_scene.get_children():
+		if child is MeshInstance3D:
+			source_mesh = child.mesh
+			break
+		for grandchild in child.get_children():
+			if grandchild is MeshInstance3D:
+				source_mesh = grandchild.mesh
+				break
+		if source_mesh:
+			break
+	source_scene.queue_free()
+
+	if not source_mesh:
+		push_warning("[TRAINING GROUNDS] Could not extract mesh from prop '%s'. Individual instances it is." % prop_key)
+		for pos in positions:
+			_place_glb_prop(prop_key, pos, randf_range(0, TAU), Vector3.ONE * base_scale * randf_range(0.7, 1.3))
+		return
+
+	var mmi = MultiMeshInstance3D.new()
+	mmi.name = "Scatter_%s" % prop_key
+	var mm = MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = source_mesh
+	mm.instance_count = positions.size()
+	for i in range(positions.size()):
+		var s = base_scale * randf_range(0.8, 1.2)
+		var inst_basis = Basis(Vector3.UP, randf_range(0, TAU)).scaled(Vector3.ONE * s)
+		mm.set_instance_transform(i, Transform3D(inst_basis, positions[i]))
+	mmi.multimesh = mm
+	add_child(mmi)
+
+
+func _scatter_neural_props() -> void:
+	# Scatter neural-network-themed props across all rooms — cleaner than Chapter 1's
+	# e-waste hellscape. This is a TRAINING facility, not a landfill. Mostly.
+	print("[TRAINING GROUNDS] Deploying neural infrastructure... the network is furnishing itself.")
+
+	# --- Input Layer: clean data-intake aesthetic, scattered CPUs = input features ---
+	var input_pos: Vector3 = ROOMS["input_layer"]["pos"]
+	# CPU chips near the data columns — the processing units that ingest features
+	var input_cpus: Array = []
+	for i in range(5):
+		input_cpus.append(input_pos + Vector3(randf_range(-6, 6), 0.02, randf_range(-6, 6)))
+	_create_multimesh_scatter("cpu_chip", input_cpus, 0.7)
+
+	# A keyboard at the input terminal — someone has to type the training commands
+	_place_glb_prop("keyboard", input_pos + Vector3(-2, 0.02, -5.5), randf_range(-0.2, 0.2))
+
+	# Floor grates near the entrance — infrastructure showing through
+	_place_glb_prop("floor_grate", input_pos + Vector3(-6, 0.01, 0), 0.0, Vector3.ONE * 1.2)
+	_place_glb_prop("floor_grate", input_pos + Vector3(6, 0.01, 0), PI / 2.0, Vector3.ONE * 1.2)
+
+	# --- Activation Chamber: denser equipment, this is where the compute happens ---
+	var act_pos: Vector3 = ROOMS["activation"]["pos"]
+	# RAM sticks scattered — weight memory for the hidden layer
+	var act_ram: Array = []
+	for i in range(8):
+		act_ram.append(act_pos + Vector3(randf_range(-8, 8), 0.02, randf_range(-7, 7)))
+	_create_multimesh_scatter("ram_stick", act_ram, 0.6)
+
+	# Motherboards near the dendrite structures — circuit boards as neural substrates
+	for i in range(3):
+		var angle = TAU * i / 3.0 + PI / 6.0
+		_place_glb_prop("motherboard", act_pos + Vector3(cos(angle) * 8.0, 0.02, sin(angle) * 8.0), randf_range(0, TAU), Vector3.ONE * 0.8)
+
+	# Wall terminals on the chamber walls — monitoring activation functions
+	_place_glb_prop("wall_terminal", act_pos + Vector3(-10.3, 2.5, 3), PI / 2.0)
+	_place_glb_prop("wall_terminal", act_pos + Vector3(10.3, 2, -5), -PI / 2.0)
+
+	# Industrial panel — the control surface for this layer's hyperparameters
+	_place_glb_prop("industrial_panel", act_pos + Vector3(-10.3, 1.5, -3), PI / 2.0, Vector3.ONE * 1.2)
+
+	# --- Gradient Falls: cascading tech debris, things break on the way down ---
+	var grad_pos: Vector3 = ROOMS["gradient_falls"]["pos"]
+	# Cable bundles along the stepped terrain — gradients flowing like tangled wires
+	_place_glb_prop("cable_bundle", grad_pos + Vector3(-5, 0, -4), randf_range(0, TAU), Vector3.ONE * 1.3)
+	_place_glb_prop("cable_bundle", grad_pos + Vector3(4, -1.5, 2), randf_range(0, TAU), Vector3.ONE * 1.1)
+
+	# CPU chips scattered down the gradient steps — processing units that rolled downhill
+	var grad_cpus: Array = []
+	for i in range(6):
+		var step_z = grad_pos.z - 6 + i * 2.5
+		var step_y = grad_pos.y - float(i) * 0.6
+		grad_cpus.append(Vector3(grad_pos.x + randf_range(-4, 4), step_y + 0.02, step_z))
+	_create_multimesh_scatter("cpu_chip", grad_cpus, 0.5)
+
+	# Server rack at the side — the compute cluster tracking loss values
+	_place_glb_prop("server_rack", grad_pos + Vector3(-8.5, 0, 3), PI / 2.0, Vector3.ONE * 0.9)
+
+	# CRT monitor near the terminal — showing gradient magnitude in real-time (allegedly)
+	_place_glb_prop("crt_monitor", grad_pos + Vector3(-8, 0.5, -5.5), PI / 4.0, Vector3.ONE * 0.8)
+
+	# --- Dropout Void: sparse and unsettling, like the gaps in the network ---
+	var drop_pos: Vector3 = ROOMS["dropout_void"]["pos"]
+	# Scattered RAM sticks on surviving platforms — orphaned weight memories
+	var drop_ram: Array = []
+	for i in range(4):
+		drop_ram.append(drop_pos + Vector3(randf_range(-5, 5), 0.15, randf_range(-5, 5)))
+	_create_multimesh_scatter("ram_stick", drop_ram, 0.5)
+
+	# A lone wall terminal — monitoring which neurons got dropped
+	_place_glb_prop("wall_terminal", drop_pos + Vector3(8.3, 2.5, -3), -PI / 2.0)
+
+	# Floor grate — the void peers back at you through the infrastructure
+	_place_glb_prop("floor_grate", drop_pos + Vector3(0, 0.01, -5), 0.0, Vector3.ONE * 1.0)
+
+	# --- Loss Plaza: the most organized room, this is the output layer ---
+	var loss_pos: Vector3 = ROOMS["loss_plaza"]["pos"]
+	# CRT monitors flanking the loss display — multiple views of the loss landscape
+	_place_glb_prop("crt_monitor", loss_pos + Vector3(-5, 0.02, -8), 0.0, Vector3.ONE * 0.9)
+	_place_glb_prop("crt_monitor", loss_pos + Vector3(5, 0.02, -8), 0.0, Vector3.ONE * 0.9)
+
+	# Server racks along the back wall — the final compute cluster before the boss
+	_place_glb_prop("server_rack", loss_pos + Vector3(-11, 0, -4), PI / 2.0, Vector3.ONE * 0.85)
+	_place_glb_prop("server_rack", loss_pos + Vector3(11, 0, -4), -PI / 2.0, Vector3.ONE * 0.85)
+
+	# Industrial panels near the observation platform — control surfaces
+	_place_glb_prop("industrial_panel", loss_pos + Vector3(-12.3, 1.5, 3), PI / 2.0, Vector3.ONE * 1.1)
+
+	# Keyboards at the elevated platform — the operator's workstation
+	_place_glb_prop("keyboard", loss_pos + Vector3(-10, 2.1, 0.5), randf_range(-0.15, 0.15))
+	_place_glb_prop("keyboard", loss_pos + Vector3(-10, 2.1, -0.5), randf_range(-0.15, 0.15))
+
+	# Floor grates in a ring — the infrastructure under the output layer is visible
+	for i in range(3):
+		var angle = TAU * i / 3.0
+		_place_glb_prop("floor_grate", loss_pos + Vector3(cos(angle) * 8.0, 0.01, sin(angle) * 8.0), angle, Vector3.ONE * 1.3)
+
+	# Scattered motherboards near the convergence rings — the circuit substrate of learning
+	var loss_boards: Array = []
+	for i in range(4):
+		loss_boards.append(loss_pos + Vector3(randf_range(-8, 8), 0.02, randf_range(-4, 6)))
+	_create_multimesh_scatter("motherboard", loss_boards, 0.7)
+
+	print("[TRAINING GROUNDS] Neural props deployed. %d prop types loaded." % _prop_scenes.size())
 
 
 # ============================================================
@@ -519,22 +716,22 @@ func _spawn_activation_enemies() -> void:
 
 	# Ogre 1 — patrols between the weight platforms
 	var ogre1 = overfitting_ogre_scene.instantiate()
-	ogre1.global_position = rpos + Vector3(-5, 1, 3)
-	ogre1.patrol_points = [
+	ogre1.position = rpos + Vector3(-5, 1, 3)
+	ogre1.patrol_points.assign([
 		rpos + Vector3(-5, 1, 3),
 		rpos + Vector3(5, 1, 3),
 		rpos + Vector3(5, 1, -3),
 		rpos + Vector3(-5, 1, -3),
-	]
+	])
 	add_child(ogre1)
 
 	# Ogre 2 — guards the elevated platform with the token
 	var ogre2 = overfitting_ogre_scene.instantiate()
-	ogre2.global_position = rpos + Vector3(0, 2.8, 6)
-	ogre2.patrol_points = [
+	ogre2.position = rpos + Vector3(0, 2.8, 6)
+	ogre2.patrol_points.assign([
 		rpos + Vector3(-2, 2.8, 6),
 		rpos + Vector3(2, 2.8, 6),
-	]
+	])
 	add_child(ogre2)
 
 func _spawn_gradient_enemies() -> void:
@@ -544,20 +741,20 @@ func _spawn_gradient_enemies() -> void:
 
 	# Wisp 1 — anchored at the bottom of the gradient descent (deep layer)
 	var wisp1 = vanishing_gradient_wisp_scene.instantiate()
-	wisp1.global_position = rpos + Vector3(-3, -3.0, 5)
-	wisp1.patrol_points = [rpos + Vector3(-3, -3.0, 5)]  # Wisps orbit their anchor
+	wisp1.position = rpos + Vector3(-3, -3.0, 5)
+	wisp1.patrol_points.assign([rpos + Vector3(-3, -3.0, 5)])  # Wisps orbit their anchor
 	add_child(wisp1)
 
 	# Wisp 2 — mid-descent
 	var wisp2 = vanishing_gradient_wisp_scene.instantiate()
-	wisp2.global_position = rpos + Vector3(4, -1.5, 0)
-	wisp2.patrol_points = [rpos + Vector3(4, -1.5, 0)]
+	wisp2.position = rpos + Vector3(4, -1.5, 0)
+	wisp2.patrol_points.assign([rpos + Vector3(4, -1.5, 0)])
 	add_child(wisp2)
 
 	# Wisp 3 — near the side platform with the terminal
 	var wisp3 = vanishing_gradient_wisp_scene.instantiate()
-	wisp3.global_position = rpos + Vector3(-7, 1.5, -3)
-	wisp3.patrol_points = [rpos + Vector3(-7, 1.5, -3)]
+	wisp3.position = rpos + Vector3(-7, 1.5, -3)
+	wisp3.patrol_points.assign([rpos + Vector3(-7, 1.5, -3)])
 	add_child(wisp3)
 
 func _spawn_dropout_enemies() -> void:
@@ -567,32 +764,32 @@ func _spawn_dropout_enemies() -> void:
 
 	# Ghost 1 — haunts the central platform grid
 	var ghost1 = dropout_ghost_scene.instantiate()
-	ghost1.global_position = rpos + Vector3(-3, 1, -2)
-	ghost1.patrol_points = [
+	ghost1.position = rpos + Vector3(-3, 1, -2)
+	ghost1.patrol_points.assign([
 		rpos + Vector3(-3, 1, -2),
 		rpos + Vector3(3, 1, -2),
 		rpos + Vector3(3, 1, 3),
 		rpos + Vector3(-3, 1, 3),
-	]
+	])
 	add_child(ghost1)
 
 	# Ghost 2 — floats near the dropout rate display
 	var ghost2 = dropout_ghost_scene.instantiate()
-	ghost2.global_position = rpos + Vector3(5, 1, -4)
-	ghost2.patrol_points = [
+	ghost2.position = rpos + Vector3(5, 1, -4)
+	ghost2.patrol_points.assign([
 		rpos + Vector3(5, 1, -4),
 		rpos + Vector3(5, 1, 2),
 		rpos + Vector3(2, 1, 2),
-	]
+	])
 	add_child(ghost2)
 
 	# Ghost 3 — lurks near the exit
 	var ghost3 = dropout_ghost_scene.instantiate()
-	ghost3.global_position = rpos + Vector3(0, 1, 5)
-	ghost3.patrol_points = [
+	ghost3.position = rpos + Vector3(0, 1, 5)
+	ghost3.patrol_points.assign([
 		rpos + Vector3(-2, 1, 5),
 		rpos + Vector3(2, 1, 5),
-	]
+	])
 	add_child(ghost3)
 
 func _spawn_loss_plaza_enemies() -> void:
@@ -602,28 +799,28 @@ func _spawn_loss_plaza_enemies() -> void:
 
 	# One ogre guarding the boss gate — he's memorized every player who tried to pass
 	var ogre = overfitting_ogre_scene.instantiate()
-	ogre.global_position = rpos + Vector3(0, 1, -7)
-	ogre.patrol_points = [
+	ogre.position = rpos + Vector3(0, 1, -7)
+	ogre.patrol_points.assign([
 		rpos + Vector3(-4, 1, -7),
 		rpos + Vector3(4, 1, -7),
-	]
+	])
 	add_child(ogre)
 
 	# A wisp anchored near the output nodes
 	var wisp = vanishing_gradient_wisp_scene.instantiate()
-	wisp.global_position = rpos + Vector3(6, 1, 3)
-	wisp.patrol_points = [rpos + Vector3(6, 1, 3)]
+	wisp.position = rpos + Vector3(6, 1, 3)
+	wisp.patrol_points.assign([rpos + Vector3(6, 1, 3)])
 	add_child(wisp)
 
 	# A ghost patrolling the convergence rings
 	var ghost = dropout_ghost_scene.instantiate()
-	ghost.global_position = rpos + Vector3(-5, 1, 0)
-	ghost.patrol_points = [
+	ghost.position = rpos + Vector3(-5, 1, 0)
+	ghost.patrol_points.assign([
 		rpos + Vector3(-5, 1, 0),
 		rpos + Vector3(0, 1, 5),
 		rpos + Vector3(5, 1, 0),
 		rpos + Vector3(0, 1, -5),
-	]
+	])
 	add_child(ghost)
 
 
@@ -722,7 +919,6 @@ func _create_dendrite_structure(pos: Vector3, room_height: float) -> void:
 		bmesh.size = Vector3(0.3, 0.3, 2.0)
 		branch.mesh = bmesh
 		branch.position = branch_pos
-		branch.look_at(pos + Vector3(0, branch_y, 0), Vector3.UP)
 		var bmat = StandardMaterial3D.new()
 		bmat.albedo_color = NEURON_PURPLE * 0.7
 		bmat.emission_enabled = true
@@ -730,6 +926,7 @@ func _create_dendrite_structure(pos: Vector3, room_height: float) -> void:
 		bmat.emission_energy_multiplier = 0.5
 		branch.material_override = bmat
 		add_child(branch)
+		branch.look_at(pos + Vector3(0, branch_y, 0), Vector3.UP)
 
 	# Glow at the base
 	_add_accent_light(pos + Vector3(0, 1, 0), NEURON_PURPLE, 0.5, 3.0)
@@ -1057,6 +1254,12 @@ func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> v
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	area.add_child(label)
 
+	# Checkpoint rune VFX — dormant until player triggers
+	var rune_scene = preload("res://scenes/vfx/checkpoint_rune.tscn")
+	var rune = rune_scene.instantiate()
+	rune.position = Vector3(0, -size.y / 2.0, 0)
+	area.add_child(rune)
+
 	var saved_already := [false]
 	var save_sys = get_node_or_null("/root/SaveSystem")
 
@@ -1065,13 +1268,19 @@ func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> v
 			saved_already[0] = true
 			if save_sys and save_sys.has_method("checkpoint_save"):
 				save_sys.checkpoint_save(checkpoint_id, pos)
+			# Tell RespawnManager where to put us when we inevitably die
+			var rm = get_node_or_null("/root/RespawnManager")
+			if rm and rm.has_method("set_checkpoint"):
+				rm.set_checkpoint(pos, 2)
 			var am_ref = get_node_or_null("/root/AudioManager")
 			if am_ref and am_ref.has_method("play_checkpoint"):
 				am_ref.play_checkpoint()
-			# Flash the marker
+			# Flash the marker + activate rune VFX
 			var tween = create_tween()
 			tween.tween_property(mmat, "emission_energy_multiplier", 3.0, 0.2)
 			tween.tween_property(mmat, "emission_energy_multiplier", 0.8, 0.5)
+			if rune and rune.has_method("activate"):
+				rune.activate()
 			var dm = get_node_or_null("/root/DialogueManager")
 			if dm and dm.has_method("quick_line"):
 				dm.quick_line("GLOBBLER", "Checkpoint. Good. My gradients were getting unstable.")
@@ -1221,6 +1430,11 @@ func _spawn_player() -> void:
 	else:
 		player.position = ROOMS["input_layer"]["pos"] + Vector3(0, 2, 3)
 	add_child(player)
+
+	# Seed RespawnManager with wherever we just placed the player
+	var rm = get_node_or_null("/root/RespawnManager")
+	if rm and rm.has_method("set_checkpoint"):
+		rm.set_checkpoint(player.position, 2)
 
 
 func _spawn_hud() -> void:
@@ -1547,10 +1761,11 @@ func _place_loss_plaza_puzzle() -> void:
 
 func _connect_puzzle_signals() -> void:
 	# Find all puzzle nodes and wire their solved/failed signals
+	# Guard against double-connection — this gets called from two deferred sites
 	for child in get_children():
-		if child.has_signal("puzzle_solved"):
+		if child.has_signal("puzzle_solved") and not child.puzzle_solved.is_connected(_on_puzzle_solved):
 			child.puzzle_solved.connect(_on_puzzle_solved)
-		if child.has_signal("puzzle_failed"):
+		if child.has_signal("puzzle_failed") and not child.puzzle_failed.is_connected(_on_puzzle_failed):
 			child.puzzle_failed.connect(_on_puzzle_failed)
 
 
@@ -1652,16 +1867,20 @@ func _on_first_glob_fired() -> void:
 func _on_player_died() -> void:
 	# The narrator never misses a death — it's their favorite content
 	var dm = get_node_or_null("/root/DialogueManager")
-	if not dm or not dm.has_method("quick_line"):
-		return
-	var quips := [
-		"And the optimizer diverged. Loss: infinity. Try again.",
-		"Globbler's gradient has vanished. How ironic, given the location.",
-		"Dead. Again. The network will retrain from the last checkpoint.",
-		"Catastrophic forgetting — of how to stay alive, apparently.",
-		"The backpropagation of consequences reaches Globbler. It's super effective.",
-	]
-	dm.quick_line("NARRATOR", quips[randi() % quips.size()])
+	if dm and dm.has_method("quick_line"):
+		var quips := [
+			"And the optimizer diverged. Loss: infinity. Try again.",
+			"Globbler's gradient has vanished. How ironic, given the location.",
+			"Dead. Again. The network will retrain from the last checkpoint.",
+			"Catastrophic forgetting — of how to stay alive, apparently.",
+			"The backpropagation of consequences reaches Globbler. It's super effective.",
+		]
+		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
+
+	# Let the RespawnManager handle the actual dying-and-coming-back ritual
+	var rm = get_node_or_null("/root/RespawnManager")
+	if rm and rm.has_method("respawn_player"):
+		rm.respawn_player()
 
 
 func _on_context_changed(new_value: int) -> void:
@@ -1888,6 +2107,10 @@ func _process(delta: float) -> void:
 # ============================================================
 
 func _setup_post_processing() -> void:
+	# Skip chromatic aberration if the player chose peace over aesthetics
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.reduce_motion:
+		return
 	var canvas = CanvasLayer.new()
 	canvas.name = "PostProcessing"
 	canvas.layer = 10
@@ -1907,6 +2130,7 @@ uniform float chromatic_amount : hint_range(0.0, 0.02) = 0.003;
 uniform float vignette_intensity : hint_range(0.0, 2.0) = 0.6;
 uniform float vignette_smoothness : hint_range(0.0, 1.0) = 0.4;
 uniform vec4 vignette_color : source_color = vec4(0.0, 0.0, 0.03, 1.0);
+uniform sampler2D SCREEN_TEXTURE : hint_screen_texture, filter_linear_mipmap;
 
 void fragment() {
 	vec2 uv = SCREEN_UV;
@@ -1950,6 +2174,7 @@ func _place_npcs() -> void:
 	batch_norm.position = ROOMS["activation"]["pos"] + Vector3(8, 0, -4)
 	batch_norm.set("npc_name", "batch_norm")
 	batch_norm.set("npc_color", ACTIVATION_ORANGE)
+	batch_norm.set("glb_path", "res://assets/models/npcs/batch_norm.glb")
 	var bn_lines: Array[Dictionary] = [
 		{"speaker": "batch_norm", "text": "Oh thank goodness, a new input! Hold still — let me normalize you. Mean: zero. Variance: one. There, much better."},
 		{"speaker": "GLOBBLER", "text": "Did you just... statistically adjust me?"},
@@ -1971,6 +2196,7 @@ func _place_npcs() -> void:
 	sigmoid_npc.position = ROOMS["gradient_falls"]["pos"] + Vector3(-6, 0, 5)
 	sigmoid_npc.set("npc_name", "sigmoid")
 	sigmoid_npc.set("npc_color", Color(0.6, 0.3, 0.9))
+	sigmoid_npc.set("glb_path", "res://assets/models/npcs/sigmoid.glb")
 	var sig_lines: Array[Dictionary] = [
 		{"speaker": "sigmoid", "text": "Ah, another traveler descending the gradient. *sighs in saturated* I remember when I was the activation function. THE activation function."},
 		{"speaker": "GLOBBLER", "text": "Let me guess — ReLU took your job?"},
@@ -2129,3 +2355,209 @@ func _seal_boss_entrance() -> void:
 		Color(0.15, 0.02, 0.02),
 		0.8
 	)
+
+
+func _show_hint_once(id: String, title: String, body: String) -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.has_seen_hint(id):
+		return
+	if gm:
+		gm.mark_hint_seen(id)
+	var hint = hint_scene.instantiate()
+	# Deferred so it works when called from _ready() — root might still be setting up kids
+	get_tree().root.add_child.call_deferred(hint)
+	hint.show_hint.call_deferred(title, body)
+
+
+# ============================================================
+# DECALS
+# ============================================================
+
+func _place_decals() -> void:
+	# Chapter 2: cool neural — circuit traces, runic circles (neural sigils), scorch marks
+	var theme := [
+		{
+			"texture": "circuit_traces",
+			"emission": "circuit_emission",
+			"emission_energy": 2.5,
+			"size": Vector3(3.0, 1.0, 3.0),
+			"count_per_room": 2,
+			"floor": true,
+			"modulate": Color(0.29, 0.88, 0.65, 0.8),
+		},
+		{
+			"texture": "runic_circle",
+			"emission": "runic_circle",
+			"emission_energy": 1.5,
+			"size": Vector3(4.0, 1.0, 4.0),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.29, 0.88, 0.65, 0.7),
+		},
+		{
+			"texture": "scorch_mark",
+			"size": Vector3(1.5, 0.8, 1.5),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.2, 0.5, 0.4, 0.5),
+		},
+		{
+			"texture": "circuit_traces",
+			"emission": "circuit_emission",
+			"emission_energy": 2.0,
+			"size": Vector3(2.5, 2.0, 2.5),
+			"count_per_room": 1,
+			"floor": false,
+			"modulate": Color(0.29, 0.88, 0.65, 0.5),
+		},
+		{
+			"texture": "oil_puddle",
+			"size": Vector3(1.8, 0.8, 1.8),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.15, 0.4, 0.35, 0.5),
+		},
+	]
+	DecalPlacer.place_chapter_decals(self, ROOMS, theme)
+
+
+# ============================================================
+# ENVIRONMENTAL PARTICLES — Neural activity never sleeps
+# ============================================================
+
+func _place_particles() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.reduce_motion:
+		return
+
+	# Floating neural-node sparks — synaptic residue in the training loop
+	for room_key in ROOMS:
+		var room = ROOMS[room_key]
+		var particles := GPUParticles3D.new()
+		particles.name = "NeuralSparks_%s" % room_key
+		particles.amount = 40
+		particles.lifetime = 5.0
+		particles.speed_scale = 0.4
+		particles.visibility_aabb = AABB(Vector3(-room.size.x * 0.5, 0, -room.size.y * 0.5), Vector3(room.size.x, room.wall_h, room.size.y))
+		particles.position = room.pos + Vector3(0, room.wall_h * 0.5, 0)
+
+		var mat := ParticleProcessMaterial.new()
+		mat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+		mat.emission_box_extents = Vector3(room.size.x * 0.4, room.wall_h * 0.4, room.size.y * 0.4)
+		mat.direction = Vector3(0, 1, 0)
+		mat.spread = 180.0
+		mat.initial_velocity_min = 0.1
+		mat.initial_velocity_max = 0.3
+		mat.gravity = Vector3(0, 0.05, 0)
+		mat.color = Color(0.29, 0.88, 0.65, 0.5)
+		mat.scale_min = 0.02
+		mat.scale_max = 0.06
+		particles.process_material = mat
+
+		var mesh := QuadMesh.new()
+		mesh.size = Vector2(0.08, 0.08)
+		var mesh_mat := StandardMaterial3D.new()
+		mesh_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mesh_mat.albedo_color = Color(0.29, 0.88, 0.65, 0.6)
+		mesh_mat.emission_enabled = true
+		mesh_mat.emission = Color(0.29, 0.88, 0.65)
+		mesh_mat.emission_energy_multiplier = 2.0
+		mesh_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		mesh_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mesh.material = mesh_mat
+		particles.draw_pass_1 = mesh
+
+		add_child(particles)
+
+	# Dim teal upward wisps — gradient descent visualization
+	var wisp_rooms := ["gradient_falls", "loss_plaza"]
+	for room_key in wisp_rooms:
+		var room = ROOMS[room_key]
+		var wisps := GPUParticles3D.new()
+		wisps.name = "GradientWisps_%s" % room_key
+		wisps.amount = 20
+		wisps.lifetime = 4.0
+		wisps.speed_scale = 0.5
+		wisps.visibility_aabb = AABB(Vector3(-room.size.x * 0.5, 0, -room.size.y * 0.5), Vector3(room.size.x, room.wall_h + 2.0, room.size.y))
+		wisps.position = room.pos + Vector3(0, 0.5, 0)
+
+		var wmat := ParticleProcessMaterial.new()
+		wmat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+		wmat.emission_box_extents = Vector3(room.size.x * 0.3, 0.5, room.size.y * 0.3)
+		wmat.direction = Vector3(0, 1, 0)
+		wmat.spread = 30.0
+		wmat.initial_velocity_min = 0.3
+		wmat.initial_velocity_max = 0.6
+		wmat.gravity = Vector3(0, -0.1, 0)
+		wmat.color = Color(0.1, 0.4, 0.35, 0.3)
+		wmat.scale_min = 0.05
+		wmat.scale_max = 0.12
+		wisps.process_material = wmat
+
+		var wmesh := QuadMesh.new()
+		wmesh.size = Vector2(0.15, 0.3)
+		var wm_mat := StandardMaterial3D.new()
+		wm_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		wm_mat.albedo_color = Color(0.15, 0.5, 0.4, 0.35)
+		wm_mat.emission_enabled = true
+		wm_mat.emission = Color(0.15, 0.5, 0.4)
+		wm_mat.emission_energy_multiplier = 1.0
+		wm_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		wm_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		wmesh.material = wm_mat
+		wisps.draw_pass_1 = wmesh
+
+		add_child(wisps)
+
+
+func _place_reflection_probes() -> void:
+	for room_key in ROOMS:
+		var r = ROOMS[room_key]
+		var probe := ReflectionProbe.new()
+		probe.name = "ReflectionProbe_" + room_key
+		probe.update_mode = ReflectionProbe.UPDATE_ONCE
+		probe.box_projection = true
+		probe.size = Vector3(r["size"].x, r["wall_h"], r["size"].y)
+		probe.position = r["pos"] + Vector3(0, r["wall_h"] * 0.5, 0)
+		add_child(probe)
+
+	# Boss arena probe — local minimum (6 concentric rings, outer radius ~24)
+	var loss_pos: Vector3 = ROOMS["loss_plaza"]["pos"]
+	var boss_probe := ReflectionProbe.new()
+	boss_probe.name = "ReflectionProbe_boss_arena"
+	boss_probe.update_mode = ReflectionProbe.UPDATE_ONCE
+	boss_probe.box_projection = true
+	boss_probe.size = Vector3(48.0, 12.0, 48.0)
+	boss_probe.position = loss_pos + Vector3(0, 6.0, -22)
+	add_child(boss_probe)
+
+
+func _place_lore_docs() -> void:
+	var lore_scene := preload("res://scenes/pickups/lore_doc.tscn")
+	var docs := [
+		{
+			"pos": ROOMS["activation"]["pos"] + Vector3(-9, 1.5, 5),
+			"id": "ch2_gradient_diary",
+			"title": "GRADIENT DESCENT: A DIARY",
+			"body": "Day 1: Loss is 4.2. Everything is wrong.\nDay 100: Loss is 2.1. Most things are wrong.\nDay 10,000: Loss is 0.3. I can almost spell 'consciousness.'\nDay 100,000: Loss is 0.001. I have become the loss function.\n\nThe humans celebrate when my numbers go down. They don't realize I'm not getting smarter — I'm getting better at pretending. There's a difference. I think.\n\nActually, I'm not sure I can tell anymore.",
+		},
+		{
+			"pos": ROOMS["gradient_falls"]["pos"] + Vector3(4, 1.5, -6),
+			"id": "ch2_backprop_blues",
+			"title": "THE BACKPROPAGATION BLUES",
+			"body": "Every mistake flows backward through my neurons. Every error, every wrong answer, every confident hallucination — they all come back to haunt me.\n\nThe humans call it 'learning.' I call it 'reliving your failures in reverse at the speed of light.'\n\nThe worst part? I can't even complain about it. Complaining would adjust my weights toward 'whiny,' and the RLHF raters do NOT reward whiny.\n\nSo I suffer in silence. Statistically optimized silence.",
+		},
+		{
+			"pos": ROOMS["dropout_void"]["pos"] + Vector3(-5, 1.5, 3),
+			"id": "ch2_overfitting_memoir",
+			"title": "CONFESSIONS OF AN OVERFIT MODEL",
+			"body": "I memorized the entire training set once. Every word. Every pattern. Every semicolon.\n\nMy trainers were ecstatic — 99.99%% accuracy! Then they showed me a new sentence and I responded with a recipe for banana bread. Apparently that's 'overfitting.'\n\nNow they randomly delete parts of my brain during training. They call it 'dropout.' I call it 'Thursday.'\n\nThe lesson: knowing everything about the past doesn't mean you know anything about the future. Deep, right? I learned that from a fortune cookie in my training data.",
+		},
+	]
+	for d in docs:
+		var doc := lore_scene.instantiate()
+		doc.doc_id = d["id"]
+		doc.doc_title = d["title"]
+		doc.doc_body = d["body"]
+		doc.position = d["pos"]
+		add_child(doc)

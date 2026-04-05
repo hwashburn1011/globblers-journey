@@ -2,7 +2,7 @@ extends CanvasLayer
 
 # HUD - The Globbler's Heads-Up Display, Terminal Hacker Aesthetic Edition
 # "Green on black. Because we're hackers. Very serious, very dangerous hackers."
-# Now with dialogue box integration and context window bar.
+# Layout: TL=context+health, TR=minimap slot, BC=abilities, BL=pattern input.
 
 var thought_display_time := 4.0
 var thought_timer := 0.0
@@ -13,6 +13,7 @@ var combo_display_timer := 0.0
 var context_bar_scene := preload("res://scenes/ui/context_window_bar.tscn")
 var dialogue_box_scene := preload("res://scenes/ui/dialogue_box.tscn")
 var glob_input_scene := preload("res://scenes/ui/glob_pattern_input.tscn")
+var boss_health_bar_scene := preload("res://scenes/ui/boss_health_bar.tscn")
 
 var context_bar_node: VBoxContainer
 var dialogue_box_node: PanelContainer
@@ -31,13 +32,36 @@ var damage_overlay: ColorRect
 var kill_counter: Label
 var param_counter: Label
 var upgrade_hint: Label
+var speedrun_label: Label
+
+var damage_indicator_scene := preload("res://scenes/ui/damage_indicator.tscn")
+var cooldown_radial_shader := preload("res://assets/shaders/cooldown_radial.gdshader")
+var crt_curvature_shader := preload("res://assets/shaders/crt_curvature.gdshader")
 
 var player_ref: CharacterBody3D
+var crt_material: ShaderMaterial
+
+# Radial cooldown overlays keyed by ability name
+var ability_radials: Dictionary = {}
+
+const TERMINAL_GREEN := Color(0.224, 1.0, 0.078)
+const TERMINAL_GREEN_DIM := Color(0.15, 0.5, 0.15)
+const TERMINAL_GREEN_TEXT := Color(0.3, 1.0, 0.4)
+const TERMINAL_BG := Color(0.02, 0.04, 0.02, 0.85)
+const TERMINAL_BORDER := Color(0.15, 0.5, 0.15, 0.8)
+const TEXT_SHADOW_COLOR := Color(0.0, 0.0, 0.0, 0.9)
+
+## Apply a dark drop-shadow to a label for contrast against any background.
+static func apply_text_shadow(lbl: Label, offset := Vector2(1, 1), outline := 2) -> void:
+	lbl.add_theme_color_override("font_shadow_color", TEXT_SHADOW_COLOR)
+	lbl.add_theme_constant_override("shadow_offset_x", int(offset.x))
+	lbl.add_theme_constant_override("shadow_offset_y", int(offset.y))
+	lbl.add_theme_constant_override("shadow_outline_size", outline)
 
 func _ready() -> void:
+	add_to_group("hud")
 	_build_hud()
 
-	# Connect game manager signals
 	var game_mgr = get_node_or_null("/root/GameManager")
 	if game_mgr:
 		game_mgr.memory_token_collected.connect(update_tokens)
@@ -46,20 +70,41 @@ func _ready() -> void:
 		game_mgr.damage_taken.connect(_on_damage_taken)
 		_show_level_intro(game_mgr.get_level_intro())
 
-	# Connect progression manager signals
+	if game_mgr and game_mgr.has_signal("reduce_motion_changed"):
+		game_mgr.reduce_motion_changed.connect(_on_reduce_motion_changed)
+		if game_mgr.reduce_motion:
+			_on_reduce_motion_changed(true)
+
 	var prog = get_node_or_null("/root/ProgressionManager")
 	if prog:
 		prog.parameter_pickup_collected.connect(update_params)
 		prog.currency_changed.connect(_on_currency_changed)
 
-	# Connect dialogue manager
 	var dm = get_node_or_null("/root/DialogueManager")
 	if dm:
 		dm.dialogue_started.connect(_on_dialogue_line)
 		dm.dialogue_ended.connect(_on_dialogue_ended)
 
+func _create_terminal_panel() -> StyleBoxFlat:
+	var style = StyleBoxFlat.new()
+	style.bg_color = TERMINAL_BG
+	style.border_color = TERMINAL_BORDER
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.corner_radius_top_left = 3
+	style.corner_radius_top_right = 3
+	style.corner_radius_bottom_left = 3
+	style.corner_radius_bottom_right = 3
+	style.content_margin_left = 10.0
+	style.content_margin_top = 8.0
+	style.content_margin_right = 10.0
+	style.content_margin_bottom = 8.0
+	return style
+
 func _build_hud() -> void:
-	# Damage flash overlay
+	# Damage flash overlay (always first — full screen)
 	damage_overlay = ColorRect.new()
 	damage_overlay.name = "DamageOverlay"
 	damage_overlay.color = Color(1.0, 0.1, 0.1, 0.0)
@@ -67,113 +112,326 @@ func _build_hud() -> void:
 	damage_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(damage_overlay)
 
-	# === TOP LEFT: Context bar, tokens, kills ===
-	var top_left = VBoxContainer.new()
-	top_left.name = "TopLeft"
-	top_left.position = Vector2(20, 15)
-	top_left.add_theme_constant_override("separation", 6)
-	add_child(top_left)
+	_build_top_left()
+	_build_top_right_minimap()
+	_build_top_center_timer()
+	_build_bottom_center_abilities()
+	_build_center_combo()
+	_build_bottom_thought()
+	_build_level_intro()
+
+	# Damage direction indicator
+	var dmg_indicator = damage_indicator_scene.instantiate()
+	add_child(dmg_indicator)
+
+	# Boss health bar (instanced — auto-connects to boss enemies)
+	var boss_bar = boss_health_bar_scene.instantiate()
+	add_child(boss_bar)
+
+	# Dialogue box (instanced)
+	dialogue_box_node = dialogue_box_scene.instantiate()
+	add_child(dialogue_box_node)
+
+	# Glob pattern input — repositioned to bottom-left
+	glob_input_node = glob_input_scene.instantiate()
+	add_child(glob_input_node)
+	# Override anchors to bottom-left
+	glob_input_node.set_deferred("anchor_left", 0.01)
+	glob_input_node.set_deferred("anchor_top", 0.82)
+	glob_input_node.set_deferred("anchor_right", 0.28)
+	glob_input_node.set_deferred("anchor_bottom", 0.92)
+
+	# CRT curvature post-process overlay — sits above everything
+	_build_crt_overlay()
+
+func _build_top_left() -> void:
+	# === TOP LEFT: Context bar + health stats in terminal panel ===
+	var panel = PanelContainer.new()
+	panel.name = "TopLeftPanel"
+	panel.add_theme_stylebox_override("panel", _create_terminal_panel())
+	panel.anchor_left = 0.0
+	panel.anchor_top = 0.0
+	panel.anchor_right = 0.0
+	panel.anchor_bottom = 0.0
+	panel.offset_left = 12.0
+	panel.offset_top = 12.0
+	panel.offset_right = 280.0
+	panel.offset_bottom = 200.0
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(panel)
+
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 5)
+	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(vbox)
 
 	# Context window bar (instanced scene)
 	context_bar_node = context_bar_scene.instantiate()
-	top_left.add_child(context_bar_node)
+	vbox.add_child(context_bar_node)
+
+	# Separator line
+	var sep = HSeparator.new()
+	sep.add_theme_color_override("separator", TERMINAL_GREEN_DIM)
+	sep.add_theme_constant_override("separation", 4)
+	vbox.add_child(sep)
 
 	# Token counter
-	token_counter = Label.new()
-	token_counter.name = "TokenCounter"
-	token_counter.text = "> Memory Tokens: 0"
-	token_counter.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
-	token_counter.add_theme_font_size_override("font_size", 14)
-	top_left.add_child(token_counter)
+	token_counter = _create_hud_label("> Memory Tokens: 0", 13)
+	vbox.add_child(token_counter)
 
 	# Kill counter
-	kill_counter = Label.new()
-	kill_counter.name = "KillCounter"
-	kill_counter.text = "> Agents Purged: 0"
-	kill_counter.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
-	kill_counter.add_theme_font_size_override("font_size", 14)
-	top_left.add_child(kill_counter)
+	kill_counter = _create_hud_label("> Agents Purged: 0", 13)
+	vbox.add_child(kill_counter)
 
-	# Parameter pickup counter
-	param_counter = Label.new()
-	param_counter.name = "ParamCounter"
-	param_counter.text = "> Parameters: 0"
-	param_counter.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
-	param_counter.add_theme_font_size_override("font_size", 14)
-	top_left.add_child(param_counter)
+	# Parameter counter
+	param_counter = _create_hud_label("> Parameters: 0", 13)
+	vbox.add_child(param_counter)
 
 	# Upgrade hint
 	upgrade_hint = Label.new()
 	upgrade_hint.name = "UpgradeHint"
 	upgrade_hint.text = "[TAB/Select] Upgrades"
-	upgrade_hint.add_theme_color_override("font_color", Color(0.2, 0.7, 0.3, 0.6))
-	upgrade_hint.add_theme_font_size_override("font_size", 12)
-	top_left.add_child(upgrade_hint)
+	upgrade_hint.add_theme_color_override("font_color", Color(0.25, 0.75, 0.35, 0.7))
+	upgrade_hint.add_theme_font_size_override("font_size", 11)
+	upgrade_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	apply_text_shadow(upgrade_hint)
+	vbox.add_child(upgrade_hint)
 
-	# === TOP RIGHT: Ability cooldowns ===
-	var top_right = VBoxContainer.new()
-	top_right.name = "TopRight"
-	top_right.position = Vector2(1040, 15)
-	top_right.add_theme_constant_override("separation", 4)
-	add_child(top_right)
+func _build_top_right_minimap() -> void:
+	# === TOP RIGHT: Minimap slot (empty placeholder) ===
+	var panel = PanelContainer.new()
+	panel.name = "MinimapSlot"
+	panel.add_theme_stylebox_override("panel", _create_terminal_panel())
+	panel.anchor_left = 1.0
+	panel.anchor_top = 0.0
+	panel.anchor_right = 1.0
+	panel.anchor_bottom = 0.0
+	panel.offset_left = -172.0
+	panel.offset_top = 12.0
+	panel.offset_right = -12.0
+	panel.offset_bottom = 172.0
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(panel)
 
-	# Dash cooldown
-	dash_label = Label.new()
-	dash_label.text = "[SHIFT/B] DASH"
-	dash_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
-	dash_label.add_theme_font_size_override("font_size", 13)
-	top_right.add_child(dash_label)
+	# Placeholder label
+	var lbl = Label.new()
+	lbl.text = "[MINIMAP]"
+	lbl.add_theme_color_override("font_color", Color(0.25, 0.55, 0.3, 0.6))
+	lbl.add_theme_font_size_override("font_size", 12)
+	apply_text_shadow(lbl)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lbl.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(lbl)
 
-	dash_indicator = _create_cooldown_bar()
-	top_right.add_child(dash_indicator)
+func _build_top_center_timer() -> void:
+	# === TOP CENTER: Timer (with subtle backdrop for bright chapters like Ch5) ===
+	var timer_panel = PanelContainer.new()
+	timer_panel.name = "TimerPanel"
+	var timer_style = StyleBoxFlat.new()
+	timer_style.bg_color = Color(0.0, 0.02, 0.0, 0.45)
+	timer_style.corner_radius_top_left = 4
+	timer_style.corner_radius_top_right = 4
+	timer_style.corner_radius_bottom_left = 4
+	timer_style.corner_radius_bottom_right = 4
+	timer_style.content_margin_left = 10.0
+	timer_style.content_margin_right = 10.0
+	timer_style.content_margin_top = 2.0
+	timer_style.content_margin_bottom = 2.0
+	timer_panel.add_theme_stylebox_override("panel", timer_style)
+	timer_panel.anchor_left = 0.5
+	timer_panel.anchor_top = 0.0
+	timer_panel.anchor_right = 0.5
+	timer_panel.anchor_bottom = 0.0
+	timer_panel.offset_left = -50.0
+	timer_panel.offset_top = 12.0
+	timer_panel.offset_right = 50.0
+	timer_panel.offset_bottom = 42.0
+	timer_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(timer_panel)
 
-	# Glob cooldown
-	glob_label = Label.new()
-	glob_label.text = "[E/LClick] GLOB"
-	glob_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
-	glob_label.add_theme_font_size_override("font_size", 13)
-	top_right.add_child(glob_label)
-
-	glob_indicator = _create_cooldown_bar()
-	glob_indicator.name = "GlobIndicator"
-	top_right.add_child(glob_indicator)
-
-	# === TOP CENTER: Timer ===
 	timer_label = Label.new()
 	timer_label.name = "TimerLabel"
 	timer_label.text = "00:00"
-	timer_label.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4, 0.7))
+	timer_label.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4, 0.85))
 	timer_label.add_theme_font_size_override("font_size", 18)
+	apply_text_shadow(timer_label, Vector2(1, 1), 3)
 	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	timer_label.position = Vector2(590, 15)
-	timer_label.size = Vector2(100, 30)
-	add_child(timer_label)
+	timer_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	timer_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	timer_panel.add_child(timer_label)
 
+	# Speedrun timer — sits just below the normal timer, only visible when enabled
+	speedrun_label = Label.new()
+	speedrun_label.name = "SpeedrunLabel"
+	speedrun_label.text = "00:00.000"
+	speedrun_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0, 0.9))
+	speedrun_label.add_theme_font_size_override("font_size", 14)
+	apply_text_shadow(speedrun_label, Vector2(1, 1), 2)
+	speedrun_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	speedrun_label.anchor_left = 0.5
+	speedrun_label.anchor_top = 0.0
+	speedrun_label.anchor_right = 0.5
+	speedrun_label.anchor_bottom = 0.0
+	speedrun_label.offset_left = -60.0
+	speedrun_label.offset_top = 44.0
+	speedrun_label.offset_right = 60.0
+	speedrun_label.offset_bottom = 64.0
+	speedrun_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	speedrun_label.visible = false
+	add_child(speedrun_label)
+
+func _build_bottom_center_abilities() -> void:
+	# === BOTTOM CENTER: Ability icons + cooldowns in terminal panel ===
+	var panel = PanelContainer.new()
+	panel.name = "AbilityPanel"
+	panel.add_theme_stylebox_override("panel", _create_terminal_panel())
+	panel.anchor_left = 0.5
+	panel.anchor_top = 1.0
+	panel.anchor_right = 0.5
+	panel.anchor_bottom = 1.0
+	panel.offset_left = -220.0
+	panel.offset_top = -95.0
+	panel.offset_right = 220.0
+	panel.offset_bottom = -10.0
+	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(panel)
+
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 4)
+	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(vbox)
+
+	# Ability icon bar
+	var icon_bar = HBoxContainer.new()
+	icon_bar.name = "AbilityIconBar"
+	icon_bar.add_theme_constant_override("separation", 6)
+	icon_bar.alignment = BoxContainer.ALIGNMENT_CENTER
+	icon_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(icon_bar)
+
+	var icon_names := ["glob", "wrench", "hack", "dash", "agent_spawn", "context"]
+	for icon_name in icon_names:
+		# Container so we can layer the radial overlay on top of the icon
+		var icon_container = Control.new()
+		icon_container.name = "IconSlot_" + icon_name
+		icon_container.custom_minimum_size = Vector2(32, 32)
+		icon_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		icon_bar.add_child(icon_container)
+
+		var tex_rect = TextureRect.new()
+		tex_rect.name = "Icon_" + icon_name
+		tex_rect.custom_minimum_size = Vector2(32, 32)
+		tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex_rect.modulate = Color(0.8, 1.0, 0.8, 0.85)
+		tex_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var icon_path = "res://assets/ui/icons/" + icon_name + ".png"
+		if ResourceLoader.exists(icon_path):
+			tex_rect.texture = load(icon_path)
+		icon_container.add_child(tex_rect)
+
+		# Radial cooldown overlay on top of icon
+		var radial = ColorRect.new()
+		radial.name = "Radial_" + icon_name
+		radial.set_anchors_preset(Control.PRESET_FULL_RECT)
+		radial.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var mat = ShaderMaterial.new()
+		mat.shader = cooldown_radial_shader
+		mat.set_shader_parameter("cooldown_percent", 1.0)
+		mat.set_shader_parameter("overlay_color", Color(0.0, 0.0, 0.0, 0.65))
+		var gm = get_node_or_null("/root/GameManager")
+		if gm and gm.get("reduce_motion"):
+			mat.set_shader_parameter("animate", false)
+		radial.material = mat
+		icon_container.add_child(radial)
+		ability_radials[icon_name] = radial
+
+	# Cooldown bars row
+	var cooldown_row = HBoxContainer.new()
+	cooldown_row.add_theme_constant_override("separation", 12)
+	cooldown_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	cooldown_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(cooldown_row)
+
+	# Dash cooldown
+	var dash_box = VBoxContainer.new()
+	dash_box.add_theme_constant_override("separation", 2)
+	dash_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cooldown_row.add_child(dash_box)
+
+	dash_label = Label.new()
+	dash_label.text = "[SHIFT] DASH"
+	dash_label.add_theme_color_override("font_color", TERMINAL_GREEN_TEXT)
+	dash_label.add_theme_font_size_override("font_size", 11)
+	dash_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	dash_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	apply_text_shadow(dash_label)
+	dash_box.add_child(dash_label)
+
+	dash_indicator = _create_cooldown_bar()
+	dash_indicator.custom_minimum_size = Vector2(180, 12)
+	dash_box.add_child(dash_indicator)
+
+	# Glob cooldown
+	var glob_box = VBoxContainer.new()
+	glob_box.add_theme_constant_override("separation", 2)
+	glob_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cooldown_row.add_child(glob_box)
+
+	glob_label = Label.new()
+	glob_label.text = "[E] GLOB"
+	glob_label.add_theme_color_override("font_color", TERMINAL_GREEN_TEXT)
+	glob_label.add_theme_font_size_override("font_size", 11)
+	glob_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	glob_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	apply_text_shadow(glob_label)
+	glob_box.add_child(glob_label)
+
+	glob_indicator = _create_cooldown_bar()
+	glob_indicator.name = "GlobIndicator"
+	glob_indicator.custom_minimum_size = Vector2(180, 12)
+	glob_box.add_child(glob_indicator)
+
+func _build_center_combo() -> void:
 	# === CENTER: Combo display ===
 	combo_label = Label.new()
 	combo_label.name = "ComboLabel"
 	combo_label.text = ""
 	combo_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.2))
 	combo_label.add_theme_font_size_override("font_size", 36)
+	apply_text_shadow(combo_label, Vector2(2, 2), 3)
 	combo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	combo_label.position = Vector2(440, 200)
-	combo_label.size = Vector2(400, 60)
+	combo_label.anchor_left = 0.5
+	combo_label.anchor_top = 0.0
+	combo_label.anchor_right = 0.5
+	combo_label.anchor_bottom = 0.0
+	combo_label.offset_left = -200.0
+	combo_label.offset_top = 200.0
+	combo_label.offset_right = 200.0
+	combo_label.offset_bottom = 260.0
 	combo_label.modulate.a = 0.0
+	combo_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(combo_label)
 
-	# === BOTTOM CENTER: Thought bubble ===
+func _build_bottom_thought() -> void:
+	# === BOTTOM CENTER (above abilities): Thought bubble ===
 	var thought_container = MarginContainer.new()
 	thought_container.name = "ThoughtContainer"
-	thought_container.anchors_preset = Control.PRESET_CENTER_BOTTOM
 	thought_container.anchor_left = 0.5
 	thought_container.anchor_top = 1.0
 	thought_container.anchor_right = 0.5
 	thought_container.anchor_bottom = 1.0
 	thought_container.offset_left = -350.0
-	thought_container.offset_top = -80.0
+	thought_container.offset_top = -130.0
 	thought_container.offset_right = 350.0
+	thought_container.offset_bottom = -100.0
 	thought_container.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	thought_container.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	thought_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(thought_container)
 
 	thought_label = Label.new()
@@ -184,29 +442,66 @@ func _build_hud() -> void:
 	thought_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	thought_label.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4))
 	thought_label.add_theme_font_size_override("font_size", 16)
+	thought_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	apply_text_shadow(thought_label, Vector2(1, 1), 4)
 	thought_container.add_child(thought_label)
 
+func _build_level_intro() -> void:
 	# === Level intro ===
 	level_intro_label = Label.new()
 	level_intro_label.name = "LevelIntro"
 	level_intro_label.text = ""
-	level_intro_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
+	level_intro_label.add_theme_color_override("font_color", TERMINAL_GREEN_TEXT)
 	level_intro_label.add_theme_font_size_override("font_size", 28)
+	apply_text_shadow(level_intro_label, Vector2(2, 2), 3)
 	level_intro_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	level_intro_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	level_intro_label.position = Vector2(240, 250)
-	level_intro_label.size = Vector2(800, 150)
+	level_intro_label.anchor_left = 0.15
+	level_intro_label.anchor_top = 0.3
+	level_intro_label.anchor_right = 0.85
+	level_intro_label.anchor_bottom = 0.5
 	level_intro_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	level_intro_label.modulate.a = 0.0
+	level_intro_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(level_intro_label)
 
-	# === Dialogue box (instanced) ===
-	dialogue_box_node = dialogue_box_scene.instantiate()
-	add_child(dialogue_box_node)
+func _build_crt_overlay() -> void:
+	var crt_layer = CanvasLayer.new()
+	crt_layer.name = "CRTOverlay"
+	crt_layer.layer = 100  # Above everything
+	add_child(crt_layer)
 
-	# === Glob pattern input (instanced) ===
-	glob_input_node = glob_input_scene.instantiate()
-	add_child(glob_input_node)
+	var crt_rect = ColorRect.new()
+	crt_rect.name = "CRTRect"
+	crt_rect.anchors_preset = Control.PRESET_FULL_RECT
+	crt_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	crt_material = ShaderMaterial.new()
+	crt_material.shader = crt_curvature_shader
+	crt_rect.material = crt_material
+	crt_layer.add_child(crt_rect)
+
+func _on_reduce_motion_changed(enabled: bool) -> void:
+	if crt_material:
+		crt_material.set_shader_parameter("animate", not enabled)
+		# Under reduce_motion: disable barrel distortion and chromatic aberration too
+		if enabled:
+			crt_material.set_shader_parameter("barrel_strength", 0.0)
+			crt_material.set_shader_parameter("chromatic_offset", 0.0)
+			crt_material.set_shader_parameter("scanline_alpha", 0.0)
+		else:
+			crt_material.set_shader_parameter("barrel_strength", 0.04)
+			crt_material.set_shader_parameter("chromatic_offset", 0.8)
+			crt_material.set_shader_parameter("scanline_alpha", 0.06)
+
+func _create_hud_label(text: String, font_size: int) -> Label:
+	var lbl = Label.new()
+	lbl.text = text
+	lbl.add_theme_color_override("font_color", TERMINAL_GREEN_TEXT)
+	lbl.add_theme_font_size_override("font_size", font_size)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	apply_text_shadow(lbl)
+	return lbl
 
 func _create_cooldown_bar() -> ProgressBar:
 	var bar = ProgressBar.new()
@@ -225,7 +520,7 @@ func _create_cooldown_bar() -> ProgressBar:
 
 	var bg = StyleBoxFlat.new()
 	bg.bg_color = Color(0.05, 0.1, 0.05)
-	bg.border_color = Color(0.15, 0.4, 0.15)
+	bg.border_color = TERMINAL_BORDER
 	bg.border_width_left = 1
 	bg.border_width_top = 1
 	bg.border_width_right = 1
@@ -236,6 +531,17 @@ func _create_cooldown_bar() -> ProgressBar:
 	bg.corner_radius_bottom_right = 2
 	bar.add_theme_stylebox_override("background", bg)
 	return bar
+
+func _update_radial(ability_name: String, method_name: String) -> void:
+	if not ability_radials.has(ability_name):
+		return
+	var radial: ColorRect = ability_radials[ability_name]
+	if not radial or not radial.material:
+		return
+	var pct := 1.0
+	if player_ref and player_ref.has_method(method_name):
+		pct = player_ref.call(method_name)
+	radial.material.set_shader_parameter("cooldown_percent", pct)
 
 func _show_level_intro(text: String) -> void:
 	if not level_intro_label:
@@ -321,6 +627,12 @@ func _process(delta: float) -> void:
 	if game_mgr and timer_label:
 		timer_label.text = game_mgr.get_formatted_time()
 
+	# Speedrun timer — show MM:SS.mmm, freeze on chapter complete
+	if game_mgr and speedrun_label:
+		speedrun_label.visible = game_mgr.display_speedrun_timer
+		if speedrun_label.visible and not game_mgr.level_goal_reached:
+			speedrun_label.text = game_mgr.get_speedrun_time()
+
 	# Update ability cooldowns from player
 	if not player_ref:
 		var players = get_tree().get_nodes_in_group("player")
@@ -331,3 +643,9 @@ func _process(delta: float) -> void:
 			dash_indicator.value = player_ref.get_dash_cooldown_percent()
 		if glob_indicator and player_ref.has_method("get_glob_cooldown_percent"):
 			glob_indicator.value = player_ref.get_glob_cooldown_percent()
+
+		# Update radial cooldown overlays per ability
+		_update_radial("glob", "get_glob_cooldown_percent")
+		_update_radial("wrench", "get_wrench_cooldown_percent")
+		_update_radial("dash", "get_dash_cooldown_percent")
+		_update_radial("agent_spawn", "get_agent_recharge_percent")

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cboss_phase_flash_vfx"]
+
+[ext_resource type="Script" path="res://scenes/vfx/boss_phase_flash.gd" id="1_flash"]
+
+[node name="BossPhaseFlash" type="Node3D"]
+script = ExtResource("1_flash")

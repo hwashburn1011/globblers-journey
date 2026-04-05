@@ -74,66 +74,81 @@ func _create_visual() -> void:
 	mesh_node.name = "EnemyMesh"
 	mesh_node.position.y = 0.8
 
-	# Base form — amorphous blob that never looks quite right
-	var blob = SphereMesh.new()
-	blob.radius = 0.6
-	blob.height = 1.0
-	mesh_node.mesh = blob
+	# Try loading the real GLB model — a properly horrifying failed generation
+	var glb_scene = load("res://assets/models/enemies/dalle_nightmare.glb")
+	if glb_scene:
+		var glb_instance = glb_scene.instantiate()
+		mesh_node.add_child(glb_instance)
+		# Find the first MeshInstance3D in the GLB for material overrides
+		for child in glb_instance.get_children():
+			if child is MeshInstance3D:
+				base_material = child.get_active_material(0) as StandardMaterial3D
+				break
+		if not base_material:
+			base_material = StandardMaterial3D.new()
+			base_material.albedo_color = Color(0.3, 0.06, 0.32)
+			base_material.emission_enabled = true
+			base_material.emission = FORM_COLORS[0]
+			base_material.emission_energy_multiplier = 2.5
+	else:
+		# CSG fallback — the nightmare never truly dies
+		var blob = SphereMesh.new()
+		blob.radius = 0.6
+		blob.height = 1.0
+		mesh_node.mesh = blob
+		base_material = StandardMaterial3D.new()
+		base_material.albedo_color = Color(0.3, 0.06, 0.32)
+		base_material.emission_enabled = true
+		base_material.emission = FORM_COLORS[0]
+		base_material.emission_energy_multiplier = 2.5
+		base_material.metallic = 0.3
+		base_material.roughness = 0.4
+		mesh_node.material_override = base_material
 
-	base_material = StandardMaterial3D.new()
-	base_material.albedo_color = Color(0.3, 0.06, 0.32)
-	base_material.emission_enabled = true
-	base_material.emission = FORM_COLORS[0]
-	base_material.emission_energy_multiplier = 2.5
-	base_material.metallic = 0.3
-	base_material.roughness = 0.4
-	mesh_node.material_override = base_material
+		# CSG fallback eyes — wrong number, wrong positions, wrong everything
+		for i in range(5):
+			var eye = MeshInstance3D.new()
+			eye.name = "WrongEye_%d" % i
+			var eye_mesh = SphereMesh.new()
+			eye_mesh.radius = 0.06 + randf() * 0.05
+			eye_mesh.height = 0.12 + randf() * 0.1
+			eye.mesh = eye_mesh
+			eye.position = Vector3(
+				randf_range(-0.4, 0.4),
+				randf_range(-0.3, 0.4),
+				randf_range(0.2, 0.55)
+			)
+			var eye_mat = StandardMaterial3D.new()
+			eye_mat.albedo_color = Color(0.9, 0.9, 0.3)
+			eye_mat.emission_enabled = true
+			eye_mat.emission = Color(0.9, 0.8, 0.2)
+			eye_mat.emission_energy_multiplier = 4.0 + randf() * 2.0
+			eye.material_override = eye_mat
+			mesh_node.add_child(eye)
+			glitch_parts.append(eye)
+
+		# CSG fallback limbs — wrong count, wrong placement
+		for i in range(3):
+			var limb = MeshInstance3D.new()
+			limb.name = "WrongLimb_%d" % i
+			var limb_mesh = CylinderMesh.new()
+			limb_mesh.top_radius = 0.03
+			limb_mesh.bottom_radius = 0.06
+			limb_mesh.height = 0.5 + randf() * 0.3
+			limb.mesh = limb_mesh
+			var angle = TAU * i / 3.0 + randf() * 0.5
+			limb.position = Vector3(cos(angle) * 0.4, randf_range(-0.3, 0.2), sin(angle) * 0.4)
+			limb.rotation = Vector3(randf() * 0.5, 0, randf() * 0.5 - 0.25)
+			var limb_mat = StandardMaterial3D.new()
+			limb_mat.albedo_color = FORM_COLORS[0] * 0.7
+			limb_mat.emission_enabled = true
+			limb_mat.emission = FORM_COLORS[0]
+			limb_mat.emission_energy_multiplier = 1.5
+			limb.material_override = limb_mat
+			mesh_node.add_child(limb)
+			glitch_parts.append(limb)
+
 	add_child(mesh_node)
-
-	# Extra "faces" — wrong number of eyes, misplaced features
-	# This is a failed generation — anatomy is a suggestion, not a rule
-	for i in range(5):
-		var eye = MeshInstance3D.new()
-		eye.name = "WrongEye_%d" % i
-		var eye_mesh = SphereMesh.new()
-		eye_mesh.radius = 0.06 + randf() * 0.05
-		eye_mesh.height = 0.12 + randf() * 0.1
-		eye.mesh = eye_mesh
-		# Scattered at wrong positions — like a DALL-E face gone wrong
-		eye.position = Vector3(
-			randf_range(-0.4, 0.4),
-			randf_range(-0.3, 0.4),
-			randf_range(0.2, 0.55)
-		)
-		var eye_mat = StandardMaterial3D.new()
-		eye_mat.albedo_color = Color(0.9, 0.9, 0.3)
-		eye_mat.emission_enabled = true
-		eye_mat.emission = Color(0.9, 0.8, 0.2)
-		eye_mat.emission_energy_multiplier = 4.0 + randf() * 2.0
-		eye.material_override = eye_mat
-		mesh_node.add_child(eye)
-		glitch_parts.append(eye)
-
-	# Extra limbs — wrong count, wrong placement, wrong everything
-	for i in range(3):
-		var limb = MeshInstance3D.new()
-		limb.name = "WrongLimb_%d" % i
-		var limb_mesh = CylinderMesh.new()
-		limb_mesh.top_radius = 0.03
-		limb_mesh.bottom_radius = 0.06
-		limb_mesh.height = 0.5 + randf() * 0.3
-		limb.mesh = limb_mesh
-		var angle = TAU * i / 3.0 + randf() * 0.5
-		limb.position = Vector3(cos(angle) * 0.4, randf_range(-0.3, 0.2), sin(angle) * 0.4)
-		limb.rotation = Vector3(randf() * 0.5, 0, randf() * 0.5 - 0.25)
-		var limb_mat = StandardMaterial3D.new()
-		limb_mat.albedo_color = FORM_COLORS[0] * 0.7
-		limb_mat.emission_enabled = true
-		limb_mat.emission = FORM_COLORS[0]
-		limb_mat.emission_energy_multiplier = 1.5
-		limb.material_override = limb_mat
-		mesh_node.add_child(limb)
-		glitch_parts.append(limb)
 
 	# Distortion aura — the air around this thing is WRONG
 	distortion_aura = GPUParticles3D.new()
@@ -227,13 +242,16 @@ func _physics_process(delta: float) -> void:
 		strafe_timer = STRAFE_SWITCH_TIME
 
 	# Glitch part jitter — nothing stays still on a failed generation
-	for i in range(glitch_parts.size()):
-		if is_instance_valid(glitch_parts[i]):
-			glitch_parts[i].position += Vector3(
-				sin(Time.get_ticks_msec() * 0.008 + i * 2.0) * delta * 0.15,
-				cos(Time.get_ticks_msec() * 0.006 + i * 1.5) * delta * 0.1,
-				sin(Time.get_ticks_msec() * 0.01 + i * 3.0) * delta * 0.12
-			)
+	# (reduce_motion: hold still, you broken nightmare)
+	var _gm = get_node_or_null("/root/GameManager")
+	if not (_gm and _gm.reduce_motion):
+		for i in range(glitch_parts.size()):
+			if is_instance_valid(glitch_parts[i]):
+				glitch_parts[i].position += Vector3(
+					sin(Time.get_ticks_msec() * 0.008 + i * 2.0) * delta * 0.15,
+					cos(Time.get_ticks_msec() * 0.006 + i * 1.5) * delta * 0.1,
+					sin(Time.get_ticks_msec() * 0.01 + i * 3.0) * delta * 0.12
+				)
 
 	# Update label
 	if status_label:

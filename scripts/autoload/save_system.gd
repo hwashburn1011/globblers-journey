@@ -30,6 +30,8 @@ var save_data := {
 	"upgrades": {},
 	"checkpoints": {},  # level_id: { position, etc }
 	"ending_choice": "",  # "defeat" or "befriend" — the only choice that truly matters
+	"lore_docs": {},  # id: { "title": String, "body": String }
+	"achievements": {},  # id: { "title": String, "desc": String }
 }
 
 signal save_completed(path: String)
@@ -99,13 +101,22 @@ func apply_loaded_data() -> void:
 		game_mgr.enemies_killed = int(gd.get("enemies_killed", 0))
 		game_mgr.context_changed.emit(game_mgr.context_window)
 		game_mgr.ending_choice = str(save_data.get("ending_choice", ""))
+		var loaded_hints = save_data.get("hints_seen", {})
+		if loaded_hints is Dictionary:
+			game_mgr.hints_seen = loaded_hints.duplicate()
+		var loaded_lore = save_data.get("lore_docs", {})
+		if loaded_lore is Dictionary:
+			game_mgr.lore_docs_found = loaded_lore.duplicate(true)
+		var loaded_achievements = save_data.get("achievements", {})
+		if loaded_achievements is Dictionary:
+			game_mgr.achievements_unlocked = loaded_achievements.duplicate(true)
 
 	# Restore progression upgrades
 	var prog = get_node_or_null("/root/ProgressionManager")
 	if prog and prog.has_method("load_save_data"):
+		# Always call load_save_data even with empty dict — ProgressionManager needs to reset properly on fresh saves
 		var upg_data = save_data.get("upgrades", {})
-		if not upg_data.is_empty():
-			prog.load_save_data(upg_data)
+		prog.load_save_data(upg_data)
 
 ## Collect current game state into save_data
 func _collect_current_state() -> void:
@@ -129,6 +140,9 @@ func _collect_current_state() -> void:
 		save_data["game"]["enemies_killed"] = game_mgr.enemies_killed
 		save_data["game"]["level_time"] = game_mgr.level_time
 		save_data["ending_choice"] = game_mgr.ending_choice
+		save_data["hints_seen"] = game_mgr.hints_seen.duplicate()
+		save_data["lore_docs"] = game_mgr.lore_docs_found.duplicate(true)
+		save_data["achievements"] = game_mgr.achievements_unlocked.duplicate(true)
 
 	# Puzzle completion
 	var puzzles = get_tree().get_nodes_in_group("puzzles")

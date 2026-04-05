@@ -25,16 +25,49 @@ func _ready() -> void:
 	super._ready()
 
 func _create_visual() -> void:
+	# Load the real GLB model — no more CSG pretending to be a spider
+	var glb_scene = load("res://assets/models/enemies/regex_spider.glb")
+	if glb_scene:
+		var model = glb_scene.instantiate()
+		model.name = "SpiderModel"
+		model.position.y = 0.0
+		model.scale = Vector3(1.8, 1.8, 1.8)  # Scale up for game visibility
+		add_child(model)
+		# Find the first MeshInstance3D for base_enemy compatibility
+		mesh_node = _find_mesh_instance(model)
+		if mesh_node:
+			base_material = mesh_node.get_active_material(0) as StandardMaterial3D
+	else:
+		# CSG fallback — the spider regresses to its primitive form
+		_create_csg_fallback()
+
+	# Purple glow light — because spiders that don't glow aren't trying hard enough
+	var light = OmniLight3D.new()
+	light.light_color = Color(0.5, 0.1, 0.5)
+	light.light_energy = 1.5
+	light.omni_range = 3.0
+	light.position.y = 0.3
+	add_child(light)
+
+func _find_mesh_instance(node: Node) -> MeshInstance3D:
+	# Recursively find first MeshInstance3D child
+	if node is MeshInstance3D:
+		return node
+	for child in node.get_children():
+		var found = _find_mesh_instance(child)
+		if found:
+			return found
+	return null
+
+func _create_csg_fallback() -> void:
+	# Original CSG spider for when the GLB decides to go missing
 	mesh_node = MeshInstance3D.new()
 	mesh_node.name = "EnemyMesh"
 	mesh_node.position.y = 0.4
-
-	# Spider body — flattened sphere
 	var spider_body = SphereMesh.new()
 	spider_body.radius = 0.4
 	spider_body.height = 0.5
 	mesh_node.mesh = spider_body
-
 	base_material = StandardMaterial3D.new()
 	base_material.albedo_color = Color(0.6, 0.1, 0.6)
 	base_material.emission_enabled = true
@@ -44,51 +77,6 @@ func _create_visual() -> void:
 	base_material.roughness = 0.5
 	mesh_node.material_override = base_material
 	add_child(mesh_node)
-
-	# Spider legs — 4 pairs of thin cylinders
-	var leg_mat = StandardMaterial3D.new()
-	leg_mat.albedo_color = Color(0.4, 0.1, 0.4)
-	leg_mat.emission_enabled = true
-	leg_mat.emission = Color(0.3, 0.05, 0.3)
-	leg_mat.emission_energy_multiplier = 1.5
-
-	for i in range(4):
-		for side in [-1, 1]:
-			var leg = MeshInstance3D.new()
-			var cyl = CylinderMesh.new()
-			cyl.radius = 0.02
-			cyl.height = 0.5
-			leg.mesh = cyl
-			var angle = deg_to_rad(-30 + i * 20)
-			leg.position = Vector3(side * 0.3, 0.2, -0.2 + i * 0.13)
-			leg.rotation.z = side * deg_to_rad(45)
-			leg.rotation.x = angle
-			leg.material_override = leg_mat
-			mesh_node.add_child(leg)
-
-	# Eyes — multiple small glowing spheres
-	var eye_mat = StandardMaterial3D.new()
-	eye_mat.albedo_color = Color(0.224, 1.0, 0.078)
-	eye_mat.emission_enabled = true
-	eye_mat.emission = Color(0.224, 1.0, 0.078)
-	eye_mat.emission_energy_multiplier = 5.0
-
-	for i in range(4):
-		var eye = MeshInstance3D.new()
-		var sphere = SphereMesh.new()
-		sphere.radius = 0.04
-		eye.mesh = sphere
-		eye.position = Vector3(-0.1 + i * 0.07, 0.35, 0.3)
-		eye.material_override = eye_mat
-		mesh_node.add_child(eye)
-
-	# Glow light
-	var light = OmniLight3D.new()
-	light.light_color = Color(0.5, 0.1, 0.5)
-	light.light_energy = 1.5
-	light.omni_range = 3.0
-	light.position.y = 0.5
-	add_child(light)
 
 func _state_patrol(delta: float) -> void:
 	# Erratic movement — change direction randomly

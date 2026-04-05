@@ -15,14 +15,16 @@ extends "res://scenes/puzzles/base_puzzle.gd"
 @export var node_spacing: float = 2.5  # Z distance between nodes in a layer
 
 const NEON_GREEN := Color(0.224, 1.0, 0.078)
-const SYNAPSE_BLUE := Color(0.1, 0.4, 0.9)
+const SYNAPSE_BLUE := Color(0.29, 0.88, 0.65)  # Ch2 teal #4AE0A5
 const ACTIVATION_ORANGE := Color(0.9, 0.5, 0.1)
 const GRADIENT_RED := Color(0.8, 0.15, 0.1)
 const WEIGHT_GREEN := Color(0.1, 0.8, 0.3)
-const DARK_GRAY := Color(0.08, 0.08, 0.12)
-const NODE_INACTIVE := Color(0.1, 0.1, 0.15)
-const NODE_FORWARD := Color(0.1, 0.4, 0.9)  # Blue during forward pass
+const DARK_GRAY := Color(0.04, 0.1, 0.1)  # Ch2 dark base
+const NODE_INACTIVE := Color(0.04, 0.08, 0.1)
+const NODE_FORWARD := Color(0.29, 0.88, 0.65)  # Ch2 teal during forward pass
 const NODE_BACKPROP := Color(0.224, 1.0, 0.078)  # Green when correctly backpropped
+
+const _panel_scene = preload("res://assets/models/environment/arch_industrial_panel.glb")
 
 # Network structure: 3 input, 4 hidden, 2 output
 const LAYER_SIZES := [3, 4, 2]
@@ -224,11 +226,13 @@ func _build_network() -> void:
 			col.shape = shape
 			node.add_child(col)
 
-			# Visual — glowing sphere
+			# High-detail emissive neuron sphere replacing basic SphereMesh
 			var mesh = MeshInstance3D.new()
 			var sphere = SphereMesh.new()
 			sphere.radius = 0.5
 			sphere.height = 1.0
+			sphere.radial_segments = 32
+			sphere.rings = 16
 			mesh.mesh = sphere
 			var mat = StandardMaterial3D.new()
 			mat.albedo_color = NODE_INACTIVE * 0.5
@@ -237,8 +241,33 @@ func _build_network() -> void:
 			mat.emission_energy_multiplier = 0.4
 			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 			mat.albedo_color.a = 0.8
+			mat.metallic = 0.6
+			mat.roughness = 0.2
 			mesh.material_override = mat
 			node.add_child(mesh)
+
+			# Inner core glow sphere
+			var core = MeshInstance3D.new()
+			var core_sphere = SphereMesh.new()
+			core_sphere.radius = 0.2
+			core_sphere.height = 0.4
+			core_sphere.radial_segments = 16
+			core_sphere.rings = 8
+			core.mesh = core_sphere
+			var core_mat = StandardMaterial3D.new()
+			core_mat.albedo_color = SYNAPSE_BLUE
+			core_mat.emission_enabled = true
+			core_mat.emission = SYNAPSE_BLUE
+			core_mat.emission_energy_multiplier = 1.5
+			core.material_override = core_mat
+			node.add_child(core)
+
+			# Point light per neuron node
+			var light = OmniLight3D.new()
+			light.light_color = SYNAPSE_BLUE
+			light.light_energy = 0.4
+			light.omni_range = 1.8
+			node.add_child(light)
 
 			# GlobTarget — layer-tagged for pattern matching
 			var gt = Node.new()
@@ -289,14 +318,15 @@ func _build_network() -> void:
 
 
 func _create_connection_line(from: Vector3, to: Vector3) -> void:
-	# Thin cylinder connecting two nodes — the "weights" of the network
+	# Cylinder synapse connector
 	var line = MeshInstance3D.new()
-	var cyl = CylinderMesh.new()
+	var tube = CylinderMesh.new()
 	var dist = from.distance_to(to)
-	cyl.top_radius = 0.02
-	cyl.bottom_radius = 0.02
-	cyl.height = dist
-	line.mesh = cyl
+	tube.top_radius = 0.04
+	tube.bottom_radius = 0.04
+	tube.height = dist
+	tube.radial_segments = 12
+	line.mesh = tube
 
 	# Position at midpoint, rotate to connect
 	var mid = (from + to) / 2.0
@@ -349,17 +379,25 @@ func _create_door() -> void:
 	col.shape = shape
 	_door.add_child(col)
 
+	# GLB industrial panel replacing BoxMesh door
+	var door_inst = _panel_scene.instantiate()
+	door_inst.name = "DoorPanel"
+	door_inst.scale = Vector3(4.0, 2.0, 1.0)
+	_door.add_child(door_inst)
+
+	# Emissive overlay for dissolve effect
 	var mesh = MeshInstance3D.new()
 	var box = BoxMesh.new()
-	box.size = Vector3(8.0, 4.0, 0.3)
+	box.size = Vector3(8.0, 4.0, 0.05)
 	mesh.mesh = box
+	mesh.position = Vector3(0, 0, 0.2)
 	var mat = StandardMaterial3D.new()
 	mat.albedo_color = GRADIENT_RED * 0.15
+	mat.albedo_color.a = 0.6
 	mat.emission_enabled = true
 	mat.emission = GRADIENT_RED
 	mat.emission_energy_multiplier = 0.5
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.albedo_color.a = 0.6
 	mesh.material_override = mat
 	_door.add_child(mesh)
 
@@ -400,7 +438,7 @@ func _on_solved() -> void:
 		if door_mesh and door_mesh.material_override:
 			var tween = create_tween()
 			tween.tween_property(door_mesh.material_override, "albedo_color:a", 0.0, 0.8)
-			tween.tween_callback(_door.queue_free)
+			tween.tween_callback(func(): _door.queue_free())
 		else:
 			_door.queue_free()
 

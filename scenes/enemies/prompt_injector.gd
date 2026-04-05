@@ -51,75 +51,42 @@ func _init() -> void:
 
 
 func _create_visual() -> void:
-	# Main body — syringe barrel, cyan translucent
-	mesh_node = MeshInstance3D.new()
-	mesh_node.name = "EnemyMesh"
-	mesh_node.position.y = 1.0  # Floats slightly higher
+	# Try loading the real GLB model — because we're not savages using CSG syringes anymore
+	var glb_scene = load("res://assets/models/enemies/prompt_injector.glb")
+	if glb_scene:
+		mesh_node = glb_scene.instantiate()
+		mesh_node.name = "EnemyMesh"
+		mesh_node.position.y = 0.0
+		mesh_node.scale = Vector3(1.2, 1.2, 1.2)
+		add_child(mesh_node)
+		# Grab any MeshInstance3D for damage flash / dissolve material overrides
+		for child in mesh_node.get_children():
+			if child is MeshInstance3D:
+				base_material = child.get_active_material(0)
+				break
+	else:
+		# CSG fallback — the "works on my machine" of 3D art
+		mesh_node = MeshInstance3D.new()
+		mesh_node.name = "EnemyMesh"
+		mesh_node.position.y = 1.0
+		var barrel = CylinderMesh.new()
+		barrel.top_radius = 0.2
+		barrel.bottom_radius = 0.25
+		barrel.height = 1.2
+		mesh_node.mesh = barrel
+		base_material = StandardMaterial3D.new()
+		base_material.albedo_color = Color(0.05, 0.4, 0.45, 0.85)
+		base_material.emission_enabled = true
+		base_material.emission = Color(0.1, 0.85, 0.9)
+		base_material.emission_energy_multiplier = 2.5
+		base_material.metallic = 0.3
+		base_material.roughness = 0.4
+		base_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mesh_node.material_override = base_material
+		mesh_node.rotation.x = deg_to_rad(90)
+		add_child(mesh_node)
 
-	var barrel = CylinderMesh.new()
-	barrel.top_radius = 0.2
-	barrel.bottom_radius = 0.25
-	barrel.height = 1.2
-	mesh_node.mesh = barrel
-
-	base_material = StandardMaterial3D.new()
-	base_material.albedo_color = Color(0.05, 0.4, 0.45, 0.85)
-	base_material.emission_enabled = true
-	base_material.emission = Color(0.1, 0.85, 0.9)
-	base_material.emission_energy_multiplier = 2.5
-	base_material.metallic = 0.3
-	base_material.roughness = 0.4
-	base_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mesh_node.material_override = base_material
-	# Syringe points forward (tilt on X)
-	mesh_node.rotation.x = deg_to_rad(90)
-	add_child(mesh_node)
-
-	# Needle tip — sharp, bright cyan
-	needle_mesh = MeshInstance3D.new()
-	needle_mesh.name = "Needle"
-	var needle = CylinderMesh.new()
-	needle.top_radius = 0.01
-	needle.bottom_radius = 0.08
-	needle.height = 0.5
-	needle_mesh.mesh = needle
-	needle_mesh.position = Vector3(0, 0.85, 0)
-	var needle_mat = StandardMaterial3D.new()
-	needle_mat.albedo_color = Color(0.2, 0.9, 0.95)
-	needle_mat.emission_enabled = true
-	needle_mat.emission = Color(0.1, 1.0, 0.95)
-	needle_mat.emission_energy_multiplier = 5.0
-	needle_mat.metallic = 0.9
-	needle_mat.roughness = 0.1
-	needle_mesh.material_override = needle_mat
-	mesh_node.add_child(needle_mesh)
-
-	# Plunger — back end of syringe
-	var plunger = MeshInstance3D.new()
-	plunger.name = "Plunger"
-	var plunger_mesh = CylinderMesh.new()
-	plunger_mesh.top_radius = 0.18
-	plunger_mesh.bottom_radius = 0.18
-	plunger_mesh.height = 0.15
-	plunger.mesh = plunger_mesh
-	plunger.position = Vector3(0, -0.65, 0)
-	var plunger_mat = StandardMaterial3D.new()
-	plunger_mat.albedo_color = Color(0.3, 0.3, 0.35)
-	plunger_mat.metallic = 0.8
-	plunger.material_override = plunger_mat
-	mesh_node.add_child(plunger)
-
-	# Plunger handle
-	var handle = MeshInstance3D.new()
-	handle.name = "Handle"
-	var handle_mesh = BoxMesh.new()
-	handle_mesh.size = Vector3(0.5, 0.05, 0.05)
-	handle.mesh = handle_mesh
-	handle.position = Vector3(0, -0.75, 0)
-	handle.material_override = plunger_mat
-	mesh_node.add_child(handle)
-
-	# Floating code fragment ring — orbiting text scraps
+	# Floating code fragment ring — orbiting text scraps (kept regardless of model)
 	for i in range(4):
 		var frag = MeshInstance3D.new()
 		frag.name = "CodeFragment_%d" % i
@@ -137,7 +104,7 @@ func _create_visual() -> void:
 		add_child(frag)
 		code_fragments.append(frag)
 
-	# Dripping injection fluid particles
+	# Dripping injection fluid particles — because every good exploit leaks a little
 	drip_particles = GPUParticles3D.new()
 	drip_particles.name = "DripParticles"
 	drip_particles.emitting = true
@@ -174,9 +141,9 @@ func _create_visual() -> void:
 	inject_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	add_child(inject_label)
 
-	# Cyan glow
+	# Terminal-green glow
 	var light = OmniLight3D.new()
-	light.light_color = Color(0.1, 0.85, 0.9)
+	light.light_color = Color(0.1, 0.85, 0.2)
 	light.light_energy = 1.8
 	light.omni_range = 4.0
 	light.position.y = 1.0

@@ -7,6 +7,8 @@ extends Node3D
 enum GlobAction { GRAB, PUSH, ABSORB }
 
 const BEAM_DURATION := 0.4
+const _HINT_SCENE := preload("res://scenes/ui/first_time_hint.tscn")
+const _CAST_VFX_SCENE := preload("res://scenes/vfx/ability_cast.tscn")
 const GRAB_FORCE := 15.0
 const PUSH_FORCE := 25.0
 
@@ -158,6 +160,10 @@ func start_aim() -> void:
 	is_aiming = true
 	reticle.visible = true
 
+	# First-time hint — because nobody reads the manual
+	_show_hint_once("glob_aim", "GLOB COMMAND",
+		"Right-click to aim. Pattern-match targets. Q cycles grab/push/absorb.")
+
 	# Show glob pattern input on HUD
 	var hud = _get_hud()
 	if hud and hud.glob_input_node:
@@ -176,6 +182,7 @@ func fire_glob(pattern: String = "*") -> void:
 		return
 
 	cooldown_timer = glob_cooldown
+	_spawn_cast_vfx()
 
 	# Raycast to find aim point
 	var aim_origin := Vector3.ZERO
@@ -215,6 +222,9 @@ func fire_glob(pattern: String = "*") -> void:
 		# Auto-perform action on matched targets
 		if _matched_targets.size() > 0:
 			perform_action(current_action)
+
+	# Screen shake on glob fire
+	CameraShake.trigger(player, "glob_cast")
 
 	# Impact particles
 	impact_particles.global_position = _aim_point
@@ -323,15 +333,12 @@ func _update_aim() -> void:
 	glob_aimed.emit(reticle.global_position)
 
 func _get_hud() -> Node:
-	# Return cached HUD — it's not going anywhere, no need to search every call
+	# Return cached HUD — group lookup only, no hardcoded paths like some kind of animal
 	if _cached_hud and is_instance_valid(_cached_hud):
 		return _cached_hud
 	var hud_nodes = get_tree().get_nodes_in_group("hud")
 	if hud_nodes.size() > 0:
 		_cached_hud = hud_nodes[0]
-		return _cached_hud
-	# Try finding by name
-	_cached_hud = get_node_or_null("/root/TestLevel/HUD") if get_node_or_null("/root/TestLevel/HUD") else get_node_or_null("/root/MainLevel/HUD")
 	return _cached_hud
 
 func get_cooldown_percent() -> float:
@@ -356,3 +363,23 @@ func cycle_action() -> void:
 		GlobAction.ABSORB:
 			current_action = GlobAction.GRAB
 	print("[GLOB] Action mode: %s" % GlobAction.keys()[current_action])
+
+## Show a hint exactly once — because repeating yourself is a code smell
+func _show_hint_once(id: String, title: String, body: String) -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and not gm.has_seen_hint(id):
+		gm.mark_hint_seen(id)
+		var hint = _HINT_SCENE.instantiate()
+		get_tree().root.add_child(hint)
+		hint.show_hint(title, body)
+
+func _spawn_cast_vfx() -> void:
+	if not player:
+		return
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		return
+	var vfx := _CAST_VFX_SCENE.instantiate()
+	vfx.ability_type = "glob"
+	vfx.global_position = player.global_position + Vector3(0, 1.0, 0)
+	get_tree().current_scene.add_child(vfx)

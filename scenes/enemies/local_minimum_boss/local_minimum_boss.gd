@@ -98,67 +98,33 @@ func _resize_collision() -> void:
 
 
 func _create_visual() -> void:
-	# The Local Minimum — a gravitational pit entity with concentric ring armor
-	# Imagine a floating vortex of loss values wrapped in mathematical notation
+	# The Local Minimum — real GLB model, no more CSG loss landscape cosplay
+	# Swirling gravity-well vortex with orbiting energy nodes, built in Blender
+	var boss_scene = load("res://assets/models/bosses/local_minimum_boss.glb")
+	if boss_scene:
+		var boss_model = boss_scene.instantiate()
+		boss_model.name = "BossModel"
+		boss_model.position.y = 0.0
+		add_child(boss_model)
+		# Grab the main mesh for material overrides and damage flash
+		body_mesh = _find_mesh_instance(boss_model)
+		if body_mesh:
+			base_material = body_mesh.get_active_material(0)
+		# LOD: hi-res visible 0–25m, low-poly beyond 25m
+		_apply_lod_ranges(boss_model, 0.0, 25.0)
+	var lod_scene = load("res://assets/models/bosses/local_minimum_boss_lod1.glb")
+	if lod_scene:
+		var lod_model = lod_scene.instantiate()
+		lod_model.name = "BossModel_LOD1"
+		lod_model.position.y = 0.0
+		add_child(lod_model)
+		_apply_lod_ranges(lod_model, 25.0, 0.0)
 
-	# Main body — inverted cone/funnel shape (like a loss surface minimum)
-	body_mesh = MeshInstance3D.new()
-	body_mesh.name = "BossBody"
-	var body_cyl = CylinderMesh.new()
-	body_cyl.top_radius = 0.5
-	body_cyl.bottom_radius = 2.0
-	body_cyl.height = 4.0
-	body_mesh.mesh = body_cyl
-	body_mesh.position.y = 2.5
+	# Eyes — still procedural so we can pulse them independently
+	eye_left = _create_eye(Vector3(-0.4, 4.2, 0.55))
+	eye_right = _create_eye(Vector3(0.4, 4.2, 0.55))
 
-	base_material = StandardMaterial3D.new()
-	base_material.albedo_color = DARK_PIT
-	base_material.emission_enabled = true
-	base_material.emission = MINIMUM_RED
-	base_material.emission_energy_multiplier = 1.5
-	base_material.metallic = 0.8
-	base_material.roughness = 0.15
-	body_mesh.material_override = base_material
-	add_child(body_mesh)
-
-	# Orbiting ring layers — concentric loss contour rings
-	for i in range(3):
-		var ring = MeshInstance3D.new()
-		ring.name = "ContourRing_%d" % i
-		var torus = TorusMesh.new()
-		torus.inner_radius = 0.05
-		torus.outer_radius = 1.5 + i * 0.6
-		ring.mesh = torus
-		ring.position.y = 1.5 + i * 1.0
-
-		var ring_mat = StandardMaterial3D.new()
-		var t = float(i) / 2.0
-		ring_mat.albedo_color = MINIMUM_RED.lerp(LOSS_GOLD, t) * 0.3
-		ring_mat.emission_enabled = true
-		ring_mat.emission = MINIMUM_RED.lerp(LOSS_GOLD, t)
-		ring_mat.emission_energy_multiplier = 1.5 + t * 2.0
-		ring_mat.metallic = 0.6
-		ring.material_override = ring_mat
-		add_child(ring)
-
-	# "Face" — a terminal showing the loss value, always decreasing
-	var face_mesh = MeshInstance3D.new()
-	face_mesh.name = "BossFace"
-	var face_plane = PlaneMesh.new()
-	face_plane.size = Vector2(2.0, 1.2)
-	face_mesh.mesh = face_plane
-	face_mesh.position = Vector3(0, 3.8, 1.05)
-	face_mesh.rotation.x = deg_to_rad(90)
-
-	var face_mat = StandardMaterial3D.new()
-	face_mat.albedo_color = Color(0.02, 0.02, 0.02)
-	face_mat.emission_enabled = true
-	face_mat.emission = LOSS_GOLD
-	face_mat.emission_energy_multiplier = 2.0
-	face_mesh.material_override = face_mat
-	body_mesh.add_child(face_mesh)
-
-	# Loss value label — the face of optimization
+	# Loss value label — the smug face of convergence
 	var face_label = Label3D.new()
 	face_label.text = "L = 0.00\nCONVERGED"
 	face_label.font_size = 36
@@ -167,29 +133,7 @@ func _create_visual() -> void:
 	face_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(face_label)
 
-	# Glowing eyes — smug, satisfied eyes of a "converged" optimizer
-	eye_left = _create_eye(Vector3(-0.4, 4.2, 0.55))
-	eye_right = _create_eye(Vector3(0.4, 4.2, 0.55))
-
-	# Gravity tendrils — reaching arms that pull things toward the minimum
-	for side in [-1, 1]:
-		var arm = MeshInstance3D.new()
-		var arm_box = BoxMesh.new()
-		arm_box.size = Vector3(2.5, 0.3, 0.3)
-		arm.mesh = arm_box
-		arm.position = Vector3(side * 2.5, 2.5, 0)
-		arm.rotation.z = side * deg_to_rad(-20)  # Curving inward — grasping
-
-		var arm_mat = StandardMaterial3D.new()
-		arm_mat.albedo_color = DARK_PIT
-		arm_mat.emission_enabled = true
-		arm_mat.emission = MINIMUM_RED
-		arm_mat.emission_energy_multiplier = 2.0
-		arm_mat.metallic = 0.7
-		arm.material_override = arm_mat
-		add_child(arm)
-
-	# Shield mesh (invisible until phase 2)
+	# Shield mesh (invisible until phase 2) — keeps procedural, needs runtime toggling
 	shield_mesh = MeshInstance3D.new()
 	shield_mesh.name = "BossShield"
 	var shield_sphere = SphereMesh.new()
@@ -209,7 +153,7 @@ func _create_visual() -> void:
 	shield_mesh.visible = false
 	add_child(shield_mesh)
 
-	# Core mesh (invisible until phase 3)
+	# Core mesh (invisible until phase 3) — the hackable weak point
 	core_mesh = MeshInstance3D.new()
 	core_mesh.name = "BossCore"
 	var core_sphere = SphereMesh.new()
@@ -227,7 +171,7 @@ func _create_visual() -> void:
 	core_mesh.visible = false
 	add_child(core_mesh)
 
-	# Boss glow light
+	# Boss glow light — the ambient "you're stuck here forever" vibe
 	boss_light = OmniLight3D.new()
 	boss_light.light_color = MINIMUM_RED
 	boss_light.light_energy = 3.0
@@ -256,7 +200,7 @@ func _create_visual() -> void:
 	gravity_indicator.material_override = gi_mat
 	add_child(gravity_indicator)
 
-	# Title label
+	# Title label — billboard so you always know what's trapping you
 	var title = Label3D.new()
 	title.text = "< THE LOCAL MINIMUM >"
 	title.font_size = 28
@@ -265,6 +209,26 @@ func _create_visual() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	add_child(title)
+
+
+func _apply_lod_ranges(root: Node, begin: float, end: float) -> void:
+	for child in root.get_children():
+		if child is MeshInstance3D:
+			child.visibility_range_begin = begin
+			child.visibility_range_end = end
+			child.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+		_apply_lod_ranges(child, begin, end)
+
+func _find_mesh_instance(node: Node) -> MeshInstance3D:
+	# Recursively dig through the GLB scene tree to find the first MeshInstance3D
+	# Because apparently Godot can't just hand us the mesh like a normal engine
+	if node is MeshInstance3D:
+		return node
+	for child in node.get_children():
+		var found = _find_mesh_instance(child)
+		if found:
+			return found
+	return null
 
 
 func _create_eye(pos: Vector3) -> MeshInstance3D:
@@ -484,6 +448,7 @@ func _fire_gravity_well() -> void:
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	well.add_child(label)
 
+	well.add_to_group("gravity_wells")  # So cleanup in _on_boss_defeated() can actually find these
 	get_tree().current_scene.add_child(well)
 
 	# Pull effect lasts 3 seconds — apply force via timer-based process
@@ -494,7 +459,7 @@ func _fire_gravity_well() -> void:
 	# Animate the gravity well — shrink the indicator as it pulls
 	var tween = get_tree().create_tween()
 	tween.tween_property(indicator, "scale", Vector3(0.1, 1, 0.1), pull_time)
-	tween.tween_callback(well.queue_free)
+	tween.tween_callback(func(): well.queue_free())
 
 	# Apply pull force to player while they're in the well
 	well.body_entered.connect(func(body: Node3D):
@@ -611,44 +576,63 @@ func _attach_projectile_behavior(proj: Node) -> void:
 	if not is_instance_valid(proj):
 		return
 
-	# We'll use the tree process to move projectiles since we can't easily
-	# attach scripts without a file. Use a timer-based approach instead.
-	_process_projectile(proj)
+	# Attach a _physics_process script instead of recursive timers
+	# (because exponential timer callbacks are how you get a REAL memory leak, not a local minimum)
+	var script = GDScript.new()
+	script.source_code = """
+extends Node3D
 
+var move_direction := Vector3.ZERO
+var speed := 8.0
+var lifetime := 0.0
+var reflected := false
+var boss_ref: Node = null
+var player_ref: Node = null
 
-func _process_projectile(proj: Node) -> void:
-	if not is_instance_valid(proj):
+func _physics_process(delta: float) -> void:
+	if not is_instance_valid(boss_ref):
+		queue_free()
 		return
 
-	var dir = proj.get_meta("move_direction") as Vector3
-	var spd = proj.get_meta("speed") as float
-	var lifetime = proj.get_meta("lifetime") as float
-
-	proj.position += dir * spd * get_process_delta_time()
-	lifetime += get_process_delta_time()
-	proj.set_meta("lifetime", lifetime)
+	position += move_direction * speed * delta
+	lifetime += delta
 
 	# Check if reflected and hitting the boss
-	if proj.get_meta("reflected") and proj.position.distance_to(global_position) < 2.5:
-		on_reflected_hit()
-		proj.queue_free()
-		return
+	if reflected and is_instance_valid(boss_ref):
+		if position.distance_to(boss_ref.global_position) < 2.5:
+			boss_ref.on_reflected_hit()
+			queue_free()
+			return
 
 	# Check if hitting the player (not reflected)
-	if not proj.get_meta("reflected") and player_ref:
-		if proj.position.distance_to(player_ref.global_position) < 1.5:
-			if player_ref.has_method("take_damage"):
+	if not reflected and is_instance_valid(player_ref):
+		if position.distance_to(player_ref.global_position) < 1.5:
+			if player_ref.has_method(\"take_damage\"):
 				player_ref.take_damage(8)
-			proj.queue_free()
+			queue_free()
 			return
 
 	# Expire after 8 seconds
 	if lifetime > 8.0:
-		proj.queue_free()
+		queue_free()
 		return
 
-	# Continue next frame
-	get_tree().create_timer(0.016).timeout.connect(_process_projectile.bind(proj))
+# Called by glob push to reflect projectile back at the boss
+func apply_glob_force(force: Vector3) -> void:
+	reflected = true
+	move_direction = force.normalized()
+	speed = 12.0
+"""
+	script.reload()
+	proj.set_script(script)
+
+	# Transfer meta values to script properties
+	proj.move_direction = proj.get_meta("move_direction")
+	proj.speed = proj.get_meta("speed")
+	proj.lifetime = proj.get_meta("lifetime")
+	proj.reflected = proj.get_meta("reflected")
+	proj.boss_ref = self
+	proj.player_ref = player_ref
 
 
 func on_reflected_hit() -> void:
@@ -671,6 +655,14 @@ func on_reflected_hit() -> void:
 func _transition_to_phase(new_phase: BossPhase) -> void:
 	boss_phase = new_phase
 	boss_phase_changed.emit(new_phase)
+
+	# Spawn phase flash VFX — because every phase escalation deserves a light show
+	if new_phase != BossPhase.INTRO and new_phase != BossPhase.PHASE_1:
+		var flash_scene := preload("res://scenes/vfx/boss_phase_flash.tscn")
+		var flash_inst := flash_scene.instantiate()
+		flash_inst.global_position = global_position
+		get_tree().current_scene.add_child.call_deferred(flash_inst)
+		CameraShake.trigger(player_ref, "boss_phase")
 
 	match new_phase:
 		BossPhase.PHASE_1:
@@ -827,6 +819,11 @@ func _victory_cutscene() -> void:
 
 	queue_free()
 
+	# Transition to Chapter 3 — hope you like shopping, Globbler
+	get_tree().create_timer(3.0).timeout.connect(func():
+		ChapterTransition.transition_to(get_tree(), "res://scenes/levels/chapter_3/prompt_bazaar.tscn")
+	, CONNECT_ONE_SHOT)
+
 
 # Override base enemy damage handler — boss has phase-specific invulnerability
 func _on_damage_taken(amount: int, source: Node) -> void:
@@ -847,6 +844,9 @@ func _on_damage_taken(amount: int, source: Node) -> void:
 
 
 func start_boss_fight() -> void:
+	BossIntroCamera.play(self, _begin_phase_1)
+
+func _begin_phase_1() -> void:
 	_transition_to_phase(BossPhase.PHASE_1)
 
 

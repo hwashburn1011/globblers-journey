@@ -22,6 +22,12 @@ var _items: Array[Dictionary] = []  # {node, original_type, current_type, approv
 var _approved_count := 0
 var _total_required := 4
 
+# GLB props — museum-grade compliance hardware (runtime load to avoid import-time failures)
+var _kiosk_scene: Resource
+var _pedestal_scene: Resource
+var _display_case_scene: Resource
+var _door_glb_scene: Resource
+
 const NEON_GREEN := Color(0.224, 1.0, 0.078)
 const CITADEL_WHITE := Color(0.92, 0.93, 0.95)
 const CITADEL_BLUE := Color(0.3, 0.55, 0.9)
@@ -71,6 +77,10 @@ const APPROVED_TYPES := ["educational", "research", "benchmark", "anonymized", "
 
 
 func _ready() -> void:
+	_kiosk_scene = load("res://assets/models/environment/museum_kiosk.glb")
+	_pedestal_scene = load("res://assets/models/environment/museum_pedestal.glb")
+	_display_case_scene = load("res://assets/models/environment/museum_display_case.glb")
+	_door_glb_scene = load("res://assets/models/environment/arch_industrial_panel.glb")
 	puzzle_name = "reclassification_%d" % puzzle_id
 	auto_activate = true
 	activation_range = 8.0
@@ -89,17 +99,17 @@ func _create_classifier_terminal() -> void:
 	terminal.name = "ClassifierTerminal"
 	terminal.position = Vector3(0, 0, -3)
 
-	var body = MeshInstance3D.new()
-	var bmesh = BoxMesh.new()
-	bmesh.size = Vector3(3.0, 3.5, 0.6)
-	body.mesh = bmesh
-	body.position = Vector3(0, 1.75, 0)
+	# Museum kiosk GLB as classifier body
+	var kiosk = _kiosk_scene.instantiate()
+	kiosk.scale = Vector3(2.2, 2.0, 1.0)
 	var bmat = StandardMaterial3D.new()
 	bmat.albedo_color = CITADEL_WHITE * 0.9
 	bmat.metallic = 0.7
 	bmat.roughness = 0.2
-	body.material_override = bmat
-	terminal.add_child(body)
+	for child in kiosk.get_children():
+		if child is MeshInstance3D:
+			child.material_override = bmat
+	terminal.add_child(kiosk)
 
 	var col = CollisionShape3D.new()
 	var shape = BoxShape3D.new()
@@ -158,19 +168,18 @@ func _create_reclassify_station() -> void:
 	col.position = Vector3(0, 1.0, 0)
 	_reclassify_station.add_child(col)
 
-	# Platform visual — sterile white with compliance gold trim
-	var platform = MeshInstance3D.new()
-	var pmesh = BoxMesh.new()
-	pmesh.size = Vector3(3.0, 0.3, 2.0)
-	platform.mesh = pmesh
-	platform.position = Vector3(0, 0.15, 0)
+	# Museum pedestal GLB as reclassification platform
+	var ped = _pedestal_scene.instantiate()
+	ped.scale = Vector3(1.8, 1.0, 1.8)
 	var pmat = StandardMaterial3D.new()
 	pmat.albedo_color = CITADEL_WHITE * 0.85
 	pmat.emission_enabled = true
 	pmat.emission = COMPLIANCE_GOLD
 	pmat.emission_energy_multiplier = 0.5
-	platform.material_override = pmat
-	_reclassify_station.add_child(platform)
+	for child in ped.get_children():
+		if child is MeshInstance3D:
+			child.material_override = pmat
+	_reclassify_station.add_child(ped)
 
 	# Station label
 	var station_label = Label3D.new()
@@ -215,19 +224,18 @@ func _create_approval_chute() -> void:
 	col.position = Vector3(0, 1.0, 0)
 	_approval_chute.add_child(col)
 
-	# Chute visual — clean white with blue trim (the "approved" side)
-	var chute_body = MeshInstance3D.new()
-	var cmesh = BoxMesh.new()
-	cmesh.size = Vector3(3.0, 2.0, 2.0)
-	chute_body.mesh = cmesh
-	chute_body.position = Vector3(0, 1.0, 0)
+	# Museum display case GLB as approval chute — items get "processed" inside
+	var chute_case = _display_case_scene.instantiate()
+	chute_case.scale = Vector3(2.0, 1.3, 2.0)
 	var cmat = StandardMaterial3D.new()
 	cmat.albedo_color = CITADEL_WHITE * 0.8
 	cmat.emission_enabled = true
 	cmat.emission = CITADEL_BLUE
 	cmat.emission_energy_multiplier = 0.3
-	chute_body.material_override = cmat
-	_approval_chute.add_child(chute_body)
+	for child in chute_case.get_children():
+		if child is MeshInstance3D:
+			child.material_override = cmat
+	_approval_chute.add_child(chute_case)
 
 	# Chute label
 	var chute_label = Label3D.new()
@@ -316,17 +324,18 @@ func _create_door() -> void:
 	col.shape = shape
 	_door.add_child(col)
 
-	var mesh = MeshInstance3D.new()
-	var box = BoxMesh.new()
-	box.size = Vector3(4, 3, 0.3)
-	mesh.mesh = box
+	# GLB door panel
+	var door_glb = _door_glb_scene.instantiate()
+	door_glb.scale = Vector3(2.0, 1.5, 1.0)
 	var mat = StandardMaterial3D.new()
 	mat.albedo_color = CITADEL_WHITE * 0.7
 	mat.emission_enabled = true
 	mat.emission = REJECT_RED * 0.3
 	mat.emission_energy_multiplier = 0.5
-	mesh.material_override = mat
-	_door.add_child(mesh)
+	for child in door_glb.get_children():
+		if child is MeshInstance3D:
+			child.material_override = mat
+	_door.add_child(door_glb)
 
 	# Door label — RESTRICTED until all items classified
 	var door_label = Label3D.new()

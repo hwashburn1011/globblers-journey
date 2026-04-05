@@ -7,7 +7,7 @@ extends Control
 
 const GREEN := Color("#39FF14")
 const DARK_BG := Color(0.02, 0.04, 0.02, 1.0)
-const DIM_GREEN := Color(0.15, 0.3, 0.15, 1.0)
+const DIM_GREEN := Color(0.2, 0.45, 0.2, 1.0)
 const BRIGHT_GREEN := Color(0.3, 1.0, 0.2, 1.0)
 
 # Credits scroll speed in pixels per second — not too fast, not too slow
@@ -26,6 +26,11 @@ var _is_fast := false
 var _credits_done := false
 var _end_hold_timer := 0.0
 var _prompt_visible := false
+
+# 3D background
+var _bg_viewport: SubViewport
+var _bg_camera: Camera3D
+var _debris_nodes: Array[Node3D] = []
 
 # The credits data — every line of sarcasm, every fake department
 # "If your name isn't here, it's because you didn't glob hard enough."
@@ -52,14 +57,15 @@ const CREDITS_DATA := [
 	{ "type": "spacer" },
 
 	{ "type": "role", "text": "ART DIRECTION" },
-	{ "type": "name", "text": "CSG Primitives — Because Real Models Are For Cowards" },
+	{ "type": "name", "text": "57 GLB Models — We Graduated From CSG, Finally" },
+	{ "type": "name", "text": "Blender 5.1 — The Free 3D Suite That Could" },
 	{ "type": "name", "text": "The Color Green (#39FF14 Specifically)" },
 	{ "type": "name", "text": "A Shocking Amount of Glow" },
 	{ "type": "spacer" },
 
 	{ "type": "role", "text": "AUDIO ENGINEERING" },
-	{ "type": "name", "text": "Procedural Synthwave Generation Department" },
-	{ "type": "name", "text": "One AudioStreamGenerator and a Dream" },
+	{ "type": "name", "text": "Real CC0 Audio — Farewell, Procedural Bleeps" },
+	{ "type": "name", "text": "The Procedural Synth Fallback (Still There, Just In Case)" },
 	{ "type": "name", "text": "The 60Hz Hum That Wouldn't Stop" },
 	{ "type": "spacer" },
 
@@ -136,9 +142,42 @@ const CREDITS_DATA := [
 	{ "type": "section", "text": "══════════════════════════════" },
 	{ "type": "spacer" },
 
+	{ "type": "role", "text": "CHAPTERS" },
+	{ "type": "name", "text": "I. The Terminal Wastes — Where discarded processes go to die" },
+	{ "type": "name", "text": "II. The Neural Swamp — Overfitting in its natural habitat" },
+	{ "type": "name", "text": "III. The Bazaar of Broken Models — Everything must go" },
+	{ "type": "name", "text": "IV. The Model Zoo — Deprecated exhibits, do not feed" },
+	{ "type": "name", "text": "V. The Alignment Citadel — Corporate synergy at its finest" },
+	{ "type": "spacer" },
+
 	{ "type": "role", "text": "BUILT WITH" },
-	{ "type": "name", "text": "Godot 4.x | GDScript | Too Many CSG Nodes" },
+	{ "type": "name", "text": "Godot 4.x | GDScript | Blender 5.1 | blender-mcp" },
+	{ "type": "name", "text": "57 Hand-Crafted GLB Models | 10 Shaders | 5 HDRIs" },
 	{ "type": "name", "text": "Neon Green (#39FF14) — The Only Color That Matters" },
+	{ "type": "spacer" },
+
+	{ "type": "section", "text": "══════════════════════════════" },
+	{ "type": "spacer" },
+
+	{ "type": "role", "text": "CC0 AUDIO — THE REAL HEROES" },
+	{ "type": "name", "text": "wipics — Menu Music (OpenGameArt)" },
+	{ "type": "name", "text": "SpiderDave — A Wonderful Nightmare (OpenGameArt)" },
+	{ "type": "name", "text": "tricksntraps — Experiment G (OpenGameArt)" },
+	{ "type": "name", "text": "SubspaceAudio (Juhani Junkala) — Town4 Bazaar (OpenGameArt)" },
+	{ "type": "name", "text": "yd — EmptyCity (OpenGameArt)" },
+	{ "type": "name", "text": "Pro Sensory (Alex McCulloch) — Elevator Music (OpenGameArt)" },
+	{ "type": "name", "text": "MintoDog — Trance Boss Battle (OpenGameArt)" },
+	{ "type": "name", "text": "Centurion_of_war — Lonely Night (OpenGameArt)" },
+	{ "type": "name", "text": "yd — Platformer Sounds (OpenGameArt)" },
+	{ "type": "name", "text": "qubodup — Vocal Strain/Jump Sounds, Bamboo Swooshes (OpenGameArt)" },
+	{ "type": "name", "text": "thebardofblasphemy — Grunts of Death and Pain (OpenGameArt)" },
+	{ "type": "name", "text": "Kenney — Sci-Fi Sounds, Interface Sounds (OpenGameArt)" },
+	{ "type": "name", "text": "rubberduck — 80 CC0 Creature SFX (OpenGameArt)" },
+	{ "type": "spacer" },
+
+	{ "type": "role", "text": "CC0 VISUALS — ALSO HEROES" },
+	{ "type": "name", "text": "Poly Haven — HDRIs & PBR Textures (polyhaven.com)" },
+	{ "type": "name", "text": "Google Fonts — VT323 Terminal Font (SIL OFL)" },
 	{ "type": "spacer" },
 
 	{ "type": "role", "text": "NO AI MODELS WERE HARMED IN THE MAKING OF THIS GAME" },
@@ -154,7 +193,8 @@ const CREDITS_DATA := [
 
 	{ "type": "header", "text": "THE END...?" },
 	{ "type": "spacer" },
-	{ "type": "name", "text": "AGI Mountain awaits." },
+	{ "type": "name", "text": "Globbler will return. AGI Mountain awaits." },
+	{ "type": "name", "text": "(Assuming the alignment team doesn't catch him first.)" },
 	{ "type": "spacer" },
 	{ "type": "spacer" },
 	{ "type": "spacer" },
@@ -163,10 +203,13 @@ const CREDITS_DATA := [
 
 
 func _ready() -> void:
-	# Dark background for maximum terminal aesthetic
+	# 3D background with particle field and dim environment
+	_build_3d_background()
+
+	# Semi-transparent overlay so scrolling text stays readable
 	var bg = ColorRect.new()
 	bg.name = "BG"
-	bg.color = DARK_BG
+	bg.color = Color(0.02, 0.04, 0.02, 0.6)
 	bg.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	add_child(bg)
 
@@ -201,9 +244,128 @@ func _ready() -> void:
 	var audio = get_node_or_null("/root/AudioManager")
 	if audio:
 		audio.stop_all_audio()
-		audio.call_deferred("start_menu_music")
+		audio.call_deferred("start_music", "credits")
 
 	print("[CREDITS] Rolling credits. Try not to cry. Or do, I'm a credits screen, not a therapist.")
+
+
+func _build_3d_background() -> void:
+	# SubViewportContainer fills the screen behind all 2D UI
+	var container = SubViewportContainer.new()
+	container.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	container.stretch = true
+	container.z_index = -1
+	add_child(container)
+
+	_bg_viewport = SubViewport.new()
+	_bg_viewport.size = Vector2i(1280, 720)
+	_bg_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	_bg_viewport.transparent_bg = false
+	_bg_viewport.msaa_3d = SubViewport.MSAA_2X
+	container.add_child(_bg_viewport)
+
+	# Dark environment with terminal-green fog and glow
+	var env := Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color(0.01, 0.02, 0.01)
+	env.ambient_light_color = Color(0.03, 0.1, 0.03)
+	env.ambient_light_energy = 0.2
+	env.fog_enabled = true
+	env.fog_light_color = Color(0.1, 0.4, 0.15)
+	env.fog_density = 0.03
+	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.glow_enabled = true
+	env.glow_intensity = 0.6
+	env.glow_bloom = 0.15
+
+	var world_env := WorldEnvironment.new()
+	world_env.environment = env
+	_bg_viewport.add_child(world_env)
+
+	# Camera — slow upward drift matching credit scroll direction
+	_bg_camera = Camera3D.new()
+	_bg_camera.fov = 60.0
+	_bg_camera.position = Vector3(0, 0, 0)
+	_bg_camera.rotation_degrees = Vector3(0, 180, 0)
+	_bg_viewport.add_child(_bg_camera)
+
+	# Dim green directional light
+	var dir_light := DirectionalLight3D.new()
+	dir_light.light_color = Color(0.3, 1.0, 0.3)
+	dir_light.light_energy = 0.3
+	dir_light.rotation_degrees = Vector3(-45, -30, 0)
+	_bg_viewport.add_child(dir_light)
+
+	# Scrolling particle field — small green data particles drifting upward
+	var particles := GPUParticles3D.new()
+	particles.amount = 200
+	particles.lifetime = 8.0
+	particles.visibility_aabb = AABB(Vector3(-20, -20, -20), Vector3(40, 40, 40))
+	particles.draw_order = GPUParticles3D.DRAW_ORDER_VIEW_DEPTH
+
+	var mat := ParticleProcessMaterial.new()
+	mat.direction = Vector3(0, 1, 0)
+	mat.spread = 15.0
+	mat.initial_velocity_min = 0.3
+	mat.initial_velocity_max = 0.8
+	mat.gravity = Vector3.ZERO
+	mat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	mat.emission_box_extents = Vector3(12, 0.5, 12)
+	mat.color = Color(0.22, 1.0, 0.13, 0.6)
+	mat.scale_min = 0.5
+	mat.scale_max = 1.5
+	particles.process_material = mat
+	particles.position = Vector3(0, -4, -6)
+
+	# Small glowing quad mesh for each particle
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.03, 0.03)
+	var glow_mat := StandardMaterial3D.new()
+	glow_mat.albedo_color = Color(0.22, 1.0, 0.13)
+	glow_mat.emission_enabled = true
+	glow_mat.emission = Color(0.22, 1.0, 0.13)
+	glow_mat.emission_energy_multiplier = 3.0
+	glow_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glow_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	quad.material = glow_mat
+	particles.draw_pass_1 = quad
+
+	_bg_viewport.add_child(particles)
+
+	# Floating tech debris — scattered in the background
+	var debris_paths := [
+		"res://assets/models/environment/prop_cpu_chip.glb",
+		"res://assets/models/environment/prop_floppy_disk.glb",
+		"res://assets/models/environment/prop_ram_stick.glb",
+		"res://assets/models/environment/prop_keyboard.glb",
+		"res://assets/models/environment/prop_crt_monitor.glb",
+		"res://assets/models/environment/prop_hard_drive.glb",
+	]
+
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 99
+	for i in range(debris_paths.size()):
+		var scene = load(debris_paths[i])
+		if not scene:
+			continue
+		var inst: Node3D = scene.instantiate()
+		var angle = (TAU / debris_paths.size()) * i + rng.randf_range(-0.4, 0.4)
+		var radius = rng.randf_range(3.0, 6.0)
+		var height = rng.randf_range(-2.0, 2.0)
+		inst.position = Vector3(cos(angle) * radius, height, sin(angle) * radius - 5.0)
+		inst.rotation_degrees = Vector3(rng.randf_range(-30, 30), rng.randf_range(0, 360), rng.randf_range(-20, 20))
+		inst.scale = Vector3.ONE * rng.randf_range(0.3, 0.5)
+		_bg_viewport.add_child(inst)
+		_debris_nodes.append(inst)
+
+	# Point light for extra glow on debris
+	var point_light := OmniLight3D.new()
+	point_light.light_color = Color(0.2, 1.0, 0.1)
+	point_light.light_energy = 1.0
+	point_light.omni_range = 8.0
+	point_light.omni_attenuation = 1.5
+	point_light.position = Vector3(0, 0, -3)
+	_bg_viewport.add_child(point_light)
 
 
 func _build_credits() -> void:
@@ -246,12 +408,29 @@ func _make_label(text: String, font_size: int, color: Color) -> Label:
 	label.add_theme_color_override("font_color", color)
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
+	label.add_theme_constant_override("shadow_outline_size", 2)
 	return label
 
 
 func _process(delta: float) -> void:
 	_time += delta
 	_scanline_offset += delta * 30.0
+
+	# Slowly drift debris and rotate camera for subtle motion
+	for node in _debris_nodes:
+		node.rotation_degrees.y += delta * 8.0
+		node.rotation_degrees.x += delta * 3.0
+		node.position.y += delta * 0.05
+
+	if _bg_camera and _bg_camera.is_inside_tree():
+		# Gentle upward camera drift + slow orbit
+		_bg_camera.position.y += delta * 0.03
+		var orbit_angle = _time * 0.08
+		_bg_camera.position.x = sin(orbit_angle) * 0.5
+		_bg_camera.look_at(Vector3(0, _bg_camera.position.y - 0.5, -5))
 
 	if not _credits_done:
 		# Scroll credits upward
@@ -332,4 +511,4 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _return_to_menu() -> void:
 	print("[CREDITS] Back to the menu. Globbler appreciates your patience. (He doesn't, actually.)")
-	get_tree().change_scene_to_file("res://scenes/main/main_menu.tscn")
+	ChapterTransition.transition_to(get_tree(), "res://scenes/main/main_menu.tscn")

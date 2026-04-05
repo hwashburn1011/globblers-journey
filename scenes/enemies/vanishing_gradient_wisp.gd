@@ -43,69 +43,31 @@ func _ready() -> void:
 	swarm_angle = randf() * TAU  # Random start angle for swarming
 
 func _create_visual() -> void:
-	mesh_node = MeshInstance3D.new()
-	mesh_node.name = "EnemyMesh"
-	mesh_node.position.y = 1.2  # Wisps float high
+	# Load the real GLB model — when your gradient has form, flaunt it
+	var glb_scene = load("res://assets/models/enemies/vanishing_gradient_wisp.glb")
+	if glb_scene:
+		var model = glb_scene.instantiate()
+		model.name = "WispModel"
+		model.position.y = 0.0  # GLB already positioned at y=1.2 internally
+		model.scale = Vector3(1.0, 1.0, 1.0)
+		add_child(model)
+		# Find the core mesh for base_enemy material swaps and gradient fading
+		mesh_node = _find_mesh_instance(model)
+		if mesh_node:
+			base_material = mesh_node.get_active_material(0) as StandardMaterial3D
+	else:
+		# CSG fallback — the gradient vanished before the model could load
+		_create_csg_fallback()
 
-	# Wisp core — small glowing sphere, intense at full gradient
-	var wisp_mesh = SphereMesh.new()
-	wisp_mesh.radius = 0.25
-	wisp_mesh.height = 0.5
-	mesh_node.mesh = wisp_mesh
-
-	base_material = StandardMaterial3D.new()
-	base_material.albedo_color = Color(0.8, 0.15, 0.1, 0.9)  # Red-orange gradient color
-	base_material.emission_enabled = true
-	base_material.emission = Color(0.9, 0.2, 0.05)
-	base_material.emission_energy_multiplier = 6.0
-	base_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	base_material.metallic = 0.0
-	base_material.roughness = 1.0
-	mesh_node.material_override = base_material
-	add_child(mesh_node)
-
-	# Inner core — brighter, smaller sphere
-	var inner = MeshInstance3D.new()
-	var inner_mesh = SphereMesh.new()
-	inner_mesh.radius = 0.12
-	inner.mesh = inner_mesh
-	inner.position.y = 0.0
-
-	var inner_mat = StandardMaterial3D.new()
-	inner_mat.albedo_color = Color(1.0, 0.8, 0.2)
-	inner_mat.emission_enabled = true
-	inner_mat.emission = Color(1.0, 0.9, 0.3)
-	inner_mat.emission_energy_multiplier = 8.0
-	inner.material_override = inner_mat
-	inner.name = "InnerCore"
-	mesh_node.add_child(inner)
-
-	# Orbiting gradient fragments — tiny cubes circling the wisp
-	var frag_mat = StandardMaterial3D.new()
-	frag_mat.albedo_color = Color(0.9, 0.3, 0.1, 0.7)
-	frag_mat.emission_enabled = true
-	frag_mat.emission = Color(0.8, 0.2, 0.05)
-	frag_mat.emission_energy_multiplier = 3.0
-	frag_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-
-	for i in range(3):
-		var frag = MeshInstance3D.new()
-		var frag_mesh = BoxMesh.new()
-		frag_mesh.size = Vector3(0.06, 0.06, 0.06)
-		frag.mesh = frag_mesh
-		frag.material_override = frag_mat
-		frag.name = "Fragment_%d" % i
-		mesh_node.add_child(frag)
-
-	# Gradient strength label
+	# Gradient strength label — floats above regardless of model source
 	gradient_label = Label3D.new()
 	gradient_label.text = "∇=1.00"
 	gradient_label.font_size = 20
 	gradient_label.modulate = Color(1.0, 0.4, 0.1)
-	gradient_label.position = Vector3(0, 0.6, 0)
+	gradient_label.position = Vector3(0, 1.8, 0)
 	gradient_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	gradient_label.no_depth_test = true
-	mesh_node.add_child(gradient_label)
+	add_child(gradient_label)
 
 	# Dynamic light — intensity scales with gradient strength
 	wisp_light = OmniLight3D.new()
@@ -142,6 +104,38 @@ func _create_visual() -> void:
 	wisp_trail.draw_pass_1 = trail_mesh
 	add_child(wisp_trail)
 
+func _find_mesh_instance(node: Node) -> MeshInstance3D:
+	# Recursively find first MeshInstance3D — digging through the gradient layers
+	if node is MeshInstance3D:
+		return node
+	for child in node.get_children():
+		var found = _find_mesh_instance(child)
+		if found:
+			return found
+	return null
+
+func _create_csg_fallback() -> void:
+	# Original CSG sphere — for when the real model vanished like its namesake
+	mesh_node = MeshInstance3D.new()
+	mesh_node.name = "EnemyMesh"
+	mesh_node.position.y = 1.2
+
+	var wisp_mesh = SphereMesh.new()
+	wisp_mesh.radius = 0.25
+	wisp_mesh.height = 0.5
+	mesh_node.mesh = wisp_mesh
+
+	base_material = StandardMaterial3D.new()
+	base_material.albedo_color = Color(0.8, 0.15, 0.1, 0.9)
+	base_material.emission_enabled = true
+	base_material.emission = Color(0.9, 0.2, 0.05)
+	base_material.emission_energy_multiplier = 6.0
+	base_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	base_material.metallic = 0.0
+	base_material.roughness = 1.0
+	mesh_node.material_override = base_material
+	add_child(mesh_node)
+
 func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
 
@@ -161,8 +155,11 @@ func _physics_process(delta: float) -> void:
 	# Orbit fragments
 	_animate_fragments(delta)
 
-	# Bob up and down
-	if mesh_node:
+	# Bob up and down — the whole model container floats gently
+	var wisp_model = get_node_or_null("WispModel")
+	if wisp_model:
+		wisp_model.position.y = sin(Time.get_ticks_msec() * 0.004) * 0.2
+	elif mesh_node:
 		mesh_node.position.y = 1.2 + sin(Time.get_ticks_msec() * 0.004) * 0.2
 
 func _update_gradient_visuals(delta: float) -> void:
@@ -192,20 +189,11 @@ func _update_gradient_visuals(delta: float) -> void:
 		gradient_label.text = "∇=%.2f" % gradient_strength
 		gradient_label.modulate.a = 0.3 + gradient_strength * 0.7
 
-func _animate_fragments(delta: float) -> void:
-	if not mesh_node:
-		return
-
-	var t = Time.get_ticks_msec() * 0.002
-	for i in range(3):
-		var frag = mesh_node.get_node_or_null("Fragment_%d" % i)
-		if frag:
-			var angle = t + i * TAU / 3.0
-			var orbit_radius = 0.4 * gradient_strength  # Orbit shrinks as gradient vanishes
-			frag.position = Vector3(cos(angle) * orbit_radius, sin(angle * 0.7) * 0.15, sin(angle) * orbit_radius)
-			# Fragments fade with gradient
-			if frag.material_override:
-				frag.material_override.albedo_color.a = gradient_strength * 0.7
+func _animate_fragments(_delta: float) -> void:
+	# GLB model has baked-in gradient fragments — no runtime orbiting needed
+	# CSG fallback doesn't have fragments either, so this is a graceful no-op
+	# The gradient strength fading handles the visual decay just fine
+	pass
 
 func _state_patrol(delta: float) -> void:
 	if _can_see_player():

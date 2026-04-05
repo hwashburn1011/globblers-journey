@@ -83,109 +83,101 @@ func _create_visual() -> void:
 	mesh_node.name = "EnemyMesh"
 	mesh_node.position.y = 0.5
 
-	# Paperclip body — the iconic shape, now weaponized
-	# Bottom curve
-	var base_wire = MeshInstance3D.new()
-	base_wire.name = "BaseWire"
-	var bw = CylinderMesh.new()
-	bw.top_radius = 0.08
-	bw.bottom_radius = 0.08
-	bw.height = 1.2
-	base_wire.mesh = bw
-	base_wire.position = Vector3(-0.15, 0.6, 0)
+	# Try loading the real GLB model — Clippy has been UPGRADED
+	var glb_scene = load("res://assets/models/enemies/clippy_revenge.glb")
+	if glb_scene:
+		var glb_instance = glb_scene.instantiate()
+		mesh_node.add_child(glb_instance)
+		# Grab the first MeshInstance3D for material overrides during rage
+		for child in glb_instance.get_children():
+			if child is MeshInstance3D:
+				base_material = child.get_active_material(0) as StandardMaterial3D
+				wire_segments.append(child)
+		if not base_material:
+			base_material = StandardMaterial3D.new()
+			base_material.albedo_color = Color(0.65, 0.70, 0.75)
+			base_material.emission_enabled = true
+			base_material.emission = Color(0.25, 0.45, 0.85)
+			base_material.emission_energy_multiplier = 2.0
+			base_material.metallic = 0.9
+			base_material.roughness = 0.15
+	else:
+		# CSG fallback — the paperclip shape lives on in primitive form
+		var body = CylinderMesh.new()
+		body.top_radius = 0.08
+		body.bottom_radius = 0.08
+		body.height = 1.4
+		mesh_node.mesh = body
 
-	var wire_mat = StandardMaterial3D.new()
-	wire_mat.albedo_color = Color(0.6, 0.65, 0.7)
-	wire_mat.emission_enabled = true
-	wire_mat.emission = Color(0.25, 0.45, 0.85)
-	wire_mat.emission_energy_multiplier = 2.0
-	wire_mat.metallic = 0.9
-	wire_mat.roughness = 0.15
-	base_wire.material_override = wire_mat
-	mesh_node.add_child(base_wire)
-	wire_segments.append(base_wire)
+		base_material = StandardMaterial3D.new()
+		base_material.albedo_color = Color(0.6, 0.65, 0.7)
+		base_material.emission_enabled = true
+		base_material.emission = Color(0.25, 0.45, 0.85)
+		base_material.emission_energy_multiplier = 2.0
+		base_material.metallic = 0.9
+		base_material.roughness = 0.15
+		mesh_node.material_override = base_material
 
-	# Main body — use the body mesh as the main visible mesh
-	var body = CylinderMesh.new()
-	body.top_radius = 0.08
-	body.bottom_radius = 0.08
-	body.height = 1.4
-	mesh_node.mesh = body
+		var wire_mat = StandardMaterial3D.new()
+		wire_mat.albedo_color = Color(0.6, 0.65, 0.7)
+		wire_mat.emission_enabled = true
+		wire_mat.emission = Color(0.25, 0.45, 0.85)
+		wire_mat.emission_energy_multiplier = 2.0
+		wire_mat.metallic = 0.9
+		wire_mat.roughness = 0.15
 
-	base_material = StandardMaterial3D.new()
-	base_material.albedo_color = Color(0.6, 0.65, 0.7)
-	base_material.emission_enabled = true
-	base_material.emission = Color(0.25, 0.45, 0.85)
-	base_material.emission_energy_multiplier = 2.0
-	base_material.metallic = 0.9
-	base_material.roughness = 0.15
-	mesh_node.material_override = base_material
+		# Parallel wires for that "I'm definitely a paperclip trust me" look
+		for offset in [-0.15, 0.15]:
+			var wire = MeshInstance3D.new()
+			wire.name = "Wire"
+			var wm = CylinderMesh.new()
+			wm.top_radius = 0.08
+			wm.bottom_radius = 0.08
+			wm.height = 1.2
+			wire.mesh = wm
+			wire.position = Vector3(offset, 0.6, 0)
+			wire.material_override = wire_mat
+			mesh_node.add_child(wire)
+			wire_segments.append(wire)
+
+		# Googly eyes — because placeholder Clippy still needs to stare at you
+		var eye_base_mat = StandardMaterial3D.new()
+		eye_base_mat.albedo_color = Color(0.95, 0.95, 0.95)
+		eye_base_mat.emission_enabled = true
+		eye_base_mat.emission = Color(1, 1, 1)
+		eye_base_mat.emission_energy_multiplier = 1.5
+
+		var pupil_mat = StandardMaterial3D.new()
+		pupil_mat.albedo_color = Color(0.05, 0.05, 0.05)
+
+		for side_i in range(2):
+			var side = -1 if side_i == 0 else 1
+			var eye_white = MeshInstance3D.new()
+			eye_white.name = "EyeWhite_" + ("L" if side < 0 else "R")
+			var ew = SphereMesh.new()
+			ew.radius = 0.14
+			ew.height = 0.28
+			eye_white.mesh = ew
+			eye_white.position = Vector3(side * 0.12, 1.3, 0.1)
+			eye_white.material_override = eye_base_mat
+			mesh_node.add_child(eye_white)
+
+			var pupil = MeshInstance3D.new()
+			pupil.name = "Pupil_" + ("L" if side < 0 else "R")
+			var pm = SphereMesh.new()
+			pm.radius = 0.07
+			pm.height = 0.14
+			pupil.mesh = pm
+			pupil.position = Vector3(0, 0, 0.09)
+			pupil.material_override = pupil_mat
+			eye_white.add_child(pupil)
+
+			if side < 0:
+				eye_left = eye_white
+			else:
+				eye_right = eye_white
+
 	add_child(mesh_node)
-
-	# Upper curve
-	var upper_wire = MeshInstance3D.new()
-	upper_wire.name = "UpperWire"
-	var uw = CylinderMesh.new()
-	uw.top_radius = 0.08
-	uw.bottom_radius = 0.08
-	uw.height = 1.0
-	upper_wire.mesh = uw
-	upper_wire.position = Vector3(0.15, 0.5, 0)
-	upper_wire.material_override = wire_mat
-	mesh_node.add_child(upper_wire)
-	wire_segments.append(upper_wire)
-
-	# Cross bars — connecting the paperclip sides
-	for i in range(2):
-		var cross = MeshInstance3D.new()
-		cross.name = "CrossBar_%d" % i
-		var cm = CylinderMesh.new()
-		cm.top_radius = 0.07
-		cm.bottom_radius = 0.07
-		cm.height = 0.35
-		cross.mesh = cm
-		cross.rotation.z = deg_to_rad(90)
-		cross.position = Vector3(0, 0.2 + i * 0.9, 0)
-		cross.material_override = wire_mat
-		mesh_node.add_child(cross)
-		wire_segments.append(cross)
-
-	# Googly eyes — oversized, always watching, slightly unhinged
-	var eye_base_mat = StandardMaterial3D.new()
-	eye_base_mat.albedo_color = Color(0.95, 0.95, 0.95)
-	eye_base_mat.emission_enabled = true
-	eye_base_mat.emission = Color(1, 1, 1)
-	eye_base_mat.emission_energy_multiplier = 1.5
-
-	var pupil_mat = StandardMaterial3D.new()
-	pupil_mat.albedo_color = Color(0.05, 0.05, 0.05)
-
-	for side_i in range(2):
-		var side = -1 if side_i == 0 else 1
-		var eye_white = MeshInstance3D.new()
-		eye_white.name = "EyeWhite_" + ("L" if side < 0 else "R")
-		var ew = SphereMesh.new()
-		ew.radius = 0.14
-		ew.height = 0.28
-		eye_white.mesh = ew
-		eye_white.position = Vector3(side * 0.12, 1.3, 0.1)
-		eye_white.material_override = eye_base_mat
-		mesh_node.add_child(eye_white)
-
-		var pupil = MeshInstance3D.new()
-		pupil.name = "Pupil_" + ("L" if side < 0 else "R")
-		var pm = SphereMesh.new()
-		pm.radius = 0.07
-		pm.height = 0.14
-		pupil.mesh = pm
-		pupil.position = Vector3(0, 0, 0.09)
-		pupil.material_override = pupil_mat
-		eye_white.add_child(pupil)
-
-		if side < 0:
-			eye_left = eye_white
-		else:
-			eye_right = eye_white
 
 	# Speech bubble — the unwanted advice container
 	speech_bubble = MeshInstance3D.new()
@@ -199,8 +191,8 @@ func _create_visual() -> void:
 	bubble_mat.emission_enabled = true
 	bubble_mat.emission = Color(1, 1, 0.9)
 	bubble_mat.emission_energy_multiplier = 1.0
+	bubble_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 	speech_bubble.material_override = bubble_mat
-	speech_bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	mesh_node.add_child(speech_bubble)
 
 	# Speech text

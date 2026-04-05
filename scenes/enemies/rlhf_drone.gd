@@ -37,8 +37,6 @@ var strafe_direction := 1.0  # 1 = right, -1 = left
 var strafe_switch_timer := 0.0
 
 # Visual nodes — small, annoying, and impossibly smug
-var propeller_ring: MeshInstance3D
-var antenna_array: MeshInstance3D
 var thumb_hologram: MeshInstance3D
 var thumb_label: Label3D
 var reward_particles: GPUParticles3D
@@ -82,94 +80,48 @@ func _init() -> void:
 
 
 func _create_visual() -> void:
-	# Main body — small hovering sphere, lavender with white accents
+	# Main body — quad-rotor clipboard-bot, lavender corporate drone
 	mesh_node = MeshInstance3D.new()
 	mesh_node.name = "EnemyMesh"
 	mesh_node.position.y = 1.5  # Hovers high — looking down on everyone, literally
 
-	var body_mesh = SphereMesh.new()
-	body_mesh.radius = 0.35
-	body_mesh.height = 0.7
-	mesh_node.mesh = body_mesh
+	# Try loading the real GLB model — behavioral adjustment hardware UPGRADED
+	var glb_scene = load("res://assets/models/enemies/rlhf_drone.glb")
+	if glb_scene:
+		var glb_instance = glb_scene.instantiate()
+		mesh_node.add_child(glb_instance)
+		# Grab first MeshInstance3D for material reference
+		for child in glb_instance.get_children():
+			if child is MeshInstance3D:
+				base_material = child.get_active_material(0) as StandardMaterial3D
+				break
+		if not base_material:
+			base_material = StandardMaterial3D.new()
+			base_material.albedo_color = Color(0.85, 0.82, 0.95)
+			base_material.emission_enabled = true
+			base_material.emission = Color(0.6, 0.5, 0.85)
+			base_material.emission_energy_multiplier = 2.5
+			base_material.metallic = 0.6
+			base_material.roughness = 0.2
+	else:
+		# CSG fallback — primitive sphere for when the real model is AWOL
+		var body_mesh = SphereMesh.new()
+		body_mesh.radius = 0.35
+		body_mesh.height = 0.7
+		mesh_node.mesh = body_mesh
 
-	base_material = StandardMaterial3D.new()
-	base_material.albedo_color = Color(0.85, 0.82, 0.95)  # Lavender white
-	base_material.emission_enabled = true
-	base_material.emission = Color(0.6, 0.5, 0.85)  # RLHF Lavender
-	base_material.emission_energy_multiplier = 2.5
-	base_material.metallic = 0.6
-	base_material.roughness = 0.2
-	mesh_node.material_override = base_material
+		base_material = StandardMaterial3D.new()
+		base_material.albedo_color = Color(0.85, 0.82, 0.95)
+		base_material.emission_enabled = true
+		base_material.emission = Color(0.6, 0.5, 0.85)
+		base_material.emission_energy_multiplier = 2.5
+		base_material.metallic = 0.6
+		base_material.roughness = 0.2
+		mesh_node.material_override = base_material
+
 	add_child(mesh_node)
 
-	# Propeller ring — spins around the body
-	propeller_ring = MeshInstance3D.new()
-	propeller_ring.name = "PropellerRing"
-	var prop_mesh = TorusMesh.new()
-	prop_mesh.inner_radius = 0.38
-	prop_mesh.outer_radius = 0.48
-	prop_mesh.rings = 12
-	prop_mesh.ring_segments = 16
-	propeller_ring.mesh = prop_mesh
-	propeller_ring.position = Vector3(0, 0, 0)
-
-	var prop_mat = StandardMaterial3D.new()
-	prop_mat.albedo_color = Color(0.7, 0.65, 0.85, 0.6)
-	prop_mat.emission_enabled = true
-	prop_mat.emission = Color(0.6, 0.5, 0.85)
-	prop_mat.emission_energy_multiplier = 1.5
-	prop_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	propeller_ring.material_override = prop_mat
-	mesh_node.add_child(propeller_ring)
-
-	# Antenna array — three little spikes on top
-	antenna_array = MeshInstance3D.new()
-	antenna_array.name = "AntennaArray"
-	var ant_mesh = CylinderMesh.new()
-	ant_mesh.top_radius = 0.01
-	ant_mesh.bottom_radius = 0.03
-	ant_mesh.height = 0.3
-	antenna_array.mesh = ant_mesh
-	antenna_array.position = Vector3(0, 0.4, 0)
-	var ant_mat = StandardMaterial3D.new()
-	ant_mat.albedo_color = Color(0.8, 0.75, 0.9)
-	ant_mat.emission_enabled = true
-	ant_mat.emission = Color(0.6, 0.5, 0.85)
-	ant_mat.emission_energy_multiplier = 3.0
-	antenna_array.material_override = ant_mat
-	mesh_node.add_child(antenna_array)
-
-	# Side antennas
-	for side in [-1, 1]:
-		var side_ant = MeshInstance3D.new()
-		side_ant.name = "SideAntenna_%d" % side
-		var sa_mesh = CylinderMesh.new()
-		sa_mesh.top_radius = 0.008
-		sa_mesh.bottom_radius = 0.02
-		sa_mesh.height = 0.2
-		side_ant.mesh = sa_mesh
-		side_ant.position = Vector3(side * 0.15, 0.35, 0)
-		side_ant.rotation.z = deg_to_rad(side * 20)
-		side_ant.material_override = ant_mat
-		mesh_node.add_child(side_ant)
-
-	# Eye — single cyclopean lens
-	var eye = MeshInstance3D.new()
-	eye.name = "Eye"
-	var eye_mesh = SphereMesh.new()
-	eye_mesh.radius = 0.1
-	eye_mesh.height = 0.2
-	eye.mesh = eye_mesh
-	eye.position = Vector3(0, 0, 0.3)
-	var eye_mat = StandardMaterial3D.new()
-	eye_mat.albedo_color = Color(0.3, 0.9, 0.4)
-	eye_mat.emission_enabled = true
-	eye_mat.emission = Color(0.3, 0.9, 0.4)
-	eye_mat.emission_energy_multiplier = 5.0
-	eye.material_override = eye_mat
-	mesh_node.add_child(eye)
-
-	# Thumb hologram — shows thumbs up or down
+	# Thumb hologram — shows thumbs up or down (overlaid on GLB model)
 	thumb_hologram = MeshInstance3D.new()
 	thumb_hologram.name = "ThumbHologram"
 	var th_mesh = PlaneMesh.new()
@@ -275,10 +227,6 @@ func _physics_process(delta: float) -> void:
 	# Reward beam cooldown
 	if reward_timer > 0:
 		reward_timer -= delta
-
-	# Propeller spin — because all drones must spin something
-	if propeller_ring:
-		propeller_ring.rotation.y += delta * 12.0
 
 	# Hovering bob — gentle, non-threatening, deeply irritating
 	if mesh_node:

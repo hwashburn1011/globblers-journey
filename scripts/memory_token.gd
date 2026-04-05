@@ -74,5 +74,11 @@ func _on_body_entered(body: Node3D) -> void:
 		if game_mgr:
 			game_mgr.collect_memory_token()
 
+		# Spawn sparkle VFX at our position — a little farewell fireworks show
+		var sparkle_scene := preload("res://scenes/vfx/token_sparkle.tscn")
+		var sparkle := sparkle_scene.instantiate()
+		sparkle.global_position = global_position
+		get_tree().current_scene.add_child(sparkle)
+
 		# Poof! Gone. Like your training data after a legal dispute.
 		queue_free()

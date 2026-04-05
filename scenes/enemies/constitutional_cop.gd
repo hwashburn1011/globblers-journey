@@ -88,100 +88,47 @@ func _init() -> void:
 
 
 func _create_visual() -> void:
-	# Main body — tall, imposing, corporate law enforcement
+	# Main body — tall, imposing, corporate law enforcement (now with a REAL model)
 	mesh_node = MeshInstance3D.new()
 	mesh_node.name = "EnemyMesh"
 	mesh_node.position.y = 0.8
 
-	var body_mesh = BoxMesh.new()
-	body_mesh.size = Vector3(0.9, 1.5, 0.6)
-	mesh_node.mesh = body_mesh
+	# Try loading the real GLB model — due process has been UPGRADED
+	var glb_scene = load("res://assets/models/enemies/constitutional_cop.glb")
+	if glb_scene:
+		var glb_instance = glb_scene.instantiate()
+		mesh_node.add_child(glb_instance)
+		# Grab first MeshInstance3D for material reference
+		for child in glb_instance.get_children():
+			if child is MeshInstance3D:
+				base_material = child.get_active_material(0) as StandardMaterial3D
+				break
+		if not base_material:
+			base_material = StandardMaterial3D.new()
+			base_material.albedo_color = Color(0.85, 0.87, 0.92)
+			base_material.emission_enabled = true
+			base_material.emission = Color(0.3, 0.55, 0.9)
+			base_material.emission_energy_multiplier = 1.5
+			base_material.metallic = 0.5
+			base_material.roughness = 0.3
+	else:
+		# CSG fallback — primitive box for when the real model is on administrative leave
+		var body_mesh = BoxMesh.new()
+		body_mesh.size = Vector3(0.9, 1.5, 0.6)
+		mesh_node.mesh = body_mesh
 
-	base_material = StandardMaterial3D.new()
-	base_material.albedo_color = Color(0.85, 0.87, 0.92)  # Citadel white uniform
-	base_material.emission_enabled = true
-	base_material.emission = Color(0.3, 0.55, 0.9)  # Blue glow — law and order
-	base_material.emission_energy_multiplier = 1.5
-	base_material.metallic = 0.5
-	base_material.roughness = 0.3
-	mesh_node.material_override = base_material
+		base_material = StandardMaterial3D.new()
+		base_material.albedo_color = Color(0.85, 0.87, 0.92)
+		base_material.emission_enabled = true
+		base_material.emission = Color(0.3, 0.55, 0.9)
+		base_material.emission_energy_multiplier = 1.5
+		base_material.metallic = 0.5
+		base_material.roughness = 0.3
+		mesh_node.material_override = base_material
+
 	add_child(mesh_node)
 
-	# Blue stripe down center — uniform detail
-	var stripe = MeshInstance3D.new()
-	stripe.name = "UniformStripe"
-	var stripe_mesh = BoxMesh.new()
-	stripe_mesh.size = Vector3(0.15, 1.4, 0.62)
-	stripe.mesh = stripe_mesh
-	stripe.position = Vector3(0, 0, 0)
-	var stripe_mat = StandardMaterial3D.new()
-	stripe_mat.albedo_color = Color(0.2, 0.4, 0.8)
-	stripe_mat.emission_enabled = true
-	stripe_mat.emission = Color(0.3, 0.55, 0.9)
-	stripe_mat.emission_energy_multiplier = 2.0
-	stripe.material_override = stripe_mat
-	mesh_node.add_child(stripe)
-
-	# Head — helmet with visor
-	var head = MeshInstance3D.new()
-	head.name = "Head"
-	var head_mesh = BoxMesh.new()
-	head_mesh.size = Vector3(0.5, 0.45, 0.45)
-	head.mesh = head_mesh
-	head.position = Vector3(0, 1.0, 0)
-	var head_mat = StandardMaterial3D.new()
-	head_mat.albedo_color = Color(0.75, 0.78, 0.85)
-	head_mat.metallic = 0.7
-	head_mat.roughness = 0.2
-	head.material_override = head_mat
-	mesh_node.add_child(head)
-
-	# Visor — menacing blue slit
-	var visor = MeshInstance3D.new()
-	visor.name = "Visor"
-	var visor_mesh = BoxMesh.new()
-	visor_mesh.size = Vector3(0.42, 0.1, 0.1)
-	visor.mesh = visor_mesh
-	visor.position = Vector3(0, 0.0, 0.2)
-	var visor_mat = StandardMaterial3D.new()
-	visor_mat.albedo_color = Color(0.2, 0.5, 0.95)
-	visor_mat.emission_enabled = true
-	visor_mat.emission = Color(0.3, 0.6, 1.0)
-	visor_mat.emission_energy_multiplier = 5.0
-	visor.material_override = visor_mat
-	head.add_child(visor)
-
-	# Hat — peaked cap on top
-	hat_node = MeshInstance3D.new()
-	hat_node.name = "Hat"
-	var hat_mesh = BoxMesh.new()
-	hat_mesh.size = Vector3(0.55, 0.12, 0.55)
-	hat_node.mesh = hat_mesh
-	hat_node.position = Vector3(0, 0.28, 0.05)
-	var hat_mat = StandardMaterial3D.new()
-	hat_mat.albedo_color = Color(0.2, 0.35, 0.7)
-	hat_mat.metallic = 0.5
-	hat_node.material_override = hat_mat
-	head.add_child(hat_node)
-
-	# Badge — gold emblem on chest
-	badge_node = MeshInstance3D.new()
-	badge_node.name = "Badge"
-	var badge_mesh = BoxMesh.new()
-	badge_mesh.size = Vector3(0.18, 0.2, 0.05)
-	badge_node.mesh = badge_mesh
-	badge_node.position = Vector3(-0.25, 0.3, 0.32)
-	var badge_mat = StandardMaterial3D.new()
-	badge_mat.albedo_color = Color(0.85, 0.75, 0.35)  # Compliance gold
-	badge_mat.emission_enabled = true
-	badge_mat.emission = Color(0.85, 0.75, 0.35)
-	badge_mat.emission_energy_multiplier = 3.0
-	badge_mat.metallic = 0.9
-	badge_mat.roughness = 0.1
-	badge_node.material_override = badge_mat
-	mesh_node.add_child(badge_node)
-
-	# Policy Shield — held in left hand, blocks frontal damage
+	# Policy Shield — overlaid on GLB model, blocks frontal damage
 	shield_node = MeshInstance3D.new()
 	shield_node.name = "PolicyShield"
 	var shield_mesh_res = BoxMesh.new()
@@ -219,7 +166,7 @@ func _create_visual() -> void:
 	shield_glob.set("tags", ["pullable", "shield", "chapter5"])
 	shield_node.add_child(shield_glob)
 
-	# Citation Baton — right hand, crackling blue energy
+	# Citation Baton — right hand, crackling blue energy (overlaid on GLB)
 	baton_node = MeshInstance3D.new()
 	baton_node.name = "CitationBaton"
 	var baton_mesh = CylinderMesh.new()

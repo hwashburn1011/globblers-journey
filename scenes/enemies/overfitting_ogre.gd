@@ -43,108 +43,67 @@ func _ready() -> void:
 	super._ready()
 
 func _create_visual() -> void:
-	mesh_node = MeshInstance3D.new()
-	mesh_node.name = "EnemyMesh"
-	mesh_node.position.y = 0.9
+	# Load the real GLB model — this ogre memorized the upgrade path
+	var glb_scene = load("res://assets/models/enemies/overfitting_ogre.glb")
+	if glb_scene:
+		var model = glb_scene.instantiate()
+		model.name = "OgreModel"
+		model.position.y = 0.0
+		model.scale = Vector3(1.2, 1.2, 1.2)  # Beefy boy needs presence
+		add_child(model)
+		# Find the first MeshInstance3D for base_enemy material swaps
+		mesh_node = _find_mesh_instance(model)
+		if mesh_node:
+			base_material = mesh_node.get_active_material(0) as StandardMaterial3D
+	else:
+		# CSG fallback — the ogre overfit to the old loading method
+		_create_csg_fallback()
 
-	# Ogre body — big chunky box because overfitting is blunt force
-	var body_mesh = BoxMesh.new()
-	body_mesh.size = Vector3(1.2, 1.4, 1.0)
-	mesh_node.mesh = body_mesh
-
-	base_material = StandardMaterial3D.new()
-	base_material.albedo_color = Color(0.5, 0.2, 0.05)  # Deep bronze-brown
-	base_material.emission_enabled = true
-	base_material.emission = Color(0.6, 0.3, 0.05)  # Orange-amber glow
-	base_material.emission_energy_multiplier = 1.5
-	base_material.metallic = 0.6
-	base_material.roughness = 0.4
-	mesh_node.material_override = base_material
-	add_child(mesh_node)
-
-	# Head — slightly smaller box on top with "brain" pattern
-	var head = MeshInstance3D.new()
-	var head_mesh = BoxMesh.new()
-	head_mesh.size = Vector3(0.8, 0.7, 0.7)
-	head.mesh = head_mesh
-	head.position.y = 1.0
-
-	var head_mat = StandardMaterial3D.new()
-	head_mat.albedo_color = Color(0.4, 0.15, 0.05)
-	head_mat.emission_enabled = true
-	head_mat.emission = Color(0.7, 0.4, 0.1)
-	head_mat.emission_energy_multiplier = 2.0
-	head.material_override = head_mat
-	mesh_node.add_child(head)
-
-	# Eyes — two amber squares (memorizing everything they see)
-	var eye_mat = StandardMaterial3D.new()
-	eye_mat.albedo_color = Color(1.0, 0.6, 0.0)
-	eye_mat.emission_enabled = true
-	eye_mat.emission = Color(1.0, 0.6, 0.0)
-	eye_mat.emission_energy_multiplier = 5.0
-
-	for side in [-1, 1]:
-		var eye = MeshInstance3D.new()
-		var eye_mesh = BoxMesh.new()
-		eye_mesh.size = Vector3(0.15, 0.12, 0.05)
-		eye.mesh = eye_mesh
-		eye.position = Vector3(side * 0.2, 1.1, 0.35)
-		eye.material_override = eye_mat
-		mesh_node.add_child(eye)
-
-	# Arms — thick cylinders, this guy lifts (training data)
-	var arm_mat = StandardMaterial3D.new()
-	arm_mat.albedo_color = Color(0.45, 0.18, 0.05)
-	arm_mat.emission_enabled = true
-	arm_mat.emission = Color(0.5, 0.25, 0.05)
-	arm_mat.emission_energy_multiplier = 1.0
-
-	for side in [-1, 1]:
-		var arm = MeshInstance3D.new()
-		var arm_mesh = CylinderMesh.new()
-		arm_mesh.radius = 0.18
-		arm_mesh.height = 0.9
-		arm.mesh = arm_mesh
-		arm.position = Vector3(side * 0.75, 0.3, 0)
-		arm.rotation.z = side * deg_to_rad(15)
-		arm.material_override = arm_mat
-		mesh_node.add_child(arm)
-
-	# "Memory bank" on back — small glowing cubes representing stored patterns
-	var mem_mat = StandardMaterial3D.new()
-	mem_mat.albedo_color = Color(0.224, 1.0, 0.078)
-	mem_mat.emission_enabled = true
-	mem_mat.emission = Color(0.224, 1.0, 0.078)
-	mem_mat.emission_energy_multiplier = 3.0
-
-	for i in range(4):
-		for j in range(2):
-			var mem_cube = MeshInstance3D.new()
-			var cube_mesh = BoxMesh.new()
-			cube_mesh.size = Vector3(0.12, 0.12, 0.08)
-			mem_cube.mesh = cube_mesh
-			mem_cube.position = Vector3(-0.2 + i * 0.14, 0.5 + j * 0.15, -0.52)
-			mem_cube.material_override = mem_mat
-			mesh_node.add_child(mem_cube)
-
-	# Confidence display floating above head
+	# Confidence display floating above head — the ogre's hubris meter
 	confidence_label = Label3D.new()
 	confidence_label.text = "CONFIDENCE: 0%"
 	confidence_label.font_size = 32
 	confidence_label.modulate = Color(1.0, 0.6, 0.0)
-	confidence_label.position = Vector3(0, 2.2, 0)
+	confidence_label.position = Vector3(0, 2.8, 0)
 	confidence_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	confidence_label.no_depth_test = true
-	mesh_node.add_child(confidence_label)
+	add_child(confidence_label)
 
-	# Amber glow light
+	# Amber glow light — because overconfidence should be visible from space
 	var light = OmniLight3D.new()
 	light.light_color = Color(0.8, 0.4, 0.05)
 	light.light_energy = 2.0
 	light.omni_range = 4.0
 	light.position.y = 1.0
 	add_child(light)
+
+func _find_mesh_instance(node: Node) -> MeshInstance3D:
+	# Recursively find first MeshInstance3D — digging through the ogre's data blocks
+	if node is MeshInstance3D:
+		return node
+	for child in node.get_children():
+		var found = _find_mesh_instance(child)
+		if found:
+			return found
+	return null
+
+func _create_csg_fallback() -> void:
+	# Original CSG box for when the GLB fails to generalize
+	mesh_node = MeshInstance3D.new()
+	mesh_node.name = "EnemyMesh"
+	mesh_node.position.y = 0.9
+	var body_mesh = BoxMesh.new()
+	body_mesh.size = Vector3(1.2, 1.4, 1.0)
+	mesh_node.mesh = body_mesh
+	base_material = StandardMaterial3D.new()
+	base_material.albedo_color = Color(0.5, 0.2, 0.05)
+	base_material.emission_enabled = true
+	base_material.emission = Color(0.6, 0.3, 0.05)
+	base_material.emission_energy_multiplier = 1.5
+	base_material.metallic = 0.6
+	base_material.roughness = 0.4
+	mesh_node.material_override = base_material
+	add_child(mesh_node)
 
 func _physics_process(delta: float) -> void:
 	super._physics_process(delta)

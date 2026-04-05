@@ -8,11 +8,15 @@ extends Node3D
 # Failure: triggers alarm or spawns enemies.
 
 const INTERACT_RANGE := 3.5
+const _HINT_SCENE := preload("res://scenes/ui/first_time_hint.tscn")
+const _PROMPT_SCENE := preload("res://scenes/ui/interaction_prompt.tscn")
+const _CAST_VFX_SCENE := preload("res://scenes/vfx/ability_cast.tscn")
 
 var player: CharacterBody3D
 var _nearby_hackable: Node = null
 var _is_hacking := false
 var _hack_ui: Control = null
+var _interaction_prompt: Node = null
 
 # Minigame state
 var _sequence: Array[int] = []
@@ -42,6 +46,8 @@ func _on_tree_changed(_node: Node) -> void:
 
 func setup(p: CharacterBody3D) -> void:
 	player = p
+	_interaction_prompt = _PROMPT_SCENE.instantiate()
+	add_child(_interaction_prompt)
 
 func _process(delta: float) -> void:
 	if _is_hacking:
@@ -72,7 +78,7 @@ func _scan_for_hackables() -> void:
 		if not is_instance_valid(node) or not node is Node3D:
 			continue
 		var dist = player.global_position.distance_to((node as Node3D).global_position)
-		if dist >= INTERACT_RANGE or dist >= closest_dist:
+		if dist >= INTERACT_RANGE or dist > closest_dist:
 			continue
 		# Check hackable group nodes for hackable component
 		if node.is_in_group("hackable"):
@@ -85,6 +91,15 @@ func _scan_for_hackables() -> void:
 			# hackable_objects group — node itself is the target
 			_nearby_hackable = node
 			closest_dist = dist
+
+	# First time spotting a hackable? Drop the tutorial hint — hand-holding, but necessary
+	if _nearby_hackable:
+		_show_hint_once("hack", "TERMINAL HACK", "Press T near glowing terminals. Repeat the arrow sequence.")
+		if _interaction_prompt and _interaction_prompt.has_method("show_prompt"):
+			_interaction_prompt.show_prompt("[T] HACK")
+	else:
+		if _interaction_prompt and _interaction_prompt.has_method("hide_prompt"):
+			_interaction_prompt.hide_prompt()
 
 func try_interact() -> void:
 	if _is_hacking:
@@ -107,8 +122,11 @@ func try_interact() -> void:
 		_hack_difficulty = hackable_comp.hack_difficulty
 
 	hackable_comp.start_hack()
+	_spawn_cast_vfx()
 	_start_minigame()
 	hack_started.emit(_nearby_hackable)
+	if _interaction_prompt and _interaction_prompt.has_method("hide_prompt"):
+		_interaction_prompt.hide_prompt()
 	# "Initiating hack sequence. Try not to drool on the keyboard."
 	var audio = get_node_or_null("/root/AudioManager")
 	if audio:
@@ -292,3 +310,24 @@ func has_nearby_hackable() -> bool:
 
 func is_hacking() -> bool:
 	return _is_hacking
+
+# — Hint plumbing — because apparently players don't read minds
+func _show_hint_once(id: String, title: String, body: String) -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if not gm or gm.has_seen_hint(id):
+		return
+	gm.mark_hint_seen(id)
+	var hint_inst = _HINT_SCENE.instantiate()
+	get_tree().root.add_child(hint_inst)
+	hint_inst.show_hint(title, body)
+
+func _spawn_cast_vfx() -> void:
+	if not player:
+		return
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		return
+	var vfx := _CAST_VFX_SCENE.instantiate()
+	vfx.ability_type = "hack"
+	vfx.global_position = player.global_position + Vector3(0, 0.8, 0) + (-player.global_transform.basis.z.normalized() * 0.4)
+	get_tree().current_scene.add_child(vfx)

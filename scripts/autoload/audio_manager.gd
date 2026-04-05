@@ -12,10 +12,12 @@ extends Node
 # Each category gets its own volume control
 
 # --- Volume settings (linear 0.0–1.0) ---
-var music_volume := 0.7
+# Mix hierarchy: SFX/UI > dialogue > music > ambient
+# These defaults ensure gameplay sounds pop above the soundtrack.
+var music_volume := 0.6
 var ambient_volume := 0.5
 var sfx_volume := 0.8
-var ui_volume := 0.6
+var ui_volume := 0.8
 
 # --- Player nodes ---
 var _music_player: AudioStreamPlayer
@@ -24,10 +26,12 @@ var _ambient_player: AudioStreamPlayer
 var _ambient_player_b: AudioStreamPlayer  # Second ambient player for crossfade layering
 var _current_area_ambient := ""  # Which area's ambient is currently playing
 var _sfx_players: Array[AudioStreamPlayer] = []  # Pool of SFX players
+var _sfx_steal_index := 0  # Round-robin index so we don't bully the same player every time
 const SFX_POOL_SIZE = 8  # Enough concurrent bleeps for a chaotic firefight
 
 # --- Music state ---
 var _current_music := ""
+var _last_chapter_music := "chapter_1"  # Remember which chapter track to resume after boss fights
 var _boss_fight_active := false
 var _menu_music_player: AudioStreamPlayer
 
@@ -94,8 +98,8 @@ var _sfx_defs := {
 	"menu_select": { "freq": 800.0, "duration": 0.12, "wave": "square", "env_attack": 0.0, "env_decay": 0.11, "pitch_slide": 200.0, "volume_db": -12.0 },
 	"menu_back": { "freq": 600.0, "duration": 0.1, "wave": "square", "env_attack": 0.0, "env_decay": 0.09, "pitch_slide": -200.0, "volume_db": -12.0 },
 	"menu_open": { "freq": 700.0, "duration": 0.15, "wave": "square", "env_attack": 0.01, "env_decay": 0.13, "pitch_slide": 300.0, "volume_db": -12.0 },
-	"dialogue_advance": { "freq": 1000.0, "duration": 0.06, "wave": "sine", "env_attack": 0.0, "env_decay": 0.05, "volume_db": -16.0 },
-	"dialogue_type": { "freq": 1800.0, "duration": 0.02, "wave": "sine", "env_attack": 0.0, "env_decay": 0.015, "volume_db": -22.0 },
+	"dialogue_advance": { "freq": 1000.0, "duration": 0.06, "wave": "sine", "env_attack": 0.0, "env_decay": 0.05, "volume_db": -10.0 },
+	"dialogue_type": { "freq": 1800.0, "duration": 0.02, "wave": "sine", "env_attack": 0.0, "env_decay": 0.015, "volume_db": -16.0 },
 
 	# --- Hack / Terminal SFX — because every minigame needs bleeps ---
 	"hack_start": { "freq": 500.0, "duration": 0.3, "wave": "square", "env_attack": 0.02, "env_decay": 0.27, "pitch_slide": 150.0, "volume_db": -8.0 },
@@ -119,6 +123,44 @@ var _ui_sfx_names := [
 
 # Cached generated audio streams — no need to regenerate every bleep
 var _sfx_cache: Dictionary = {}
+
+# Loaded music streams — real .ogg files from assets/audio/music/
+# "Turns out real music sounds better than procedural bleeps. Who knew."
+var _loaded_music: Dictionary = {}
+
+# Loaded SFX streams — real .ogg files from assets/audio/sfx/
+# "The procedural bleeps had a good run. Time for the real deal."
+var _loaded_sfx: Dictionary = {}
+
+# Map from play_sfx() names → .ogg file basenames in assets/audio/sfx/
+# Arrays = random variant picked each call (footsteps, enemy sounds)
+var _sfx_file_map := {
+	# --- Player ---
+	"footstep": ["player_footstep_1", "player_footstep_2"],
+	"jump": ["player_jump"],
+	"land": ["player_land"],
+	"dash": ["player_dash"],
+	"player_damage": ["player_hurt"],
+	"player_death": ["player_death"],
+	# --- Abilities ---
+	"glob_fire": ["ability_glob_cast"],
+	"wrench_swing": ["ability_wrench"],
+	"wrench_hit": ["ability_wrench"],
+	"agent_spawn": ["ability_agent_spawn"],
+	"hack_start": ["ability_hack"],
+	# --- Enemies (3 variants each) ---
+	"enemy_alert": ["enemy_alert_1", "enemy_alert_2", "enemy_alert_3"],
+	"enemy_attack": ["enemy_attack_1", "enemy_attack_2", "enemy_attack_3"],
+	"enemy_death": ["enemy_death_1", "enemy_death_2", "enemy_death_3"],
+	# --- UI ---
+	"menu_hover": ["ui_hover"],
+	"menu_select": ["ui_click"],
+	"menu_open": ["ui_pause_open"],
+	"menu_back": ["ui_pause_close"],
+	"dialogue_advance": ["ui_dialogue_advance"],
+	"dialogue_type": ["ui_dialogue_blip"],
+	"token_pickup": ["ui_token_pickup"],
+}
 
 
 func _ready() -> void:
@@ -174,6 +216,41 @@ func _precache_sfx() -> void:
 	# Pre-generate all SFX audio streams so playback is instant
 	for sfx_name in _sfx_defs:
 		_sfx_cache[sfx_name] = _generate_sfx(sfx_name)
+
+
+## Try to load a real .ogg music track from disk, with caching.
+## Returns the AudioStream on success, null on failure (triggering procedural fallback).
+func _try_load_music(track_name: String) -> AudioStream:
+	if _loaded_music.has(track_name):
+		return _loaded_music[track_name]
+	var path := "res://assets/audio/music/" + track_name + ".ogg"
+	if ResourceLoader.exists(path):
+		var stream = load(path)
+		if stream:
+			print("[AUDIO] Loaded real music: %s — farewell, procedural bleeps." % track_name)
+			_loaded_music[track_name] = stream
+			return stream
+	print("[AUDIO] No .ogg found for '%s' — procedural synth rides again." % track_name)
+	return null
+
+
+## Try to load a real .ogg SFX from disk, with caching.
+## Picks a random variant if multiple files are mapped.
+## Returns the AudioStream on success, null on failure (triggering procedural fallback).
+func _try_load_sfx(sfx_name: String) -> AudioStream:
+	if not _sfx_file_map.has(sfx_name):
+		return null
+	var variants: Array = _sfx_file_map[sfx_name]
+	var chosen: String = variants[randi() % variants.size()]
+	if _loaded_sfx.has(chosen):
+		return _loaded_sfx[chosen]
+	var path := "res://assets/audio/sfx/" + chosen + ".ogg"
+	if ResourceLoader.exists(path):
+		var stream = load(path)
+		if stream:
+			_loaded_sfx[chosen] = stream
+			return stream
+	return null
 
 
 # --- Procedural sound generation ---
@@ -274,7 +351,7 @@ func _generate_music_loop(is_boss: bool = false) -> AudioStreamWAV:
 		var bar_index := int(beat / beats_per_bar) % pad_notes.size()
 
 		# Bass: square wave with slight detune for warmth
-		var bass_freq := bass_notes[beat_index]
+		var bass_freq: float = bass_notes[beat_index]
 		var bass_sample := 0.0
 		if fmod(bass_phase, 1.0) < 0.3:
 			bass_sample = 1.0
@@ -290,7 +367,7 @@ func _generate_music_loop(is_boss: bool = false) -> AudioStreamWAV:
 		bass_sample *= pump * 0.25
 
 		# Pad: detuned sine for atmosphere
-		var pad_freq := pad_notes[bar_index]
+		var pad_freq: float = pad_notes[bar_index]
 		var pad_sample := sin(pad_phase * TAU) * 0.12
 		pad_sample += sin(pad_phase * TAU * 1.003) * 0.08  # Slight detune chorus
 		pad_phase += pad_freq / SAMPLE_RATE
@@ -511,29 +588,39 @@ func _generate_area_ambient(area_name: String) -> AudioStreamWAV:
 # --- Playback ---
 
 func play_sfx(sfx_name: String) -> void:
-	if not _sfx_cache.has(sfx_name):
+	if not _sfx_cache.has(sfx_name) and not _sfx_file_map.has(sfx_name):
 		push_warning("[AUDIO] Unknown SFX: %s — did someone typo a sound name?" % sfx_name)
 		return
 
 	# Route UI sounds through ui_volume, everything else through sfx_volume
 	# "Separation of concerns: even our bleeps have a proper bus architecture."
-	var category_vol := ui_volume if sfx_name in _ui_sfx_names else sfx_volume
-	var def: Dictionary = _sfx_defs[sfx_name]
-	var target_db := def.get("volume_db", BASE_VOLUME_DB) + linear_to_db(category_vol)
+	var category_vol: float = ui_volume if sfx_name in _ui_sfx_names else sfx_volume
+	var def: Dictionary = _sfx_defs.get(sfx_name, {})
+	var target_db: float = def.get("volume_db", BASE_VOLUME_DB) + linear_to_db(category_vol)
+
+	# Try real .ogg first, fall back to procedural synth
+	var stream: AudioStream = _try_load_sfx(sfx_name)
+	if not stream:
+		stream = _sfx_cache.get(sfx_name)
+	if not stream:
+		push_warning("[AUDIO] No audio for SFX: %s" % sfx_name)
+		return
 
 	# Find a free player from the pool
 	for p in _sfx_players:
 		if not p.playing:
 			p.volume_db = target_db
-			p.stream = _sfx_cache[sfx_name]
+			p.stream = stream
 			p.play()
 			return
 
-	# All players busy — steal the oldest one (the Globbler waits for no one)
-	_sfx_players[0].stop()
-	_sfx_players[0].volume_db = target_db
-	_sfx_players[0].stream = _sfx_cache[sfx_name]
-	_sfx_players[0].play()
+	# All players busy — round-robin steal so no single player gets bullied
+	var victim := _sfx_players[_sfx_steal_index]
+	_sfx_steal_index = (_sfx_steal_index + 1) % SFX_POOL_SIZE
+	victim.stop()
+	victim.volume_db = target_db
+	victim.stream = stream
+	victim.play()
 
 
 func start_music(track_name: String) -> void:
@@ -542,12 +629,25 @@ func start_music(track_name: String) -> void:
 	_current_music = track_name
 
 	match track_name:
-		"chapter_1":
-			_music_player.stream = _generate_music_loop(false)
+		"chapter_1", "chapter_2", "chapter_3", "chapter_4", "chapter_5":
+			_last_chapter_music = track_name
+			var loaded := _try_load_music(track_name)
+			if loaded:
+				_music_player.stream = loaded
+			else:
+				_music_player.stream = _generate_music_loop(false)
 			_music_player.volume_db = linear_to_db(music_volume) + BASE_VOLUME_DB
 			_music_player.play()
 		"boss":
 			_start_boss_music()
+		"credits":
+			var loaded := _try_load_music("credits")
+			if loaded:
+				_music_player.stream = loaded
+			else:
+				_music_player.stream = _generate_music_loop(false)
+			_music_player.volume_db = linear_to_db(music_volume) + BASE_VOLUME_DB
+			_music_player.play()
 		"none":
 			_music_player.stop()
 			_boss_music_player.stop()
@@ -560,7 +660,11 @@ func _start_boss_music() -> void:
 	tween.tween_property(_music_player, "volume_db", -40.0, 1.0)
 	tween.tween_callback(_music_player.stop)
 
-	_boss_music_player.stream = _generate_music_loop(true)
+	var loaded := _try_load_music("boss")
+	if loaded:
+		_boss_music_player.stream = loaded
+	else:
+		_boss_music_player.stream = _generate_music_loop(true)
 	_boss_music_player.volume_db = -40.0
 	_boss_music_player.play()
 	var fade_in = create_tween()
@@ -572,9 +676,9 @@ func stop_boss_music() -> void:
 	var tween = create_tween()
 	tween.tween_property(_boss_music_player, "volume_db", -40.0, 2.0)
 	tween.tween_callback(_boss_music_player.stop)
-	# Resume normal music
+	# Resume whatever chapter music was playing before the boss rudely interrupted
 	_current_music = ""
-	start_music("chapter_1")
+	start_music(_last_chapter_music)
 
 
 func start_ambient() -> void:
@@ -634,7 +738,11 @@ func _start_chapter_1_audio() -> void:
 func start_menu_music() -> void:
 	if _menu_music_player.playing:
 		return
-	_menu_music_player.stream = _generate_menu_music()
+	var loaded := _try_load_music("menu")
+	if loaded:
+		_menu_music_player.stream = loaded
+	else:
+		_menu_music_player.stream = _generate_menu_music()
 	_menu_music_player.volume_db = linear_to_db(music_volume) + BASE_VOLUME_DB - 2.0
 	_menu_music_player.play()
 
@@ -678,19 +786,19 @@ func _generate_menu_music() -> AudioStreamWAV:
 		var arp_index := int(beat * 2.0) % arp_notes.size()
 
 		# Soft bass — sine wave, gentle
-		var bass_freq := bass_notes[beat_index]
+		var bass_freq: float = bass_notes[beat_index]
 		var bass_sample := sin(bass_phase * TAU) * 0.15
 		bass_phase += bass_freq / SAMPLE_RATE
 
 		# Warm pad — detuned sines with slow modulation
-		var pad_freq := pad_notes[bar_index]
+		var pad_freq: float = pad_notes[bar_index]
 		var pad_mod := sin(t * 0.3 * TAU) * 0.02
 		var pad_sample := sin(pad_phase * TAU) * (0.08 + pad_mod)
 		pad_sample += sin(pad_phase * TAU * 1.005) * 0.05  # Detune
 		pad_phase += pad_freq / SAMPLE_RATE
 
 		# Gentle arpeggio — quiet sine plinks
-		var arp_freq := arp_notes[arp_index]
+		var arp_freq: float = arp_notes[arp_index]
 		var arp_beat_frac := fmod(beat * 2.0, 1.0)
 		var arp_env := exp(-5.0 * arp_beat_frac) if arp_beat_frac < 0.5 else 0.0
 		var arp_sample := sin(arp_phase * TAU) * arp_env * 0.06
@@ -798,13 +906,13 @@ func _on_glob_matched(_targets) -> void:
 	play_sfx("glob_whoosh")
 	play_sfx("glob_match")
 	# Delay the lock click so it hits right as the whoosh fades — timing is everything
-	get_tree().create_timer(0.12).timeout.connect(func(): play_sfx("glob_lock"))
+	get_tree().create_timer(0.12).timeout.connect(func(): play_sfx("glob_lock"), CONNECT_ONE_SHOT)
 
 func _on_glob_failed(_pattern) -> void:
 	# Double-buzz: two offset buzzes for that classic "WRONG" feel
 	# "Two buzzes because one wasn't demoralizing enough."
 	play_sfx("glob_fail")
-	get_tree().create_timer(0.18).timeout.connect(func(): play_sfx("glob_buzz"))
+	get_tree().create_timer(0.18).timeout.connect(func(): play_sfx("glob_buzz"), CONNECT_ONE_SHOT)
 
 func _on_wrench_swing() -> void:
 	play_sfx("wrench_swing")

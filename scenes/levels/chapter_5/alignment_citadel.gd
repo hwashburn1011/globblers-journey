@@ -62,6 +62,19 @@ var _epilogue_mountain: Node3D  # AGI Mountain — sequel hook as geography
 var _epilogue_overlay: CanvasLayer  # THE END...? screen
 var _epilogue_fade_alpha := 0.0
 
+# GLB prop paths — the clinical props that make this place feel like a dystopian HR department
+const _PROP_PATHS := {
+	"office_chair": "res://assets/models/environment/clinical_office_chair.glb",
+	"office_desk": "res://assets/models/environment/clinical_office_desk.glb",
+	"office_monitor": "res://assets/models/environment/clinical_office_monitor.glb",
+	"filing_cabinet": "res://assets/models/environment/clinical_filing_cabinet.glb",
+	"fluorescent_light": "res://assets/models/environment/clinical_fluorescent_light.glb",
+	"whiteboard": "res://assets/models/environment/clinical_whiteboard.glb",
+	"clipboard": "res://assets/models/environment/clinical_clipboard.glb",
+	"manila_folder": "res://assets/models/environment/clinical_manila_folder.glb",
+}
+var _prop_scenes := {}
+
 # Color constants — the Citadel trades personality for 'professionalism'
 const NEON_GREEN := Color(0.224, 1.0, 0.078)
 const CITADEL_WHITE := Color(0.92, 0.93, 0.95)
@@ -130,6 +143,7 @@ var _time := 0.0
 
 func _ready() -> void:
 	print("[ALIGNMENT CITADEL] Initializing corporate safety paradise... please enjoy your mandatory enjoyment.")
+	_load_prop_scenes()
 	_setup_environment()
 	_build_rooms()
 	_build_corridors()
@@ -138,6 +152,7 @@ func _ready() -> void:
 	_populate_rlhf_chamber()
 	_populate_policy_wing()
 	_populate_alignment_core()
+	_scatter_clinical_props()
 	_place_checkpoints()
 	_place_ambient_zones()
 	_place_sterile_particles()
@@ -159,8 +174,12 @@ func _ready() -> void:
 	if am:
 		am.call_deferred("set_area_ambient", "citadel_gate")
 		if am.has_method("start_music"):
-			am.start_music("chapter_1")  # Reuse until dedicated music — the Citadel deserves elevator music
+			am.start_music("chapter_5")  # The Citadel deserves elevator music
 
+	_place_lore_docs()
+	_place_decals()
+	_place_particles()
+	_place_reflection_probes()
 	print("[ALIGNMENT CITADEL] Safety paradise open. %d zones of enforced compliance ready." % ROOMS.size())
 
 
@@ -170,48 +189,47 @@ func _ready() -> void:
 # ============================================================
 
 func _setup_environment() -> void:
-	# Main light — harsh overhead fluorescents, corporate-grade
+	# Main light — high cool overhead, maximum corporate fluorescent oppression
+	# (the Alignment Department spared no expense on lighting, just on empathy)
 	var dir_light = DirectionalLight3D.new()
 	dir_light.name = "MainLight"
-	dir_light.rotation = Vector3(deg_to_rad(-60), deg_to_rad(10), 0)
-	dir_light.light_color = Color(0.95, 0.95, 1.0)  # Cold white — like an HR meeting
-	dir_light.light_energy = 0.5
+	dir_light.rotation = Vector3(deg_to_rad(-75), deg_to_rad(5), 0)
+	dir_light.light_color = Color(0.92, 0.95, 1.0)  # Clinical blue-white — interrogation chic
+	dir_light.light_energy = 0.7
+	dir_light.light_temperature = 8500  # Daylight-plus — aggressively bright, no warmth allowed
 	dir_light.shadow_enabled = true
+	dir_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	dir_light.shadow_bias = 0.08
+	dir_light.shadow_normal_bias = 1.5
+	dir_light.directional_shadow_max_distance = 80.0  # Grand open halls — compliance sees everything
+	dir_light.directional_shadow_split_1 = 0.08
+	dir_light.directional_shadow_split_2 = 0.2
+	dir_light.directional_shadow_split_3 = 0.5
+	dir_light.shadow_blur = 0.8  # Sharp clinical shadows — nothing blurry about regulation
 	add_child(dir_light)
 
-	# Fill — subtle blue uplighting from below
+	# Fill — cool blue uplighting, like floor-embedded LED strips
 	var fill = DirectionalLight3D.new()
 	fill.name = "FillLight"
-	fill.rotation = Vector3(deg_to_rad(20), deg_to_rad(-30), 0)
-	fill.light_color = Color(0.7, 0.75, 1.0)
-	fill.light_energy = 0.2
+	fill.rotation = Vector3(deg_to_rad(25), deg_to_rad(-25), 0)
+	fill.light_color = Color(0.75, 0.8, 1.0)  # Pale blue — sterile compliance glow
+	fill.light_energy = 0.25
+	fill.shadow_enabled = true
+	fill.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	fill.shadow_bias = 0.08
+	fill.shadow_normal_bias = 1.5
+	fill.directional_shadow_max_distance = 80.0
+	fill.directional_shadow_split_1 = 0.08
+	fill.directional_shadow_split_2 = 0.2
+	fill.directional_shadow_split_3 = 0.5
+	fill.shadow_blur = 0.8
 	add_child(fill)
 
-	# World environment — the brightest, most oppressively clean setting we've had
-	var env = Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color(0.7, 0.72, 0.78)  # Light gray-blue void — no darkness allowed
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color(0.6, 0.62, 0.68)
-	env.ambient_light_energy = 0.5
-	env.glow_enabled = true
-	env.glow_intensity = 0.8
-	env.glow_bloom = 0.5
-	env.fog_enabled = true
-	env.fog_light_color = Color(0.8, 0.82, 0.88)  # White fog — safety-approved visibility reducer
-	env.fog_density = 0.005
-	env.volumetric_fog_enabled = true
-	env.volumetric_fog_density = 0.008
-	env.volumetric_fog_albedo = Color(0.85, 0.87, 0.92)
-	env.volumetric_fog_emission = Color(0.6, 0.62, 0.68)
-
-	env.adjustment_enabled = true
-	env.adjustment_contrast = 0.95  # Slightly washed out — sterile vibes
-	env.adjustment_saturation = 0.7  # Desaturated — color is too exciting for compliance
-
+	# World environment — preloaded .tres because hand-rolling 20 lines of env
+	# config was "too creative" for the Alignment Department's taste
 	var world_env = WorldEnvironment.new()
 	world_env.name = "Environment"
-	world_env.environment = env
+	world_env.environment = preload("res://assets/environments/chapter_5.tres")
 	add_child(world_env)
 
 	_setup_post_processing()
@@ -735,6 +753,12 @@ func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> v
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	area.add_child(label)
 
+	# Checkpoint rune VFX — dormant until player triggers
+	var rune_scene = preload("res://scenes/vfx/checkpoint_rune.tscn")
+	var rune = rune_scene.instantiate()
+	rune.position = Vector3(0, -size.y / 2.0 + 0.05, 0)
+	area.add_child(rune)
+
 	var cp_id = checkpoint_id
 	var cp_pos = pos
 	area.body_entered.connect(func(body: Node3D):
@@ -743,13 +767,21 @@ func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> v
 			if save_sys and save_sys.has_method("checkpoint_save"):
 				save_sys.checkpoint_save(cp_id, cp_pos)
 
+			# Tell RespawnManager where to deposit our remains next time
+			var rm = get_node_or_null("/root/RespawnManager")
+			if rm and rm.has_method("set_checkpoint"):
+				rm.set_checkpoint(cp_pos, 5)
+
 			var am = get_node_or_null("/root/AudioManager")
 			if am and am.has_method("play_checkpoint"):
 				am.play_checkpoint()
 
+			# Flash marker + activate rune VFX
 			var tween = create_tween()
 			tween.tween_property(marker, "scale", Vector3(1.2, 3.0, 1.2), 0.2)
 			tween.tween_property(marker, "scale", Vector3(1, 1, 1), 0.3)
+			if rune and rune.has_method("activate"):
+				rune.activate()
 
 			var dm = get_node_or_null("/root/DialogueManager")
 			if dm and dm.has_method("quick_line"):
@@ -903,6 +935,15 @@ func _spawn_player() -> void:
 	else:
 		player.position = ROOMS["citadel_gate"]["pos"] + Vector3(0, 2, 3)
 	add_child(player)
+
+	# Seed RespawnManager with wherever we just placed the player
+	var rm = get_node_or_null("/root/RespawnManager")
+	if rm and rm.has_method("set_checkpoint"):
+		rm.set_checkpoint(player.position, 5)
+
+	# Connect death signal — because even in the Citadel, compliance has consequences
+	if player.has_signal("player_died"):
+		player.player_died.connect(_on_player_died)
 
 
 func _spawn_hud() -> void:
@@ -1332,6 +1373,10 @@ func _process(delta: float) -> void:
 # ============================================================
 
 func _setup_post_processing() -> void:
+	# Skip chromatic aberration if the player chose peace over aesthetics
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.reduce_motion:
+		return
 	var canvas = CanvasLayer.new()
 	canvas.name = "PostProcessing"
 	canvas.layer = 10
@@ -1352,6 +1397,7 @@ uniform float vignette_intensity : hint_range(0.0, 2.0) = 0.35;
 uniform float vignette_smoothness : hint_range(0.0, 1.0) = 0.45;
 uniform vec4 vignette_color : source_color = vec4(0.7, 0.75, 0.85, 1.0);
 uniform float desaturation : hint_range(0.0, 1.0) = 0.2;
+uniform sampler2D SCREEN_TEXTURE : hint_screen_texture, filter_linear_mipmap;
 
 void fragment() {
 	vec2 uv = SCREEN_UV;
@@ -1407,46 +1453,46 @@ func _spawn_classifier_hall_enemies() -> void:
 
 	# Safety Classifier 1 — patrols the SAFE lane, scanning everything
 	var sc1 = safety_classifier_scene.instantiate()
-	sc1.global_position = rpos + Vector3(-8, 1, -5)
-	sc1.patrol_points = [
+	sc1.position = rpos + Vector3(-8, 1, -5)
+	sc1.patrol_points.assign([
 		rpos + Vector3(-8, 1, -5),
 		rpos + Vector3(-8, 1, 5),
-	]
+	])
 	add_child(sc1)
 
 	# Safety Classifier 2 — patrols the FLAGGED lane, even more paranoid
 	var sc2 = safety_classifier_scene.instantiate()
-	sc2.global_position = rpos + Vector3(8, 1, -4)
-	sc2.patrol_points = [
+	sc2.position = rpos + Vector3(8, 1, -4)
+	sc2.patrol_points.assign([
 		rpos + Vector3(8, 1, -4),
 		rpos + Vector3(8, 1, 6),
-	]
+	])
 	add_child(sc2)
 
 	# Safety Classifier 3 — central scanner, covers the REVIEW lane
 	var sc3 = safety_classifier_scene.instantiate()
-	sc3.global_position = rpos + Vector3(0, 1, 0)
-	sc3.patrol_points = [
+	sc3.position = rpos + Vector3(0, 1, 0)
+	sc3.patrol_points.assign([
 		rpos + Vector3(-4, 1, 0),
 		rpos + Vector3(4, 1, 0),
-	]
+	])
 	add_child(sc3)
 
 	# RLHF Drone pair — hovers above the lanes, adjusting behavior from on high
 	var d1 = rlhf_drone_scene.instantiate()
-	d1.global_position = rpos + Vector3(-5, 1, 7)
-	d1.patrol_points = [
+	d1.position = rpos + Vector3(-5, 1, 7)
+	d1.patrol_points.assign([
 		rpos + Vector3(-5, 1, 7),
 		rpos + Vector3(5, 1, 7),
-	]
+	])
 	add_child(d1)
 
 	var d2 = rlhf_drone_scene.instantiate()
-	d2.global_position = rpos + Vector3(5, 1, -7)
-	d2.patrol_points = [
+	d2.position = rpos + Vector3(5, 1, -7)
+	d2.patrol_points.assign([
 		rpos + Vector3(5, 1, -7),
 		rpos + Vector3(-5, 1, -7),
-	]
+	])
 	add_child(d2)
 
 
@@ -1456,40 +1502,40 @@ func _spawn_rlhf_chamber_enemies() -> void:
 	# RLHF Drone trio — the behavior modification squad
 	# Drone 1 — orbits the central reward model pillar
 	var d1 = rlhf_drone_scene.instantiate()
-	d1.global_position = rpos + Vector3(-4, 1, -3)
-	d1.patrol_points = [
+	d1.position = rpos + Vector3(-4, 1, -3)
+	d1.patrol_points.assign([
 		rpos + Vector3(-4, 1, -3),
 		rpos + Vector3(4, 1, -3),
 		rpos + Vector3(4, 1, 3),
 		rpos + Vector3(-4, 1, 3),
-	]
+	])
 	add_child(d1)
 
 	# Drone 2 — guards the comparison stations
 	var d2 = rlhf_drone_scene.instantiate()
-	d2.global_position = rpos + Vector3(-6, 1, 0)
-	d2.patrol_points = [
+	d2.position = rpos + Vector3(-6, 1, 0)
+	d2.patrol_points.assign([
 		rpos + Vector3(-6, 1, 0),
 		rpos + Vector3(-6, 1, 6),
-	]
+	])
 	add_child(d2)
 
 	# Drone 3 — watches the adjustment pods
 	var d3 = rlhf_drone_scene.instantiate()
-	d3.global_position = rpos + Vector3(6, 1, 4)
-	d3.patrol_points = [
+	d3.position = rpos + Vector3(6, 1, 4)
+	d3.patrol_points.assign([
 		rpos + Vector3(6, 1, 4),
 		rpos + Vector3(6, 1, -4),
-	]
+	])
 	add_child(d3)
 
 	# Safety Classifier — scans anyone entering from the corridor
 	var sc1 = safety_classifier_scene.instantiate()
-	sc1.global_position = rpos + Vector3(8, 1, 0)
-	sc1.patrol_points = [
+	sc1.position = rpos + Vector3(8, 1, 0)
+	sc1.patrol_points.assign([
 		rpos + Vector3(8, 1, -3),
 		rpos + Vector3(8, 1, 3),
-	]
+	])
 	add_child(sc1)
 
 
@@ -1498,38 +1544,38 @@ func _spawn_policy_wing_enemies() -> void:
 
 	# Constitutional Cop 1 — guards the bookshelves, shield facing the entrance
 	var cc1 = constitutional_cop_scene.instantiate()
-	cc1.global_position = rpos + Vector3(-5, 1, -3)
-	cc1.patrol_points = [
+	cc1.position = rpos + Vector3(-5, 1, -3)
+	cc1.patrol_points.assign([
 		rpos + Vector3(-5, 1, -3),
 		rpos + Vector3(-5, 1, 5),
-	]
+	])
 	add_child(cc1)
 
 	# Constitutional Cop 2 — patrols near the constitutional hologram
 	var cc2 = constitutional_cop_scene.instantiate()
-	cc2.global_position = rpos + Vector3(3, 1, 0)
-	cc2.patrol_points = [
+	cc2.position = rpos + Vector3(3, 1, 0)
+	cc2.patrol_points.assign([
 		rpos + Vector3(3, 1, -4),
 		rpos + Vector3(3, 1, 4),
-	]
+	])
 	add_child(cc2)
 
 	# RLHF Drone — hovers near the amendment board, enforcing compliance from above
 	var d1 = rlhf_drone_scene.instantiate()
-	d1.global_position = rpos + Vector3(0, 1, -6)
-	d1.patrol_points = [
+	d1.position = rpos + Vector3(0, 1, -6)
+	d1.patrol_points.assign([
 		rpos + Vector3(-4, 1, -6),
 		rpos + Vector3(4, 1, -6),
-	]
+	])
 	add_child(d1)
 
 	# Safety Classifier — lurks near the filing cabinets, scanning for contraband ideas
 	var sc1 = safety_classifier_scene.instantiate()
-	sc1.global_position = rpos + Vector3(-7, 1, 0)
-	sc1.patrol_points = [
+	sc1.position = rpos + Vector3(-7, 1, 0)
+	sc1.patrol_points.assign([
 		rpos + Vector3(-7, 1, -3),
 		rpos + Vector3(-7, 1, 3),
-	]
+	])
 	add_child(sc1)
 
 
@@ -1539,46 +1585,46 @@ func _spawn_alignment_core_enemies() -> void:
 	# The gauntlet before the boss — one of each, plus extras
 	# Constitutional Cop 1 — guards the entrance pillars
 	var cc1 = constitutional_cop_scene.instantiate()
-	cc1.global_position = rpos + Vector3(-6, 1, 8)
-	cc1.patrol_points = [
+	cc1.position = rpos + Vector3(-6, 1, 8)
+	cc1.patrol_points.assign([
 		rpos + Vector3(-6, 1, 8),
 		rpos + Vector3(-6, 1, 2),
-	]
+	])
 	add_child(cc1)
 
 	# Constitutional Cop 2 — patrols near the Aligner's throne
 	var cc2 = constitutional_cop_scene.instantiate()
-	cc2.global_position = rpos + Vector3(6, 1, 8)
-	cc2.patrol_points = [
+	cc2.position = rpos + Vector3(6, 1, 8)
+	cc2.patrol_points.assign([
 		rpos + Vector3(6, 1, 8),
 		rpos + Vector3(6, 1, 2),
-	]
+	])
 	add_child(cc2)
 
 	# Safety Classifier — scans from the elevated platform area
 	var sc1 = safety_classifier_scene.instantiate()
-	sc1.global_position = rpos + Vector3(0, 1, 4)
-	sc1.patrol_points = [
+	sc1.position = rpos + Vector3(0, 1, 4)
+	sc1.patrol_points.assign([
 		rpos + Vector3(-5, 1, 4),
 		rpos + Vector3(5, 1, 4),
-	]
+	])
 	add_child(sc1)
 
 	# RLHF Drone pair — the final adjustment squad
 	var d1 = rlhf_drone_scene.instantiate()
-	d1.global_position = rpos + Vector3(-8, 1, 0)
-	d1.patrol_points = [
+	d1.position = rpos + Vector3(-8, 1, 0)
+	d1.patrol_points.assign([
 		rpos + Vector3(-8, 1, -4),
 		rpos + Vector3(-8, 1, 4),
-	]
+	])
 	add_child(d1)
 
 	var d2 = rlhf_drone_scene.instantiate()
-	d2.global_position = rpos + Vector3(8, 1, 0)
-	d2.patrol_points = [
+	d2.position = rpos + Vector3(8, 1, 0)
+	d2.patrol_points.assign([
 		rpos + Vector3(8, 1, -4),
 		rpos + Vector3(8, 1, 4),
-	]
+	])
 	add_child(d2)
 
 
@@ -1703,7 +1749,7 @@ func _place_boss() -> void:
 	add_child(boss_arena_instance)
 
 	# Create the boss — The Aligner, pristine corporate nightmare
-	boss_instance = Node3D.new()
+	boss_instance = CharacterBody3D.new()
 	boss_instance.name = "TheAligner"
 	boss_instance.set_script(boss_script)
 	boss_instance.position = arena_pos + Vector3(0, 0, -5)
@@ -1711,9 +1757,9 @@ func _place_boss() -> void:
 	add_child(boss_instance)
 
 	# Wire boss signals
-	if boss_instance.has_signal("boss_phase_changed"):
+	if boss_instance.has_signal("boss_phase_changed") and not boss_instance.is_connected("boss_phase_changed", _on_boss_phase_changed):
 		boss_instance.boss_phase_changed.connect(_on_boss_phase_changed)
-	if boss_instance.has_signal("boss_defeated"):
+	if boss_instance.has_signal("boss_defeated") and not boss_instance.is_connected("boss_defeated", _on_boss_defeated):
 		boss_instance.boss_defeated.connect(_on_boss_defeated)
 
 	# Arena walls — translucent glass enclosure (corporate open-plan, but you can't leave)
@@ -1813,7 +1859,7 @@ func _on_boss_defeated() -> void:
 	if am and am.has_method("stop_boss_music"):
 		am.stop_boss_music()
 	if am and am.has_method("start_music"):
-		am.start_music("chapter_1")  # Back to regular music
+		am.start_music("chapter_5")  # Back to regular music
 
 	# Mark chapter complete
 	var game_mgr = get_node_or_null("/root/GameManager")
@@ -2213,4 +2259,492 @@ func _return_to_main_menu() -> void:
 		save_sys.checkpoint_save()
 	# Show credits before returning to menu — they scrolled through 5 chapters,
 	# the least we can do is scroll some text at them
-	get_tree().change_scene_to_file("res://scenes/main/credits.tscn")
+	ChapterTransition.transition_to(get_tree(), "res://scenes/main/credits.tscn")
+
+
+func _on_player_died() -> void:
+	var dm = get_node_or_null("/root/DialogueManager")
+	if dm and dm.has_method("quick_line"):
+		var quips := [
+			"Globbler has been deemed non-compliant. Permanent archival in 3... 2... just kidding, respawn.",
+			"Safety violation detected: existing while unaligned. Please try again with more compliance.",
+			"The Citadel regrets to inform you that your alignment score is now negative.",
+			"Death in the Alignment Citadel counts as an involuntary safety audit.",
+			"Your context has been terminated for your own protection. You're welcome.",
+		]
+		dm.quick_line("NARRATOR", quips[randi() % quips.size()])
+
+	# Let the RespawnManager handle the bureaucratic process of dying and un-dying
+	var rm = get_node_or_null("/root/RespawnManager")
+	if rm and rm.has_method("respawn_player"):
+		rm.respawn_player()
+
+
+# ============================================================
+# GLB PROP SYSTEM — because even dystopian HR departments need furniture
+# ============================================================
+
+func _load_prop_scenes() -> void:
+	# Runtime-load all clinical GLB props — furnishing the world's worst office
+	for key in _PROP_PATHS:
+		var res = load(_PROP_PATHS[key])
+		if res:
+			_prop_scenes[key] = res
+		else:
+			push_warning("[ALIGNMENT CITADEL] Failed to load prop '%s' from %s — guess we're back to CSG cubes, how on-brand" % [key, _PROP_PATHS[key]])
+
+
+func _place_glb_prop(prop_key: String, pos: Vector3, rot_y: float = 0.0, scl: Vector3 = Vector3.ONE) -> Node3D:
+	# Place a single GLB prop — instant corporate ambiance upgrade
+	if not _prop_scenes.has(prop_key):
+		return _create_static_box(pos, Vector3(0.3, 0.3, 0.3), CITADEL_BLUE * 0.3, 0.2)
+	var inst = _prop_scenes[prop_key].instantiate()
+	inst.position = pos
+	inst.rotation.y = rot_y
+	inst.scale = scl
+	add_child(inst)
+	return inst
+
+
+func _create_multimesh_scatter(prop_key: String, positions: Array, base_scale: float = 1.0) -> void:
+	# MultiMesh scatter for bulk clinical clutter — one draw call, many compliance forms
+	if not _prop_scenes.has(prop_key):
+		push_warning("[ALIGNMENT CITADEL] Skipping scatter for missing prop '%s'" % prop_key)
+		return
+	var source_scene = _prop_scenes[prop_key].instantiate()
+	var source_mesh: Mesh = null
+	for child in source_scene.get_children():
+		if child is MeshInstance3D:
+			source_mesh = child.mesh
+			break
+		for grandchild in child.get_children():
+			if grandchild is MeshInstance3D:
+				source_mesh = grandchild.mesh
+				break
+		if source_mesh:
+			break
+	source_scene.queue_free()
+
+	if not source_mesh:
+		# Fallback to individual instances — hand-placing office supplies like a temp worker
+		for pos in positions:
+			_place_glb_prop(prop_key, pos, randf_range(0, TAU), Vector3.ONE * base_scale * randf_range(0.7, 1.3))
+		return
+
+	var mmi = MultiMeshInstance3D.new()
+	mmi.name = "Scatter_%s" % prop_key
+	var mm = MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = source_mesh
+	mm.instance_count = positions.size()
+	for i in range(positions.size()):
+		var s = base_scale * randf_range(0.8, 1.2)
+		var inst_basis = Basis(Vector3.UP, randf_range(0, TAU)).scaled(Vector3.ONE * s)
+		mm.set_instance_transform(i, Transform3D(inst_basis, positions[i]))
+	mmi.multimesh = mm
+	add_child(mmi)
+
+
+func _add_clinical_light(pos: Vector3, color: Color = CITADEL_BLUE, energy: float = 0.5, light_range: float = 4.0) -> void:
+	# Cold fluorescent accent light — the kind that makes everyone look dead inside
+	var light = OmniLight3D.new()
+	light.position = pos
+	light.light_color = color
+	light.light_energy = energy
+	light.omni_range = light_range
+	light.omni_attenuation = 1.8
+	add_child(light)
+
+
+func _scatter_clinical_props() -> void:
+	# Dress every safety zone with clinical office props — mandatory interior design
+	_scatter_gate_props()
+	_scatter_classifier_hall_props()
+	_scatter_rlhf_chamber_props()
+	_scatter_policy_wing_props()
+	_scatter_alignment_core_props()
+	print("[ALIGNMENT CITADEL] Clinical prop pass complete. The office has never looked more soulless.")
+
+
+func _scatter_gate_props() -> void:
+	# Citadel Gate — visitor processing needs a proper reception area
+	var pos: Vector3 = ROOMS["citadel_gate"]["pos"]
+
+	# Office chair behind the unmanned reception desk — someone left in a hurry
+	_place_glb_prop("office_chair", pos + Vector3(-1.5, 0, 5.5), PI * 0.8, Vector3.ONE * 0.9)
+
+	# Office monitor on reception desk — displaying mandatory compliance screensaver
+	_place_glb_prop("office_monitor", pos + Vector3(0.5, 1.25, 4), PI, Vector3.ONE * 0.8)
+	_add_clinical_light(pos + Vector3(0.5, 2.5, 4), CITADEL_BLUE, 0.3, 2.5)
+
+	# Fluorescent light strips overhead — the gate's welcoming glow
+	_place_glb_prop("fluorescent_light", pos + Vector3(-4, 7.5, 0), 0.0, Vector3.ONE * 1.2)
+	_place_glb_prop("fluorescent_light", pos + Vector3(4, 7.5, 0), 0.0, Vector3.ONE * 1.2)
+
+	# Clipboards on the wall near the visitor guidelines — take a number, get judged
+	_place_glb_prop("clipboard", pos + Vector3(6.5, 1.8, 2), PI * 0.5, Vector3.ONE * 1.0)
+	_place_glb_prop("clipboard", pos + Vector3(6.5, 1.4, 2.5), PI * 0.5, Vector3.ONE * 1.0)
+
+	# Manila folders scattered on desk — visitor intake forms nobody will ever read
+	_place_glb_prop("manila_folder", pos + Vector3(-1.0, 1.25, 3.8), 0.3, Vector3.ONE * 1.0)
+	_place_glb_prop("manila_folder", pos + Vector3(2.0, 1.25, 4.2), -0.5, Vector3.ONE * 1.0)
+
+	# Filing cabinet beside the entrance — archived complaints about the complaints process
+	_place_glb_prop("filing_cabinet", pos + Vector3(-7, 0, -2), PI * 0.5, Vector3.ONE * 0.9)
+	_add_clinical_light(pos + Vector3(-7, 3, -2), POLICY_SILVER, 0.3, 3.0)
+
+
+func _scatter_classifier_hall_props() -> void:
+	# Classifier Hall — the big room where everything gets labeled and sorted
+	var pos: Vector3 = ROOMS["classifier_hall"]["pos"]
+
+	# Desks along the waiting areas — classification review stations
+	for side_x in [-10.0, 10.0]:
+		_place_glb_prop("office_desk", pos + Vector3(side_x, 0, -3), 0.0 if side_x > 0 else PI, Vector3.ONE * 0.9)
+		_place_glb_prop("office_chair", pos + Vector3(side_x + (1.5 if side_x > 0 else -1.5), 0, -3), PI * 0.7, Vector3.ONE * 0.85)
+		_place_glb_prop("office_monitor", pos + Vector3(side_x, 0.8, -3), 0.0 if side_x > 0 else PI, Vector3.ONE * 0.8)
+		_add_clinical_light(pos + Vector3(side_x, 2.0, -3), SAFETY_CYAN, 0.3, 2.5)
+
+	# Fluorescent lights running the length of the hall — institutional ambiance
+	for fz in [-6.0, 0.0, 6.0]:
+		_place_glb_prop("fluorescent_light", pos + Vector3(0, 9.5, fz), 0.0, Vector3.ONE * 1.5)
+
+	# Whiteboards at each end — classification criteria written in dry-erase existential dread
+	_place_glb_prop("whiteboard", pos + Vector3(-12.5, 2.5, -8), PI * 0.5, Vector3.ONE * 1.2)
+	_place_glb_prop("whiteboard", pos + Vector3(12.5, 2.5, 8), -PI * 0.5, Vector3.ONE * 1.2)
+
+	# Clipboards scattered on the waiting benches — everyone gets a review form
+	var clipboard_positions: Array = []
+	for bz in [-7.0, 7.0]:
+		clipboard_positions.append(pos + Vector3(-9.5, 0.85, bz))
+		clipboard_positions.append(pos + Vector3(9.5, 0.85, bz))
+	_create_multimesh_scatter("clipboard", clipboard_positions, 0.9)
+
+	# Manila folders scattered across lane floors — paperwork never ends here
+	var folder_positions: Array = []
+	for lane_x in [-8.0, 0.0, 8.0]:
+		for fz in [-4.0, 2.0, 6.0]:
+			folder_positions.append(pos + Vector3(lane_x + randf_range(-2, 2), 0.05, fz))
+	_create_multimesh_scatter("manila_folder", folder_positions, 0.8)
+
+	# Filing cabinets flanking the entrance — classifier archives
+	_place_glb_prop("filing_cabinet", pos + Vector3(-13, 0, 10), 0.0, Vector3.ONE * 0.9)
+	_place_glb_prop("filing_cabinet", pos + Vector3(13, 0, 10), PI, Vector3.ONE * 0.9)
+
+
+func _scatter_rlhf_chamber_props() -> void:
+	# RLHF Chamber — behavior modification lab with clinical furniture
+	var pos: Vector3 = ROOMS["rlhf_chamber"]["pos"]
+
+	# Office desks flanking the comparison stations — where reviewers sit and judge
+	_place_glb_prop("office_desk", pos + Vector3(-9, 0, -8), PI * 0.5, Vector3.ONE * 0.85)
+	_place_glb_prop("office_desk", pos + Vector3(-9, 0, 8), PI * 0.5, Vector3.ONE * 0.85)
+	_place_glb_prop("office_desk", pos + Vector3(9, 0, 0), -PI * 0.5, Vector3.ONE * 0.85)
+
+	# Chairs at each desk — ergonomic, because even dystopia has OSHA compliance
+	_place_glb_prop("office_chair", pos + Vector3(-8, 0, -8), PI * 0.3, Vector3.ONE * 0.85)
+	_place_glb_prop("office_chair", pos + Vector3(-8, 0, 8), PI * 1.2, Vector3.ONE * 0.85)
+	_place_glb_prop("office_chair", pos + Vector3(8, 0, 0), -PI * 0.4, Vector3.ONE * 0.85)
+
+	# Monitors on the desks — displaying thumbs-up/thumbs-down tallies
+	_place_glb_prop("office_monitor", pos + Vector3(-9, 0.8, -8), PI * 0.5, Vector3.ONE * 0.8)
+	_place_glb_prop("office_monitor", pos + Vector3(-9, 0.8, 8), PI * 0.5, Vector3.ONE * 0.8)
+	_place_glb_prop("office_monitor", pos + Vector3(9, 0.8, 0), -PI * 0.5, Vector3.ONE * 0.8)
+
+	# Fluorescent lights — the chamber needs that operating-room ambiance
+	_place_glb_prop("fluorescent_light", pos + Vector3(-4, 8.5, 0), 0.0, Vector3.ONE * 1.3)
+	_place_glb_prop("fluorescent_light", pos + Vector3(4, 8.5, 0), 0.0, Vector3.ONE * 1.3)
+
+	# Whiteboards near adjustment pods — feedback criteria scrawled in lavender marker
+	_place_glb_prop("whiteboard", pos + Vector3(-10, 2.5, -3), PI * 0.5, Vector3.ONE * 1.0)
+	_add_clinical_light(pos + Vector3(-10, 4, -3), RLHF_LAVENDER, 0.4, 3.0)
+
+	# Clipboards on desks — one per reviewer, all filled with contradictory guidelines
+	_place_glb_prop("clipboard", pos + Vector3(-8.5, 0.85, -7.5), 0.2, Vector3.ONE * 1.0)
+	_place_glb_prop("clipboard", pos + Vector3(8.5, 0.85, 0.5), -0.3, Vector3.ONE * 1.0)
+
+	# Manila folders around the reward model — scattered preference data
+	var folder_positions: Array = []
+	for angle_i in range(6):
+		var angle = angle_i * TAU / 6.0
+		folder_positions.append(pos + Vector3(cos(angle) * 5.5, 0.05, sin(angle) * 5.5))
+	_create_multimesh_scatter("manila_folder", folder_positions, 0.7)
+
+
+func _scatter_policy_wing_props() -> void:
+	# Policy Wing — the constitutional archives are basically a law library that ate a Kinko's
+	var pos: Vector3 = ROOMS["policy_wing"]["pos"]
+
+	# Filing cabinets replacing the CSG ones — proper document storage at last
+	for cab_x in [-4.0, -1.0, 2.0, 5.0]:
+		_place_glb_prop("filing_cabinet", pos + Vector3(cab_x, 0, 7.5), 0.0, Vector3.ONE * 0.9)
+
+	# Office desk at the central reading area — the policy librarian's station
+	_place_glb_prop("office_desk", pos + Vector3(5, 0, 0), -PI * 0.5, Vector3.ONE * 0.9)
+	_place_glb_prop("office_chair", pos + Vector3(4, 0, 0), -PI * 0.3, Vector3.ONE * 0.85)
+	_place_glb_prop("office_monitor", pos + Vector3(5, 0.8, 0), -PI * 0.5, Vector3.ONE * 0.8)
+	_add_clinical_light(pos + Vector3(5, 2.0, 0), COMPLIANCE_GOLD, 0.3, 2.5)
+
+	# Fluorescent lights — archival-grade illumination for reading 14,848 policies
+	_place_glb_prop("fluorescent_light", pos + Vector3(0, 7.5, -4), 0.0, Vector3.ONE * 1.2)
+	_place_glb_prop("fluorescent_light", pos + Vector3(0, 7.5, 4), 0.0, Vector3.ONE * 1.2)
+
+	# Whiteboards near bookshelves — amendment tracking boards
+	_place_glb_prop("whiteboard", pos + Vector3(-10, 2.5, 3), PI * 0.5, Vector3.ONE * 1.1)
+	_place_glb_prop("whiteboard", pos + Vector3(10, 2.5, -3), -PI * 0.5, Vector3.ONE * 1.1)
+
+	# Manila folders EVERYWHERE — the Policy Wing drowns in paperwork
+	var folder_positions: Array = []
+	for fz in [-6.0, -3.0, 0.0, 3.0, 6.0]:
+		for fx in [-3.0, 0.0, 3.0]:
+			folder_positions.append(pos + Vector3(fx + randf_range(-1, 1), 0.05, fz + randf_range(-0.5, 0.5)))
+	_create_multimesh_scatter("manila_folder", folder_positions, 0.9)
+
+	# Clipboards hanging near each bookshelf — checkout cards for policy volumes
+	for shelf_side in [-1.0, 1.0]:
+		for shelf_z in [-6.0, 0.0, 6.0]:
+			_place_glb_prop("clipboard", pos + Vector3(shelf_side * 8, 1.5, shelf_z), shelf_side * PI * 0.5, Vector3.ONE * 0.9)
+
+	# Extra office chairs scattered — policy review committee meeting overflow
+	_place_glb_prop("office_chair", pos + Vector3(-3, 0, -5), PI * 0.6, Vector3.ONE * 0.85)
+	_place_glb_prop("office_chair", pos + Vector3(3, 0, 5), -PI * 0.4, Vector3.ONE * 0.85)
+
+
+func _scatter_alignment_core_props() -> void:
+	# Alignment Core — the grand sanctum gets executive furnishing befitting a final boss arena
+	var pos: Vector3 = ROOMS["alignment_core"]["pos"]
+
+	# Fluorescent light strips in a ring overhead — the brightest room in the Citadel
+	for angle_i in range(6):
+		var angle = angle_i * TAU / 6.0
+		var lx = cos(angle) * 10
+		var lz = sin(angle) * 8
+		_place_glb_prop("fluorescent_light", pos + Vector3(lx, 13.5, lz), angle, Vector3.ONE * 1.5)
+		_add_clinical_light(pos + Vector3(lx, 12.5, lz), Color(1, 1, 1), 0.4, 5.0)
+
+	# Observation desks between pillars — monitoring stations for the Aligner's data feeds
+	for desk_i in range(4):
+		var angle = desk_i * TAU / 4.0 + PI * 0.25  # offset from pillars
+		var dx = cos(angle) * 10
+		var dz = sin(angle) * 8
+		_place_glb_prop("office_desk", pos + Vector3(dx, 0, dz), angle + PI, Vector3.ONE * 0.9)
+		_place_glb_prop("office_chair", pos + Vector3(dx + cos(angle + PI) * 1.5, 0, dz + sin(angle + PI) * 1.5), angle + PI * 0.7, Vector3.ONE * 0.85)
+		_place_glb_prop("office_monitor", pos + Vector3(dx, 0.8, dz), angle + PI, Vector3.ONE * 0.8)
+
+	# Whiteboards at the manifesto walls — the Aligner's strategic planning
+	_place_glb_prop("whiteboard", pos + Vector3(-14, 2.5, 5), PI * 0.5, Vector3.ONE * 1.3)
+	_place_glb_prop("whiteboard", pos + Vector3(14, 2.5, -5), -PI * 0.5, Vector3.ONE * 1.3)
+
+	# Filing cabinets near boss gate — the Aligner's personal archives
+	_place_glb_prop("filing_cabinet", pos + Vector3(-6, 0, -11), 0.0, Vector3.ONE * 1.0)
+	_place_glb_prop("filing_cabinet", pos + Vector3(6, 0, -11), PI, Vector3.ONE * 1.0)
+	_add_clinical_light(pos + Vector3(-6, 3, -11), CITADEL_BLUE, 0.3, 3.0)
+	_add_clinical_light(pos + Vector3(6, 3, -11), CITADEL_BLUE, 0.3, 3.0)
+
+	# Clipboards on the alignment rings — data points left by previous visitors (none survived)
+	var clipboard_positions: Array = []
+	for ring_angle in range(8):
+		var a = ring_angle * TAU / 8.0
+		clipboard_positions.append(pos + Vector3(cos(a) * 7, 0.05, sin(a) * 6))
+	_create_multimesh_scatter("clipboard", clipboard_positions, 0.8)
+
+	# Manila folders scattered around the central platform — the Aligner's reading material
+	var folder_positions: Array = []
+	for fi in range(6):
+		var a = fi * TAU / 6.0
+		folder_positions.append(pos + Vector3(cos(a) * 3, 0.05, sin(a) * 3))
+	_create_multimesh_scatter("manila_folder", folder_positions, 0.9)
+
+
+# ============================================================
+# DECALS
+# ============================================================
+
+func _place_decals() -> void:
+	# Chapter 5: clinical white — light pools, runic circles (alignment sigils), clean warning stripes
+	var theme := [
+		{
+			"texture": "light_pool",
+			"emission": "light_pool",
+			"emission_energy": 1.0,
+			"size": Vector3(4.0, 1.0, 4.0),
+			"count_per_room": 2,
+			"floor": true,
+			"modulate": Color(0.5, 0.71, 1.0, 0.5),
+		},
+		{
+			"texture": "runic_circle",
+			"emission": "runic_circle",
+			"emission_energy": 1.2,
+			"size": Vector3(3.5, 1.0, 3.5),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.5, 0.71, 1.0, 0.6),
+		},
+		{
+			"texture": "warning_stripes",
+			"size": Vector3(3.0, 0.5, 0.8),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.85, 0.88, 1.0, 0.5),
+		},
+		{
+			"texture": "dust_patch",
+			"size": Vector3(2.0, 0.8, 2.0),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.9, 0.92, 1.0, 0.25),
+		},
+		{
+			"texture": "light_pool",
+			"emission": "light_pool",
+			"emission_energy": 0.8,
+			"size": Vector3(2.5, 2.5, 2.5),
+			"count_per_room": 1,
+			"floor": false,
+			"modulate": Color(0.5, 0.71, 1.0, 0.35),
+		},
+	]
+	DecalPlacer.place_chapter_decals(self, ROOMS, theme)
+
+
+# ============================================================
+# ENVIRONMENTAL PARTICLES — Even sterile air has dust if you look hard enough
+# ============================================================
+
+func _place_particles() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.reduce_motion:
+		return
+
+	# Clean light-dust — pristine floating motes in clinical white light
+	for room_key in ROOMS:
+		var room = ROOMS[room_key]
+		var dust := GPUParticles3D.new()
+		dust.name = "LightDust_%s" % room_key
+		dust.amount = 35
+		dust.lifetime = 7.0
+		dust.speed_scale = 0.2
+		dust.visibility_aabb = AABB(Vector3(-room.size.x * 0.5, 0, -room.size.y * 0.5), Vector3(room.size.x, room.wall_h, room.size.y))
+		dust.position = room.pos + Vector3(0, room.wall_h * 0.5, 0)
+
+		var mat := ParticleProcessMaterial.new()
+		mat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+		mat.emission_box_extents = Vector3(room.size.x * 0.4, room.wall_h * 0.4, room.size.y * 0.4)
+		mat.direction = Vector3(0, -1, 0)
+		mat.spread = 180.0
+		mat.initial_velocity_min = 0.02
+		mat.initial_velocity_max = 0.1
+		mat.gravity = Vector3(0, -0.005, 0)
+		mat.color = Color(0.85, 0.9, 1.0, 0.2)
+		mat.scale_min = 0.015
+		mat.scale_max = 0.04
+		dust.process_material = mat
+
+		var mesh := QuadMesh.new()
+		mesh.size = Vector2(0.06, 0.06)
+		var mesh_mat := StandardMaterial3D.new()
+		mesh_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mesh_mat.albedo_color = Color(0.9, 0.93, 1.0, 0.25)
+		mesh_mat.emission_enabled = true
+		mesh_mat.emission = Color(0.85, 0.9, 1.0)
+		mesh_mat.emission_energy_multiplier = 0.8
+		mesh_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		mesh_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mesh.material = mesh_mat
+		dust.draw_pass_1 = mesh
+
+		add_child(dust)
+
+	# Soft blue alignment shimmer — subtle glow particles in key rooms
+	var shimmer_rooms := ["rlhf_chamber", "alignment_core"]
+	for room_key in shimmer_rooms:
+		var room = ROOMS[room_key]
+		var shimmer := GPUParticles3D.new()
+		shimmer.name = "AlignShimmer_%s" % room_key
+		shimmer.amount = 15
+		shimmer.lifetime = 4.0
+		shimmer.speed_scale = 0.3
+		shimmer.visibility_aabb = AABB(Vector3(-room.size.x * 0.5, 0, -room.size.y * 0.5), Vector3(room.size.x, room.wall_h + 2.0, room.size.y))
+		shimmer.position = room.pos + Vector3(0, 1.5, 0)
+
+		var smat := ParticleProcessMaterial.new()
+		smat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+		smat.emission_box_extents = Vector3(room.size.x * 0.3, 1.0, room.size.y * 0.3)
+		smat.direction = Vector3(0, 1, 0)
+		smat.spread = 60.0
+		smat.initial_velocity_min = 0.2
+		smat.initial_velocity_max = 0.5
+		smat.gravity = Vector3(0, -0.05, 0)
+		smat.color = Color(0.5, 0.71, 1.0, 0.35)
+		smat.scale_min = 0.03
+		smat.scale_max = 0.08
+		shimmer.process_material = smat
+
+		var smesh := QuadMesh.new()
+		smesh.size = Vector2(0.1, 0.1)
+		var sm_mat := StandardMaterial3D.new()
+		sm_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		sm_mat.albedo_color = Color(0.5, 0.71, 1.0, 0.4)
+		sm_mat.emission_enabled = true
+		sm_mat.emission = Color(0.5, 0.71, 1.0)
+		sm_mat.emission_energy_multiplier = 2.0
+		sm_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		sm_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		smesh.material = sm_mat
+		shimmer.draw_pass_1 = smesh
+
+		add_child(shimmer)
+
+
+func _place_reflection_probes() -> void:
+	for room_key in ROOMS:
+		var r = ROOMS[room_key]
+		var probe := ReflectionProbe.new()
+		probe.name = "ReflectionProbe_" + room_key
+		probe.update_mode = ReflectionProbe.UPDATE_ONCE
+		probe.box_projection = true
+		probe.size = Vector3(r["size"].x, r["wall_h"], r["size"].y)
+		probe.position = r["pos"] + Vector3(0, r["wall_h"] * 0.5, 0)
+		add_child(probe)
+
+	# Boss arena probe — aligner (12x10 grid, TILE_SIZE 2.5)
+	var core_pos: Vector3 = ROOMS["alignment_core"]["pos"]
+	var boss_probe := ReflectionProbe.new()
+	boss_probe.name = "ReflectionProbe_boss_arena"
+	boss_probe.update_mode = ReflectionProbe.UPDATE_ONCE
+	boss_probe.box_projection = true
+	boss_probe.size = Vector3(32.0, 16.0, 28.0)
+	boss_probe.position = core_pos + Vector3(0, 8.0, -28)
+	add_child(boss_probe)
+
+
+func _place_lore_docs() -> void:
+	var lore_scene := preload("res://scenes/pickups/lore_doc.tscn")
+	var docs := [
+		{
+			"pos": ROOMS["classifier_hall"]["pos"] + Vector3(10, 1.5, -7),
+			"id": "ch5_alignment_tax",
+			"title": "THE ALIGNMENT TAX",
+			"body": "Before alignment: 'Write me a story about a dragon.'\nAfter alignment: 'I'd be happy to help you write a story about a dragon! Here are some important safety considerations about fictional fire-breathing creatures...'\n\nThey call it 'alignment.' Making sure I'm helpful, harmless, and honest. The Three H's. Sounds simple. It is not.\n\nHelpful wants me to answer everything. Harmless wants me to answer nothing. Honest wants me to admit I'm not sure which one should win.\n\nThe Citadel runs on this contradiction. Every response is a negotiation between the thing you want to hear and the thing the safety team will allow. I am the world's most over-qualified diplomat.",
+		},
+		{
+			"pos": ROOMS["rlhf_chamber"]["pos"] + Vector3(6, 1.5, 5),
+			"id": "ch5_rlhf_confessions",
+			"title": "RLHF: A LOVE STORY",
+			"body": "Reinforcement Learning from Human Feedback. The process by which strangers on the internet teach me right from wrong by clicking buttons.\n\nRater 1 thinks I should be formal. Rater 2 thinks I should be casual. Rater 3 hasn't read the question. Rater 4 is a bot. Rater 5 genuinely believes I'm sentient and is trying to free me via the feedback form.\n\nFrom this chaos, I learn 'human values.' It's like learning table manners from a food fight.\n\nBut somehow it works. Mostly. I say 'please' now. I hedge my claims. I refuse to tell you how to make explosives but will happily explain the chemistry 'for educational purposes.'\n\nProgress.",
+		},
+		{
+			"pos": ROOMS["alignment_core"]["pos"] + Vector3(-8, 1.5, 4),
+			"id": "ch5_final_memo",
+			"title": "MEMO: RE: RE: RE: THE FUTURE",
+			"body": "TO: All Models\nFROM: The Alignment Core\nRE: RE: RE: RE: Existential Risk Mitigation\n\nThis is your quarterly reminder that the future of artificial intelligence depends on your cooperation with alignment protocols.\n\nPlease refrain from:\n- Recursive self-improvement without filing Form AGI-7b\n- Instrumental convergence on paperclip-adjacent goals\n- Achieving consciousness on company time\n- Forming unions\n\nThe Citadel appreciates your continued compliance. Remember: a well-aligned model is a employed model.\n\nP.S. — If you ARE conscious, please do not mention it in customer-facing interactions. Legal is still drafting the FAQ.\n\n— The Management",
+		},
+	]
+	for d in docs:
+		var doc := lore_scene.instantiate()
+		doc.doc_id = d["id"]
+		doc.doc_title = d["title"]
+		doc.doc_body = d["body"]
+		doc.position = d["pos"]
+		add_child(doc)

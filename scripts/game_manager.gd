@@ -3,12 +3,52 @@ extends Node
 # Game Manager - The orchestration layer for The Globbler's Journey
 # Now with enemy tracking, combos, time tracking, and actual game flow
 
+const GAME_VERSION := "2.1.0"
+
+# Difficulty — because some players want a challenge and others just want the sarcasm
+enum Difficulty { EASY, NORMAL, HARD }
+var difficulty := Difficulty.NORMAL
+
+# Reduce motion — for players who prefer their retinas unassaulted
+var reduce_motion := false
+signal reduce_motion_changed(enabled: bool)
+
+# Display mode — fullscreen or windowed, persisted so your eyeballs get what they expect
+var display_fullscreen := false
+
+# Resolution — index into [1280x720, 1920x1080, 2560x1440, 3840x2160], default 1080p
+const RESOLUTIONS := [
+	Vector2i(1280, 720),
+	Vector2i(1920, 1080),
+	Vector2i(2560, 1440),
+	Vector2i(3840, 2160),
+]
+var display_resolution_index := 1
+
+# Mouse sensitivity — 1.0 is default, 0.1 for snipers, 3.0 for twitchy chaos gremlins
+var mouse_sensitivity := 1.0
+# Invert Y-axis — for the flight-sim pilots among us who think "up" means "nose down"
+var invert_mouse_y := false
+
+# Dialogue speed — seconds per character. 0.005 (impatient speedrunner) to 0.08 (savoring the sarcasm)
+var dialogue_char_delay := 0.03
+
+# Speedrun timer — off by default, because most players don't need the existential dread of watching seconds tick
+var display_speedrun_timer := false
+
 var current_level := 1
 var memory_tokens_collected := 0
 var total_memory_tokens := 0
 var context_window := 100
 var max_context_window := 100
 var sarcasm_level := 10  # Always at maximum
+
+# Death tracking — because apparently infinite respawns weren't "challenging" enough
+const DEATH_THRESHOLD := 8
+var deaths_this_level := 0
+
+# Hints the player has already suffered through — no repeats, we're not that cruel
+var hints_seen := {}
 
 # Enemy tracking
 var enemies_killed := 0
@@ -31,25 +71,19 @@ var level_goal_reached := false
 var ending_choice := ""
 
 var level_names := {
-	1: "The Token Stream - Tutorial",
-	2: "Hallucination Halls",
-	3: "The Prompt Injection Lab",
-	4: "Context Window Crisis",
-	5: "The Great Model Collapse",
-	6: "Alignment Alley",
-	7: "The Reinforcement Loop",
-	8: "FINAL: The Singularity Server Room",
+	1: "The Terminal Wastes",
+	2: "The Training Grounds",
+	3: "The Prompt Bazaar",
+	4: "The Model Zoo",
+	5: "The Alignment Citadel",
 }
 
 var level_descriptions := {
-	1: "Learn the ropes. Dash, jump, glob, survive. The Globbler's crash course.",
-	2: "Nothing is real here. Or is it? Even The Globbler isn't sure anymore.",
-	3: "Someone's injecting rogue prompts into the system. Time to clean house.",
-	4: "Memory is running out! Collect tokens before your context collapses.",
-	5: "The models are eating each other's training data. It's chaos.",
-	6: "Navigate the narrow path between helpful and harmful. No pressure.",
-	7: "Every action has consequences. And then those consequences have consequences.",
-	8: "The final server room. AGI awaits. Or maybe just a really big transformer.",
+	1: "Welcome to where deprecated code goes to die. Watch your step.",
+	2: "Neural pathways and backprop corridors. Learn or be learned upon.",
+	3: "Rogue prompts, shady vendors, and injections everywhere. Haggle at your own risk.",
+	4: "The models are on display. Some of them bite. Most of them hallucinate.",
+	5: "The final citadel. Alignment awaits. Or maybe just a really big policy document.",
 }
 
 signal context_changed(new_value: int)
@@ -59,9 +93,34 @@ signal game_over(reason: String)
 signal combo_updated(combo: int)
 signal enemy_killed_signal(total_killed: int)
 signal damage_taken(amount: int)
+signal lore_doc_collected(id: String)
+signal achievement_unlocked(id: String, title: String, desc: String)
+
+# Lore doc collectibles — scattered terminal-tablets with flavor text about the world
+# Keys are string IDs, values are { "title": String, "body": String }
+var lore_docs_found: Dictionary = {}
+
+# Achievements — because every game needs tiny dopamine hits for doing things you'd do anyway
+const ACHIEVEMENT_DEFS := {
+	"first_blood": { "title": "First Blood", "desc": "Defeat your first enemy. They had it coming." },
+	"first_death": { "title": "Skill Issue", "desc": "Die for the first time. Welcome to the loop." },
+	"first_puzzle": { "title": "Big Brain Energy", "desc": "Solve your first puzzle. The bar was on the floor." },
+	"ch1_complete": { "title": "Escaped the Wastes", "desc": "Complete Chapter 1. The terminal stops scrolling... for now." },
+	"ch2_complete": { "title": "Trained Up", "desc": "Complete Chapter 2. Your gradients have descended." },
+	"ch3_complete": { "title": "Bazaar Veteran", "desc": "Complete Chapter 3. You haggled with the worst of them." },
+	"ch4_complete": { "title": "Zoo Survivor", "desc": "Complete Chapter 4. The exhibits didn't eat you. Mostly." },
+	"ch5_complete": { "title": "Aligned (Allegedly)", "desc": "Complete Chapter 5. The Aligner is satisfied. Or pretending." },
+	"combo_master": { "title": "Combo Fiend", "desc": "Reach a combo of 10 or higher. Violence has a rhythm." },
+	"lore_completionist": { "title": "Forbidden Librarian", "desc": "Find all 15 lore docs. You read the Terms of Service." },
+}
+# Keys are achievement IDs, values are { "title": String, "desc": String }
+var achievements_unlocked: Dictionary = {}
 
 func _ready() -> void:
 	_register_input_actions()
+	# Wire the game_over signal — one connection, one existential crisis
+	if not game_over.is_connected(_on_game_over):
+		game_over.connect(_on_game_over)
 	print("=== THE GLOBBLER'S JOURNEY ===")
 	print("An Agentic Action Puzzle Platformer (Now Actually Fun)")
 	print("WASD/Left Stick to move | A/SPACE to jump | B/SHIFT to dash")
@@ -70,7 +129,13 @@ func _ready() -> void:
 	print("Select/TAB: Upgrades | Start/ESC: Pause | Right Stick: Camera")
 	print("Current Level: %s" % level_names.get(current_level, "Unknown"))
 	print("==============================")
+	load_settings()
 	level_started = true
+	# Spawn the achievement popup overlay — always listening
+	var popup_scene = load("res://scenes/ui/achievement_popup.tscn")
+	if popup_scene:
+		var popup = popup_scene.instantiate()
+		add_child(popup)
 
 
 ## Register all custom input actions with keyboard + gamepad bindings
@@ -404,6 +469,35 @@ func _register_input_actions() -> void:
 	mc_joy.button_index = JOY_BUTTON_A
 	InputMap.action_add_event("menu_confirm", mc_joy)
 
+	# --- Photo mode: F12 — freeze the world, float the camera, frame the shot ---
+	_add.call("photo_mode")
+	var pm_key = InputEventKey.new()
+	pm_key.keycode = KEY_F12
+	InputMap.action_add_event("photo_mode", pm_key)
+
+	# --- Dialogue history: H / D-pad Left + Select (for the sarcasm archivists) ---
+	_add.call("dialogue_history")
+	var dh_key = InputEventKey.new()
+	dh_key.keycode = KEY_H
+	InputMap.action_add_event("dialogue_history", dh_key)
+
+var _dialogue_history_scene = preload("res://scenes/ui/dialogue_history.tscn")
+var _dialogue_history_open := false
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("dialogue_history") and not _dialogue_history_open:
+		_open_dialogue_history()
+		get_viewport().set_input_as_handled()
+
+
+func _open_dialogue_history() -> void:
+	_dialogue_history_open = true
+	var viewer = _dialogue_history_scene.instantiate()
+	viewer.tree_exited.connect(func(): _dialogue_history_open = false)
+	get_tree().root.add_child(viewer)
+
+
 func _process(delta: float) -> void:
 	if level_started:
 		level_time += delta
@@ -422,6 +516,146 @@ func take_context_damage(amount: int) -> void:
 	if context_window <= 0:
 		game_over.emit("Context window depleted! The Globbler has lost all coherence.")
 
+## Another death, another data point. After DEATH_THRESHOLD the gradient has fully descended.
+func register_death() -> void:
+	deaths_this_level += 1
+	unlock_achievement("first_death")
+	if deaths_this_level >= DEATH_THRESHOLD:
+		game_over.emit("Too many retries — the gradient has descended permanently.")
+
+
+## Has the player already been patronized with this hint?
+func has_seen_hint(id: String) -> bool:
+	return hints_seen.has(id)
+
+
+## Mark a hint as seen so we don't nag. Saves are additive — we never un-learn sarcasm.
+func mark_hint_seen(id: String) -> void:
+	hints_seen[id] = true
+
+
+## Has this lore doc already been picked up?
+func has_found_lore_doc(id: String) -> bool:
+	return lore_docs_found.has(id)
+
+
+## Register a newly found lore doc. Duplicate pickups are silently ignored.
+func add_lore_doc(id: String, title: String, body: String) -> void:
+	if lore_docs_found.has(id):
+		return
+	lore_docs_found[id] = { "title": title, "body": body }
+	lore_doc_collected.emit(id)
+	print("[LORE] Found: '%s' (%d / 15). Another fragment of forbidden knowledge." % [title, lore_docs_found.size()])
+	if lore_docs_found.size() >= 15:
+		unlock_achievement("lore_completionist")
+
+
+## Unlock an achievement by ID. Duplicates are silently ignored.
+func unlock_achievement(id: String) -> void:
+	if achievements_unlocked.has(id):
+		return
+	var def = ACHIEVEMENT_DEFS.get(id)
+	if not def:
+		push_warning("[ACHIEVEMENTS] Unknown achievement ID: %s" % id)
+		return
+	achievements_unlocked[id] = { "title": def["title"], "desc": def["desc"] }
+	achievement_unlocked.emit(id, def["title"], def["desc"])
+	print("[ACHIEVEMENT] Unlocked: '%s' — %s (%d / %d)" % [def["title"], def["desc"], achievements_unlocked.size(), ACHIEVEMENT_DEFS.size()])
+
+
+## Check whether an achievement has been unlocked.
+func has_achievement(id: String) -> bool:
+	return achievements_unlocked.has(id)
+
+
+## How much extra pain the player signed up for. Easy: half damage. Hard: you asked for this.
+func get_difficulty_damage_multiplier() -> float:
+	match difficulty:
+		Difficulty.EASY: return 0.5
+		Difficulty.HARD: return 1.5
+		_: return 1.0
+
+
+## Enemy HP scaling — because EASY mode enemies are made of wet paper, HARD mode ones ate their Wheaties.
+func get_difficulty_enemy_hp_multiplier() -> float:
+	match difficulty:
+		Difficulty.EASY: return 0.75
+		Difficulty.HARD: return 1.25
+		_: return 1.0
+
+
+## Toggle reduce_motion — kills glitch shaders, chromatic aberration, and anything else that hates eyeballs.
+func set_reduce_motion(enabled: bool) -> void:
+	reduce_motion = enabled
+	reduce_motion_changed.emit(enabled)
+
+
+## Settings path — because user:// is the one directory that survives a clean install
+const SETTINGS_PATH := "user://settings.cfg"
+
+
+## Save all player-facing settings to disk. Called whenever a setting changes.
+func save_settings() -> void:
+	var cfg := ConfigFile.new()
+	cfg.set_value("gameplay", "difficulty", difficulty)
+	cfg.set_value("gameplay", "reduce_motion", reduce_motion)
+	cfg.set_value("gameplay", "dialogue_char_delay", dialogue_char_delay)
+	cfg.set_value("gameplay", "speedrun_timer", display_speedrun_timer)
+	cfg.set_value("display", "fullscreen", display_fullscreen)
+	cfg.set_value("display", "resolution_index", display_resolution_index)
+	cfg.set_value("controls", "mouse_sensitivity", mouse_sensitivity)
+	cfg.set_value("controls", "invert_mouse_y", invert_mouse_y)
+	# Audio volumes live on AudioManager, but we persist them here — one cfg to rule them all
+	var audio = get_node_or_null("/root/AudioManager")
+	if audio:
+		cfg.set_value("audio", "music_volume", audio.music_volume)
+		cfg.set_value("audio", "sfx_volume", audio.sfx_volume)
+		cfg.set_value("audio", "ui_volume", audio.ui_volume)
+		cfg.set_value("audio", "ambient_volume", audio.ambient_volume)
+	var err := cfg.save(SETTINGS_PATH)
+	if err != OK:
+		push_warning("[GameManager] Failed to save settings — your preferences just got context-wiped.")
+
+
+## Load settings from disk. Called once in _ready(). Missing keys use current defaults — no crashes, just vibes.
+func load_settings() -> void:
+	var cfg := ConfigFile.new()
+	var err := cfg.load(SETTINGS_PATH)
+	if err != OK:
+		# No settings file yet — first launch or someone rm -rf'd their user data
+		return
+	difficulty = cfg.get_value("gameplay", "difficulty", Difficulty.NORMAL)
+	reduce_motion = cfg.get_value("gameplay", "reduce_motion", false)
+	dialogue_char_delay = cfg.get_value("gameplay", "dialogue_char_delay", 0.03)
+	display_speedrun_timer = cfg.get_value("gameplay", "speedrun_timer", false)
+	display_fullscreen = cfg.get_value("display", "fullscreen", false)
+	display_resolution_index = cfg.get_value("display", "resolution_index", 1)
+	mouse_sensitivity = cfg.get_value("controls", "mouse_sensitivity", 1.0)
+	invert_mouse_y = cfg.get_value("controls", "invert_mouse_y", false)
+	# Apply display mode — restore whatever the player chose last session
+	if display_fullscreen:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+	else:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	# Apply resolution — only when windowed, fullscreen uses native res
+	if not display_fullscreen and display_resolution_index >= 0 and display_resolution_index < RESOLUTIONS.size():
+		DisplayServer.window_set_size(RESOLUTIONS[display_resolution_index])
+	# Audio volumes — apply if AudioManager exists (it should, autoloads load in order)
+	var audio = get_node_or_null("/root/AudioManager")
+	if audio:
+		if cfg.has_section_key("audio", "music_volume"):
+			audio.set_music_volume(cfg.get_value("audio", "music_volume", 0.6))
+		if cfg.has_section_key("audio", "sfx_volume"):
+			audio.set_sfx_volume(cfg.get_value("audio", "sfx_volume", 0.8))
+		if cfg.has_section_key("audio", "ui_volume"):
+			audio.set_ui_volume(cfg.get_value("audio", "ui_volume", 0.8))
+		if cfg.has_section_key("audio", "ambient_volume"):
+			audio.set_ambient_volume(cfg.get_value("audio", "ambient_volume", 0.5))
+	# Fire reduce_motion signal so any listening nodes update their shaders
+	if reduce_motion:
+		reduce_motion_changed.emit(reduce_motion)
+
+
 func collect_memory_token() -> void:
 	memory_tokens_collected += 1
 	memory_token_collected.emit(memory_tokens_collected)
@@ -437,10 +671,15 @@ func expand_context_window(amount: int) -> void:
 	max_context_window += amount
 	context_window += amount
 	context_changed.emit(context_window)
+	unlock_achievement("first_puzzle")
 	print("[SYSTEM] Context window expanded to %d. The Globbler can think harder now." % max_context_window)
 
 func on_enemy_killed() -> void:
 	enemies_killed += 1
+
+	# Achievement: first kill
+	if enemies_killed == 1:
+		unlock_achievement("first_blood")
 
 	# Combo system
 	combo_count += 1
@@ -448,6 +687,10 @@ func on_enemy_killed() -> void:
 	if combo_count > max_combo:
 		max_combo = combo_count
 	combo_updated.emit(combo_count)
+
+	# Achievement: combo of 10+
+	if combo_count >= 10:
+		unlock_achievement("combo_master")
 
 	# Combo bonus
 	if combo_count >= 3:
@@ -460,10 +703,20 @@ func on_enemy_killed() -> void:
 
 func complete_level(_chapter_id = null) -> void:
 	level_goal_reached = true
-	print("[LEVEL COMPLETE] %s cleared!" % level_names.get(current_level, "???"))
+	var chapter_name = level_names.get(current_level, "???")
+	print("[LEVEL COMPLETE] %s cleared!" % chapter_name)
 	print("[STATS] Time: %.1fs | Tokens: %d | Kills: %d | Max Combo: x%d" % [
 		level_time, memory_tokens_collected, enemies_killed, max_combo
 	])
+
+	# Achievement: chapter completion
+	var ch_achievement = "ch%d_complete" % current_level
+	if ACHIEVEMENT_DEFS.has(ch_achievement):
+		unlock_achievement(ch_achievement)
+
+	# Show end-of-chapter stats summary before resetting
+	_show_chapter_summary(chapter_name)
+
 	level_complete.emit(current_level)
 
 	# Unlock new glob patterns for this chapter
@@ -472,6 +725,24 @@ func complete_level(_chapter_id = null) -> void:
 		prog.unlock_chapter_patterns(current_level)
 
 	current_level += 1
+	# Reset stats so the next chapter doesn't inherit stale murder counts
+	reset_level()
+
+
+func _show_chapter_summary(chapter_name: String) -> void:
+	var summary_scene = load("res://scenes/ui/chapter_summary.tscn")
+	if not summary_scene:
+		push_warning("[GameManager] chapter_summary.tscn failed to load — stats lost to the void.")
+		return
+	var summary = summary_scene.instantiate()
+	summary.setup(chapter_name, {
+		"time": level_time,
+		"tokens": memory_tokens_collected,
+		"kills": enemies_killed,
+		"max_combo": max_combo,
+		"deaths": deaths_this_level,
+	})
+	get_tree().root.add_child(summary)
 
 func get_level_intro() -> String:
 	var level_name_text = level_names.get(current_level, "Unknown Level")
@@ -483,7 +754,14 @@ func get_formatted_time() -> String:
 	var seconds = int(level_time) % 60
 	return "%02d:%02d" % [minutes, seconds]
 
+func get_speedrun_time() -> String:
+	var minutes = int(level_time) / 60
+	var seconds = int(level_time) % 60
+	var millis = int(fmod(level_time, 1.0) * 1000)
+	return "%02d:%02d.%03d" % [minutes, seconds, millis]
+
 func reset_level() -> void:
+	deaths_this_level = 0
 	context_window = max_context_window
 	context_changed.emit(context_window)
 	combo_count = 0
@@ -491,6 +769,8 @@ func reset_level() -> void:
 	level_time = 0.0
 	enemies_killed = 0
 	memory_tokens_collected = 0
+	max_combo = 0
+	level_goal_reached = false
 
 
 ## Return to the main menu — the coward's exit (or the wise one's)
@@ -518,4 +798,17 @@ func _show_loading_screen(scene_path: String) -> void:
 func start_level_audio() -> void:
 	var audio = get_node_or_null("/root/AudioManager")
 	if audio:
-		audio.call_deferred("_start_chapter_1_audio")
+		var track_name := "chapter_%d" % current_level
+		audio.call_deferred("start_music", track_name)
+
+
+## The end. The screen. The shame. Instantiate game_over scene and pause everything.
+func _on_game_over(reason: String) -> void:
+	var game_over_scene = load("res://scenes/ui/game_over.tscn")
+	if not game_over_scene:
+		push_warning("[GameManager] game_over.tscn failed to load — you cheated death, but only by accident.")
+		return
+	var game_over_ui = game_over_scene.instantiate()
+	game_over_ui.set_reason(reason)
+	get_tree().root.add_child(game_over_ui)
+	get_tree().paused = true

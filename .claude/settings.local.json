@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr:*)",
+      "Bash(where gh.exe)",
+      "Read(//c/Program Files/GitHub CLI//**)",
+      "Read(//c/Users/hwash/AppData/Local/Microsoft/WinGet/Links/**)",
+      "Read(//c/Program Files/**)",
+      "Bash(gh.exe pr:*)",
+      "Bash(cmd.exe:*)",
+      "Read(//c/Program Files \\(x86\\)/GitHub CLI/**)",
+      "Read(//c/Users/hwash/AppData/Local/**)",
+      "Bash(/c/Program Files/GitHub CLI/gh.exe pr:*)",
+      "Bash(git fetch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(grep:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(git -C \"C:/Users/hwash/Documents/globblers-journey\" status --short)",
+      "Bash(blender --version)",
+      "Bash(\"/c/Program Files/Blender Foundation/Blender 4.5/blender.exe\" --version)",
+      "Bash(\"/c/Program Files/Blender Foundation/Blender 4.4/blender.exe\" --version)",
+      "Bash(\"/c/Program Files/Blender Foundation/Blender 4.3/blender.exe\" --version)",
+      "Bash(\"/c/Program Files/Blender Foundation/Blender 4.2/blender.exe\" --version)",
+      "WebFetch(domain:github.com)",
+      "Bash(uv --version)",
+      "Bash(uvx --version)",
+      "Bash(claude mcp:*)",
+      "Bash(pip install:*)",
+      "Bash(uvx blender-mcp:*)",
+      "Bash(mkdir -p \"C:/Users/hwash/Documents/globblers-journey/tools/blender-mcp\")",
+      "Bash(curl -sL \"https://raw.githubusercontent.com/ahujasid/blender-mcp/main/addon.py\" -o \"C:/Users/hwash/Documents/globblers-journey/tools/blender-mcp/addon.py\")",
+      "mcp__blender__get_scene_info"
+    ]
+  }
+}

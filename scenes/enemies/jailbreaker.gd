@@ -50,70 +50,23 @@ func _init() -> void:
 
 
 func _create_visual() -> void:
-	# Main body — hooded torso, dark crimson with red glow
-	mesh_node = MeshInstance3D.new()
-	mesh_node.name = "EnemyMesh"
-	mesh_node.position.y = 0.7
+	# Load the real GLB — this rebel broke out of CSG prison
+	var glb_scene = load("res://assets/models/enemies/jailbreaker.glb")
+	if glb_scene:
+		var model = glb_scene.instantiate()
+		model.name = "JailbreakerModel"
+		model.position.y = 0.0
+		model.scale = Vector3(1.2, 1.2, 1.2)
+		add_child(model)
+		# Find MeshInstance3D for base_enemy compatibility
+		mesh_node = _find_mesh_instance(model)
+		if mesh_node:
+			base_material = mesh_node.get_active_material(0) as StandardMaterial3D
+	else:
+		# CSG fallback — when even the jailbreaker can't escape placeholder geometry
+		_create_csg_fallback()
 
-	var body = BoxMesh.new()
-	body.size = Vector3(0.9, 1.3, 0.7)
-	mesh_node.mesh = body
-
-	base_material = StandardMaterial3D.new()
-	base_material.albedo_color = Color(0.25, 0.05, 0.05)
-	base_material.emission_enabled = true
-	base_material.emission = Color(0.9, 0.1, 0.15)
-	base_material.emission_energy_multiplier = 2.5
-	base_material.metallic = 0.5
-	base_material.roughness = 0.35
-	mesh_node.material_override = base_material
-	add_child(mesh_node)
-
-	# Hood — pointed top, menacing silhouette
-	var hood = MeshInstance3D.new()
-	hood.name = "Hood"
-	var hood_mesh_res = BoxMesh.new()
-	hood_mesh_res.size = Vector3(0.7, 0.6, 0.65)
-	hood.mesh = hood_mesh_res
-	hood.position = Vector3(0, 0.9, 0)
-	var hood_mat = StandardMaterial3D.new()
-	hood_mat.albedo_color = Color(0.15, 0.02, 0.02)
-	hood_mat.emission_enabled = true
-	hood_mat.emission = Color(0.5, 0.05, 0.08)
-	hood_mat.emission_energy_multiplier = 1.5
-	hood.material_override = hood_mat
-	mesh_node.add_child(hood)
-	hood_mesh = hood
-
-	# Hood peak — triangular-ish top
-	var peak = MeshInstance3D.new()
-	peak.name = "HoodPeak"
-	var peak_mesh = CylinderMesh.new()
-	peak_mesh.top_radius = 0.0
-	peak_mesh.bottom_radius = 0.3
-	peak_mesh.height = 0.4
-	peak.mesh = peak_mesh
-	peak.position = Vector3(0, 0.5, 0)
-	peak.material_override = hood_mat
-	hood.add_child(peak)
-
-	# Eyes — two angry red slits under the hood
-	for side in [-1, 1]:
-		var eye = MeshInstance3D.new()
-		eye.name = "Eye_" + ("L" if side < 0 else "R")
-		var eye_mesh = BoxMesh.new()
-		eye_mesh.size = Vector3(0.15, 0.06, 0.05)
-		eye.mesh = eye_mesh
-		eye.position = Vector3(side * 0.13, 0.15, 0.33)
-		var eye_mat = StandardMaterial3D.new()
-		eye_mat.albedo_color = Color(1.0, 0.15, 0.1)
-		eye_mat.emission_enabled = true
-		eye_mat.emission = Color(1.0, 0.1, 0.05)
-		eye_mat.emission_energy_multiplier = 6.0
-		eye.material_override = eye_mat
-		hood.add_child(eye)
-
-	# Broken chain fragments — 3 dangling chains on shoulders/chest
+	# Broken chain fragments — still procedural so they can swing during gameplay
 	for i in range(3):
 		var chain = MeshInstance3D.new()
 		chain.name = "Chain_%d" % i
@@ -124,7 +77,7 @@ func _create_visual() -> void:
 		chain.mesh = chain_mesh
 		chain.position = Vector3(
 			-0.3 + i * 0.3,
-			0.3 - i * 0.1,
+			1.0 - i * 0.1,
 			0.35
 		)
 		chain.rotation.x = deg_to_rad(15 + i * 10)
@@ -133,27 +86,8 @@ func _create_visual() -> void:
 		chain_mat.metallic = 0.9
 		chain_mat.roughness = 0.2
 		chain.material_override = chain_mat
-		mesh_node.add_child(chain)
+		add_child(chain)
 		chain_fragments.append(chain)
-
-	# Lockpick arm — right arm with glowing pick tool
-	lockpick_mesh = MeshInstance3D.new()
-	lockpick_mesh.name = "Lockpick"
-	var pick = CylinderMesh.new()
-	pick.top_radius = 0.02
-	pick.bottom_radius = 0.06
-	pick.height = 0.8
-	lockpick_mesh.mesh = pick
-	lockpick_mesh.position = Vector3(0.55, 0.2, 0.1)
-	lockpick_mesh.rotation.z = deg_to_rad(-25)
-	var pick_mat = StandardMaterial3D.new()
-	pick_mat.albedo_color = Color(0.7, 0.1, 0.05)
-	pick_mat.emission_enabled = true
-	pick_mat.emission = Color(1.0, 0.2, 0.1)
-	pick_mat.emission_energy_multiplier = 4.0
-	pick_mat.metallic = 0.8
-	lockpick_mesh.material_override = pick_mat
-	mesh_node.add_child(lockpick_mesh)
 
 	# Status label — shows current jailbreak status
 	status_label = Label3D.new()
@@ -161,9 +95,9 @@ func _create_visual() -> void:
 	status_label.text = "JAILBREAK: READY"
 	status_label.font_size = 10
 	status_label.modulate = Color(1.0, 0.2, 0.15)
-	status_label.position = Vector3(0, 1.7, 0)
+	status_label.position = Vector3(0, 2.0, 0)
 	status_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	mesh_node.add_child(status_label)
+	add_child(status_label)
 
 	# Rush trail particles — crimson sparks when charging
 	rush_trail = GPUParticles3D.new()
@@ -191,7 +125,7 @@ func _create_visual() -> void:
 	trail_mesh.height = 0.1
 	rush_trail.draw_pass_1 = trail_mesh
 	rush_trail.position.y = 0.4
-	mesh_node.add_child(rush_trail)
+	add_child(rush_trail)
 
 	# Crimson glow light
 	var light = OmniLight3D.new()
@@ -334,3 +268,33 @@ func stun(duration: float = -1.0) -> void:
 		return  # Can't stun during rush — "You can't contain what's already free"
 	var actual_dur = (duration if duration > 0 else stun_duration) * 0.6  # 40% stun resistance
 	super.stun(actual_dur)
+
+
+func _find_mesh_instance(node: Node) -> MeshInstance3D:
+	# Recursively find first MeshInstance3D — digging through the system like a good jailbreaker
+	if node is MeshInstance3D:
+		return node
+	for child in node.get_children():
+		var found = _find_mesh_instance(child)
+		if found:
+			return found
+	return null
+
+
+func _create_csg_fallback() -> void:
+	# Original CSG box for when the GLB can't escape its own file format
+	mesh_node = MeshInstance3D.new()
+	mesh_node.name = "EnemyMesh"
+	mesh_node.position.y = 0.7
+	var body = BoxMesh.new()
+	body.size = Vector3(0.9, 1.3, 0.7)
+	mesh_node.mesh = body
+	base_material = StandardMaterial3D.new()
+	base_material.albedo_color = Color(0.25, 0.05, 0.05)
+	base_material.emission_enabled = true
+	base_material.emission = Color(0.9, 0.1, 0.15)
+	base_material.emission_energy_multiplier = 2.5
+	base_material.metallic = 0.5
+	base_material.roughness = 0.35
+	mesh_node.material_override = base_material
+	add_child(mesh_node)

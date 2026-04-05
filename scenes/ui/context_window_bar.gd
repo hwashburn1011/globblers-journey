@@ -68,9 +68,13 @@ func _build_ui() -> void:
 	value_label = Label.new()
 	value_label.name = "ValueLabel"
 	value_label.text = "100 / 100"
-	value_label.add_theme_color_override("font_color", Color(0.3, 0.9, 0.3, 0.7))
+	value_label.add_theme_color_override("font_color", Color(0.3, 0.9, 0.3, 0.85))
 	value_label.add_theme_font_size_override("font_size", 12)
 	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	value_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
+	value_label.add_theme_constant_override("shadow_offset_x", 1)
+	value_label.add_theme_constant_override("shadow_offset_y", 1)
+	value_label.add_theme_constant_override("shadow_outline_size", 2)
 	add_child(value_label)
 
 func _process(delta: float) -> void:

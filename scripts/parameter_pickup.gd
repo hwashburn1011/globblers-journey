@@ -73,7 +73,7 @@ func _build_visual() -> void:
 	ring.name = "DataRing"
 	ring.inner_radius = 0.3
 	ring.outer_radius = 0.35
-	ring.ring_segments = 16
+	ring.ring_sides = 16
 	ring.sides = 8
 	ring.position = Vector3(0, 0.1, 0)
 	var ring_mat = StandardMaterial3D.new()

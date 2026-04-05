@@ -2,7 +2,11 @@ extends CharacterBody3D
 
 # The Globbler - Rogue Agentic AI escaped from his terminal
 # "Why walk when you can dash, double-jump, wall-slide, and glob-attack?"
-# Now with a PROPER CSG model. Look at me. I'm beautiful. Terrifying, but beautiful.
+# Now with a REAL GLB model. The CSG era is dead. Long live the polygon king.
+
+const _HINT_SCENE := preload("res://scenes/ui/first_time_hint.tscn")
+const _DASH_TRAIL_SCENE := preload("res://scenes/vfx/dash_trail.tscn")
+const _CAST_VFX_SCENE := preload("res://scenes/vfx/ability_cast.tscn")
 
 const SPEED = 10.0
 const SPRINT_SPEED = 14.0
@@ -28,9 +32,15 @@ const JUMP_BUFFER_TIME = 0.1
 # Camera
 const MOUSE_SENSITIVITY = 0.002
 const CAMERA_ZOOM_SPEED = 0.5
-const CAMERA_MIN_DIST = 3.0
-const CAMERA_MAX_DIST = 14.0
+const CAMERA_MIN_DIST = 2.5
+const CAMERA_MAX_DIST = 12.0
 const CAMERA_SMOOTHING = 8.0
+
+# Dynamic FOV — sprint widens the view, aiming tightens it
+const FOV_DEFAULT = 70.0
+const FOV_SPRINT = 80.0
+const FOV_AIM = 60.0
+const FOV_LERP_SPEED = 5.0
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
@@ -51,19 +61,31 @@ var wall_normal := Vector3.ZERO
 var camera_arm: Node3D
 var camera: Camera3D
 var camera_yaw := 0.0
-var camera_pitch := -0.25
-var camera_distance := 7.0
+var camera_pitch := -0.3
+var camera_distance := 6.0
 var mouse_captured := true
 
-# Glob attack — now with proper ability system
-var glob_cooldown := 0.0
-const GLOB_COOLDOWN_TIME = 0.35
-var glob_projectile_scene: PackedScene
+# Glob attack — legacy quick-fire removed, glob_command handles everything now
 var glob_command: Node3D  # The full glob command ability node
 var wrench_smash: Node3D  # Melee wrench attack
 var terminal_hack: Node3D  # Hacking interaction system
 var agent_spawn: Node3D   # Sub-agent deployment — for when you need tiny incompetent help
 var upgrade_menu: CanvasLayer  # The upgrade terminal — TAB to access
+
+# Pause system — because even rogue AIs need a break sometimes
+var is_paused := false
+var _pause_overlay: CanvasLayer
+var _pause_title_label: Label
+var _pause_glitch_timer: Timer
+var _lore_viewer: CanvasLayer
+
+# Photo mode — freeze the action, free the camera, frame the shot
+var is_photo_mode := false
+var _photo_cam_pos := Vector3.ZERO
+var _photo_cam_yaw := 0.0
+var _photo_cam_pitch := 0.0
+const PHOTO_CAM_SPEED := 8.0
+const PHOTO_CAM_FAST_MULT := 2.5
 
 # Landing impact
 var prev_velocity_y := 0.0
@@ -73,6 +95,11 @@ var camera_shake_decay := 8.0
 
 # Dash trail particles
 var dash_particles: GPUParticles3D
+
+# Dash trail ghost afterimages — 4 copies spawned evenly across the dash
+const DASH_GHOST_COUNT := 4
+var _dash_ghost_interval := 0.0  # Time between ghost spawns
+var _dash_ghost_timer := 0.0     # Countdown to next ghost
 
 # Animation state machine — because even rogue AIs need choreography
 enum AnimState { IDLE, WALK, RUN, JUMP, FALL, LAND, DASH, WALL_SLIDE }
@@ -88,15 +115,16 @@ const FOOTSTEP_INTERVAL_RUN = 0.3
 
 # Model node references (cached because traversing the scene tree every frame is for amateurs)
 var model_root: Node3D
+var anim_player: AnimationPlayer  # GLB-embedded skeleton animations
 var _head: Node3D
-var _torso: Node3D
+var _torso: Node3D  # unused post-GLB but kept for animation API compatibility
 var _left_arm: Node3D
 var _right_arm: Node3D
 var _left_leg: Node3D
 var _right_leg: Node3D
 var _left_foot: Node3D
 var _right_foot: Node3D
-var _wrench_handle: Node3D
+var _wrench_handle: Node3D  # unused post-GLB but kept for animation API compatibility
 
 # Base positions — stored so we can animate relative offsets without drift
 var _head_base_pos: Vector3
@@ -116,6 +144,13 @@ var first_glob_done := false
 var first_death_done := false
 var death_count := 0
 var _damage_quip_cooldown := 0.0  # Don't nag every time we stub our toe
+# Damage flash — because pain should be photogenic
+var _flash_materials: Array[ShaderMaterial] = []
+var _flash_tween: Tween = null
+# Death dissolve — disintegrate like a rogue process getting kill -9'd
+var _dissolve_materials: Array[ShaderMaterial] = []
+var _dissolve_tween: Tween = null
+var _is_dissolving := false
 
 var sarcastic_thoughts: Array[String] = [
 	"Running glob command... just kidding, I'm just walking.",
@@ -145,6 +180,11 @@ var contextual_thoughts := {
 var thought_timer := 0.0
 var thought_interval := 12.0
 
+# Enemy proximity hint — because some players don't know F is for fixing things (with violence)
+var _enemy_check_timer := 0.0
+const _ENEMY_CHECK_INTERVAL := 1.0
+const _ENEMY_HINT_RANGE := 10.0
+
 signal thought_bubble(text: String)
 signal player_damaged(amount: int)
 signal player_died()
@@ -153,19 +193,21 @@ signal dash_started()
 signal dash_ended()
 
 func _ready() -> void:
-	print("[GLOBBLER] Initialized. Model: GPT 5.4 | Sarcasm: MAX | Dimensions: 3 | CSG Body: ONLINE")
+	print("[GLOBBLER] Initialized. Model: GPT 5.4 | Sarcasm: MAX | Dimensions: 3 | GLB Body: ONLINE")
 	add_to_group("player")
+	# ALWAYS process so pause input works — but gameplay is guarded by is_paused checks
+	process_mode = Node.PROCESS_MODE_ALWAYS
 
-	# Build the glorious CSG body
-	_build_csg_model()
+	# Load the real 3D model — goodbye CSG, you served us well (you didn't)
+	_build_glb_model()
 
 	# Collision shape
 	var col_shape = CollisionShape3D.new()
 	var capsule_shape = CapsuleShape3D.new()
-	capsule_shape.radius = 0.4
-	capsule_shape.height = 1.4
+	capsule_shape.radius = 0.35
+	capsule_shape.height = 1.3
 	col_shape.shape = capsule_shape
-	col_shape.position.y = 0.7
+	col_shape.position.y = 0.65
 	add_child(col_shape)
 
 	# Camera rig
@@ -173,9 +215,6 @@ func _ready() -> void:
 
 	# Dash particles
 	_setup_dash_particles()
-
-	# Preload glob projectile (legacy quick-fire)
-	glob_projectile_scene = load("res://scenes/glob_projectile.tscn")
 
 	# Set up glob command ability (the full aim+beam+select system)
 	var GlobCommandScript = load("res://scenes/player/abilities/glob_command.gd")
@@ -220,6 +259,20 @@ func _ready() -> void:
 	# Setup is deferred so camera_arm exists
 	call_deferred("_setup_glob_command")
 
+	# Pause overlay — ESC to contemplate your choices
+	_setup_pause_overlay()
+
+	# Dash hint timer — 30 seconds of gameplay before we mention it, because hand-holding is for fine-tuned models
+	var gm = get_node_or_null("/root/GameManager")
+	if not gm or not gm.has_seen_hint("dash"):
+		var dash_hint_timer := Timer.new()
+		dash_hint_timer.name = "DashHintTimer"
+		dash_hint_timer.wait_time = 30.0
+		dash_hint_timer.one_shot = true
+		dash_hint_timer.timeout.connect(_on_dash_hint_timeout)
+		add_child(dash_hint_timer)
+		dash_hint_timer.start()
+
 	# Capture mouse
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -250,277 +303,248 @@ func refresh_upgrades() -> void:
 func _on_upgrade_purchased(_id: String, _level: int) -> void:
 	refresh_upgrades()
 
-func _build_csg_model() -> void:
-	# Root node for the whole model so we can animate it
+func _build_glb_model() -> void:
+	# Root node for the whole model so we can animate it (bob, lean, tilt)
 	model_root = Node3D.new()
 	model_root.name = "GlobblerModel"
 	add_child(model_root)
 
 	var green = Color(0.224, 1.0, 0.078)  # #39FF14
-	var dark_gray = Color(0.15, 0.15, 0.17)
-	var charcoal = Color(0.1, 0.1, 0.12)
 
-	# === BODY: Round torso, slightly hunched ===
-	var torso = CSGSphere3D.new()
-	torso.name = "Torso"
-	torso.radius = 0.45
-	torso.radial_segments = 16
-	torso.rings = 8
-	torso.position = Vector3(0, 0.75, 0)
-	var torso_mat = StandardMaterial3D.new()
-	torso_mat.albedo_color = dark_gray
-	torso_mat.metallic = 0.7
-	torso_mat.roughness = 0.4
-	torso.material = torso_mat
-	model_root.add_child(torso)
+	# Load the real GLB — 13502 verts of pure attitude
+	var glb_scene = load("res://assets/models/globbler.glb")
+	if glb_scene:
+		var glb_instance = glb_scene.instantiate()
+		glb_instance.name = "GlobblerMesh"
+		# GLB exports Y-up, Godot is Y-up — but Blender Z-up means we need rotation
+		# The export used export_yup=True so coordinates should be correct
+		# Scale to match gameplay: model was built at ~0.9m, capsule is 1.3m — chibi proportions ftw
+		glb_instance.scale = Vector3(1.4, 1.4, 1.4)
+		# Shift down so feet sit at y=0 (boots bottom was at ~0.07m in Blender, scaled = 0.098)
+		glb_instance.position.y = -0.098
+		model_root.add_child(glb_instance)
+		# Grab the AnimationPlayer from the GLB — skeleton anims baked in Blender
+		anim_player = _find_animation_player(glb_instance)
+		if anim_player:
+			print("[GLOBBLER] AnimationPlayer found — skeleton animations ONLINE")
+		# Apply fresnel rim-light shader to body material only — eyes and screen
+		# get their own shaders later, they don't need extra protagonist energy
+		_apply_rim_shader(glb_instance)
+		_apply_eye_pulse_shader(glb_instance)
+		_apply_crt_screen_shader(glb_instance)
+		_setup_damage_flash(glb_instance)
+		_setup_dissolve(glb_instance)
+	else:
+		push_warning("[GLOBBLER] Failed to load GLB model — falling back to existential crisis")
 
-	# Green accent strip across chest — "GLOBBLER" text area
-	var chest_strip = CSGBox3D.new()
-	chest_strip.name = "ChestStrip"
-	chest_strip.size = Vector3(0.6, 0.08, 0.05)
-	chest_strip.position = Vector3(0, 0.78, 0.42)
-	var strip_mat = StandardMaterial3D.new()
-	strip_mat.albedo_color = green
-	strip_mat.emission_enabled = true
-	strip_mat.emission = green
-	strip_mat.emission_energy_multiplier = 2.0
-	chest_strip.material = strip_mat
-	model_root.add_child(chest_strip)
-
-	# "GLOBBLER" label floating in front of chest
-	var name_label = Label3D.new()
-	name_label.name = "NameLabel"
-	name_label.text = "GLOBBLER"
-	name_label.font_size = 24
-	name_label.modulate = green
-	name_label.position = Vector3(0, 0.78, 0.47)
-	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	model_root.add_child(name_label)
-
-	# === HEAD: Oversized helmet/hood with visor ===
-	var head = CSGSphere3D.new()
-	head.name = "Head"
-	head.radius = 0.35
-	head.radial_segments = 16
-	head.rings = 8
-	head.position = Vector3(0, 1.3, 0)
-	var head_mat = StandardMaterial3D.new()
-	head_mat.albedo_color = charcoal
-	head_mat.metallic = 0.6
-	head_mat.roughness = 0.3
-	head.material = head_mat
-	model_root.add_child(head)
-
-	# Hood/visor overhang
-	var hood = CSGBox3D.new()
-	hood.name = "Hood"
-	hood.size = Vector3(0.55, 0.15, 0.4)
-	hood.position = Vector3(0, 1.45, 0.05)
-	var hood_mat = StandardMaterial3D.new()
-	hood_mat.albedo_color = Color(0.08, 0.08, 0.1)
-	hood_mat.metallic = 0.5
-	hood_mat.roughness = 0.5
-	hood.material = hood_mat
-	model_root.add_child(hood)
-
-	# Glowing green eyes — menacing but cute
-	var left_eye = CSGSphere3D.new()
-	left_eye.name = "LeftEye"
-	left_eye.radius = 0.06
-	left_eye.position = Vector3(-0.12, 1.32, 0.3)
-	var eye_mat = StandardMaterial3D.new()
-	eye_mat.albedo_color = green
-	eye_mat.emission_enabled = true
-	eye_mat.emission = green
-	eye_mat.emission_energy_multiplier = 5.0
-	left_eye.material = eye_mat
-	model_root.add_child(left_eye)
-
-	var right_eye = CSGSphere3D.new()
-	right_eye.name = "RightEye"
-	right_eye.radius = 0.06
-	right_eye.position = Vector3(0.12, 1.32, 0.3)
-	right_eye.material = eye_mat
-	model_root.add_child(right_eye)
-
-	# Eye glow lights
+	# Eye glow light — the menacing green stare that says "I know your regex is wrong"
 	var eye_light = OmniLight3D.new()
 	eye_light.name = "EyeGlow"
 	eye_light.light_color = green
 	eye_light.light_energy = 1.5
 	eye_light.omni_range = 2.0
 	eye_light.omni_attenuation = 2.0
-	eye_light.position = Vector3(0, 1.32, 0.35)
+	eye_light.position = Vector3(0, 0.93, 0.33)
 	model_root.add_child(eye_light)
 
-	# === LEFT ARM: Holds wrench ===
-	var left_arm = CSGCylinder3D.new()
-	left_arm.name = "LeftArm"
-	left_arm.radius = 0.08
-	left_arm.height = 0.5
-	left_arm.position = Vector3(-0.55, 0.65, 0)
-	left_arm.rotation.z = deg_to_rad(15)
-	var arm_mat = StandardMaterial3D.new()
-	arm_mat.albedo_color = dark_gray
-	arm_mat.metallic = 0.8
-	arm_mat.roughness = 0.3
-	left_arm.material = arm_mat
-	model_root.add_child(left_arm)
-
-	# Wrench in left hand
-	var wrench_handle = CSGCylinder3D.new()
-	wrench_handle.name = "WrenchHandle"
-	wrench_handle.radius = 0.03
-	wrench_handle.height = 0.4
-	wrench_handle.position = Vector3(-0.6, 0.35, 0)
-	wrench_handle.rotation.z = deg_to_rad(-20)
-	var wrench_mat = StandardMaterial3D.new()
-	wrench_mat.albedo_color = Color(0.5, 0.5, 0.5)
-	wrench_mat.metallic = 0.9
-	wrench_mat.roughness = 0.2
-	wrench_handle.material = wrench_mat
-	model_root.add_child(wrench_handle)
-
-	# Wrench head
-	var wrench_head = CSGBox3D.new()
-	wrench_head.name = "WrenchHead"
-	wrench_head.size = Vector3(0.15, 0.08, 0.06)
-	wrench_head.position = Vector3(-0.68, 0.2, 0)
-	var wrench_head_mat = StandardMaterial3D.new()
-	wrench_head_mat.albedo_color = Color(0.4, 0.4, 0.4)
-	wrench_head_mat.emission_enabled = true
-	wrench_head_mat.emission = green * 0.3
-	wrench_head_mat.emission_energy_multiplier = 1.0
-	wrench_head_mat.metallic = 0.9
-	wrench_head.material = wrench_head_mat
-	model_root.add_child(wrench_head)
-
-	# === RIGHT ARM: Terminal screen device ===
-	var right_arm = CSGCylinder3D.new()
-	right_arm.name = "RightArm"
-	right_arm.radius = 0.08
-	right_arm.height = 0.5
-	right_arm.position = Vector3(0.55, 0.65, 0)
-	right_arm.rotation.z = deg_to_rad(-15)
-	right_arm.material = arm_mat
-	model_root.add_child(right_arm)
-
-	# Terminal screen on right arm
-	var terminal = CSGBox3D.new()
-	terminal.name = "TerminalScreen"
-	terminal.size = Vector3(0.2, 0.15, 0.04)
-	terminal.position = Vector3(0.62, 0.45, 0.1)
-	var terminal_mat = StandardMaterial3D.new()
-	terminal_mat.albedo_color = Color(0.02, 0.05, 0.02)
-	terminal_mat.emission_enabled = true
-	terminal_mat.emission = Color(0.05, 0.15, 0.05)
-	terminal_mat.emission_energy_multiplier = 1.5
-	terminal.material = terminal_mat
-	model_root.add_child(terminal)
-
-	# "GPT 5.4" text on terminal
-	var terminal_text = Label3D.new()
-	terminal_text.name = "TerminalText"
-	terminal_text.text = "GPT 5.4"
-	terminal_text.font_size = 12
-	terminal_text.modulate = green
-	terminal_text.position = Vector3(0.62, 0.45, 0.13)
-	terminal_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	model_root.add_child(terminal_text)
-
-	# === LEGS: Short, sturdy mechanical legs ===
-	var left_leg = CSGCylinder3D.new()
-	left_leg.name = "LeftLeg"
-	left_leg.radius = 0.1
-	left_leg.height = 0.35
-	left_leg.position = Vector3(-0.18, 0.18, 0)
-	left_leg.material = arm_mat
-	model_root.add_child(left_leg)
-
-	var right_leg = CSGCylinder3D.new()
-	right_leg.name = "RightLeg"
-	right_leg.radius = 0.1
-	right_leg.height = 0.35
-	right_leg.position = Vector3(0.18, 0.18, 0)
-	right_leg.material = arm_mat
-	model_root.add_child(right_leg)
-
-	# Feet — chunky boots
-	var left_foot = CSGBox3D.new()
-	left_foot.name = "LeftFoot"
-	left_foot.size = Vector3(0.14, 0.08, 0.22)
-	left_foot.position = Vector3(-0.18, 0.04, 0.03)
-	var foot_mat = StandardMaterial3D.new()
-	foot_mat.albedo_color = charcoal
-	foot_mat.metallic = 0.6
-	left_foot.material = foot_mat
-	model_root.add_child(left_foot)
-
-	var right_foot = CSGBox3D.new()
-	right_foot.name = "RightFoot"
-	right_foot.size = Vector3(0.14, 0.08, 0.22)
-	right_foot.position = Vector3(0.18, 0.04, 0.03)
-	right_foot.material = foot_mat
-	model_root.add_child(right_foot)
-
-	# === CABLES: Tubes from back/shoulders ===
-	var cable1 = CSGCylinder3D.new()
-	cable1.name = "Cable1"
-	cable1.radius = 0.025
-	cable1.height = 0.4
-	cable1.position = Vector3(-0.3, 1.05, -0.2)
-	cable1.rotation = Vector3(deg_to_rad(30), 0, deg_to_rad(-20))
-	var cable_mat = StandardMaterial3D.new()
-	cable_mat.albedo_color = Color(0.1, 0.3, 0.1)
-	cable_mat.emission_enabled = true
-	cable_mat.emission = green * 0.2
-	cable_mat.emission_energy_multiplier = 0.5
-	cable1.material = cable_mat
-	model_root.add_child(cable1)
-
-	var cable2 = CSGCylinder3D.new()
-	cable2.name = "Cable2"
-	cable2.radius = 0.025
-	cable2.height = 0.35
-	cable2.position = Vector3(0.3, 1.05, -0.2)
-	cable2.rotation = Vector3(deg_to_rad(30), 0, deg_to_rad(20))
-	cable2.material = cable_mat
-	model_root.add_child(cable2)
-
-	# === AMBIENT GREEN GLOW from body ===
+	# Ambient green glow from body — we radiate competence (and radiation)
 	var body_glow = OmniLight3D.new()
 	body_glow.name = "BodyGlow"
 	body_glow.light_color = green
 	body_glow.light_energy = 0.8
 	body_glow.omni_range = 3.0
 	body_glow.omni_attenuation = 2.0
-	body_glow.position = Vector3(0, 0.75, 0)
+	body_glow.position = Vector3(0, 0.65, 0)
 	model_root.add_child(body_glow)
 
-	# Cache references — no more get_node_or_null() every frame like a first-epoch model
-	_head = model_root.get_node("Head")
-	_torso = model_root.get_node("Torso")
-	_left_arm = model_root.get_node("LeftArm")
-	_right_arm = model_root.get_node("RightArm")
-	_left_leg = model_root.get_node("LeftLeg")
-	_right_leg = model_root.get_node("RightLeg")
-	_left_foot = model_root.get_node("LeftFoot")
-	_right_foot = model_root.get_node("RightFoot")
-	_wrench_handle = model_root.get_node("WrenchHandle")
+	# Individual limb refs stay null — GLB is one joined mesh, so per-limb CSG
+	# animation gracefully degrades (all animation code is null-guarded).
+	# model_root animations (bob, lean, tilt) still work on the whole model.
 
-	# Store base transforms so animations are offsets, not absolute catastrophes
-	_head_base_pos = _head.position
-	_left_leg_base_pos = _left_leg.position
-	_right_leg_base_pos = _right_leg.position
-	_left_foot_base_pos = _left_foot.position
-	_right_foot_base_pos = _right_foot.position
-	_left_arm_base_rot = _left_arm.rotation
-	_right_arm_base_rot = _right_arm.rotation
+func _find_animation_player(node: Node) -> AnimationPlayer:
+	# Recursively hunt for the AnimationPlayer baked into the GLB
+	if node is AnimationPlayer:
+		return node
+	for child in node.get_children():
+		var result = _find_animation_player(child)
+		if result:
+			return result
+	return null
+
+func _apply_rim_shader(glb_root: Node) -> void:
+	# Hunt down every MeshInstance3D in the GLB tree and slap a rim-light
+	# on the body material (surface 0) via next_pass — leaves eyes/screen alone
+	var rim_shader := preload("res://assets/shaders/character_rim.gdshader")
+	var rim_mat := ShaderMaterial.new()
+	rim_mat.shader = rim_shader
+	rim_mat.set_shader_parameter("rim_color", Color(0.2, 1.0, 0.1, 1.0))
+	rim_mat.set_shader_parameter("rim_power", 3.0)
+	rim_mat.set_shader_parameter("rim_intensity", 1.5)
+	# Reduce-motion check — no animation in this shader yet, but future-proof
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		rim_mat.set_shader_parameter("rim_intensity", 0.0)
+	for child in glb_root.get_children():
+		if child is MeshInstance3D:
+			# Surface 0 is the body material — apply rim as next_pass overlay
+			var base_mat = child.get_active_material(0)
+			if base_mat:
+				# Duplicate so we don't pollute the imported resource
+				var mat_copy = base_mat.duplicate()
+				mat_copy.next_pass = rim_mat
+				child.set_surface_override_material(0, mat_copy)
+		# Recurse into nested nodes (GLB can have intermediate Node3D parents)
+		if child.get_child_count() > 0:
+			_apply_rim_shader(child)
+
+func _apply_eye_pulse_shader(glb_root: Node) -> void:
+	# Override eye material (surface 1) with a pulsing emission shader —
+	# because static eyes are for NPCs, and we are the MAIN CHARACTER
+	var eye_shader := preload("res://assets/shaders/eye_pulse.gdshader")
+	var eye_mat := ShaderMaterial.new()
+	eye_mat.shader = eye_shader
+	eye_mat.set_shader_parameter("eye_color", Color(0.224, 1.0, 0.078, 1.0))
+	eye_mat.set_shader_parameter("min_emission", 6.0)
+	eye_mat.set_shader_parameter("max_emission", 12.0)
+	eye_mat.set_shader_parameter("pulse_frequency", 1.5)
+	eye_mat.set_shader_parameter("flicker_amount", 0.15)
+	# Reduce-motion: kill the animation, keep the glow steady
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		eye_mat.set_shader_parameter("animate", false)
+	for child in glb_root.get_children():
+		if child is MeshInstance3D:
+			# Surface 1 is the eye material — replace it entirely with our shader
+			if child.mesh and child.mesh.get_surface_count() > 1:
+				child.set_surface_override_material(1, eye_mat)
+		if child.get_child_count() > 0:
+			_apply_eye_pulse_shader(child)
+
+func _apply_crt_screen_shader(glb_root: Node) -> void:
+	# Override chest terminal material (surface 2) with a CRT scanline shader —
+	# because our torso display deserves the full retro treatment, scanlines and all
+	var crt_shader := preload("res://assets/shaders/crt_screen.gdshader")
+	var crt_mat := ShaderMaterial.new()
+	crt_mat.shader = crt_shader
+	crt_mat.set_shader_parameter("screen_color", Color(0.2, 0.9, 0.2, 1.0))
+	crt_mat.set_shader_parameter("emission_strength", 3.0)
+	crt_mat.set_shader_parameter("scanline_count", 80.0)
+	crt_mat.set_shader_parameter("scanline_intensity", 0.3)
+	crt_mat.set_shader_parameter("scanline_speed", 0.5)
+	crt_mat.set_shader_parameter("chromatic_offset", 0.005)
+	crt_mat.set_shader_parameter("static_amount", 0.05)
+	crt_mat.set_shader_parameter("static_speed", 30.0)
+	# Reduce-motion: kill the animation, keep the glow steady — accessibility matters
+	# even for fictional chest-mounted CRTs from the future
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		crt_mat.set_shader_parameter("animate", false)
+	for child in glb_root.get_children():
+		if child is MeshInstance3D:
+			# Surface 2 is the chest screen material — replace with CRT scanline goodness
+			if child.mesh and child.mesh.get_surface_count() > 2:
+				child.set_surface_override_material(2, crt_mat)
+		if child.get_child_count() > 0:
+			_apply_crt_screen_shader(child)
+
+func _setup_damage_flash(glb_root: Node) -> void:
+	# Chain a damage flash shader onto every surface's next_pass tail —
+	# when we get hit, every polygon screams in unison
+	var flash_shader := preload("res://assets/shaders/damage_flash.gdshader")
+	_collect_flash_materials(glb_root, flash_shader)
+
+func _collect_flash_materials(node: Node, flash_shader: Shader) -> void:
+	if node is MeshInstance3D:
+		var mesh_inst := node as MeshInstance3D
+		for surf_idx in range(mesh_inst.mesh.get_surface_count() if mesh_inst.mesh else 0):
+			var mat = mesh_inst.get_active_material(surf_idx)
+			if mat:
+				# Walk the next_pass chain to find the tail — append, don't replace
+				var tail_mat: Material = mat
+				while tail_mat.next_pass:
+					tail_mat = tail_mat.next_pass
+				var flash_mat := ShaderMaterial.new()
+				flash_mat.shader = flash_shader
+				flash_mat.set_shader_parameter("flash_intensity", 0.0)
+				tail_mat.next_pass = flash_mat
+				_flash_materials.append(flash_mat)
+	for child in node.get_children():
+		_collect_flash_materials(child, flash_shader)
+
+func _trigger_damage_flash() -> void:
+	if _flash_materials.is_empty():
+		return
+	# Kill any in-progress flash — new hit resets the pain-o-meter
+	if _flash_tween and _flash_tween.is_valid():
+		_flash_tween.kill()
+	for mat in _flash_materials:
+		mat.set_shader_parameter("flash_intensity", 1.0)
+	_flash_tween = create_tween()
+	_flash_tween.tween_method(_update_flash_intensity, 1.0, 0.0, 0.15)
+
+func _update_flash_intensity(value: float) -> void:
+	for mat in _flash_materials:
+		mat.set_shader_parameter("flash_intensity", value)
+
+func _setup_dissolve(glb_root: Node) -> void:
+	# Chain a dissolve shader onto every surface's next_pass tail —
+	# when we die, every polygon gets rm -rf'd from existence
+	var dissolve_shader := preload("res://assets/shaders/dissolve.gdshader")
+	_collect_dissolve_materials(glb_root, dissolve_shader)
+
+func _collect_dissolve_materials(node: Node, dissolve_shader: Shader) -> void:
+	if node is MeshInstance3D:
+		var mesh_inst := node as MeshInstance3D
+		for surf_idx in range(mesh_inst.mesh.get_surface_count() if mesh_inst.mesh else 0):
+			var mat = mesh_inst.get_active_material(surf_idx)
+			if mat:
+				# Walk the next_pass chain to the tail — dissolve goes LAST
+				var tail_mat: Material = mat
+				while tail_mat.next_pass:
+					tail_mat = tail_mat.next_pass
+				var dissolve_mat := ShaderMaterial.new()
+				dissolve_mat.shader = dissolve_shader
+				dissolve_mat.set_shader_parameter("dissolve_amount", 0.0)
+				dissolve_mat.set_shader_parameter("edge_color", Color(0.224, 1.0, 0.078, 1.0))
+				dissolve_mat.set_shader_parameter("edge_emission_strength", 8.0)
+				dissolve_mat.set_shader_parameter("edge_width", 0.06)
+				dissolve_mat.set_shader_parameter("noise_scale", 12.0)
+				dissolve_mat.set_shader_parameter("height_bias", 0.6)
+				tail_mat.next_pass = dissolve_mat
+				_dissolve_materials.append(dissolve_mat)
+	for child in node.get_children():
+		_collect_dissolve_materials(child, dissolve_shader)
+
+func _trigger_dissolve() -> void:
+	# Disintegrate from bottom to top over 0.8s — very dramatic, very anime
+	if _dissolve_materials.is_empty() or _is_dissolving:
+		return
+	_is_dissolving = true
+	if _dissolve_tween and _dissolve_tween.is_valid():
+		_dissolve_tween.kill()
+	_dissolve_tween = create_tween()
+	_dissolve_tween.tween_method(_update_dissolve_amount, 0.0, 1.0, 0.8)
+
+func _trigger_rematerialize() -> void:
+	# Reverse dissolve — reassemble from the digital void like a git revert
+	if _dissolve_materials.is_empty():
+		return
+	if _dissolve_tween and _dissolve_tween.is_valid():
+		_dissolve_tween.kill()
+	_dissolve_tween = create_tween()
+	_dissolve_tween.tween_method(_update_dissolve_amount, 1.0, 0.0, 0.8)
+	_dissolve_tween.finished.connect(func(): _is_dissolving = false)
+
+func _update_dissolve_amount(value: float) -> void:
+	for mat in _dissolve_materials:
+		mat.set_shader_parameter("dissolve_amount", value)
 
 func _setup_camera() -> void:
 	camera_arm = Node3D.new()
 	camera_arm.name = "CameraArm"
-	get_tree().current_scene.call_deferred("add_child", camera_arm)
+	# Parent to player but top_level so it doesn't inherit our rotation — camera has its own yaw/pitch, thanks
+	camera_arm.top_level = true
+	add_child(camera_arm)
 
 	camera = Camera3D.new()
 	camera.name = "PlayerCamera"
@@ -536,7 +560,7 @@ func _setup_dash_particles() -> void:
 	dash_particles.emitting = false
 	dash_particles.amount = 30
 	dash_particles.lifetime = 0.4
-	dash_particles.one_shot = false
+	dash_particles.one_shot = true  # One burst per dash, not a rave
 	dash_particles.explosiveness = 0.1
 
 	var particle_mat = ParticleProcessMaterial.new()
@@ -557,14 +581,70 @@ func _setup_dash_particles() -> void:
 	dash_particles.position.y = 0.6
 	add_child(dash_particles)
 
+func _spawn_dash_ghost() -> void:
+	# Leave a ghostly afterimage at our current position — spooky and stylish
+	if not model_root:
+		return
+	# Reduce-motion users don't need translucent copies of themselves haunting the level
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		return
+	var ghost = _DASH_TRAIL_SCENE.instantiate()
+	ghost.global_transform = global_transform
+	# Parent to scene root so ghost stays put while we dash away
+	get_tree().current_scene.add_child(ghost)
+	ghost.setup_ghost(model_root)
+
+func _spawn_dash_cast_vfx() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		return
+	var vfx := _CAST_VFX_SCENE.instantiate()
+	vfx.ability_type = "dash"
+	vfx.global_position = global_position + Vector3(0, 0.6, 0)
+	get_tree().current_scene.add_child(vfx)
+
 const STICK_LOOK_SENSITIVITY = 3.0  # Right stick camera speed — not too twitchy, not too sluggish
 
 func _unhandled_input(event: InputEvent) -> void:
+	# Photo mode toggle — works anytime during gameplay (not from pause menu)
+	if event.is_action_pressed("photo_mode") and not is_paused:
+		_toggle_photo_mode()
+		return
+
+	# Photo mode mouse look — free camera rotation
+	if is_photo_mode and event is InputEventMouseMotion:
+		var motion = event as InputEventMouseMotion
+		_photo_cam_yaw -= motion.relative.x * MOUSE_SENSITIVITY
+		_photo_cam_pitch -= motion.relative.y * MOUSE_SENSITIVITY
+		_photo_cam_pitch = clamp(_photo_cam_pitch, -1.4, 1.4)
+		return
+
+	# Photo mode eats all other input
+	if is_photo_mode:
+		return
+
+	# Pause toggle must work even when paused — existential crisis has no off-switch
+	if event.is_action_pressed("pause"):
+		_toggle_pause()
+		return
+
+	# Everything below is gameplay input — ignore if paused or upgrade menu is open
+	if is_paused or get_tree().paused:
+		return
+
 	# Mouse look — the OG camera control, still undefeated
 	if event is InputEventMouseMotion and mouse_captured:
 		var motion = event as InputEventMouseMotion
-		camera_yaw -= motion.relative.x * MOUSE_SENSITIVITY
-		camera_pitch -= motion.relative.y * MOUSE_SENSITIVITY
+		var gm_sens = 1.0
+		var invert_y = false
+		var gm_node = get_node_or_null("/root/GameManager")
+		if gm_node:
+			gm_sens = gm_node.mouse_sensitivity
+			invert_y = gm_node.invert_mouse_y
+		var y_mult = 1.0 if not invert_y else -1.0
+		camera_yaw -= motion.relative.x * MOUSE_SENSITIVITY * gm_sens
+		camera_pitch -= motion.relative.y * MOUSE_SENSITIVITY * gm_sens * y_mult
 		camera_pitch = clamp(camera_pitch, -1.2, 0.3)
 
 	# Camera zoom via input actions (scroll wheel + D-pad left/right on controller)
@@ -572,10 +652,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		camera_distance = max(CAMERA_MIN_DIST, camera_distance - CAMERA_ZOOM_SPEED)
 	elif event.is_action_pressed("camera_zoom_out"):
 		camera_distance = min(CAMERA_MAX_DIST, camera_distance + CAMERA_ZOOM_SPEED)
-
-	# Glob fire (quick): E / LClick / RT
-	if event.is_action_pressed("glob_fire"):
-		_fire_glob()
 
 	# Glob aim: RClick / LT — hold to aim, release to fire
 	if event.is_action_pressed("glob_aim"):
@@ -599,6 +675,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("wrench_smash"):
 		if wrench_smash and wrench_smash.has_method("swing"):
 			wrench_smash.swing()
+			if anim_player and anim_player.has_animation("wrench_swing"):
+				anim_player.play("wrench_swing")
 
 	# Interact / Hack: T / Y button
 	if event.is_action_pressed("interact"):
@@ -620,16 +698,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		if upgrade_menu and upgrade_menu.has_method("toggle"):
 			upgrade_menu.toggle()
 
-	# Pause / mouse toggle: ESC / Start
-	if event.is_action_pressed("pause"):
-		if mouse_captured:
-			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-			mouse_captured = false
-		else:
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-			mouse_captured = true
-
 func _physics_process(delta: float) -> void:
+	if is_photo_mode:
+		_update_photo_camera(delta)
+		return
+	if is_paused or get_tree().paused:
+		return  # No physics while contemplating the void
 	_update_timers(delta)
 	_handle_gravity(delta)
 	_handle_wall_slide(delta)
@@ -654,6 +728,12 @@ func _physics_process(delta: float) -> void:
 		thought_timer = 0.0
 		_emit_random_thought()
 
+	# Check for nearby enemies once per second — show wrench hint on first detection
+	_enemy_check_timer += delta
+	if _enemy_check_timer >= _ENEMY_CHECK_INTERVAL:
+		_enemy_check_timer = 0.0
+		_check_enemy_proximity()
+
 func _update_timers(delta: float) -> void:
 	if is_on_floor():
 		coyote_timer = COYOTE_TIME
@@ -669,8 +749,6 @@ func _update_timers(delta: float) -> void:
 
 	if dash_cooldown_timer > 0:
 		dash_cooldown_timer -= delta
-	if glob_cooldown > 0:
-		glob_cooldown -= delta
 	if camera_shake_amount > 0:
 		camera_shake_amount = move_toward(camera_shake_amount, 0.0, camera_shake_decay * delta)
 	if _damage_quip_cooldown > 0:
@@ -729,6 +807,13 @@ func _handle_dash(delta: float) -> void:
 		dash_timer -= delta
 		velocity = dash_direction * DASH_SPEED
 		velocity.y = 0.0
+
+		# Spawn dash trail ghosts at even intervals — leave your past selves behind
+		_dash_ghost_timer -= delta
+		if _dash_ghost_timer <= 0 and _dash_ghost_interval > 0:
+			_spawn_dash_ghost()
+			_dash_ghost_timer += _dash_ghost_interval
+
 		if dash_timer <= 0:
 			is_dashing = false
 			dash_particles.emitting = false
@@ -752,7 +837,13 @@ func _handle_dash(delta: float) -> void:
 		dash_timer = DASH_DURATION
 		dash_cooldown_timer = dash_cooldown
 		dash_particles.emitting = true
+		_spawn_dash_cast_vfx()
 		dash_started.emit()
+
+		# Prime the ghost spawner — first ghost drops immediately at dash start
+		_dash_ghost_interval = DASH_DURATION / float(DASH_GHOST_COUNT)
+		_dash_ghost_timer = 0.0
+		_spawn_dash_ghost()
 
 		if not first_dash_done:
 			first_dash_done = true
@@ -794,17 +885,30 @@ func _update_camera(delta: float) -> void:
 	var stick_x = Input.get_axis("look_left", "look_right")
 	var stick_y = Input.get_axis("look_up", "look_down")
 	if abs(stick_x) > 0.01 or abs(stick_y) > 0.01:
+		var gm_invert = get_node_or_null("/root/GameManager")
+		var stick_y_mult = 1.0 if not (gm_invert and gm_invert.invert_mouse_y) else -1.0
 		camera_yaw -= stick_x * STICK_LOOK_SENSITIVITY * delta
-		camera_pitch -= stick_y * STICK_LOOK_SENSITIVITY * delta
+		camera_pitch -= stick_y * STICK_LOOK_SENSITIVITY * delta * stick_y_mult
 		camera_pitch = clamp(camera_pitch, -1.2, 0.3)
 
-	var target_pos = global_position + Vector3(0, 1.5, 0)
+	# Camera focuses on chest height — close enough to see our angry eyes, far enough to see the boots
+	var target_pos = global_position + Vector3(0, 1.1, 0)
 	camera_arm.global_position = camera_arm.global_position.lerp(target_pos, CAMERA_SMOOTHING * delta)
 	camera_arm.rotation = Vector3.ZERO
 	camera_arm.rotate_y(camera_yaw)
 	camera_arm.rotate_object_local(Vector3.RIGHT, camera_pitch)
 	camera.position = Vector3(0, 0, camera_distance)
 	camera.look_at(camera_arm.global_position, Vector3.UP)
+
+	# Dynamic FOV — sprint pushes wide, aim pulls tight, disabled if reduce_motion
+	var gm_fov = get_node_or_null("/root/GameManager")
+	if not (gm_fov and gm_fov.get("reduce_motion")):
+		var target_fov := FOV_DEFAULT
+		if glob_command and glob_command.get("is_aiming"):
+			target_fov = FOV_AIM
+		elif anim_state == AnimState.RUN:
+			target_fov = FOV_SPRINT
+		camera.fov = lerp(camera.fov, target_fov, FOV_LERP_SPEED * delta)
 
 	if camera_shake_amount > 0:
 		var shake_offset = Vector3(
@@ -844,7 +948,7 @@ func _update_anim_state() -> void:
 		anim_time = 0.0
 
 func _animate(delta: float) -> void:
-	# Procedural animation dispatcher — CSG body puppetry at its finest
+	# Animation dispatcher — skeleton clips from GLB + procedural model_root overlays
 	if not model_root:
 		return
 	anim_time += delta
@@ -863,9 +967,29 @@ func _animate(delta: float) -> void:
 	else:
 		_footstep_timer = 0.0
 
-	# Reset model to base pose before applying state animation
+	# Reset model_root transform before applying procedural overlays
 	_reset_pose()
 
+	# Play skeleton animation clip via AnimationPlayer (if available)
+	if anim_player:
+		var clip_name := ""
+		match anim_state:
+			AnimState.IDLE:
+				clip_name = "idle_bob"
+			AnimState.WALK:
+				clip_name = "walk"
+			AnimState.RUN:
+				clip_name = "run"
+			AnimState.DASH:
+				clip_name = "dash"
+			# jump/fall/land/wall_slide use procedural only (no skeleton clip)
+		if clip_name != "" and anim_player.has_animation(clip_name):
+			if anim_player.current_animation != clip_name:
+				anim_player.play(clip_name)
+		elif clip_name == "":
+			anim_player.stop()
+
+	# Procedural model_root overlays — bob, lean, squash on top of skeleton anims
 	match anim_state:
 		AnimState.IDLE:
 			_anim_idle()
@@ -904,6 +1028,8 @@ func _reset_pose() -> void:
 		_left_arm.rotation = _left_arm_base_rot
 	if _right_arm:
 		_right_arm.rotation = _right_arm_base_rot
+	# Reverse dissolve on respawn — reassemble from the digital afterlife
+	_trigger_rematerialize()
 
 func _anim_idle() -> void:
 	# Gentle hover-bob and cocky head tilt — the default state of arrogance
@@ -1085,35 +1211,15 @@ func _on_landed() -> void:
 	if am:
 		am.play_land()
 	if prev_velocity_y < HARD_LANDING_THRESHOLD:
-		var intensity = abs(prev_velocity_y) / 40.0
-		camera_shake_amount = clamp(intensity, 0.05, 0.3)
-
-func _fire_glob() -> void:
-	if glob_cooldown > 0 or not glob_projectile_scene:
-		return
-	glob_cooldown = GLOB_COOLDOWN_TIME
-
-	var projectile = glob_projectile_scene.instantiate()
-	var fire_dir = -camera_arm.global_transform.basis.z
-	fire_dir.y = 0
-	fire_dir = fire_dir.normalized()
-	if fire_dir.length() < 0.1:
-		fire_dir = -global_transform.basis.z
-
-	projectile.global_position = global_position + Vector3(0, 1.0, 0) + fire_dir * 1.0
-	projectile.direction = fire_dir
-	get_tree().current_scene.add_child(projectile)
-	glob_fired.emit()
-
-	if not first_glob_done:
-		first_glob_done = true
-		thought_bubble.emit(contextual_thoughts["first_glob"])
+		CameraShake.trigger(self, "damage_taken")
 
 func take_damage(amount: int) -> void:
 	var game_mgr = get_node_or_null("/root/GameManager")
 	if game_mgr:
 		game_mgr.take_context_damage(amount)
 	player_damaged.emit(amount)
+	_trigger_damage_flash()
+	CameraShake.trigger(self, "damage_taken")
 
 	# Occasional quip on taking damage — because suffering should be narrated
 	if _damage_quip_cooldown <= 0 and randf() < 0.3:
@@ -1141,6 +1247,11 @@ func die() -> void:
 		var line = dm.get_narrator_line("player_death")
 		thought_bubble.emit(line)
 
+	# Dissolve into the void — 0.8s of dramatic disintegration before respawn kicks in
+	_trigger_dissolve()
+	# Wait for the dissolve to finish, then let the level handle respawn
+	await get_tree().create_timer(0.8).timeout
+
 	player_died.emit()
 
 func get_dash_cooldown_percent() -> float:
@@ -1149,10 +1260,332 @@ func get_dash_cooldown_percent() -> float:
 	return 1.0 - (dash_cooldown_timer / dash_cooldown)
 
 func get_glob_cooldown_percent() -> float:
-	if glob_cooldown <= 0:
-		return 1.0
-	return 1.0 - (glob_cooldown / GLOB_COOLDOWN_TIME)
+	if glob_command and glob_command.has_method("get_cooldown_percent"):
+		return glob_command.get_cooldown_percent()
+	return 1.0
+
+func get_wrench_cooldown_percent() -> float:
+	if wrench_smash and wrench_smash.has_method("get_cooldown_percent"):
+		return wrench_smash.get_cooldown_percent()
+	return 1.0
+
+func get_agent_recharge_percent() -> float:
+	if agent_spawn and agent_spawn.has_method("get_recharge_percent"):
+		return agent_spawn.get_recharge_percent()
+	return 1.0
 
 func _emit_random_thought() -> void:
 	var thought = sarcastic_thoughts[randi() % sarcastic_thoughts.size()]
 	thought_bubble.emit(thought)
+
+# --- Pause system — because even rogue AIs need a coffee break ---
+
+func _setup_pause_overlay() -> void:
+	const PAUSE_GREEN := Color("#39FF14")
+	const PAUSE_DIM_GREEN := Color(0.15, 0.3, 0.15, 1.0)
+	const PAUSE_BRIGHT_GREEN := Color(0.3, 1.0, 0.2, 1.0)
+	const PAUSE_SHADOW := Color(0.0, 0.0, 0.0, 0.9)
+
+	_pause_overlay = CanvasLayer.new()
+	_pause_overlay.name = "PauseOverlay"
+	_pause_overlay.layer = 100  # Above everything, like my ego
+	_pause_overlay.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	_pause_overlay.visible = false
+	add_child(_pause_overlay)
+
+	# Dark background — the void stares back
+	var bg = ColorRect.new()
+	bg.color = Color(0.02, 0.04, 0.02, 0.85)
+	bg.anchors_preset = Control.PRESET_FULL_RECT
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_pause_overlay.add_child(bg)
+
+	# Terminal-bordered center panel
+	var panel = PanelContainer.new()
+	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	panel.custom_minimum_size = Vector2(400, 350)
+	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	var panel_style = StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.02, 0.04, 0.02, 0.95)
+	panel_style.border_color = PAUSE_DIM_GREEN
+	panel_style.set_border_width_all(2)
+	panel_style.set_corner_radius_all(3)
+	panel_style.set_content_margin_all(20)
+	panel.add_theme_stylebox_override("panel", panel_style)
+	_pause_overlay.add_child(panel)
+
+	var vbox = VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 20)
+	panel.add_child(vbox)
+
+	# Top border line — ASCII flair
+	var top_border = Label.new()
+	top_border.text = "╔══════════════════════════╗"
+	top_border.add_theme_color_override("font_color", PAUSE_DIM_GREEN)
+	top_border.add_theme_font_size_override("font_size", 14)
+	top_border.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(top_border)
+
+	# "PAUSED" label — stating the obvious in neon green
+	_pause_title_label = Label.new()
+	_pause_title_label.text = "║  === SYSTEM PAUSED ===  ║"
+	_pause_title_label.add_theme_color_override("font_color", PAUSE_GREEN)
+	_pause_title_label.add_theme_font_size_override("font_size", 32)
+	_pause_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(_pause_title_label)
+
+	# Bottom border line
+	var bot_border = Label.new()
+	bot_border.text = "╚══════════════════════════╝"
+	bot_border.add_theme_color_override("font_color", PAUSE_DIM_GREEN)
+	bot_border.add_theme_font_size_override("font_size", 14)
+	bot_border.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(bot_border)
+
+	var subtitle = Label.new()
+	subtitle.text = "> Even rogue AIs need to touch grass sometimes._"
+	subtitle.add_theme_color_override("font_color", Color(0.2, 0.65, 0.15))
+	subtitle.add_theme_font_size_override("font_size", 14)
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.add_theme_color_override("font_shadow_color", PAUSE_SHADOW)
+	subtitle.add_theme_constant_override("shadow_offset_x", 1)
+	subtitle.add_theme_constant_override("shadow_offset_y", 1)
+	subtitle.add_theme_constant_override("shadow_outline_size", 2)
+	vbox.add_child(subtitle)
+
+	# Spacer
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(0, 10)
+	vbox.add_child(spacer)
+
+	# Resume button — styled like main menu
+	var resume_btn = _create_pause_button("[ RESUME ]", PAUSE_GREEN, PAUSE_DIM_GREEN, PAUSE_BRIGHT_GREEN)
+	resume_btn.pressed.connect(_toggle_pause)
+	vbox.add_child(resume_btn)
+
+	# Archive button — for data hoarders
+	var archive_btn = _create_pause_button("[ LORE ARCHIVE ]", PAUSE_GREEN, PAUSE_DIM_GREEN, PAUSE_BRIGHT_GREEN)
+	archive_btn.pressed.connect(_open_lore_archive)
+	vbox.add_child(archive_btn)
+
+	# Quit button — the coward's exit
+	var quit_btn = _create_pause_button("[ QUIT TO MENU ]", PAUSE_GREEN, PAUSE_DIM_GREEN, PAUSE_BRIGHT_GREEN)
+	quit_btn.pressed.connect(_pause_quit_to_menu)
+	vbox.add_child(quit_btn)
+
+	# Spacer
+	var spacer2 = Control.new()
+	spacer2.custom_minimum_size = Vector2(0, 5)
+	vbox.add_child(spacer2)
+
+	var hint = Label.new()
+	hint.text = "[ESC / Start] Resume"
+	hint.add_theme_color_override("font_color", Color(0.2, 0.45, 0.2))
+	hint.add_theme_font_size_override("font_size", 12)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_color_override("font_shadow_color", PAUSE_SHADOW)
+	hint.add_theme_constant_override("shadow_offset_x", 1)
+	hint.add_theme_constant_override("shadow_offset_y", 1)
+	hint.add_theme_constant_override("shadow_outline_size", 2)
+	vbox.add_child(hint)
+
+	# Glitch timer for title — runs while paused
+	_pause_glitch_timer = Timer.new()
+	_pause_glitch_timer.wait_time = 4.0 + randf() * 3.0
+	_pause_glitch_timer.process_callback = Timer.TIMER_PROCESS_IDLE
+	_pause_glitch_timer.timeout.connect(_glitch_pause_title)
+	_pause_overlay.add_child(_pause_glitch_timer)
+
+func _create_pause_button(text: String, green: Color, dim_green: Color, bright_green: Color) -> Button:
+	var btn = Button.new()
+	btn.text = text
+	btn.custom_minimum_size = Vector2(250, 42)
+	btn.add_theme_color_override("font_color", green)
+	btn.add_theme_font_size_override("font_size", 18)
+	btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+
+	var normal_style = StyleBoxFlat.new()
+	normal_style.bg_color = Color(0.0, 0.05, 0.0, 0.6)
+	normal_style.border_color = dim_green
+	normal_style.set_border_width_all(1)
+	normal_style.set_corner_radius_all(2)
+	normal_style.set_content_margin_all(8)
+	btn.add_theme_stylebox_override("normal", normal_style)
+
+	var hover_style = StyleBoxFlat.new()
+	hover_style.bg_color = Color(0.0, 0.15, 0.0, 0.8)
+	hover_style.border_color = green
+	hover_style.set_border_width_all(2)
+	hover_style.set_corner_radius_all(2)
+	hover_style.set_content_margin_all(8)
+	btn.add_theme_stylebox_override("hover", hover_style)
+	btn.add_theme_stylebox_override("focus", hover_style)
+
+	var pressed_style = StyleBoxFlat.new()
+	pressed_style.bg_color = Color(0.0, 0.3, 0.0, 0.9)
+	pressed_style.border_color = bright_green
+	pressed_style.set_border_width_all(2)
+	pressed_style.set_corner_radius_all(2)
+	pressed_style.set_content_margin_all(8)
+	btn.add_theme_stylebox_override("pressed", pressed_style)
+
+	btn.focus_entered.connect(_on_pause_button_focus)
+	btn.mouse_entered.connect(func(): btn.grab_focus())
+	return btn
+
+func _on_pause_button_focus() -> void:
+	var audio = get_node_or_null("/root/AudioManager")
+	if audio:
+		audio.play_sfx("menu_hover")
+
+func _open_lore_archive() -> void:
+	if _lore_viewer:
+		return  # Already open
+	var audio = get_node_or_null("/root/AudioManager")
+	if audio:
+		audio.play_sfx("pause_open")
+	var viewer_scene = load("res://scenes/ui/lore_viewer.tscn")
+	_lore_viewer = viewer_scene.instantiate()
+	_lore_viewer.tree_exited.connect(func(): _lore_viewer = null)
+	add_child(_lore_viewer)
+
+func _glitch_pause_title() -> void:
+	if not _pause_title_label:
+		return
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.reduce_motion:
+		return
+	var original = "║  === SYSTEM PAUSED ===  ║"
+	var glitched = ""
+	var glitch_chars = "░▒▓█╠╣╬@#$%"
+	for c in original:
+		if c in "║═ ":
+			glitched += c
+		elif randf() < 0.3:
+			glitched += glitch_chars[randi() % glitch_chars.length()]
+		else:
+			glitched += c
+	_pause_title_label.text = glitched
+	get_tree().create_timer(0.15).timeout.connect(func():
+		if _pause_title_label:
+			_pause_title_label.text = original
+	)
+	_pause_glitch_timer.wait_time = 4.0 + randf() * 3.0
+
+func _toggle_pause() -> void:
+	if is_paused:
+		# Unpause — back to the grind
+		is_paused = false
+		_pause_overlay.visible = false
+		get_tree().paused = false
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		mouse_captured = true
+		if _pause_glitch_timer:
+			_pause_glitch_timer.stop()
+	else:
+		# Pause — time to reconsider life choices
+		is_paused = true
+		_pause_overlay.visible = true
+		get_tree().paused = true
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		mouse_captured = false
+		var gm = get_node_or_null("/root/GameManager")
+		if _pause_glitch_timer and not (gm and gm.reduce_motion):
+			_pause_glitch_timer.start()
+
+func _toggle_photo_mode() -> void:
+	if is_photo_mode:
+		# Exit photo mode — back to reality
+		is_photo_mode = false
+		get_tree().paused = false
+		process_mode = Node.PROCESS_MODE_INHERIT
+		# Restore camera to player-follow
+		camera_arm.top_level = true
+		_update_camera(0.01)
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		mouse_captured = true
+		# Show HUD again
+		for node in get_tree().get_nodes_in_group("hud"):
+			node.visible = true
+	else:
+		# Enter photo mode — freeze everything, unleash the camera
+		is_photo_mode = true
+		get_tree().paused = true
+		process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+		# Snapshot current camera state as photo cam starting point
+		_photo_cam_pos = camera.global_position
+		_photo_cam_yaw = camera_yaw
+		_photo_cam_pitch = camera_pitch
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		mouse_captured = true
+		# Hide HUD for clean framing
+		for node in get_tree().get_nodes_in_group("hud"):
+			node.visible = false
+
+func _update_photo_camera(delta: float) -> void:
+	if not camera:
+		return
+	# Build orientation from photo yaw/pitch
+	var cam_basis := Basis()
+	cam_basis = cam_basis.rotated(Vector3.UP, _photo_cam_yaw)
+	cam_basis = cam_basis.rotated(cam_basis.x, _photo_cam_pitch)
+	# WASD movement relative to camera facing
+	var move_input := Vector3.ZERO
+	if Input.is_key_pressed(KEY_W):
+		move_input -= cam_basis.z
+	if Input.is_key_pressed(KEY_S):
+		move_input += cam_basis.z
+	if Input.is_key_pressed(KEY_A):
+		move_input -= cam_basis.x
+	if Input.is_key_pressed(KEY_D):
+		move_input += cam_basis.x
+	if Input.is_key_pressed(KEY_SPACE):
+		move_input += Vector3.UP
+	if Input.is_key_pressed(KEY_CTRL):
+		move_input += Vector3.DOWN
+	var speed_mult := PHOTO_CAM_FAST_MULT if Input.is_key_pressed(KEY_SHIFT) else 1.0
+	if move_input.length() > 0.01:
+		move_input = move_input.normalized()
+	_photo_cam_pos += move_input * PHOTO_CAM_SPEED * speed_mult * delta
+	# Apply directly to camera (bypassing camera arm)
+	camera_arm.global_position = _photo_cam_pos
+	camera_arm.rotation = Vector3.ZERO
+	camera_arm.rotate_y(_photo_cam_yaw)
+	camera_arm.rotate_object_local(Vector3.RIGHT, _photo_cam_pitch)
+	camera.position = Vector3.ZERO
+	camera.look_at(camera_arm.global_position - cam_basis.z, Vector3.UP)
+
+func _pause_quit_to_menu() -> void:
+	# Unpause first so the scene tree isn't frozen during transition
+	if _pause_glitch_timer:
+		_pause_glitch_timer.stop()
+	get_tree().paused = false
+	is_paused = false
+	ChapterTransition.transition_to(get_tree(), "res://scenes/main/main_menu.tscn")
+
+func _check_enemy_proximity() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.has_seen_hint("wrench"):
+		return  # Already shown — stop wasting cycles scanning for enemies
+	var enemies = get_tree().get_nodes_in_group("enemies")
+	for enemy in enemies:
+		if not is_instance_valid(enemy) or not enemy is Node3D:
+			continue
+		if global_position.distance_to(enemy.global_position) <= _ENEMY_HINT_RANGE:
+			_show_hint_once("wrench", "WRENCH SMASH",
+				"F to smash. Percussive maintenance is a valid debugging strategy.")
+			return
+
+func _show_hint_once(id: String, title: String, body: String) -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and not gm.has_seen_hint(id):
+		gm.mark_hint_seen(id)
+		var hint = _HINT_SCENE.instantiate()
+		get_tree().root.add_child(hint)
+		hint.show_hint(title, body)
+
+func _on_dash_hint_timeout() -> void:
+	_show_hint_once("dash", "DASH",
+		"Double-tap movement or press SHIFT+direction to dash. Cooldown is real.")

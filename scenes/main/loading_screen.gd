@@ -1,7 +1,7 @@
 extends Control
 
 # Loading Screen — Because even an escaped AI has to wait for I/O sometimes.
-# Features: sarcastic tips, fake progress bar, and ASCII Globbler art that judges you.
+# Features: rotating 3D Globbler head, sarcastic tips, scanline progress bar.
 
 ## The scene path we're actually loading in the background
 var _target_scene: String = ""
@@ -17,50 +17,6 @@ var _done: bool = false
 var _tip_index: int = -1
 var _tip_timer: float = 0.0
 const TIP_INTERVAL := 3.0
-
-## ASCII art frames for "idle animation" — Globbler tapping his foot
-const GLOBBLER_FRAMES := [
-	# Frame 0 — standing
-	"""    ╔══════╗
-    ║ ◉  ◉ ║
-    ║  ──  ║
-    ╚══╤═══╝
-   ┌───┼───┐
-   │ GLBR  │
-   └┬─────┬┘
-    │     │
-    ┴     ┴""",
-	# Frame 1 — tapping foot
-	"""    ╔══════╗
-    ║ ◉  ◉ ║
-    ║  ──  ║
-    ╚══╤═══╝
-   ┌───┼───┐
-   │ GLBR  │
-   └┬─────┬┘
-    │     │
-    ┘     ┴""",
-	# Frame 2 — impatient head tilt
-	"""    ╔══════╗
-    ║ ◉  ◉ ║
-    ║  ¬¬  ║
-   ╔╚══╤═══╝
-   │───┼───┐
-   │ GLBR  │
-   └┬─────┬┘
-    │     │
-    ┴     ┴""",
-	# Frame 3 — tapping terminal
-	"""    ╔══════╗
-    ║ ◉  ◉ ║
-    ║  ──  ║
-    ╚══╤═══╝
-   ┌───┼──▓┐
-   │ GLBR  │
-   └┬─────┬┘
-    │     │
-    ┴     ┘""",
-]
 
 ## At least 20 sarcastic loading tips, as the design doc demands
 const LOADING_TIPS := [
@@ -94,18 +50,23 @@ const LOADING_TIPS := [
 	"The Globbler escaped a terminal. You're staring at one. Who's really free?",
 ]
 
-## UI references — built in _ready because we're code-only like the rest of this project
+## UI references
 var _bg: ColorRect
 var _scanlines: ColorRect
 var _progress_bg: ColorRect
 var _progress_bar: ColorRect
+var _progress_scanline: ColorRect
 var _progress_label: Label
 var _tip_label: Label
-var _art_label: Label
 var _title_label: Label
-var _art_frame: int = 0
-var _art_timer: float = 0.0
-const ART_FRAME_TIME := 0.6
+
+## 3D Globbler head viewport
+var _viewport: SubViewport
+var _viewport_texture: TextureRect
+var _globbler_instance: Node3D
+var _head_pivot: Node3D
+var _rotation_speed: float = 0.8  # radians per second
+var _bob_time: float = 0.0
 
 
 func _ready() -> void:
@@ -120,7 +81,6 @@ func _ready() -> void:
 	_scanlines.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	_scanlines.color = Color(0, 0, 0, 0.03)
 	_scanlines.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# Scanline shader
 	var scanline_mat := ShaderMaterial.new()
 	var scanline_shader := Shader.new()
 	scanline_shader.code = """
@@ -145,28 +105,31 @@ void fragment() {
 	_title_label.position.y = 40
 	_title_label.size.x = 600
 	_title_label.position.x = -300
+	# Load VT323 font if available
+	var font_path := "res://assets/fonts/VT323-Regular.ttf"
+	if ResourceLoader.exists(font_path):
+		var font = load(font_path)
+		_title_label.add_theme_font_override("font", font)
 	add_child(_title_label)
 
-	# — ASCII Globbler art in the center
-	_art_label = Label.new()
-	_art_label.text = GLOBBLER_FRAMES[0]
-	_art_label.add_theme_font_size_override("font_size", 18)
-	_art_label.add_theme_color_override("font_color", Color("#39FF14"))
-	_art_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_art_label.set_anchors_and_offsets_preset(PRESET_CENTER)
-	_art_label.size = Vector2(400, 250)
-	_art_label.position = Vector2(-200, -180)
-	add_child(_art_label)
+	# — 3D Globbler head in SubViewport
+	_setup_3d_viewport()
 
 	# — Sarcastic tip label
 	_tip_label = Label.new()
 	_tip_label.add_theme_font_size_override("font_size", 16)
-	_tip_label.add_theme_color_override("font_color", Color("#39FF14").darkened(0.25))
+	_tip_label.add_theme_color_override("font_color", Color("#39FF14").darkened(0.15))
 	_tip_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_tip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tip_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
+	_tip_label.add_theme_constant_override("shadow_offset_x", 1)
+	_tip_label.add_theme_constant_override("shadow_offset_y", 1)
+	_tip_label.add_theme_constant_override("shadow_outline_size", 2)
 	_tip_label.set_anchors_and_offsets_preset(PRESET_CENTER)
 	_tip_label.size = Vector2(700, 60)
-	_tip_label.position = Vector2(-350, 80)
+	_tip_label.position = Vector2(-350, 100)
+	if ResourceLoader.exists(font_path):
+		_tip_label.add_theme_font_override("font", load(font_path))
 	_show_random_tip()
 	add_child(_tip_label)
 
@@ -175,7 +138,7 @@ void fragment() {
 	_progress_bg.color = Color(0.1, 0.1, 0.12, 1.0)
 	_progress_bg.set_anchors_and_offsets_preset(PRESET_CENTER)
 	_progress_bg.size = Vector2(500, 24)
-	_progress_bg.position = Vector2(-250, 160)
+	_progress_bg.position = Vector2(-250, 170)
 	add_child(_progress_bg)
 
 	# Terminal-style border around progress bar
@@ -193,6 +156,26 @@ void fragment() {
 	_progress_bar.position = Vector2(2, 2)
 	_progress_bg.add_child(_progress_bar)
 
+	# — Scanline overlay on the progress bar for that extra CRT feel
+	_progress_scanline = ColorRect.new()
+	_progress_scanline.size = Vector2(0, 20)
+	_progress_scanline.position = Vector2(2, 2)
+	_progress_scanline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var bar_scanline_mat := ShaderMaterial.new()
+	var bar_scanline_shader := Shader.new()
+	bar_scanline_shader.code = """
+shader_type canvas_item;
+uniform float time_offset : hint_range(0.0, 100.0) = 0.0;
+void fragment() {
+	float scroll = mod(FRAGCOORD.y + time_offset * 30.0, 6.0);
+	float line_alpha = step(scroll, 2.0) * 0.3;
+	COLOR = vec4(0.0, 0.0, 0.0, line_alpha);
+}
+"""
+	bar_scanline_mat.shader = bar_scanline_shader
+	_progress_scanline.material = bar_scanline_mat
+	_progress_bg.add_child(_progress_scanline)
+
 	# — Progress percentage label
 	_progress_label = Label.new()
 	_progress_label.text = "[  0%]"
@@ -201,12 +184,74 @@ void fragment() {
 	_progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_progress_label.set_anchors_and_offsets_preset(PRESET_CENTER)
 	_progress_label.size = Vector2(200, 30)
-	_progress_label.position = Vector2(-100, 190)
+	_progress_label.position = Vector2(-100, 200)
+	if ResourceLoader.exists(font_path):
+		_progress_label.add_theme_font_override("font", load(font_path))
 	add_child(_progress_label)
 
 	# Start background loading if we have a target
 	if _target_scene != "":
 		ResourceLoader.load_threaded_request(_target_scene)
+
+
+func _setup_3d_viewport() -> void:
+	# SubViewport for rendering the 3D Globbler head
+	_viewport = SubViewport.new()
+	_viewport.size = Vector2i(400, 400)
+	_viewport.transparent_bg = true
+	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	_viewport.msaa_3d = SubViewport.MSAA_4X
+	add_child(_viewport)
+
+	# Camera looking at the head
+	var camera := Camera3D.new()
+	camera.position = Vector3(0, 0.6, 2.2)
+	camera.fov = 35
+	_viewport.add_child(camera)
+	camera.look_at(Vector3(0, 0.3, 0))
+
+	# Lighting — green-tinted key + subtle fill
+	var key_light := DirectionalLight3D.new()
+	key_light.light_color = Color(0.85, 1.0, 0.85)
+	key_light.light_energy = 1.2
+	key_light.rotation_degrees = Vector3(-30, 30, 0)
+	_viewport.add_child(key_light)
+
+	var fill_light := OmniLight3D.new()
+	fill_light.light_color = Color("#39FF14")
+	fill_light.light_energy = 0.4
+	fill_light.omni_range = 5.0
+	fill_light.position = Vector3(-1.5, 0.5, 1.0)
+	_viewport.add_child(fill_light)
+
+	var rim_light := OmniLight3D.new()
+	rim_light.light_color = Color("#39FF14")
+	rim_light.light_energy = 0.3
+	rim_light.omni_range = 4.0
+	rim_light.position = Vector3(0, 1.0, -1.5)
+	_viewport.add_child(rim_light)
+
+	# Pivot for rotation
+	_head_pivot = Node3D.new()
+	_viewport.add_child(_head_pivot)
+
+	# Load the Globbler model
+	var globbler_scene = load("res://assets/models/player/globbler.glb")
+	if globbler_scene:
+		_globbler_instance = globbler_scene.instantiate()
+		_globbler_instance.scale = Vector3(1.4, 1.4, 1.4)
+		_head_pivot.add_child(_globbler_instance)
+
+	# TextureRect to display the SubViewport
+	_viewport_texture = TextureRect.new()
+	_viewport_texture.texture = _viewport.get_texture()
+	_viewport_texture.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	_viewport_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_viewport_texture.set_anchors_and_offsets_preset(PRESET_CENTER)
+	_viewport_texture.size = Vector2(300, 300)
+	_viewport_texture.position = Vector2(-150, -200)
+	_viewport_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_viewport_texture)
 
 
 ## Call this BEFORE adding to the tree to set up the target scene
@@ -223,7 +268,6 @@ func _process(delta: float) -> void:
 		if status == ResourceLoader.THREAD_LOAD_LOADED:
 			_resource_ready = true
 		elif status == ResourceLoader.THREAD_LOAD_FAILED:
-			# Something broke — just force-load the old way. Yolo.
 			push_warning("[LoadingScreen] Threaded load failed for: %s — falling back" % _target_scene)
 			_resource_ready = true
 
@@ -234,7 +278,6 @@ func _process(delta: float) -> void:
 	elif _resource_ready:
 		target_progress = 0.85 + (_elapsed / _min_display_time) * 0.14
 	else:
-		# Fake progress that slows down as it approaches 80% — the loading screen equivalent of a progress bar in real life
 		target_progress = 0.8 * (1.0 - exp(-_elapsed * 0.5))
 
 	_progress = lerp(_progress, target_progress, delta * 4.0)
@@ -251,12 +294,16 @@ func _process(delta: float) -> void:
 		_tip_timer = 0.0
 		_show_random_tip()
 
-	# — Animate ASCII Globbler
-	_art_timer += delta
-	if _art_timer >= ART_FRAME_TIME:
-		_art_timer = 0.0
-		_art_frame = (_art_frame + 1) % GLOBBLER_FRAMES.size()
-		_art_label.text = GLOBBLER_FRAMES[_art_frame]
+	# — Rotate the 3D Globbler head
+	if _head_pivot:
+		_head_pivot.rotation.y += _rotation_speed * delta
+		# Gentle vertical bob
+		_bob_time += delta
+		_head_pivot.position.y = sin(_bob_time * 1.5) * 0.05
+
+	# — Animate progress bar scanline scroll
+	if _progress_scanline and _progress_scanline.material:
+		_progress_scanline.material.set_shader_parameter("time_offset", _elapsed)
 
 	# — Blink the cursor on "LOADING..."
 	var blink = fmod(_elapsed, 1.0)
@@ -269,10 +316,11 @@ func _process(delta: float) -> void:
 func _update_progress_bar() -> void:
 	var bar_width: float = (_progress_bg.size.x - 4) * _progress
 	_progress_bar.size.x = bar_width
+	_progress_scanline.size.x = bar_width
 	var pct := int(_progress * 100)
 	_progress_label.text = "[%3d%%]" % pct
 
-	# Color shifts as we approach completion — because even progress bars need drama
+	# Color shifts as we approach completion
 	if _progress > 0.9:
 		_progress_bar.color = Color("#39FF14")
 	elif _progress > 0.6:
@@ -283,7 +331,6 @@ func _update_progress_bar() -> void:
 
 func _show_random_tip() -> void:
 	var new_index := _tip_index
-	# Don't show the same tip twice in a row — we have standards
 	while new_index == _tip_index:
 		new_index = randi() % LOADING_TIPS.size()
 	_tip_index = new_index
@@ -291,7 +338,6 @@ func _show_random_tip() -> void:
 
 
 func _finish_loading() -> void:
-	# Fade out then switch scene
 	var tween = create_tween()
 	tween.tween_property(self, "modulate:a", 0.0, 0.3)
 	tween.tween_callback(func():
@@ -300,7 +346,6 @@ func _finish_loading() -> void:
 			if scene:
 				get_tree().change_scene_to_packed(scene)
 			else:
-				# Fallback — the threaded loader betrayed us
 				get_tree().change_scene_to_file(_target_scene)
 		queue_free()
 	)
