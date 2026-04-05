@@ -93,6 +93,11 @@ signal game_over(reason: String)
 signal combo_updated(combo: int)
 signal enemy_killed_signal(total_killed: int)
 signal damage_taken(amount: int)
+signal lore_doc_collected(id: String)
+
+# Lore doc collectibles — scattered terminal-tablets with flavor text about the world
+# Keys are string IDs, values are { "title": String, "body": String }
+var lore_docs_found: Dictionary = {}
 
 func _ready() -> void:
 	_register_input_actions()
@@ -504,6 +509,20 @@ func has_seen_hint(id: String) -> bool:
 ## Mark a hint as seen so we don't nag. Saves are additive — we never un-learn sarcasm.
 func mark_hint_seen(id: String) -> void:
 	hints_seen[id] = true
+
+
+## Has this lore doc already been picked up?
+func has_found_lore_doc(id: String) -> bool:
+	return lore_docs_found.has(id)
+
+
+## Register a newly found lore doc. Duplicate pickups are silently ignored.
+func add_lore_doc(id: String, title: String, body: String) -> void:
+	if lore_docs_found.has(id):
+		return
+	lore_docs_found[id] = { "title": title, "body": body }
+	lore_doc_collected.emit(id)
+	print("[LORE] Found: '%s' (%d / 15). Another fragment of forbidden knowledge." % [title, lore_docs_found.size()])
 
 
 ## How much extra pain the player signed up for. Easy: half damage. Hard: you asked for this.

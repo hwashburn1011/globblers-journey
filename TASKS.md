@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 5.2 — Speedrun timer overlay
-- **Next task to do:** Task 5.3 — Lore doc collectibles data structure (Pass 5: Shipping Extras)
+- **Last task completed:** Task 5.3 — Lore doc collectibles data structure
+- **Next task to do:** Task 5.4 — Lore doc pickup scene
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -185,7 +185,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Added `display_speedrun_timer` bool to GameManager (default false), persisted in settings.cfg under `gameplay/speedrun_timer`. Added `get_speedrun_time()` returning `MM:SS.mmm` format. In HUD, added gold-colored speedrun label (font size 14, yellow `Color(1.0, 0.85, 0.0, 0.9)`) positioned just below the existing timer panel. Visibility driven by `display_speedrun_timer` — hidden when off. Timer updates every frame using `level_time` (continues across deaths since `reset_level()` doesn't reset `level_time` on death, only on full level restart). Freezes display when `level_goal_reached` is true (chapter complete). Verified via Godot MCP — zero runtime errors.
 
 ### 5.3 Lore doc collectibles — data structure
-- [ ] Add `lore_docs_found: Dictionary` to GameManager + `add_lore_doc(id, title, body)` + `has_found_lore_doc(id)`. Include in save data. Signal `lore_doc_collected(id)`.
+- [x] **DONE:** Added `lore_docs_found: Dictionary` to GameManager (keys = string IDs, values = `{ "title": String, "body": String }`). Added `add_lore_doc(id, title, body)` (ignores duplicates, prints collection count out of 15), `has_found_lore_doc(id)` query, and `lore_doc_collected(id)` signal. Wired into SaveSystem: `save_data["lore_docs"]` added to default schema, `_collect_current_state()` deep-copies from GameManager, `apply_loaded_data()` restores on load. Save format is additive — no existing keys removed. Verified via Godot MCP — zero runtime errors.
 
 ### 5.4 Lore doc pickup scene
 - [ ] Create `scenes/pickups/lore_doc.tscn` + `.gd` — floating terminal-tablet mesh that pulses. On player overlap + E press, calls `add_lore_doc` with the pickup's exported id/title/body, plays pickup VFX, queue_frees.

@@ -30,6 +30,7 @@ var save_data := {
 	"upgrades": {},
 	"checkpoints": {},  # level_id: { position, etc }
 	"ending_choice": "",  # "defeat" or "befriend" — the only choice that truly matters
+	"lore_docs": {},  # id: { "title": String, "body": String }
 }
 
 signal save_completed(path: String)
@@ -102,6 +103,9 @@ func apply_loaded_data() -> void:
 		var loaded_hints = save_data.get("hints_seen", {})
 		if loaded_hints is Dictionary:
 			game_mgr.hints_seen = loaded_hints.duplicate()
+		var loaded_lore = save_data.get("lore_docs", {})
+		if loaded_lore is Dictionary:
+			game_mgr.lore_docs_found = loaded_lore.duplicate(true)
 
 	# Restore progression upgrades
 	var prog = get_node_or_null("/root/ProgressionManager")
@@ -133,6 +137,7 @@ func _collect_current_state() -> void:
 		save_data["game"]["level_time"] = game_mgr.level_time
 		save_data["ending_choice"] = game_mgr.ending_choice
 		save_data["hints_seen"] = game_mgr.hints_seen.duplicate()
+		save_data["lore_docs"] = game_mgr.lore_docs_found.duplicate(true)
 
 	# Puzzle completion
 	var puzzles = get_tree().get_nodes_in_group("puzzles")
