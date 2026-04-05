@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 2.7 — Download CC0 Chapter 5 music
-- **Next task to do:** Task 2.8 — Download CC0 boss music
+- **Last task completed:** Task 2.8 — Download CC0 boss music
+- **Next task to do:** Task 2.9 — Download CC0 credits music
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -92,7 +92,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Downloaded "Elevator Music" by Pro Sensory (Alex McCulloch) from OpenGameArt.org (CC0). Clean corporate elevator muzak — perfect for the sterile "Alignment Citadel" corporate vibe. Downloaded as WAV (16.9MB), converted to OGG via ffmpeg. 1.8MB OGG, ~1:36 loop. Saved to `assets/audio/music/chapter_5.ogg`. Attribution added to LICENSES.md.
 
 ### 2.8 Download CC0 boss music
-- [ ] Intense synth/drum-n-bass boss track (~2 min loop). `assets/audio/music/boss.ogg`.
+- [x] **DONE:** Downloaded "Trance Boss Battle" by MintoDog from OpenGameArt.org (CC0). Intense trance boss battle track, 150 BPM, loopable. 3.4MB OGG, stereo 44100 Hz. Saved to `assets/audio/music/boss.ogg`. Attribution added to LICENSES.md.
 
 ### 2.9 Download CC0 credits music
 - [ ] Bittersweet synthwave for credits rollout (~3 min). `assets/audio/music/credits.ogg`.

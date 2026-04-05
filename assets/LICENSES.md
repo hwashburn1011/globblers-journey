@@ -55,6 +55,7 @@ Only CC0 / CC-BY / royalty-free assets are permitted.
 | Town4 - Bazaar (music) | OpenGameArt / SubspaceAudio (Juhani Junkala) | CC0 | https://opengameart.org/content/jrpg-pack-2-towns | Ch3 music — assets/audio/music/chapter_3.ogg |
 | EmptyCity (music) | OpenGameArt / yd | CC0 | https://opengameart.org/content/emptycity-background-music | Ch4 music — assets/audio/music/chapter_4.ogg |
 | Elevator Music (music) | OpenGameArt / Pro Sensory (Alex McCulloch) | CC0 | https://opengameart.org/content/elevator-music | Ch5 music — assets/audio/music/chapter_5.ogg |
-| *(Audio — music, remaining)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Ch5, boss, credits music — assets/audio/music/* |
+| Trance Boss Battle (music) | OpenGameArt / MintoDog | CC0 | https://opengameart.org/content/trance-boss-battle | Boss music — assets/audio/music/boss.ogg |
+| *(Audio — music, remaining)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Credits music — assets/audio/music/* |
 | *(Audio — SFX)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Player, ability, UI, enemy SFX — assets/audio/sfx/* |
 | *(Audio — ambient)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Ambient loops — assets/audio/ambient/* |
