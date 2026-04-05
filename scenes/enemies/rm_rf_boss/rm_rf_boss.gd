@@ -381,6 +381,13 @@ func _transition_to_phase(new_phase: BossPhase) -> void:
 	boss_phase = new_phase
 	boss_phase_changed.emit(new_phase)
 
+	# Spawn phase flash VFX for dramatic transitions — skip the opening handshake
+	if new_phase != BossPhase.INTRO and new_phase != BossPhase.PHASE_1:
+		var flash_scene := preload("res://scenes/vfx/boss_phase_flash.tscn")
+		var flash_inst := flash_scene.instantiate()
+		flash_inst.global_position = global_position
+		get_tree().current_scene.add_child.call_deferred(flash_inst)
+
 	match new_phase:
 		BossPhase.PHASE_1:
 			_boss_dialogue("rm -rf /", "INITIATING RECURSIVE DELETE. YOUR FILES. YOUR FLOOR. YOUR HOPE.")
