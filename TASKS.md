@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 6.9 complete
-- **Last task completed:** Task 6.9 — Prompt Injector enemy model via blender-mcp
-- **Next task to do:** Task 6.10 (GPT-2 Fossil enemy model via blender-mcp)
+- **Last updated by:** Claude (2026-04-04) — Task 6.10 complete
+- **Last task completed:** Task 6.10 — GPT-2 Fossil enemy model via blender-mcp
+- **Next task to do:** Task 6.11 (DALL-E Nightmare enemy model via blender-mcp)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 IN PROGRESS — enemy visual upgrades. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -212,7 +212,7 @@ assets/
 - [x] Via blender-mcp: slim rogue figure in terminal-green hoodie throwing text-shard projectiles. Swap in `prompt_injector.tscn`. **Done: Built slim rogue hacker with dark terminal-green hoodie (subdivided, fabric roughness), hood with peak overhang, pale skin head, dark face mask/visor, glowing green slit eyes, hoodie strings with green accent emission, circuit strip decorations on shoulders, code line accents on chest, slim arms with forearms reaching forward, hands, belt with 4 pouches, dark pants, boots with subdivision. Added wrist terminal with glowing screen on left forearm, 5 floating text-shard projectiles (cyan-green emissive flat cubes) around hands and hood. All PBR materials with emission. Exported to `assets/models/enemies/prompt_injector.glb`, source saved to `assets/blender_source/prompt_injector.blend`. Updated `prompt_injector.gd` `_create_visual()` to load GLB with CSG fallback, preserving orbiting code fragments, drip particles, status label, glow light, and all gameplay mechanics.**
 
 ### 6.10 GPT-2 Fossil model
-- [ ] Via blender-mcp: skeletal stone-data fossil frame, hunched. Tan fossil material. Swap in `gpt2_fossil.tscn`.
+- [x] Via blender-mcp: skeletal stone-data fossil frame, hunched. Tan fossil material. Swap in `gpt2_fossil.tscn`. **Done: Built hunched skeletal fossil frame with 8 vertebrae curved spine, 10 torus ribs forming a cage, shoulder blades, skeletal arms with 3-finger bony claws, squat legs with flat stone feet, cracked skull with hanging jaw, amber glowing eye sockets, cranial crack details, attention ring halo with 6 orbiting tokens, 4 embedded amber transformer data blocks, trailing tail of diminishing data fragments. All PBR materials (FossilBone tan, FossilDark, FossilAmber emissive, FossilEye bright amber, FossilCrack dark). Exported to `assets/models/enemies/gpt2_fossil.glb`, source saved to `assets/blender_source/gpt2_fossil.blend`. Updated `gpt2_fossil.gd` `_create_visual()` to load GLB with CSG fallback, preserving parameter dust particles, crumble particles, status label, glow light, and all gameplay mechanics.**
 
 ### 6.11 DALL-E Nightmare model
 - [ ] Via blender-mcp: abstract CSG-dream creature with morphing parts (keep procedural CSG spawns inside script; this task swaps only the BASE body). Swap in `dalle_nightmare.tscn`.
