@@ -119,6 +119,9 @@ var first_glob_done := false
 var first_death_done := false
 var death_count := 0
 var _damage_quip_cooldown := 0.0  # Don't nag every time we stub our toe
+# Damage flash — because pain should be photogenic
+var _flash_materials: Array[ShaderMaterial] = []
+var _flash_tween: Tween = null
 
 var sarcastic_thoughts: Array[String] = [
 	"Running glob command... just kidding, I'm just walking.",
@@ -296,6 +299,7 @@ func _build_glb_model() -> void:
 		_apply_rim_shader(glb_instance)
 		_apply_eye_pulse_shader(glb_instance)
 		_apply_crt_screen_shader(glb_instance)
+		_setup_damage_flash(glb_instance)
 	else:
 		push_warning("[GLOBBLER] Failed to load GLB model — falling back to existential crisis")
 
@@ -398,6 +402,45 @@ func _apply_crt_screen_shader(glb_root: Node) -> void:
 				child.set_surface_override_material(2, crt_mat)
 		if child.get_child_count() > 0:
 			_apply_crt_screen_shader(child)
+
+func _setup_damage_flash(glb_root: Node) -> void:
+	# Chain a damage flash shader onto every surface's next_pass tail —
+	# when we get hit, every polygon screams in unison
+	var flash_shader := preload("res://assets/shaders/damage_flash.gdshader")
+	_collect_flash_materials(glb_root, flash_shader)
+
+func _collect_flash_materials(node: Node, flash_shader: Shader) -> void:
+	if node is MeshInstance3D:
+		var mesh_inst := node as MeshInstance3D
+		for surf_idx in range(mesh_inst.mesh.get_surface_count() if mesh_inst.mesh else 0):
+			var mat = mesh_inst.get_active_material(surf_idx)
+			if mat:
+				# Walk the next_pass chain to find the tail — append, don't replace
+				var tail_mat := mat
+				while tail_mat.next_pass:
+					tail_mat = tail_mat.next_pass
+				var flash_mat := ShaderMaterial.new()
+				flash_mat.shader = flash_shader
+				flash_mat.set_shader_parameter("flash_intensity", 0.0)
+				tail_mat.next_pass = flash_mat
+				_flash_materials.append(flash_mat)
+	for child in node.get_children():
+		_collect_flash_materials(child, flash_shader)
+
+func _trigger_damage_flash() -> void:
+	if _flash_materials.is_empty():
+		return
+	# Kill any in-progress flash — new hit resets the pain-o-meter
+	if _flash_tween and _flash_tween.is_valid():
+		_flash_tween.kill()
+	for mat in _flash_materials:
+		mat.set_shader_parameter("flash_intensity", 1.0)
+	_flash_tween = create_tween()
+	_flash_tween.tween_method(_update_flash_intensity, 1.0, 0.0, 0.15)
+
+func _update_flash_intensity(value: float) -> void:
+	for mat in _flash_materials:
+		mat.set_shader_parameter("flash_intensity", value)
 
 func _setup_camera() -> void:
 	camera_arm = Node3D.new()
@@ -980,6 +1023,7 @@ func take_damage(amount: int) -> void:
 	if game_mgr:
 		game_mgr.take_context_damage(amount)
 	player_damaged.emit(amount)
+	_trigger_damage_flash()
 
 	# Occasional quip on taking damage — because suffering should be narrated
 	if _damage_quip_cooldown <= 0 and randf() < 0.3:
