@@ -9,9 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 4.2 — Playtest Chapter 2
-- **Next task to do:** Task 4.3 — Playtest Chapter 3
+- **Last task completed:** Task 4.3 — Playtest Chapter 3
+- **Next task to do:** Task 4.4 — Playtest Chapter 4
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -157,7 +156,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Ran `training_grounds.tscn` via Godot MCP, captured full debug output over ~30s runtime. **Zero runtime errors** (`finalErrors` empty). All 5 neuron-rooms loaded, 4 puzzles placed, enemy cohort spawned, boss arena constructed (Local Minimum, 6 rings), player GLB model initialized with skeleton animations, HUD loaded. Real music loaded: `chapter_2.ogg` confirmed playing ("farewell, procedural bleeps"). Ambient crossfade to 'input_layer' working. Save/checkpoint at 'ch2_input' confirmed. **Issues cataloged:** (1) [MINOR] ~35 GDScript parse-time warnings (unused variables/parameters) across enemy, boss, puzzle, HUD, and upgrade scripts — same pre-existing set as Ch1, not V2.0/V2.1 regressions. (2) [MINOR] Current Level banner still shows "The Token Stream - Tutorial" (Ch1 name) — likely set by GameManager default rather than Ch2 overriding it; cosmetic only since HUD displays correct chapter info. No BREAKING or VISUAL issues found. Ch2 correctly calls `start_music("chapter_2")` in its `_ready()` (unlike Ch1's missing call noted in 4.1).
 
 ### 4.3 Playtest Chapter 3
-- [ ] Same for chapter 3. Catalog issues.
+- [x] **DONE:** Ran `prompt_bazaar.tscn` via Godot MCP, captured full debug output over ~30s runtime. **Zero runtime errors** (`finalErrors` empty). All 5 districts loaded, 8 market prop types deployed, 4 puzzles placed, boss arena constructed (System Prompt, 48 instruction tiles), player GLB model initialized with skeleton animations, HUD loaded. Real music loaded: `chapter_3.ogg` confirmed playing ("farewell, procedural bleeps"). Ambient crossfade to 'bazaar_gate' working. Save/checkpoint at 'ch3_gate' confirmed. **Issues cataloged:** (1) [MINOR] Current Level banner still shows "The Token Stream - Tutorial" (Ch1 name) — same issue as Ch1 and Ch2, set by GameManager default rather than chapter overriding it; cosmetic only since HUD displays correct chapter info. (2) [MINOR] ~35 GDScript parse-time warnings (unused variables/parameters) across enemy, boss, puzzle, HUD, and upgrade scripts — same pre-existing set as Ch1/Ch2, not V2.0/V2.1 regressions. No BREAKING or VISUAL issues found. Ch3 correctly calls `start_music("chapter_3")` in its `_ready()` and `start_music("boss")` for boss phase.
 
 ### 4.4 Playtest Chapter 4
 - [ ] Same for chapter 4. Catalog issues.
