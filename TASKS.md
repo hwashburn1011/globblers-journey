@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 15.10 complete
-- **Last task completed:** Task 15.10 — Dynamic FOV. Added FOV constants (default 70°, sprint 80°, aim 60°) and smooth lerp (speed 5.0) in `_update_camera()` in `scenes/player/globbler.gd`. FOV widens during `AnimState.RUN` (sprint) and tightens when `glob_command.is_aiming`. Disabled when `reduce_motion` is enabled. Zero new runtime errors.
-- **Next task to do:** Task 15.11 (LOD meshes for bosses and large props)
+- **Last updated by:** Claude (2026-04-05) — Task 15.11 complete
+- **Last task completed:** Task 15.11 — LOD meshes for bosses. Generated 5 decimated LOD1 GLBs (40% tris) via Blender decimate modifier. Each boss script loads both hi-res (visible 0–25m) and LOD1 (visible 25m+) models with `visibility_range_begin/end` and FADE_SELF transition. No MultiMesh scatters exist in codebase so prop LODs were not needed. Zero new runtime errors.
+- **Next task to do:** Task 15.12 (Ability cast VFX at player hand)
 - **V2.0 MILESTONE SUMMARY (Passes 1–11):**
   - **Pass 1 — Lighting:** 5 Poly Haven HDRIs, 5 WorldEnvironment .tres resources, DirectionalLight3D tuning (4-split shadows, per-chapter color temp). All chapters have FILMIC tonemap, SSAO, SSIL, SDFGI, volumetric fog.
   - **Pass 2 — Globbler Hero:** Custom Blender-built chibi robot GLB (dark metal + neon green), tuned scale (1.4x), collision capsule (r=0.35, h=1.3), third-person camera (distance=6.0, pitch=-0.3, height=1.1m).
@@ -478,7 +478,7 @@ assets/
 - [x] In `globbler.gd` camera logic: lerp FOV to 80° during sprint (from default ~75°), pull to 65° when aiming glob. Use `lerp` at 0.1 per frame. Setting can be disabled via reduce_motion. **Done: Added FOV_DEFAULT=70, FOV_SPRINT=80, FOV_AIM=60, FOV_LERP_SPEED=5.0 constants. In `_update_camera()`, lerps `camera.fov` toward target based on `anim_state == AnimState.RUN` (sprint→80°) or `glob_command.is_aiming` (aim→60°), else default 70°. Gated behind `reduce_motion` check — when enabled, FOV stays fixed at whatever it currently is. Verified: zero new runtime errors.**
 
 ### 15.11 LOD meshes for bosses and large props
-- [ ] For each boss GLB and any prop used in MultiMesh scatters: add a low-poly LOD variant (decimate to 40% tris) via blender-mcp. Set up `MeshInstance3D.visibility_range_begin/end` or use `LODMesh` equivalents. Target: drop boss mesh to low-LOD beyond 25m, props beyond 15m.
+- [x] For each boss GLB and any prop used in MultiMesh scatters: add a low-poly LOD variant (decimate to 40% tris) via blender-mcp. Set up `MeshInstance3D.visibility_range_begin/end` or use `LODMesh` equivalents. Target: drop boss mesh to low-LOD beyond 25m, props beyond 15m. **Done: Generated 5 LOD1 GLBs via Blender decimate (0.4 ratio): rm_rf (4116→1646), system_prompt (2264→900), local_minimum (7336→2928), foundation_model (15912→6353), aligner (57422→22926). Each boss script loads both hi-res (visibility_range_end=25) and LOD1 (visibility_range_begin=25) with FADE_SELF. No MultiMesh scatters exist so prop LODs skipped. Blend source saved to `assets/blender_source/boss_lod_meshes.blend`. Zero new runtime errors.**
 
 ### 15.12 Ability cast VFX at player hand
 - [ ] Create `scenes/vfx/ability_cast.tscn` — small GPUParticles3D burst (15 particles, 0.3s) in matching color per ability (green glob, white wrench, purple hack, cyan dash, orange agent). Triggered on ability activation from each ability script. Spawns at Globbler's hand bone position (or approximate offset if no bone).

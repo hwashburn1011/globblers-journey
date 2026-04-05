@@ -120,6 +120,15 @@ func _create_visual() -> void:
 		body_mesh = _find_mesh_instance(boss_model)
 		if body_mesh:
 			base_material = body_mesh.get_active_material(0)
+		# LOD: hi-res visible 0–25m, low-poly beyond 25m
+		_apply_lod_ranges(boss_model, 0.0, 25.0)
+	var lod_scene = load("res://assets/models/bosses/foundation_model_boss_lod1.glb")
+	if lod_scene:
+		var lod_model = lod_scene.instantiate()
+		lod_model.name = "BossModel_LOD1"
+		lod_model.position.y = 0.0
+		add_child(lod_model)
+		_apply_lod_ranges(lod_model, 25.0, 0.0)
 
 	# Eyes — still procedural so we can pulse them independently
 	eye_left = _create_eye(Vector3(-0.35, 8.0, 1.15))
@@ -262,6 +271,14 @@ func _physics_process(delta: float) -> void:
 	_animate_rings(delta)
 	_animate_eyes(delta)
 
+
+func _apply_lod_ranges(root: Node, begin: float, end: float) -> void:
+	for child in root.get_children():
+		if child is MeshInstance3D:
+			child.visibility_range_begin = begin
+			child.visibility_range_end = end
+			child.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+		_apply_lod_ranges(child, begin, end)
 
 func _find_mesh_instance(node: Node) -> MeshInstance3D:
 	if node is MeshInstance3D:
