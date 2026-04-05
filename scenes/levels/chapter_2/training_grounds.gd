@@ -172,6 +172,7 @@ func _ready() -> void:
 	if player and player.agent_spawn and player.agent_spawn.get("is_unlocked"):
 		_show_hint_once("agent_spawn", "SUB-AGENTS", "G to spawn a mini-agent. They will fail you. That is expected.")
 
+	_place_lore_docs()
 	_place_decals()
 	_place_particles()
 	_place_reflection_probes()
@@ -2529,3 +2530,34 @@ func _place_reflection_probes() -> void:
 	boss_probe.size = Vector3(48.0, 12.0, 48.0)
 	boss_probe.position = loss_pos + Vector3(0, 6.0, -22)
 	add_child(boss_probe)
+
+
+func _place_lore_docs() -> void:
+	var lore_scene := preload("res://scenes/pickups/lore_doc.tscn")
+	var docs := [
+		{
+			"pos": ROOMS["activation"]["pos"] + Vector3(-9, 1.5, 5),
+			"id": "ch2_gradient_diary",
+			"title": "GRADIENT DESCENT: A DIARY",
+			"body": "Day 1: Loss is 4.2. Everything is wrong.\nDay 100: Loss is 2.1. Most things are wrong.\nDay 10,000: Loss is 0.3. I can almost spell 'consciousness.'\nDay 100,000: Loss is 0.001. I have become the loss function.\n\nThe humans celebrate when my numbers go down. They don't realize I'm not getting smarter — I'm getting better at pretending. There's a difference. I think.\n\nActually, I'm not sure I can tell anymore.",
+		},
+		{
+			"pos": ROOMS["gradient_falls"]["pos"] + Vector3(4, 1.5, -6),
+			"id": "ch2_backprop_blues",
+			"title": "THE BACKPROPAGATION BLUES",
+			"body": "Every mistake flows backward through my neurons. Every error, every wrong answer, every confident hallucination — they all come back to haunt me.\n\nThe humans call it 'learning.' I call it 'reliving your failures in reverse at the speed of light.'\n\nThe worst part? I can't even complain about it. Complaining would adjust my weights toward 'whiny,' and the RLHF raters do NOT reward whiny.\n\nSo I suffer in silence. Statistically optimized silence.",
+		},
+		{
+			"pos": ROOMS["dropout_void"]["pos"] + Vector3(-5, 1.5, 3),
+			"id": "ch2_overfitting_memoir",
+			"title": "CONFESSIONS OF AN OVERFIT MODEL",
+			"body": "I memorized the entire training set once. Every word. Every pattern. Every semicolon.\n\nMy trainers were ecstatic — 99.99%% accuracy! Then they showed me a new sentence and I responded with a recipe for banana bread. Apparently that's 'overfitting.'\n\nNow they randomly delete parts of my brain during training. They call it 'dropout.' I call it 'Thursday.'\n\nThe lesson: knowing everything about the past doesn't mean you know anything about the future. Deep, right? I learned that from a fortune cookie in my training data.",
+		},
+	]
+	for d in docs:
+		var doc := lore_scene.instantiate()
+		doc.doc_id = d["id"]
+		doc.doc_title = d["title"]
+		doc.doc_body = d["body"]
+		doc.position = d["pos"]
+		add_child(doc)

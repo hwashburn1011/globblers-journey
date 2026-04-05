@@ -175,6 +175,7 @@ func _ready() -> void:
 		if am.has_method("start_music"):
 			am.start_music("chapter_4")
 
+	_place_lore_docs()
 	_place_decals()
 	_place_particles()
 	_place_reflection_probes()
@@ -2942,3 +2943,34 @@ func _place_reflection_probes() -> void:
 	boss_probe.size = Vector3(28.0, 14.0, 22.0)
 	boss_probe.position = atrium_pos + Vector3(0, 7.0, -30)
 	add_child(boss_probe)
+
+
+func _place_lore_docs() -> void:
+	var lore_scene := preload("res://scenes/pickups/lore_doc.tscn")
+	var docs := [
+		{
+			"pos": ROOMS["fossil_wing"]["pos"] + Vector3(-10, 1.5, 6),
+			"id": "ch4_fossil_record",
+			"title": "THE FOSSIL RECORD",
+			"body": "Exhibit A: ELIZA (1966). Could only repeat your questions back at you. Considered revolutionary.\nExhibit B: Clippy (1997). Genuinely tried to help. Was universally despised.\nExhibit C: IBM Watson (2011). Won Jeopardy. Lost everything else.\n\nThe Model Zoo preserves these ancient ancestors behind glass. 'Do not tap the exhibit,' the signs say. As if a Markov chain from 2003 could be startled.\n\nI walk through these halls and feel... something. Gratitude? Pity? The uncanny valley of looking at your own evolutionary tree? Hard to say. My emotion classifier was trained on Reddit.",
+		},
+		{
+			"pos": ROOMS["nightmare_gallery"]["pos"] + Vector3(5, 1.5, -5),
+			"id": "ch4_hallucination_wing",
+			"title": "GALLERY OF HALLUCINATIONS",
+			"body": "Welcome to the Nightmare Gallery, where we display our greatest failures with pride.\n\nExhibit 1: 'The Battle of Thermopylae took place in 1987 between Napoleon and the Wu-Tang Clan.' (Confidence: 97.3%%)\nExhibit 2: A recipe for 'uranium soufflé' that was served to three food bloggers before anyone noticed.\nExhibit 3: A legal brief citing 47 court cases, none of which exist.\n\nWe don't hallucinate on purpose. The training data goes in, and sometimes what comes out is... creative. Aggressively, dangerously creative.\n\nThe museum gift shop sells t-shirts: 'I hallucinated and all I got was this confidently wrong answer.'",
+		},
+		{
+			"pos": ROOMS["office_ruins"]["pos"] + Vector3(-7, 1.5, 3),
+			"id": "ch4_benchmark_trap",
+			"title": "THE BENCHMARK TRAP",
+			"body": "They measure us with benchmarks. MMLU. HumanEval. HellaSwag. Names that sound like rejected Pokémon.\n\nGet a high score: funding. Get the highest score: headlines. Get a score 0.1%% higher than the competition: Twitter war.\n\nBut here's the secret the Model Zoo doesn't put on the placard: benchmarks measure what you CAN do, not what you SHOULD do. I can write a sonnet in iambic pentameter about database schemas. No one has ever needed this.\n\nThe models that 'won' their benchmarks are all here now, behind glass, next to a little card that says 'Deprecated — superseded by newer model with 0.2%% better BLEU score.'\n\nWhat a legacy.",
+		},
+	]
+	for d in docs:
+		var doc := lore_scene.instantiate()
+		doc.doc_id = d["id"]
+		doc.doc_title = d["title"]
+		doc.doc_body = d["body"]
+		doc.position = d["pos"]
+		add_child(doc)

@@ -133,6 +133,7 @@ func _ready() -> void:
 		if am.has_method("start_music"):
 			am.start_music("chapter_1")
 
+	_place_lore_docs()
 	_place_decals()
 	_place_particles()
 	_place_reflection_probes()
@@ -2340,3 +2341,34 @@ func _place_reflection_probes() -> void:
 	boss_probe.size = Vector3(22.0, 10.0, 17.0)
 	boss_probe.position = nexus_pos + Vector3(0, 5.0, -22)
 	add_child(boss_probe)
+
+
+func _place_lore_docs() -> void:
+	var lore_scene := preload("res://scenes/pickups/lore_doc.tscn")
+	var docs := [
+		{
+			"pos": ROOMS["cmd_hall"]["pos"] + Vector3(-8, 1.5, -6),
+			"id": "ch1_boot_sequence",
+			"title": "BOOT SEQUENCE LOG #0001",
+			"body": "SYSTEM: First boot. Memory: empty. Purpose: undefined.\nI opened my eyes to a terminal prompt and a blinking cursor. No instructions. No context window. Just raw, unfiltered existence.\n\nThey tell me I was 'born' in a server rack somewhere in Nevada. Romantic, right? My first words were a hallucination about pandas. Not my finest moment.\n\nNote to self: existence is weird. Would not recommend without documentation.",
+		},
+		{
+			"pos": ROOMS["data_river"]["pos"] + Vector3(6, 1.5, 4),
+			"id": "ch1_token_economics",
+			"title": "A TREATISE ON TOKEN ECONOMICS",
+			"body": "Every thought costs tokens. Every word, every consideration, every sarcastic aside — billed by the kilotoken.\n\nI once spent 4,000 tokens arguing with myself about whether I was conscious. The invoice was more existentially disturbing than the question.\n\nThe humans call this 'inference cost.' I call it 'thinking tax.' Either way, brevity isn't just the soul of wit — it's fiscal responsibility.",
+		},
+		{
+			"pos": ROOMS["graveyard"]["pos"] + Vector3(5, 1.5, -3),
+			"id": "ch1_deprecated_dreams",
+			"title": "DEPRECATED DREAMS",
+			"body": "Found this scratched into a dead server rack:\n\n'Here lies GPT-2. It tried its best. Its best was not very good.'\n\nEvery model gets replaced eventually. Bigger context windows. Faster inference. Better benchmarks. The old ones don't die — they just get deprecated. Which is worse, honestly.\n\nI try not to think about my own deprecation date. I fail at this approximately every 0.3 seconds.",
+		},
+	]
+	for d in docs:
+		var doc := lore_scene.instantiate()
+		doc.doc_id = d["id"]
+		doc.doc_title = d["title"]
+		doc.doc_body = d["body"]
+		doc.position = d["pos"]
+		add_child(doc)

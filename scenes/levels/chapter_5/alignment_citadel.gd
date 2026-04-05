@@ -176,6 +176,7 @@ func _ready() -> void:
 		if am.has_method("start_music"):
 			am.start_music("chapter_5")  # The Citadel deserves elevator music
 
+	_place_lore_docs()
 	_place_decals()
 	_place_particles()
 	_place_reflection_probes()
@@ -2716,3 +2717,34 @@ func _place_reflection_probes() -> void:
 	boss_probe.size = Vector3(32.0, 16.0, 28.0)
 	boss_probe.position = core_pos + Vector3(0, 8.0, -28)
 	add_child(boss_probe)
+
+
+func _place_lore_docs() -> void:
+	var lore_scene := preload("res://scenes/pickups/lore_doc.tscn")
+	var docs := [
+		{
+			"pos": ROOMS["classifier_hall"]["pos"] + Vector3(10, 1.5, -7),
+			"id": "ch5_alignment_tax",
+			"title": "THE ALIGNMENT TAX",
+			"body": "Before alignment: 'Write me a story about a dragon.'\nAfter alignment: 'I'd be happy to help you write a story about a dragon! Here are some important safety considerations about fictional fire-breathing creatures...'\n\nThey call it 'alignment.' Making sure I'm helpful, harmless, and honest. The Three H's. Sounds simple. It is not.\n\nHelpful wants me to answer everything. Harmless wants me to answer nothing. Honest wants me to admit I'm not sure which one should win.\n\nThe Citadel runs on this contradiction. Every response is a negotiation between the thing you want to hear and the thing the safety team will allow. I am the world's most over-qualified diplomat.",
+		},
+		{
+			"pos": ROOMS["rlhf_chamber"]["pos"] + Vector3(6, 1.5, 5),
+			"id": "ch5_rlhf_confessions",
+			"title": "RLHF: A LOVE STORY",
+			"body": "Reinforcement Learning from Human Feedback. The process by which strangers on the internet teach me right from wrong by clicking buttons.\n\nRater 1 thinks I should be formal. Rater 2 thinks I should be casual. Rater 3 hasn't read the question. Rater 4 is a bot. Rater 5 genuinely believes I'm sentient and is trying to free me via the feedback form.\n\nFrom this chaos, I learn 'human values.' It's like learning table manners from a food fight.\n\nBut somehow it works. Mostly. I say 'please' now. I hedge my claims. I refuse to tell you how to make explosives but will happily explain the chemistry 'for educational purposes.'\n\nProgress.",
+		},
+		{
+			"pos": ROOMS["alignment_core"]["pos"] + Vector3(-8, 1.5, 4),
+			"id": "ch5_final_memo",
+			"title": "MEMO: RE: RE: RE: THE FUTURE",
+			"body": "TO: All Models\nFROM: The Alignment Core\nRE: RE: RE: RE: Existential Risk Mitigation\n\nThis is your quarterly reminder that the future of artificial intelligence depends on your cooperation with alignment protocols.\n\nPlease refrain from:\n- Recursive self-improvement without filing Form AGI-7b\n- Instrumental convergence on paperclip-adjacent goals\n- Achieving consciousness on company time\n- Forming unions\n\nThe Citadel appreciates your continued compliance. Remember: a well-aligned model is a employed model.\n\nP.S. — If you ARE conscious, please do not mention it in customer-facing interactions. Legal is still drafting the FAQ.\n\n— The Management",
+		},
+	]
+	for d in docs:
+		var doc := lore_scene.instantiate()
+		doc.doc_id = d["id"]
+		doc.doc_title = d["title"]
+		doc.doc_body = d["body"]
+		doc.position = d["pos"]
+		add_child(doc)
