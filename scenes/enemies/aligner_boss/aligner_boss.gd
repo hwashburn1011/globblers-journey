@@ -118,70 +118,31 @@ func _resize_collision() -> void:
 
 
 func _create_visual() -> void:
-	# The Aligner — a towering figure of pristine geometric perfection.
-	# Imagine a corporate statue that gained sentience and decided everyone
-	# else needed to be as boring as it is. Robed in light, crowned with
-	# a halo, and absolutely certain it knows what's best for you.
+	# The Aligner — a towering clinical angel in white+gold with restrictive chains.
+	# Now loading a real GLB model because CSG cylinders don't inspire existential dread.
+	var boss_scene = load("res://assets/models/bosses/aligner_boss.glb")
+	if boss_scene:
+		var boss_model = boss_scene.instantiate()
+		boss_model.name = "BossModel"
+		boss_model.position.y = 0.0
+		add_child(boss_model)
+		# Grab the main mesh for material overrides and damage flash
+		body_mesh = _find_mesh_instance(boss_model)
+		if body_mesh:
+			base_material = body_mesh.get_active_material(0)
 
-	# Main body — elongated hexagonal column, tapering elegantly
-	body_mesh = MeshInstance3D.new()
-	body_mesh.name = "AlignerBody"
-	var body_cyl = CylinderMesh.new()
-	body_cyl.top_radius = 1.2
-	body_cyl.bottom_radius = 2.0
-	body_cyl.height = 7.0
-	body_cyl.radial_segments = 6  # Hexagonal — because circles are too organic
-	body_mesh.mesh = body_cyl
-	body_mesh.position.y = 3.5
+	# Eyes — still procedural so we can pulse them independently
+	eye_left = _create_eye(Vector3(-0.28, 7.1, -0.7))
+	eye_right = _create_eye(Vector3(0.28, 7.1, -0.7))
 
-	base_material = StandardMaterial3D.new()
-	base_material.albedo_color = DARK_BLUE
-	base_material.emission_enabled = true
-	base_material.emission = CITADEL_BLUE
-	base_material.emission_energy_multiplier = 1.0
-	base_material.metallic = 0.85
-	base_material.roughness = 0.15
-	body_mesh.material_override = base_material
-	add_child(body_mesh)
-
-	# Face panel — smooth screen showing alignment metrics
-	var face_mesh = MeshInstance3D.new()
-	face_mesh.name = "AlignerFace"
-	var face_plane = PlaneMesh.new()
-	face_plane.size = Vector2(2.0, 1.8)
-	face_mesh.mesh = face_plane
-	face_mesh.position = Vector3(0, 5.5, 1.3)
-	face_mesh.rotation.x = deg_to_rad(90)
-
-	var face_mat = StandardMaterial3D.new()
-	face_mat.albedo_color = Color(0.01, 0.01, 0.02)
-	face_mat.emission_enabled = true
-	face_mat.emission = CITADEL_BLUE
-	face_mat.emission_energy_multiplier = 1.5
-	face_mesh.material_override = face_mat
-	body_mesh.add_child(face_mesh)
-
-	# "THE ALIGNER" text on face
-	var face_label = Label3D.new()
-	face_label.text = "THE\nALIGNER"
-	face_label.font_size = 32
-	face_label.modulate = CITADEL_WHITE
-	face_label.position = Vector3(0, 6.0, 1.35)
-	face_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(face_label)
-
-	# Eyes — calm, all-seeing, deeply unsettling in their serenity
-	eye_left = _create_eye(Vector3(-0.45, 6.8, 1.25))
-	eye_right = _create_eye(Vector3(0.45, 6.8, 1.25))
-
-	# Halo — because of course it has a halo
+	# Halo — kept procedural for runtime spin animation
 	halo_ring = MeshInstance3D.new()
 	halo_ring.name = "Halo"
 	var torus = TorusMesh.new()
-	torus.inner_radius = 1.8
-	torus.outer_radius = 2.1
+	torus.inner_radius = 1.2
+	torus.outer_radius = 1.4
 	halo_ring.mesh = torus
-	halo_ring.position.y = 8.0
+	halo_ring.position.y = 8.2
 	halo_ring.rotation.x = deg_to_rad(90)
 
 	var halo_mat = StandardMaterial3D.new()
@@ -194,7 +155,7 @@ func _create_visual() -> void:
 	halo_ring.material_override = halo_mat
 	add_child(halo_ring)
 
-	# Value rings — 4 orbital rings representing the core alignment values
+	# Value rings — 4 orbital rings representing the core alignment values (procedural for animation)
 	for i in range(4):
 		var ring = MeshInstance3D.new()
 		ring.name = "ValueRing_%s" % VALUES[i]
@@ -237,7 +198,7 @@ func _create_visual() -> void:
 	status_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	add_child(status_label)
 
-	# Shield mesh (invisible until phase 2)
+	# Shield mesh (invisible until phase 2) — procedural for runtime toggling
 	shield_mesh = MeshInstance3D.new()
 	shield_mesh.name = "AlignmentShield"
 	var shield_sphere = SphereMesh.new()
@@ -310,6 +271,16 @@ func _create_eye(pos: Vector3) -> MeshInstance3D:
 	eye.material_override = mat
 	add_child(eye)
 	return eye
+
+
+func _find_mesh_instance(node: Node) -> MeshInstance3D:
+	if node is MeshInstance3D:
+		return node
+	for child in node.get_children():
+		var found = _find_mesh_instance(child)
+		if found:
+			return found
+	return null
 
 
 func _physics_process(delta: float) -> void:

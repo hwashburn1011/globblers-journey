@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 7.4 complete
-- **Last task completed:** Task 7.4 — Foundation Model Boss model via blender-mcp
-- **Next task to do:** Task 7.5 (Aligner Boss model via blender-mcp)
-- **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 IN PROGRESS — boss visual upgrades. All pre-existing warnings unchanged, zero new runtime errors.
+- **Last updated by:** Claude (2026-04-04) — Task 7.5 complete
+- **Last task completed:** Task 7.5 — Aligner Boss model via blender-mcp
+- **Next task to do:** Task 8.1 (Glob beam shader upgrade)
+- **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 COMPLETE — all 5 boss visual upgrades done (rm -rf, System Prompt, Local Minimum, Foundation Model, Aligner). All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
 Upgrade visual quality from CSG placeholders to stylized indie-game-ship quality (~Death's Door / Tunic / Hi-Fi Rush tier). Hero assets (Globbler, bosses) built in Blender via blender-mcp. Environment via CC0 assets from Poly Haven / Sketchfab. Lighting + post-processing + VFX upgraded in Godot.
@@ -247,7 +247,7 @@ assets/
 - [x] Via blender-mcp: hulking multi-modal golem with 4 faces (text/image/audio/code glowing panels). Swap. **Done: Built hulking 4-sided golem with tapered obelisk body, 4 glowing face panels (TEXT=yellow, IMAGE=purple, AUDIO=blue, CODE=green), obelisk crown spike, big shoulder pauldrons, thick arms with chunky fists, 6 color-coded capability rings, chest vents, spine cables, waist belt, exposed green core, and 4 eyes (front+back). Exported to `assets/models/bosses/foundation_model_boss.glb` (source: `assets/blender_source/foundation_model_boss.blend`). Swapped `_create_visual()` in `foundation_model_boss.gd` to load GLB model with `_find_mesh_instance()` helper. Shield, core, capability rings, labels kept procedural for runtime toggling.**
 
 ### 7.5 Aligner Boss model
-- [ ] Via blender-mcp: tall clinical angel-figure in white+gold, restrictive chains. Contrasts Globbler's dark-green aesthetic. Swap.
+- [x] Via blender-mcp: tall clinical angel-figure in white+gold, restrictive chains. Contrasts Globbler's dark-green aesthetic. Swap. **Done: Built tall clinical angel figure with tapered white ceramic body, oval head with dark face visor, golden halo (double ring), angular wing struts with translucent membrane, broad shoulders, slender arms with shackled wrists, flowing robe with gold trim, restrictive dark-iron chains (chest, wrists, waist, halo-to-back), crown spikes, spine ridge, gold chest emblem (circle+cross), 4 floating value tablets (SAFE/HELPFUL/HARMLESS/HONEST with colored emission), and hidden green alignment core. Exported to `assets/models/bosses/aligner_boss.glb` (source: `assets/blender_source/aligner_boss.blend`). Swapped `_create_visual()` in `aligner_boss.gd` to load GLB model with `_find_mesh_instance()` helper. Shield, core, value rings, halo kept procedural for runtime toggling. Pass 7 (Boss Visual Upgrades) COMPLETE.**
 
 ---
 
