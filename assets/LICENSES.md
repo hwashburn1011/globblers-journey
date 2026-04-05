@@ -15,3 +15,11 @@ Only CC0 / CC-BY / royalty-free assets are permitted.
 | concrete_wall_004 (Texture) | Poly Haven | CC0 | https://polyhaven.com/a/concrete_wall_004 | Environment PBR — concrete walls/floors |
 | circuit_board (Texture) | Procedural (Blender) | N/A | N/A | Environment PBR — PCB/electronic surfaces |
 | scratched_plastic (Texture) | Procedural (Blender) | N/A | N/A | Environment PBR — worn plastic casings |
+| prop_motherboard (Model) | Procedural (Blender) | N/A | N/A | Environment prop — PCB with CPU socket, RAM slots, capacitors, ICs |
+| prop_cpu_chip (Model) | Procedural (Blender) | N/A | N/A | Environment prop — processor chip with heatspreader and gold pins |
+| prop_floppy_disk (Model) | Procedural (Blender) | N/A | N/A | Environment prop — 3.5" floppy disk with metal slide and label |
+| prop_keyboard (Model) | Procedural (Blender) | N/A | N/A | Environment prop — retro keyboard with key grid and green accents |
+| prop_ram_stick (Model) | Procedural (Blender) | N/A | N/A | Environment prop — DDR DIMM with memory chips and gold contacts |
+| prop_crt_monitor (Model) | Procedural (Blender) | N/A | N/A | Environment prop — retro CRT monitor with green emissive screen |
+| prop_hard_drive (Model) | Procedural (Blender) | N/A | N/A | Environment prop — 3.5" HDD with SATA connectors and label |
+| prop_power_supply (Model) | Procedural (Blender) | N/A | N/A | Environment prop — PSU with fan grill, cables, and warning label |
