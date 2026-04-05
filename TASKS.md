@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 15.13 complete
-- **Last task completed:** Task 15.13 — Shadow distance + CSM tuning per chapter. Added `directional_shadow_max_distance`, `directional_shadow_split_1/2/3`, and `shadow_blur` to both MainLight and FillLight in all 5 chapter scripts. Ch1=40m/blur1.5 (tight corridors), Ch2=50m/blur1.2, Ch3=50m/blur1.8 (soft lantern), Ch4=60m/blur1.0 (crisp museum), Ch5=80m/blur0.8 (sharp clinical). CSM splits tuned per-chapter for optimal near/far shadow distribution.
-- **Next task to do:** Task 15.14 (Per-chapter color grade)
+- **Last updated by:** Claude (2026-04-05) — Task 15.14 complete
+- **Last task completed:** Task 15.14 — Per-chapter color grade. Added GradientTexture1D-based adjustment_color_correction to all 5 chapter .tres files. Ch1/Ch3 warm lift, Ch2/Ch5 cool lift, Ch4 desaturated lift. All ~5% shift max.
+- **Next task to do:** Next unchecked task in the list
 - **V2.0 MILESTONE SUMMARY (Passes 1–11):**
   - **Pass 1 — Lighting:** 5 Poly Haven HDRIs, 5 WorldEnvironment .tres resources, DirectionalLight3D tuning (4-split shadows, per-chapter color temp). All chapters have FILMIC tonemap, SSAO, SSIL, SDFGI, volumetric fog.
   - **Pass 2 — Globbler Hero:** Custom Blender-built chibi robot GLB (dark metal + neon green), tuned scale (1.4x), collision capsule (r=0.35, h=1.3), third-person camera (distance=6.0, pitch=-0.3, height=1.1m).
@@ -487,4 +487,4 @@ assets/
 - [x] In each chapter WorldEnvironment / DirectionalLight3D: tune `shadow_max_distance` (Ch1 smaller=40, Ch5 larger=80), `directional_shadow_split_1/2/3` splits, and `shadow_blur` per chapter. Short chapters with tight corridors don't need 200m shadow distance. **Done: Added shadow_max_distance (Ch1=40, Ch2=50, Ch3=50, Ch4=60, Ch5=80), CSM splits, and shadow_blur (Ch1=1.5, Ch2=1.2, Ch3=1.8, Ch4=1.0, Ch5=0.8) to both MainLight and FillLight in all 5 chapter scripts.**
 
 ### 15.14 Per-chapter color grade
-- [ ] Add `adjustment_color_correction` curve texture to each chapter_n.tres Environment: slight warm lift (Ch1/3), cool lift (Ch2/5), desaturated lift (Ch4). Hand-authored Gradient or GradientTexture1D resource. Subtle — 5% shift max.
+- [x] Add `adjustment_color_correction` curve texture to each chapter_n.tres Environment: slight warm lift (Ch1/3), cool lift (Ch2/5), desaturated lift (Ch4). Hand-authored Gradient or GradientTexture1D resource. Subtle — 5% shift max. **Done: Added GradientTexture1D color correction to all 5 chapter .tres files. Ch1/Ch3: warm lift (white→1.0,0.97,0.93), Ch2/Ch5: cool lift (white→0.95,0.97,1.0), Ch4: desaturated lift (black raised to 0.02, white lowered to 0.97). All gradients 256px wide, ~5% shift max.**

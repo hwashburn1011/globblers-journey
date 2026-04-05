@@ -1,4 +1,4 @@
-[gd_resource type="Environment" load_steps=3 format=3]
+[gd_resource type="Environment" load_steps=5 format=3]
 
 [ext_resource type="CompressedTexture2D" uid="uid://jye7hmur5whx" path="res://assets/hdri/ch1_sky.hdr" id="1_ch1sky"]
 
@@ -7,6 +7,14 @@ panorama = ExtResource("1_ch1sky")
 
 [sub_resource type="Sky" id="Sky_ch1"]
 sky_material = SubResource("PanoramaSkyMaterial_ch1")
+
+[sub_resource type="Gradient" id="Gradient_cc_ch1"]
+offsets = PackedFloat32Array(0.0, 1.0)
+colors = PackedColorArray(0, 0, 0, 1, 1.0, 0.97, 0.93, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_cc_ch1"]
+gradient = SubResource("Gradient_cc_ch1")
+width = 256
 
 [resource]
 ; ============================================================
@@ -68,3 +76,4 @@ volumetric_fog_emission = Color(0.01, 0.04, 0.01, 1)
 adjustment_enabled = true
 adjustment_contrast = 1.05
 adjustment_saturation = 1.1
+adjustment_color_correction = SubResource("GradientTexture1D_cc_ch1")
