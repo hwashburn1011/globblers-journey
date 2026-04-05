@@ -421,7 +421,7 @@ func _collect_flash_materials(node: Node, flash_shader: Shader) -> void:
 			var mat = mesh_inst.get_active_material(surf_idx)
 			if mat:
 				# Walk the next_pass chain to find the tail — append, don't replace
-				var tail_mat := mat
+				var tail_mat: Material = mat
 				while tail_mat.next_pass:
 					tail_mat = tail_mat.next_pass
 				var flash_mat := ShaderMaterial.new()
@@ -460,7 +460,7 @@ func _collect_dissolve_materials(node: Node, dissolve_shader: Shader) -> void:
 			var mat = mesh_inst.get_active_material(surf_idx)
 			if mat:
 				# Walk the next_pass chain to the tail — dissolve goes LAST
-				var tail_mat := mat
+				var tail_mat: Material = mat
 				while tail_mat.next_pass:
 					tail_mat = tail_mat.next_pass
 				var dissolve_mat := ShaderMaterial.new()

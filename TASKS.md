@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 4.6 complete
-- **Last task completed:** Task 4.6 — Build procedural clinical/office prop pack (8 models)
-- **Next task to do:** Task 5.1 (Chapter 1 Terminal Wastes — prop pass)
+- **Last updated by:** Claude (2026-04-04) — Task 5.1 complete
+- **Last task completed:** Task 5.1 — Chapter 1 Terminal Wastes prop pass
+- **Next task to do:** Task 5.2 (Chapter 2 Training Grounds — prop pass)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 in progress — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -165,7 +165,7 @@ assets/
 # Replace CSG clutter with real props. One chapter per task.
 
 ### 5.1 Chapter 1 Terminal Wastes — prop pass
-- [ ] In `terminal_wastes.gd`, identify CSG clutter meshes placed as visual dressing (NOT structural walls/floors). Replace with MultiMesh scatters of Pass-4 tech-waste props. Keep puzzle/enemy positions. MCP run to verify no scripts broke.
+- [x] In `terminal_wastes.gd`, identify CSG clutter meshes placed as visual dressing (NOT structural walls/floors). Replace with MultiMesh scatters of Pass-4 tech-waste props. Keep puzzle/enemy positions. MCP run to verify no scripts broke. **Done: Replaced CSG server racks with arch_server_rack.glb models (collision preserved), CSG cables with cable_bundle.glb, CSG floppy disks with floppy_disk.glb, CSG pipe with industrial_pipe.glb. Added _scatter_tech_props() with MultiMesh scatters of cpu_chip, ram_stick, motherboard, hard_drive, floppy_disk, crt_monitor, power_supply, floor_grate, wall_terminal, vent_duct, cable_bundle across all 5 rooms. Props loaded at runtime via load() with CSG fallbacks. Fixed tail_mat type inference bugs in globbler.gd and health_component.gd. Zero new runtime errors.**
 
 ### 5.2 Chapter 2 Training Grounds — prop pass
 - [ ] Same as 5.1 for `training_grounds.gd`. Use neural-network-themed scatter (nodes, wires). Cleaner than Chapter 1.

@@ -100,7 +100,7 @@ func _collect_flash_materials(node: Node) -> void:
 			var mat = mesh_inst.get_active_material(surf_idx)
 			if mat:
 				# Walk the next_pass chain to find the tail — we append, not replace
-				var tail_mat := mat
+				var tail_mat: Material = mat
 				while tail_mat.next_pass:
 					tail_mat = tail_mat.next_pass
 				var flash_mat := ShaderMaterial.new()

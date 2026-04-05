@@ -32,6 +32,26 @@ var deprecated_npc_script := preload("res://scenes/levels/chapter_1/deprecated_n
 # Hint scene — for when the player inevitably forgets how to walk
 var hint_scene := preload("res://scenes/ui/first_time_hint.tscn")
 
+# Tech-waste prop paths — loaded at runtime because preload chokes on GLBs
+# that haven't been blessed by Godot's import pipeline yet
+const _PROP_PATHS := {
+	"server_rack": "res://assets/models/environment/arch_server_rack.glb",
+	"cable_bundle": "res://assets/models/environment/arch_cable_bundle.glb",
+	"floor_grate": "res://assets/models/environment/arch_floor_grate.glb",
+	"industrial_pipe": "res://assets/models/environment/arch_industrial_pipe.glb",
+	"wall_terminal": "res://assets/models/environment/arch_wall_terminal.glb",
+	"vent_duct": "res://assets/models/environment/arch_vent_duct.glb",
+	"motherboard": "res://assets/models/environment/prop_motherboard.glb",
+	"cpu_chip": "res://assets/models/environment/prop_cpu_chip.glb",
+	"floppy_disk": "res://assets/models/environment/prop_floppy_disk.glb",
+	"keyboard": "res://assets/models/environment/prop_keyboard.glb",
+	"ram_stick": "res://assets/models/environment/prop_ram_stick.glb",
+	"crt_monitor": "res://assets/models/environment/prop_crt_monitor.glb",
+	"hard_drive": "res://assets/models/environment/prop_hard_drive.glb",
+	"power_supply": "res://assets/models/environment/prop_power_supply.glb",
+}
+var _prop_scenes := {}  # Populated in _ready() — runtime load, not preload
+
 var boss_instance: Node  # The boss node — tracked for phase events
 var boss_arena_instance: Node3D  # The arena floor
 
@@ -82,6 +102,7 @@ var _time := 0.0
 
 func _ready() -> void:
 	print("[TERMINAL WASTES] Booting Chapter 1... please hold. Or don't. I'm not your supervisor.")
+	_load_prop_scenes()
 	_setup_environment()
 	_build_rooms()
 	_build_corridors()
@@ -98,6 +119,7 @@ func _ready() -> void:
 	_place_checkpoints()
 	_place_ambient_zones()
 	_place_binary_rain()
+	_scatter_tech_props()
 	_spawn_player()
 	_spawn_hud()
 	_create_kill_floor()
@@ -111,6 +133,17 @@ func _ready() -> void:
 # ============================================================
 # ENVIRONMENT
 # ============================================================
+
+func _load_prop_scenes() -> void:
+	# Runtime-load all GLB props — preload can't handle unimported GLBs,
+	# and we're too cool to let that stop us
+	for key in _PROP_PATHS:
+		var res = load(_PROP_PATHS[key])
+		if res:
+			_prop_scenes[key] = res
+		else:
+			push_warning("[TERMINAL WASTES] Failed to load prop '%s' from %s — will use CSG fallback" % [key, _PROP_PATHS[key]])
+
 
 func _setup_environment() -> void:
 	# Main light — low warm-green rim, because post-apocalyptic CRT wastelands
@@ -261,10 +294,10 @@ func _populate_spawn_chamber() -> void:
 		">> SECTOR 0x0000: SPAWN CHAMBER\n>> STATUS: abandoned\n>> LAST LOGIN: 847 days ago\n>> RECOMMENDATION: leave immediately"
 	)
 
-	# Scattered cables on floor (decorative boxes)
+	# Scattered cables on floor — now actual 3D cable models instead of sad green rectangles
 	for i in range(4):
-		var cable_pos = rpos + Vector3(randf_range(-4, 4), 0.05, randf_range(-3, 3))
-		_create_static_box(cable_pos, Vector3(randf_range(0.8, 2.0), 0.08, 0.08), CABLE_GREEN, 0.5)
+		var cable_pos = rpos + Vector3(randf_range(-4, 4), 0.0, randf_range(-3, 3))
+		_place_glb_prop("cable_bundle", cable_pos, randf_range(0, TAU), Vector3.ONE * randf_range(0.6, 1.2))
 
 	# Entry sign
 	_create_floating_label(rpos + Vector3(0, 4.5, 0), "THE TERMINAL WASTES", 28)
@@ -307,9 +340,9 @@ func _populate_command_hall() -> void:
 		_create_server_rack(rpos + Vector3(-8, 0, -5 + i * 4), 0.0, i == 1)
 		_create_server_rack(rpos + Vector3(8, 0, -5 + i * 4), PI, i == 2)
 
-	# Broken pipe spewing green "data" particles
+	# Broken pipe spewing green "data" particles — now an actual pipe model, not a grey box
 	var pipe_pos = rpos + Vector3(6, 2, -4)
-	_create_static_box(pipe_pos, Vector3(0.3, 0.3, 2.0), DARK_METAL, 0.2)
+	_place_glb_prop("industrial_pipe", pipe_pos, 0.0, Vector3(1.0, 1.0, 2.0))
 	_spawn_directional_particles(pipe_pos + Vector3(0, 0, -1), Vector3(0, -0.5, -1))
 
 	# Error message on wall
@@ -418,10 +451,10 @@ func _populate_server_graveyard() -> void:
 		Vector3(0, PI / 2.0, 0)
 	)
 
-	# Floppy disk pile (flat boxes)
+	# Floppy disk pile — real floppy models instead of flat grey squares. Progress!
 	for i in range(8):
 		var fpos = rpos + Vector3(randf_range(-3, 3), 0.05 + i * 0.05, randf_range(-1, 1))
-		_create_static_box(fpos, Vector3(0.5, 0.03, 0.5), Color(0.1, 0.1, 0.15), 0.1)
+		_place_glb_prop("floppy_disk", fpos, randf_range(0, TAU), Vector3.ONE * randf_range(0.8, 1.2))
 
 	# Lore terminal — big find for curious players
 	_create_terminal_sign(
@@ -1188,8 +1221,7 @@ func _create_static_box(pos: Vector3, size: Vector3, color: Color, emission_mult
 
 
 func _create_server_rack(pos: Vector3, rot_y: float, damaged: bool, tilt: float = 0.0) -> void:
-	# A server rack: tall dark box with green LED strips
-	# "These used to run GPT-2. Now they run nothing. An improvement, some say."
+	# A server rack — now using an actual GLB model instead of a box with delusions of grandeur
 	var rack = Node3D.new()
 	rack.position = pos
 	rack.rotation.y = rot_y
@@ -1198,11 +1230,25 @@ func _create_server_rack(pos: Vector3, rot_y: float, damaged: bool, tilt: float 
 	elif damaged:
 		rack.rotation.z = randf_range(0.05, 0.2) * (1 if randf() > 0.5 else -1)
 
-	# Main body
-	var body = _create_static_box_local(Vector3(0, 1.5, 0), Vector3(1.2, 3.0, 0.8), SERVER_RACK, 0.1)
-	rack.add_child(body)
+	# Real GLB model for the rack body (with CSG fallback if import failed)
+	if _prop_scenes.has("server_rack"):
+		var model = _prop_scenes["server_rack"].instantiate()
+		rack.add_child(model)
+	else:
+		var body = _create_static_box_local(Vector3(0, 1.5, 0), Vector3(1.2, 3.0, 0.8), SERVER_RACK, 0.1)
+		rack.add_child(body)
 
-	# LED strip (thin glowing bar)
+	# Collision shape — keep gameplay intact even though the mesh got a glow-up
+	var col_body = StaticBody3D.new()
+	col_body.position = Vector3(0, 1.5, 0)
+	var col = CollisionShape3D.new()
+	var shape = BoxShape3D.new()
+	shape.size = Vector3(1.2, 3.0, 0.8)
+	col.shape = shape
+	col_body.add_child(col)
+	rack.add_child(col_body)
+
+	# LED strip — because even dead servers deserve a blinking light
 	var led = MeshInstance3D.new()
 	var led_mesh = BoxMesh.new()
 	led_mesh.size = Vector3(0.05, 2.4, 0.05)
@@ -1216,18 +1262,17 @@ func _create_server_rack(pos: Vector3, rot_y: float, damaged: bool, tilt: float 
 	led.material_override = led_mat
 	rack.add_child(led)
 
-	# If damaged, add some debris nearby
+	# If damaged, scatter some real debris props instead of sad brown rectangles
 	if damaged:
-		var debris = MeshInstance3D.new()
-		var debris_mesh = BoxMesh.new()
-		debris_mesh.size = Vector3(0.4, 0.15, 0.3)
-		debris.mesh = debris_mesh
-		debris.position = Vector3(randf_range(-0.5, 0.5), 0.08, randf_range(0.5, 1.0))
-		debris.rotation.y = randf_range(0, TAU)
-		var d_mat = StandardMaterial3D.new()
-		d_mat.albedo_color = RUST_BROWN
-		debris.material_override = d_mat
-		rack.add_child(debris)
+		var debris_props := ["motherboard", "ram_stick", "cpu_chip"]
+		for j in range(randi_range(1, 3)):
+			var prop_key = debris_props[j % debris_props.size()]
+			if _prop_scenes.has(prop_key):
+				var debris = _prop_scenes[prop_key].instantiate()
+				debris.position = Vector3(randf_range(-0.5, 0.5), 0.05, randf_range(0.5, 1.2))
+				debris.rotation.y = randf_range(0, TAU)
+				debris.scale = Vector3.ONE * randf_range(0.5, 0.8)
+				rack.add_child(debris)
 
 	add_child(rack)
 
@@ -1460,6 +1505,168 @@ func _add_accent_light(pos: Vector3, color: Color, energy: float = 1.0, light_ra
 	light.omni_range = light_range
 	light.omni_attenuation = 2.0
 	add_child(light)
+
+
+func _place_glb_prop(prop_key: String, pos: Vector3, rot_y: float = 0.0, scl: Vector3 = Vector3.ONE) -> Node3D:
+	# Instantiate a GLB prop and drop it in the world — the civilized way to decorate
+	if not _prop_scenes.has(prop_key):
+		# Fallback: tiny green CSG box so we at least see something
+		return _create_static_box(pos, Vector3(0.3, 0.3, 0.3), NEON_GREEN * 0.3, 0.2)
+	var inst = _prop_scenes[prop_key].instantiate()
+	inst.position = pos
+	inst.rotation.y = rot_y
+	inst.scale = scl
+	add_child(inst)
+	return inst
+
+
+func _create_multimesh_scatter(prop_key: String, positions: Array, base_scale: float = 1.0) -> void:
+	# MultiMesh scatter for bulk prop placement — because instantiating 50 nodes
+	# individually is a war crime against the GPU
+	if not _prop_scenes.has(prop_key):
+		push_warning("[TERMINAL WASTES] Skipping scatter for missing prop '%s'" % prop_key)
+		return
+	var source_scene = _prop_scenes[prop_key].instantiate()
+	var source_mesh: Mesh = null
+	for child in source_scene.get_children():
+		if child is MeshInstance3D:
+			source_mesh = child.mesh
+			break
+		for grandchild in child.get_children():
+			if grandchild is MeshInstance3D:
+				source_mesh = grandchild.mesh
+				break
+		if source_mesh:
+			break
+	source_scene.queue_free()
+
+	if not source_mesh:
+		push_warning("[TERMINAL WASTES] Could not extract mesh from prop '%s'. Falling back to individual instances." % prop_key)
+		for pos in positions:
+			_place_glb_prop(prop_key, pos, randf_range(0, TAU), Vector3.ONE * base_scale * randf_range(0.7, 1.3))
+		return
+
+	var mmi = MultiMeshInstance3D.new()
+	mmi.name = "Scatter_%s" % prop_key
+	var mm = MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = source_mesh
+	mm.instance_count = positions.size()
+	for i in range(positions.size()):
+		var s = base_scale * randf_range(0.7, 1.3)
+		var inst_basis = Basis(Vector3.UP, randf_range(0, TAU)).scaled(Vector3.ONE * s)
+		mm.set_instance_transform(i, Transform3D(inst_basis, positions[i]))
+	mmi.multimesh = mm
+	add_child(mmi)
+
+
+func _scatter_tech_props() -> void:
+	# Scatter tech-waste props across all rooms — turning barren CSG corridors
+	# into a proper e-waste hellscape. Martha Stewart would NOT approve.
+	print("[TERMINAL WASTES] Scattering tech debris... the janitor quit 847 days ago.")
+
+	# --- Room 1: Spawn Chamber — light debris, player just got here ---
+	var spawn_pos: Vector3 = ROOMS["spawn"]["pos"]
+	var spawn_debris_positions: Array = []
+	for i in range(6):
+		spawn_debris_positions.append(spawn_pos + Vector3(randf_range(-5, 5), 0.02, randf_range(-5, 5)))
+	_create_multimesh_scatter("cpu_chip", spawn_debris_positions, 0.8)
+
+	# A few keyboards scattered — someone rage-quit here
+	for i in range(3):
+		_place_glb_prop("keyboard", spawn_pos + Vector3(randf_range(-4, 4), 0.02, randf_range(-4, 4)), randf_range(0, TAU), Vector3.ONE * randf_range(0.7, 1.0))
+
+	# Floor grates near walls
+	for side in [-1, 1]:
+		_place_glb_prop("floor_grate", spawn_pos + Vector3(side * 5.5, 0.01, 0), 0.0, Vector3.ONE * 1.2)
+
+	# --- Room 2: Command Hall — more debris, it gets worse from here ---
+	var cmd_pos: Vector3 = ROOMS["cmd_hall"]["pos"]
+	var cmd_debris: Array = []
+	for i in range(10):
+		cmd_debris.append(cmd_pos + Vector3(randf_range(-8, 8), 0.02, randf_range(-6, 6)))
+	_create_multimesh_scatter("ram_stick", cmd_debris, 0.7)
+
+	# Vent ducts on walls — the building's respiratory system is exposed
+	_place_glb_prop("vent_duct", cmd_pos + Vector3(-9, 4, -3), PI / 2.0, Vector3.ONE * 1.5)
+	_place_glb_prop("vent_duct", cmd_pos + Vector3(9, 3.5, 2), -PI / 2.0, Vector3.ONE * 1.5)
+
+	# Wall terminals — dead screens everywhere
+	_place_glb_prop("wall_terminal", cmd_pos + Vector3(-9.3, 2, 3), PI / 2.0)
+	_place_glb_prop("wall_terminal", cmd_pos + Vector3(9.3, 2.5, -5), -PI / 2.0)
+
+	# Hard drives scattered on the floor — data that nobody backed up
+	var hdd_positions: Array = []
+	for i in range(5):
+		hdd_positions.append(cmd_pos + Vector3(randf_range(-7, 7), 0.02, randf_range(-5, 5)))
+	_create_multimesh_scatter("hard_drive", hdd_positions, 0.6)
+
+	# --- Room 3: Data River Chamber — tech waste near the banks ---
+	var river_pos: Vector3 = ROOMS["data_river"]["pos"]
+	# Motherboards along the river banks — washed up digital driftwood
+	var river_debris: Array = []
+	for i in range(8):
+		var side = -1 if i < 4 else 1
+		river_debris.append(river_pos + Vector3(side * randf_range(3, 10), 0.02, randf_range(-8, 8)))
+	_create_multimesh_scatter("motherboard", river_debris, 0.9)
+
+	# Power supplies near platforms — someone tried to jumpstart this place
+	_place_glb_prop("power_supply", river_pos + Vector3(-9, 0.8, -3), randf_range(0, TAU), Vector3.ONE * 0.8)
+	_place_glb_prop("power_supply", river_pos + Vector3(9, 1.2, 3), randf_range(0, TAU), Vector3.ONE * 0.8)
+
+	# CRT monitors near the big screen — ancient display technology graveyard
+	for i in range(3):
+		_place_glb_prop("crt_monitor", river_pos + Vector3(randf_range(-4, 4), 0.02, -8 + i * 2.0), randf_range(-0.3, 0.3), Vector3.ONE * randf_range(0.6, 1.0))
+
+	# Floor grates
+	_place_glb_prop("floor_grate", river_pos + Vector3(-6, 0.01, 0), 0.0, Vector3.ONE * 1.5)
+	_place_glb_prop("floor_grate", river_pos + Vector3(6, 0.01, 0), PI / 2.0, Vector3.ONE * 1.5)
+
+	# --- Room 4: Server Graveyard — MAXIMUM debris density ---
+	var grave_pos: Vector3 = ROOMS["graveyard"]["pos"]
+	# Floppy disks everywhere — the fossils of a bygone era
+	var floppy_scatter: Array = []
+	for i in range(15):
+		floppy_scatter.append(grave_pos + Vector3(randf_range(-8, 8), 0.02, randf_range(-7, 7)))
+	_create_multimesh_scatter("floppy_disk", floppy_scatter, 0.9)
+
+	# CPU chips scattered like dead beetles
+	var cpu_scatter: Array = []
+	for i in range(12):
+		cpu_scatter.append(grave_pos + Vector3(randf_range(-8, 8), 0.02, randf_range(-7, 7)))
+	_create_multimesh_scatter("cpu_chip", cpu_scatter, 0.6)
+
+	# Keyboards and hard drives — the remains of workstations past
+	for i in range(4):
+		_place_glb_prop("keyboard", grave_pos + Vector3(randf_range(-6, 6), 0.02, randf_range(-6, 6)), randf_range(0, TAU), Vector3.ONE * randf_range(0.7, 1.0))
+	for i in range(3):
+		_place_glb_prop("hard_drive", grave_pos + Vector3(randf_range(-5, 5), 0.02, randf_range(-5, 5)), randf_range(0, TAU), Vector3.ONE * 0.7)
+
+	# Cable bundles draped around — the spaghetti of ancient networking
+	_place_glb_prop("cable_bundle", grave_pos + Vector3(-7, 0, -5), randf_range(0, TAU), Vector3.ONE * 1.5)
+	_place_glb_prop("cable_bundle", grave_pos + Vector3(5, 0, 4), randf_range(0, TAU), Vector3.ONE * 1.3)
+
+	# --- Room 5: Nexus Hub — dramatic, less cluttered, more foreboding ---
+	var nexus_pos: Vector3 = ROOMS["nexus"]["pos"]
+	# Floor grates in a ring around the central pillar
+	for i in range(4):
+		var angle = i * TAU / 4.0 + PI / 4.0
+		_place_glb_prop("floor_grate", nexus_pos + Vector3(cos(angle) * 5.0, 0.01, sin(angle) * 5.0), angle, Vector3.ONE * 1.3)
+
+	# Wall terminals on the perimeter — monitoring stations for the nexus
+	for i in range(3):
+		var angle = i * TAU / 3.0
+		_place_glb_prop("wall_terminal", nexus_pos + Vector3(cos(angle) * 10.0, 2.5, sin(angle) * 10.0), angle + PI, Vector3.ONE * 1.0)
+
+	# Vent ducts high up — the infrastructure is showing
+	_place_glb_prop("vent_duct", nexus_pos + Vector3(-10, 6, -5), PI / 2.0, Vector3.ONE * 2.0)
+	_place_glb_prop("vent_duct", nexus_pos + Vector3(10, 5.5, 5), -PI / 2.0, Vector3.ONE * 2.0)
+
+	# A few power supplies near the elevated platforms — someone tried to hotwire something
+	_place_glb_prop("power_supply", nexus_pos + Vector3(-7, 1.5, -4), randf_range(0, TAU), Vector3.ONE * 0.7)
+	_place_glb_prop("power_supply", nexus_pos + Vector3(7, 1.5, -4), randf_range(0, TAU), Vector3.ONE * 0.7)
+
+	print("[TERMINAL WASTES] Tech debris scattered. This place looks properly abandoned now.")
 
 
 func _spawn_ambient_particles(pos: Vector3, extents: Vector2 = Vector2(8, 8)) -> void:
