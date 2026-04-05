@@ -17,6 +17,7 @@ var _fast_mode := false
 var speaker_label: Label
 var text_label: RichTextLabel
 var advance_hint: Label
+var scanline_overlay: ColorRect
 
 signal typing_finished()
 signal advanced()
@@ -94,6 +95,23 @@ func _build_ui() -> void:
 	advance_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	advance_hint.visible = false
 	vbox.add_child(advance_hint)
+
+	# Scanline + flicker overlay — CRT aesthetic for the dialogue panel
+	scanline_overlay = ColorRect.new()
+	scanline_overlay.name = "ScanlineOverlay"
+	scanline_overlay.color = Color(1, 1, 1, 1)
+	scanline_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	scanline_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var shader_res = load("res://assets/shaders/dialogue_scanline.gdshader")
+	if shader_res:
+		var mat := ShaderMaterial.new()
+		mat.shader = shader_res
+		scanline_overlay.material = mat
+		# Respect reduce_motion toggle
+		var gm = get_node_or_null("/root/GameManager")
+		if gm and gm.get("reduce_motion"):
+			mat.set_shader_parameter("animate", false)
+	add_child(scanline_overlay)
 
 func show_line(speaker: String, text: String) -> void:
 	visible = true
