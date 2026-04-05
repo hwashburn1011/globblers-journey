@@ -187,6 +187,24 @@ func _build_hud() -> void:
 	glob_indicator.add_theme_stylebox_override("background", glob_bg)
 	top_right.add_child(glob_indicator)
 
+	# Ability icon bar (below cooldowns)
+	var icon_bar = HBoxContainer.new()
+	icon_bar.name = "AbilityIconBar"
+	icon_bar.add_theme_constant_override("separation", 4)
+	top_right.add_child(icon_bar)
+
+	var icon_names := ["glob", "wrench", "hack", "dash", "agent_spawn", "context"]
+	for icon_name in icon_names:
+		var tex_rect = TextureRect.new()
+		tex_rect.name = "Icon_" + icon_name
+		tex_rect.custom_minimum_size = Vector2(28, 28)
+		tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex_rect.modulate = Color(0.8, 1.0, 0.8, 0.85)
+		var icon_path = "res://assets/ui/icons/" + icon_name + ".png"
+		if ResourceLoader.exists(icon_path):
+			tex_rect.texture = load(icon_path)
+		icon_bar.add_child(tex_rect)
+
 	# Timer - top center
 	timer_label = Label.new()
 	timer_label.name = "TimerLabel"
