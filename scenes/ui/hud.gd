@@ -35,8 +35,10 @@ var upgrade_hint: Label
 
 var damage_indicator_scene := preload("res://scenes/ui/damage_indicator.tscn")
 var cooldown_radial_shader := preload("res://assets/shaders/cooldown_radial.gdshader")
+var crt_curvature_shader := preload("res://assets/shaders/crt_curvature.gdshader")
 
 var player_ref: CharacterBody3D
+var crt_material: ShaderMaterial
 
 # Radial cooldown overlays keyed by ability name
 var ability_radials: Dictionary = {}
@@ -58,6 +60,11 @@ func _ready() -> void:
 		game_mgr.enemy_killed_signal.connect(update_kills)
 		game_mgr.damage_taken.connect(_on_damage_taken)
 		_show_level_intro(game_mgr.get_level_intro())
+
+	if game_mgr and game_mgr.has_signal("reduce_motion_changed"):
+		game_mgr.reduce_motion_changed.connect(_on_reduce_motion_changed)
+		if game_mgr.reduce_motion:
+			_on_reduce_motion_changed(true)
 
 	var prog = get_node_or_null("/root/ProgressionManager")
 	if prog:
@@ -124,6 +131,9 @@ func _build_hud() -> void:
 	glob_input_node.set_deferred("anchor_top", 0.82)
 	glob_input_node.set_deferred("anchor_right", 0.28)
 	glob_input_node.set_deferred("anchor_bottom", 0.92)
+
+	# CRT curvature post-process overlay — sits above everything
+	_build_crt_overlay()
 
 func _build_top_left() -> void:
 	# === TOP LEFT: Context bar + health stats in terminal panel ===
@@ -400,6 +410,35 @@ func _build_level_intro() -> void:
 	level_intro_label.modulate.a = 0.0
 	level_intro_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(level_intro_label)
+
+func _build_crt_overlay() -> void:
+	var crt_layer = CanvasLayer.new()
+	crt_layer.name = "CRTOverlay"
+	crt_layer.layer = 100  # Above everything
+	add_child(crt_layer)
+
+	var crt_rect = ColorRect.new()
+	crt_rect.name = "CRTRect"
+	crt_rect.anchors_preset = Control.PRESET_FULL_RECT
+	crt_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	crt_material = ShaderMaterial.new()
+	crt_material.shader = crt_curvature_shader
+	crt_rect.material = crt_material
+	crt_layer.add_child(crt_rect)
+
+func _on_reduce_motion_changed(enabled: bool) -> void:
+	if crt_material:
+		crt_material.set_shader_parameter("animate", not enabled)
+		# Under reduce_motion: disable barrel distortion and chromatic aberration too
+		if enabled:
+			crt_material.set_shader_parameter("barrel_strength", 0.0)
+			crt_material.set_shader_parameter("chromatic_offset", 0.0)
+			crt_material.set_shader_parameter("scanline_alpha", 0.0)
+		else:
+			crt_material.set_shader_parameter("barrel_strength", 0.04)
+			crt_material.set_shader_parameter("chromatic_offset", 0.8)
+			crt_material.set_shader_parameter("scanline_alpha", 0.06)
 
 func _create_hud_label(text: String, font_size: int) -> Label:
 	var lbl = Label.new()

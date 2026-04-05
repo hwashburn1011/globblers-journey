@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 15.4 complete
-- **Last task completed:** Task 15.4 — Reflection probes. Added `_place_reflection_probes()` to all 6 level scripts (terminal_wastes, training_grounds, prompt_bazaar, model_zoo, alignment_citadel, main_level). Each room gets a ReflectionProbe3D at its center with UPDATE_ONCE, box_projection=true, and extents matching room size. Each boss arena also gets a dedicated probe sized to the arena grid. Total: ~30 probes across all chapters.
-- **Next task to do:** Task 15.5 (CRT curvature whole-screen post shader)
+- **Last updated by:** Claude (2026-04-05) — Task 15.5 complete
+- **Last task completed:** Task 15.5 — CRT curvature whole-screen post shader. Created `assets/shaders/crt_curvature.gdshader` (canvas_item shader with barrel distortion, chromatic aberration, scanlines, vignette). Wired into HUD via `_build_crt_overlay()` — adds a CanvasLayer (layer 100) with full-rect ColorRect + ShaderMaterial above all gameplay/UI. Connects to GameManager `reduce_motion_changed` signal: when reduce_motion is on, disables barrel distortion, chromatic aberration, and scanlines entirely.
+- **Next task to do:** Task 15.6 (Chapter transition glitch effect)
 - **V2.0 MILESTONE SUMMARY (Passes 1–11):**
   - **Pass 1 — Lighting:** 5 Poly Haven HDRIs, 5 WorldEnvironment .tres resources, DirectionalLight3D tuning (4-split shadows, per-chapter color temp). All chapters have FILMIC tonemap, SSAO, SSIL, SDFGI, volumetric fog.
   - **Pass 2 — Globbler Hero:** Custom Blender-built chibi robot GLB (dark metal + neon green), tuned scale (1.4x), collision capsule (r=0.35, h=1.3), third-person camera (distance=6.0, pitch=-0.3, height=1.1m).
@@ -460,7 +460,7 @@ assets/
 - [x] Add ReflectionProbe3D nodes at key arena centers in each chapter + each boss arena. `update_mode = UPDATE_ONCE` for perf, `box_projection = true`, extents match room size. Gives shiny props/character meaningful local reflections. **Done: Added `_place_reflection_probes()` to all 6 level scripts. Ch1 terminal_wastes: 5 room probes + rm_rf boss arena probe. Ch1 main_level: 3 section probes (tutorial, enemy arena, final arena). Ch2: 5 room probes + local_minimum boss probe (48m diameter for concentric rings). Ch3: 5 room probes + system_prompt boss probe. Ch4: 5 room probes + foundation_model boss probe. Ch5: 5 room probes + aligner boss probe. All use UPDATE_ONCE for perf, box_projection=true, extents sized to room dimensions (size.x, wall_h, size.y).**
 
 ### 15.5 CRT curvature whole-screen post shader
-- [ ] Create `assets/shaders/crt_curvature.gdshader` — barrel distortion + vignette + subtle scanlines across the whole screen. Apply as a ColorRect with full-rect anchor + ShaderMaterial on a CanvasLayer above gameplay. Toggle off under reduce_motion via GameManager signal.
+- [x] Create `assets/shaders/crt_curvature.gdshader` — barrel distortion + vignette + subtle scanlines across the whole screen. Apply as a ColorRect with full-rect anchor + ShaderMaterial on a CanvasLayer above gameplay. Toggle off under reduce_motion via GameManager signal. **Done: Created `assets/shaders/crt_curvature.gdshader` with barrel distortion (0.04), chromatic aberration (0.8px), scanlines (400 lines, 6% alpha), and vignette (0.45). Applied in `scenes/ui/hud.gd` via `_build_crt_overlay()` — CanvasLayer 100 + full-rect ColorRect. `_on_reduce_motion_changed()` zeroes barrel/chromatic/scanline params when reduce_motion is enabled. No runtime errors.**
 
 ### 15.6 Chapter transition glitch effect
 - [ ] Create `scenes/ui/chapter_transition.gd` + `.tscn` — full-screen glitch/static shader that fades in on scene change, holds briefly, fades out. Use on all `change_scene_to_file` calls in boss defeat handlers + main menu chapter select. Respect reduce_motion (simple fade instead).
