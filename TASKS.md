@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 14.1 complete
-- **Last task completed:** Task 14.1 — Hero screenshot gallery. Captured 20 screenshots total: 3 per chapter (spawn, mid-area, boss door) = 15, plus main menu, game over, pause, and settings = 4 UI shots. Saved to `assets/docs/screenshots/ch{1-5}_{a,b,c}.png` + `ui_*.png`. Also fixed TubeMesh→CylinderMesh errors in recursive_glob_puzzle.gd and backprop_trace_puzzle.gd, fixed billboard crash in hackable.gd, and converted preload→runtime load for museum/citadel GLBs in 5 puzzle scripts (fossil_exhibit, clippy_help, nightmare_gallery, reclassification, constitutional_loophole, rlhf_feedback).
-- **Next task to do:** Task 14.2 (README visual update)
+- **Last updated by:** Claude (2026-04-05) — Task 14.2 complete
+- **Last task completed:** Task 14.2 — README visual update. Created `README.md` with project summary, 8-item feature list, 6 embedded hero screenshots (one per chapter + main menu), build/run instructions for Godot 4.4, project structure overview, credits, and attribution link to `assets/LICENSES.md`.
+- **Next task to do:** Task 14.3 (Graphics changelog)
 - **V2.0 MILESTONE SUMMARY (Passes 1–11):**
   - **Pass 1 — Lighting:** 5 Poly Haven HDRIs, 5 WorldEnvironment .tres resources, DirectionalLight3D tuning (4-split shadows, per-chapter color temp). All chapters have FILMIC tonemap, SSAO, SSIL, SDFGI, volumetric fog.
   - **Pass 2 — Globbler Hero:** Custom Blender-built chibi robot GLB (dark metal + neon green), tuned scale (1.4x), collision capsule (r=0.35, h=1.3), third-person camera (distance=6.0, pitch=-0.3, height=1.1m).
@@ -437,7 +437,7 @@ assets/
 - [x] Capture 3 hero screenshots per chapter (spawn, mid-area, boss door) via Godot MCP. Save to `assets/docs/screenshots/ch{n}_{a,b,c}.png`. Also capture main menu, pause, game-over, and settings. 18 screenshots total. **Done: 20 screenshots captured (15 chapter + 4 UI + 1 extra). Automated via `scripts/tools/screenshot_capture.gd` autoload that positions a Camera3D at key room positions per chapter, captures viewport PNGs, then cycles through UI scenes. Also fixed runtime bugs: TubeMesh→CylinderMesh (2 files), billboard property crash in hackable.gd, preload→runtime load for 6 puzzle scripts with unimported GLBs.**
 
 ### 14.2 README visual update
-- [ ] Update `README.md` (create if missing) with: project summary, feature list, 6 embedded hero screenshots from 14.1, build/run instructions, credits list, attribution link to `assets/LICENSES.md`.
+- [x] Update `README.md` (create if missing) with: project summary, feature list, 6 embedded hero screenshots from 14.1, build/run instructions, credits list, attribution link to `assets/LICENSES.md`. **Done: Created `README.md` with project summary, 8 features, 6 screenshots in 2x3 table grid (ch1-5 spawn shots + main menu), Godot 4.4 build steps, project structure tree, credits with attribution link to `assets/LICENSES.md`.**
 
 ### 14.3 Graphics changelog
 - [ ] Create `assets/docs/GRAPHICS_CHANGELOG.md` summarizing V2.0 work: before/after screenshots (use one old build_log capture), list of passes completed, asset counts (#models, #shaders, #HDRIs), links to Blender source files.
