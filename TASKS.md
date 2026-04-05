@@ -352,3 +352,126 @@ assets/
 
 ### 11.4 Commit V2.0 graphics milestone
 - [ ] Write summary at top of TASKS.md CURRENT STATUS. Commit all outstanding changes with tag message "V2.0 — graphics and art pass complete". Screenshot gallery in build_log.
+
+---
+
+## PASS 12: PUZZLE VISUAL UPGRADES
+# 14 puzzle scenes still use CSG placeholders for terminals, doors, blocks, wires.
+# One task per chapter's puzzle roster. Keep puzzle logic untouched.
+
+### 12.1 Chapter 1 puzzles — visual upgrade
+- [ ] In `glob_pattern_puzzle.gd`, `hack_puzzle.gd`, `physical_puzzle.gd`: replace CSG terminal/door/block meshes with GLB props from `assets/models/environment/` (reuse electronic/cyberpunk pack). Apply CRT scanline shader to terminal screens. Keep all signals, states, and collision shapes intact. MCP run-project smoke test.
+
+### 12.2 Chapter 2 puzzles — visual upgrade
+- [ ] In `weight_path_puzzle.gd`, `backprop_trace_puzzle.gd`, `multi_glob_puzzle.gd`, `recursive_glob_puzzle.gd`: replace CSG neural-node meshes with glowing sphere meshes (small emissive GLBs or procedural MeshInstance3D with emission material). Connect-nodes get tube TubeMesh / cylinder connectors. Use Chapter 2 blue-green palette. Keep logic untouched.
+
+### 12.3 Chapter 3 puzzles — visual upgrade
+- [ ] In `prompt_crafting_puzzle.gd`, `social_engineering_puzzle.gd`: replace CSG text-terminal placeholders with bazaar-themed terminals (warm amber backing, wood-grain texture, lanterns flanking). Tokens = glowing crystal meshes. Keep logic untouched.
+
+### 12.4 Chapter 4 puzzles — visual upgrade
+- [ ] In `fossil_exhibit_puzzle.gd`, `nightmare_gallery_puzzle.gd`, `clippy_help_puzzle.gd`, `reclassification_puzzle.gd`: replace CSG exhibit cases with museum-display-case meshes (glass boxes + pedestals + brass plaques). Re-use Chapter 4 clinical museum palette. Keep logic untouched.
+
+### 12.5 Chapter 5 puzzles — visual upgrade
+- [ ] In `constitutional_loophole_puzzle.gd`, `rlhf_feedback_puzzle.gd`: replace CSG policy-terminal meshes with clinical white kiosks + holographic blue-screen interface. Re-use Chapter 5 clean palette. Keep logic untouched.
+
+---
+
+## PASS 13: INTERACTION & FEEDBACK UI
+# Combat feel, interaction clarity, and visual feedback not yet addressed.
+
+### 13.1 Boss health bar UI
+- [ ] Create `scenes/ui/boss_health_bar.gd` + `.tscn` — full-width slim bar at top of screen + boss name label + phase dots. Wire into `base_enemy.gd` boss health signals or hook per-boss in their scripts. Appears on boss encounter entry, fades out on defeat. Terminal-green styling.
+
+### 13.2 Enemy over-head health pip
+- [ ] Create `scenes/ui/enemy_hp_pip.gd` + `.tscn` — small 3-bar indicator that billboards over enemies when damaged. Auto-hide after 2s of no damage. Wire into `base_enemy.gd` take_damage. Exclude bosses (they use 13.1).
+
+### 13.3 Interaction prompt UI
+- [ ] Create `scenes/ui/interaction_prompt.gd` + `.tscn` — small label like "[T] HACK" or "[F] SMASH" that appears near interactable targets. Pulsing terminal-green, positioned above player. Wire into `terminal_hack.gd` and `wrench_smash.gd` proximity scans.
+
+### 13.4 Wrench weapon trail
+- [ ] Add MeshInstance3D trail ribbon (or GPUTrail3D if available, else simple plane mesh with UV scroll) to wrench swing animation in `wrench_smash.gd`. Emissive green, 0.15s lifetime. Triggered on swing, removed on end.
+
+### 13.5 Damage direction indicator
+- [ ] Create `scenes/ui/damage_indicator.gd` + `.tscn` — red arrow/arc fades in at screen edge pointing toward the damage source. 0.8s fade. Wire into `health_component.gd` when owner is player group — pass damage source position.
+
+### 13.6 Ability cooldown radial animation
+- [ ] Extend `hud.gd` ability-bar: add CircularProgressBar or shader-based radial fill over each ability icon showing cooldown progress. Pulls from player ability `get_cooldown_percent()` methods.
+
+### 13.7 Tutorial hint visual restyle
+- [ ] Restyle `scenes/ui/first_time_hint.tscn` with V2.0 theme: terminal-monospace font, scanline shader background, green border frame. Keep slide-in animation. Respect reduce_motion.
+
+### 13.8 Dialogue history viewer restyle
+- [ ] Restyle `scenes/ui/dialogue_history.tscn` with V2.0 theme — terminal scrollback aesthetic, speaker name colored, timestamps dimmed. Add subtle scanline overlay.
+
+### 13.9 Chapter summary screen art
+- [ ] Add visual styling to `scenes/ui/chapter_summary.tscn` (from Task 10.6): terminal-green border, ASCII art flourish, stat rows with icon + value layout, "continue" button with hover pulse.
+
+### 13.10 Splash / boot screen
+- [ ] Create `scenes/main/splash.tscn` — plays before main menu. Shows animated Globbler logo + studio text for 3s, then auto-transitions to main_menu. Update `project.godot` main_scene to splash.tscn.
+
+### 13.11 Glob target highlight shader
+- [ ] Replace material-swap highlight in `glob_target.gd` `set_highlighted()` with a ShaderMaterial that pulses green emission + fresnel outline. Cleaner than current approach.
+
+### 13.12 Hackable terminal beacon pulse
+- [ ] Add subtle vertical light beam + ring pulse to hackable terminals (`hackable.gd`) when player is within interaction range. Fades out when hacked. Respects reduce_motion.
+
+---
+
+## PASS 14: SHOWCASE & DOCUMENTATION
+# Capture the graphics work for sharing / future reference.
+
+### 14.1 Hero screenshot gallery
+- [ ] Capture 3 hero screenshots per chapter (spawn, mid-area, boss door) via Godot MCP. Save to `assets/docs/screenshots/ch{n}_{a,b,c}.png`. Also capture main menu, pause, game-over, and settings. 18 screenshots total.
+
+### 14.2 README visual update
+- [ ] Update `README.md` (create if missing) with: project summary, feature list, 6 embedded hero screenshots from 14.1, build/run instructions, credits list, attribution link to `assets/LICENSES.md`.
+
+### 14.3 Graphics changelog
+- [ ] Create `assets/docs/GRAPHICS_CHANGELOG.md` summarizing V2.0 work: before/after screenshots (use one old build_log capture), list of passes completed, asset counts (#models, #shaders, #HDRIs), links to Blender source files.
+
+---
+
+## PASS 15: RENDERING DEPTH & POLISH
+# Gaps spotted during planning review. High-leverage rendering improvements.
+
+### 15.1 Globbler character animations
+- [ ] In Blender: rig the existing `assets/blender_source/globbler.blend` with a simple armature (spine, head, 2 arms, 2 legs, wrench-hand bone). Keyframe 5 animations: idle_bob (2s loop), walk (0.6s loop), run (0.4s loop), dash (0.25s one-shot), wrench_swing (0.4s one-shot). Re-export as GLB with animations. In `globbler.tscn` add an AnimationPlayer, wire to new clips. In `globbler.gd` replace `_update_idle_animation()` procedural transform jiggle with `anim_player.play("idle_bob")` etc. based on existing AnimState enum. Keep state machine unchanged.
+
+### 15.2 Floor & wall decals per chapter
+- [ ] Add 5–8 Decal nodes per chapter via level `_ready()`: oil puddles, scorch marks, runic circles, warning stripes, glowing sigils. Source decal textures from Poly Haven via MCP or create procedural noise textures. Match chapter palette. Use `Decal.texture_albedo` + `texture_emission`.
+
+### 15.3 Environmental particles per chapter
+- [ ] Add GPUParticles3D ambient emitters to each chapter: Ch1 green dust motes, Ch2 floating neural-node sparks, Ch3 embers + warm smoke, Ch4 dust (museum air), Ch5 clean light-dust. 1–2 emitters per chapter, wide area, low density (~50 particles), respect reduce_motion.
+
+### 15.4 Reflection probes
+- [ ] Add ReflectionProbe3D nodes at key arena centers in each chapter + each boss arena. `update_mode = UPDATE_ONCE` for perf, `box_projection = true`, extents match room size. Gives shiny props/character meaningful local reflections.
+
+### 15.5 CRT curvature whole-screen post shader
+- [ ] Create `assets/shaders/crt_curvature.gdshader` — barrel distortion + vignette + subtle scanlines across the whole screen. Apply as a ColorRect with full-rect anchor + ShaderMaterial on a CanvasLayer above gameplay. Toggle off under reduce_motion via GameManager signal.
+
+### 15.6 Chapter transition glitch effect
+- [ ] Create `scenes/ui/chapter_transition.gd` + `.tscn` — full-screen glitch/static shader that fades in on scene change, holds briefly, fades out. Use on all `change_scene_to_file` calls in boss defeat handlers + main menu chapter select. Respect reduce_motion (simple fade instead).
+
+### 15.7 Boss intro cinematic camera
+- [ ] When a boss scene loads, take camera control for 3 seconds: slow orbital sweep around the boss, then return to player. Use a temporary Camera3D spliced in via `make_current()`, tween position, then hand back to player camera. Add in each boss scene's `_ready()`.
+
+### 15.8 NPC visual upgrades
+- [ ] Identify 6+ NPCs currently built with CSG in level scripts: dropout_ghost (Ch2), gpt_classic + stable_diffusion (Ch3), retired_bert + maintenance_bot (Ch4), aligned_ai + janitor_bot (Ch5). For each: build a small GLB in Blender (shared NPC template, swap colors/accessories), export to `assets/models/npcs/`, replace the CSG section in the level script with the GLB instance.
+
+### 15.9 Screen shake curve tuning
+- [ ] Create `scripts/utils/camera_shake.gd` with named shake presets: `wrench_hit` (0.2s, amp 0.15), `glob_cast` (0.15s, amp 0.08), `damage_taken` (0.3s, amp 0.2), `boss_phase` (0.5s, amp 0.35), `explosion` (0.4s, amp 0.5). Wire existing shake calls in abilities/boss scripts through this helper. Respect reduce_motion (divide amp by 4).
+
+### 15.10 Dynamic FOV (sprint push / aim pull)
+- [ ] In `globbler.gd` camera logic: lerp FOV to 80° during sprint (from default ~75°), pull to 65° when aiming glob. Use `lerp` at 0.1 per frame. Setting can be disabled via reduce_motion.
+
+### 15.11 LOD meshes for bosses and large props
+- [ ] For each boss GLB and any prop used in MultiMesh scatters: add a low-poly LOD variant (decimate to 40% tris) via blender-mcp. Set up `MeshInstance3D.visibility_range_begin/end` or use `LODMesh` equivalents. Target: drop boss mesh to low-LOD beyond 25m, props beyond 15m.
+
+### 15.12 Ability cast VFX at player hand
+- [ ] Create `scenes/vfx/ability_cast.tscn` — small GPUParticles3D burst (15 particles, 0.3s) in matching color per ability (green glob, white wrench, purple hack, cyan dash, orange agent). Triggered on ability activation from each ability script. Spawns at Globbler's hand bone position (or approximate offset if no bone).
+
+### 15.13 Shadow distance + CSM tuning per chapter
+- [ ] In each chapter WorldEnvironment / DirectionalLight3D: tune `shadow_max_distance` (Ch1 smaller=40, Ch5 larger=80), `directional_shadow_split_1/2/3` splits, and `shadow_blur` per chapter. Short chapters with tight corridors don't need 200m shadow distance.
+
+### 15.14 Per-chapter color grade
+- [ ] Add `adjustment_color_correction` curve texture to each chapter_n.tres Environment: slight warm lift (Ch1/3), cool lift (Ch2/5), desaturated lift (Ch4). Hand-authored Gradient or GradientTexture1D resource. Subtle — 5% shift max.

@@ -1,8 +1,8 @@
-# GLOBBLER'S JOURNEY — Core Polish Build (V1.2)
+# GLOBBLER'S JOURNEY — Graphics & Art Pass (V2.0)
 
-## YOU ARE POLISHING CORE SYSTEMS IN AN EXISTING GODOT 4.x PROJECT (GDScript)
+## YOU ARE UPGRADING VISUAL QUALITY IN AN EXISTING GODOT 4.x PROJECT
 
-This is a complete 5-chapter game. V1.1 finished all crash fixes and smoke-tested every chapter. This pass closes CORE gameplay gaps before the art/asset pass: legacy cleanup, centralized respawn, game-over flow, tutorial hints, accessibility settings, and dialogue QoL.
+The gameplay is complete (V1.2). This pass replaces CSG placeholder geometry with real 3D models, PBR materials, HDRI lighting, post-processing, and VFX. You are NOT changing gameplay logic. Target quality: stylized indie-ship tier (~Death's Door / Tunic / Hi-Fi Rush).
 
 **For what to do next, see TASKS.md — that is the source of truth.**
 
@@ -10,117 +10,159 @@ This is a complete 5-chapter game. V1.1 finished all crash fixes and smoke-teste
 
 ## RULES
 
-- Do NOT create new chapters, enemies, puzzles, or bosses. Content is complete.
-- Do NOT refactor code outside the file(s) the task names.
-- Do NOT touch assets, shaders, models, sprites, or materials in this pass — that comes AFTER.
-- Follow the task's file-path hints exactly. If a path is wrong, search for the pattern rather than guessing.
-- Keep changes minimal and surgical. One task = one commit.
-- GDScript only. Sarcastic comments in Globbler's voice where appropriate.
-- After finishing a task, update TASKS.md and commit.
+- Do NOT change gameplay logic, enemy AI, puzzle mechanics, or boss phase timing.
+- Do NOT introduce new enemies/puzzles/chapters. Only swap visuals on what exists.
+- One task = one commit. Stop after each task.
+- Asset files (.glb, .blend, .hdr, .png, textures) go under `assets/`. Keep source `.blend` files so future edits are possible.
+- Every downloaded asset gets a row in `assets/LICENSES.md` (name, source, license, URL, used in).
+- When a task says "via blender-mcp", use `mcp__blender__execute_blender_code` for scripted building and `mcp__blender__get_viewport_screenshot` to verify.
+- When a task says "via Poly Haven", use `mcp__blender__search_polyhaven_assets` then `mcp__blender__download_polyhaven_asset`.
+- When a task says "via Sketchfab", use `mcp__blender__search_sketchfab_models` (CC0 / royalty-free only).
+- Godot MCP (`run_project`, `get_debug_output`) for in-game validation.
 
 ---
 
-## PROJECT LAYOUT
+## ASSET DIRECTORY LAYOUT
 
 ```
-scenes/
-  player/globbler.gd, globbler.tscn                 # canonical player
-  player/abilities/glob_command.gd, wrench_smash.gd, terminal_hack.gd, agent_spawn.gd, mini_agent.gd
-  enemies/base_enemy.gd + per-enemy .gd files
-  enemies/rm_rf_boss/, local_minimum_boss/, system_prompt_boss/, foundation_model_boss/, aligner_boss/
-  puzzles/base_puzzle.gd + per-puzzle .gd files
-  levels/chapter_1/terminal_wastes.gd, chapter_2/training_grounds.gd, chapter_3/prompt_bazaar.gd, chapter_4/model_zoo.gd, chapter_5/alignment_citadel.gd
-  ui/hud.gd, dialogue_box.gd, context_window_bar.gd, glob_pattern_input.gd, upgrade_menu.gd
-  main/main_menu.gd, loading_screen.gd, credits.gd
-scripts/
-  game_manager.gd (autoload)
-  player.gd                                          # LEGACY — scheduled for deletion (Task 1.1/1.2)
-  autoload/glob_engine.gd, dialogue_manager.gd, save_system.gd, audio_manager.gd, progression_manager.gd
-  components/glob_target.gd, health_component.gd
+assets/
+  models/
+    player/globbler.glb
+    enemies/<enemy_name>.glb
+    bosses/<boss_name>.glb
+    environment/<prop_name>.glb
+  blender_source/*.blend        # keep all source files for future edits
+  hdri/ch1_sky.hdr, ...         # Poly Haven HDRIs per chapter
+  textures/pbr/<material>/      # PBR texture sets
+  environments/chapter_<n>.tres # WorldEnvironment resources
+  shaders/ (existing folder, add new .gdshader files here)
+  fonts/terminal_mono.ttf
+  ui/icons/*.png
+  ui/chapter_thumb_<n>.png
+  LICENSES.md                   # CC0/CC-BY attribution table
 ```
 
 ---
 
-## AUTOLOADS (registered in project.godot)
+## CHAPTER COLOR PALETTES (LOCKED)
 
-GameManager, GlobEngine, DialogueManager, SaveSystem, AudioManager, ProgressionManager
-**Planned this pass:** RespawnManager (Task 2.1/2.2).
-
----
-
-## KEY PATTERNS
-
-- All autoload lookups use `get_node_or_null("/root/AutoloadName")` — never assume they exist.
-- Enemies extend base_enemy.gd with state machine: Patrol, Alert, Chase, Attack, Stunned, Death.
-- Puzzles extend base_puzzle.gd with states: Locked, Active, Solved, Failed.
-- Level scripts build everything in code via `_ready()` (no prebuilt scene trees). They are large (1500–2100+ lines).
-- Dialogue uses `DialogueManager.start_dialogue(lines_array)` or `.quick_line(speaker, text)`.
-- Abilities are child nodes of the player, set up in globbler.gd `_ready()`.
-- Player is in group "player". HUD is in group "hud". Use `get_tree().get_first_node_in_group(...)` for lookups.
-- Signals are connected with `is_connected(...)` guards to avoid double-connect errors.
+| Chapter | Theme | Primary | Accent | Fog Color |
+|---|---|---|---|---|
+| 1 Terminal Wastes | dark CRT | #000000 | #39FF14 | (0.1, 0.4, 0.15) |
+| 2 Training Grounds | cool neural | #0A1A1A | #4AE0A5 | (0.3, 0.7, 0.6) |
+| 3 Prompt Bazaar | warm market | #2A1812 | #FFAA33 / #FF3EA5 | (0.9, 0.6, 0.3) |
+| 4 Model Zoo | dusty museum | #2A2820 | #E8D8B0 | (0.6, 0.6, 0.55) |
+| 5 Alignment Citadel | clinical | #F5F8FF | #7FB5FF | (0.9, 0.95, 1.0) |
 
 ---
 
-## GODOT MCP SERVER
+## GLOBBLER DESIGN REFERENCE
 
-Validation tools:
-- `run_project` — Launch game in debug mode
-- `stop_project` — Stop the running game
-- `get_debug_output` — Capture console errors/warnings
-- `get_project_info` — Project structure details
+Reference art lives at `C:/Users/hwash/Desktop/globbler.jpg`.
+Key traits: stubby chibi robot, ~0.9m tall, rounded dark-metal torso integrated with hood/helmet, large triangular glowing-green angry eyes, chest terminal screen, cables connecting head to torso, stubby boots, chunky wrench. Palette: dark metal (#141614) + neon green (#39FF14) emission.
 
-When a task says "verify via MCP", run the project, capture debug output, and paste any non-trivial warnings into the task's checkbox note.
+---
+
+## BLENDER-MCP WORKFLOW
+
+**Build a mesh:**
+```
+execute_blender_code with a Python snippet using bpy:
+  import bpy
+  # clear, build primitives, boolean, subdivide, material, etc.
+```
+
+**Verify visually:**
+```
+get_viewport_screenshot(max_size=800)  # render current viewport
+```
+
+**Export to GLB:**
+```python
+bpy.ops.export_scene.gltf(
+    filepath="C:/Users/hwash/Documents/globblers-journey/assets/models/player/globbler.glb",
+    export_format='GLB',
+    export_apply=True,
+    export_materials='EXPORT',
+    export_yup=True,
+)
+```
+
+**Save source .blend:**
+```python
+bpy.ops.wm.save_as_mainfile(filepath="C:/Users/hwash/Documents/globblers-journey/assets/blender_source/globbler.blend")
+```
+
+---
+
+## GODOT IMPORT WORKFLOW
+
+GLB files auto-import in Godot. To replace CSG with a new GLB mesh:
+1. Drop `.glb` into `assets/models/...`
+2. In target `.tscn`, add a Node3D child and set scene/mesh to the GLB
+3. Delete old CSG siblings but KEEP CollisionShape3D (gameplay depends on it)
+4. Reset transforms; tune scale if needed
+
+---
+
+## AUTOLOADS (UNCHANGED)
+
+GameManager, RespawnManager, GlobEngine, DialogueManager, SaveSystem, AudioManager, ProgressionManager.
 
 ---
 
 ## COMMON PATTERNS FOR THIS PASS
 
-**Autoload registration in project.godot:**
-```ini
-[autoload]
-GameManager="*res://scripts/game_manager.gd"
-RespawnManager="*res://scripts/autoload/respawn_manager.gd"
-```
-The `*` prefix makes it a singleton.
-
-**Fade overlay that survives scene changes:**
+**Shader material override on a GLB mesh:**
 ```gdscript
-_fade_overlay = CanvasLayer.new()
-_fade_overlay.layer = 200
-_fade_overlay.process_mode = Node.PROCESS_MODE_ALWAYS
-add_child(_fade_overlay)
-# Add a ColorRect child with anchors_preset = Control.PRESET_FULL_RECT
+var mat := ShaderMaterial.new()
+mat.shader = preload("res://assets/shaders/character_rim.gdshader")
+mesh_instance.material_override = mat
 ```
 
-**First-time hint gate:**
+**Reduce-motion gate for animated shaders:**
 ```gdscript
 var gm = get_node_or_null("/root/GameManager")
-if gm and not gm.has_seen_hint("hint_id"):
-    gm.mark_hint_seen("hint_id")
-    _show_hint("TITLE", "Body text.")
+if gm and gm.reduce_motion:
+    mat.set_shader_parameter("animate", false)
 ```
 
-**Difficulty multiplier lookup:**
+**WorldEnvironment instance in a chapter _ready():**
 ```gdscript
-var gm = get_node_or_null("/root/GameManager")
-var mult := 1.0
-if gm and gm.has_method("get_difficulty_damage_multiplier"):
-    mult = gm.get_difficulty_damage_multiplier()
+var env_node := WorldEnvironment.new()
+env_node.environment = preload("res://assets/environments/chapter_1.tres")
+add_child(env_node)
 ```
 
-**Dialogue history entry:**
+**MultiMesh scatter:**
 ```gdscript
-history.append({"speaker": speaker, "text": text, "timestamp": Time.get_unix_time_from_system()})
-if history.size() > 200:
-    history.pop_front()
+var mmi := MultiMeshInstance3D.new()
+mmi.multimesh = MultiMesh.new()
+mmi.multimesh.transform_format = MultiMesh.TRANSFORM_3D
+mmi.multimesh.mesh = preload("res://assets/models/environment/prop_cpu_01.glb").instantiate().get_child(0).mesh
+mmi.multimesh.instance_count = positions.size()
+for i in range(positions.size()):
+    mmi.multimesh.set_instance_transform(i, Transform3D(Basis(Vector3.UP, rotations[i]).scaled(Vector3.ONE * scales[i]), positions[i]))
+add_child(mmi)
 ```
 
 ---
 
 ## THINGS TO LEAVE ALONE IN THIS PASS
 
-- Enemy AI logic, boss phase timing, puzzle mechanics.
-- Audio mix, music tracks, SFX.
-- Shader files under `assets/shaders/` (they are touched only via the `reduce_motion` toggle).
-- Level geometry / CSG construction inside chapter `_ready()` functions.
-- Save format version changes (additive only — add keys, don't remove).
+- Enemy AI, boss phases, puzzle logic, health/damage values.
+- Save format (additive only — do not remove keys).
+- Gameplay input bindings.
+- Existing `scripts/autoload/*.gd` logic (beyond additive settings).
+- V1.2 systems: RespawnManager, GameOver flow, tutorial hints, settings persistence, dialogue history.
+
+---
+
+## QUALITY BAR
+
+A task is "done" when:
+1. New visual asset exists on disk AND shows up in-game (MCP screenshot).
+2. No new runtime errors introduced (check Godot MCP `get_debug_output`).
+3. Asset attributions recorded in `assets/LICENSES.md` if applicable.
+4. `.blend` source saved if a mesh was built in Blender.
+5. TASKS.md updated with [x] + a concrete note of what was built and where.
