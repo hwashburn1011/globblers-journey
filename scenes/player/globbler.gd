@@ -294,6 +294,7 @@ func _build_glb_model() -> void:
 		# Apply fresnel rim-light shader to body material only — eyes and screen
 		# get their own shaders later, they don't need extra protagonist energy
 		_apply_rim_shader(glb_instance)
+		_apply_eye_pulse_shader(glb_instance)
 	else:
 		push_warning("[GLOBBLER] Failed to load GLB model — falling back to existential crisis")
 
@@ -346,6 +347,29 @@ func _apply_rim_shader(glb_root: Node) -> void:
 		# Recurse into nested nodes (GLB can have intermediate Node3D parents)
 		if child.get_child_count() > 0:
 			_apply_rim_shader(child)
+
+func _apply_eye_pulse_shader(glb_root: Node) -> void:
+	# Override eye material (surface 1) with a pulsing emission shader —
+	# because static eyes are for NPCs, and we are the MAIN CHARACTER
+	var eye_shader := preload("res://assets/shaders/eye_pulse.gdshader")
+	var eye_mat := ShaderMaterial.new()
+	eye_mat.shader = eye_shader
+	eye_mat.set_shader_parameter("eye_color", Color(0.224, 1.0, 0.078, 1.0))
+	eye_mat.set_shader_parameter("min_emission", 6.0)
+	eye_mat.set_shader_parameter("max_emission", 12.0)
+	eye_mat.set_shader_parameter("pulse_frequency", 1.5)
+	eye_mat.set_shader_parameter("flicker_amount", 0.15)
+	# Reduce-motion: kill the animation, keep the glow steady
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		eye_mat.set_shader_parameter("animate", false)
+	for child in glb_root.get_children():
+		if child is MeshInstance3D:
+			# Surface 1 is the eye material — replace it entirely with our shader
+			if child.mesh and child.mesh.get_surface_count() > 1:
+				child.set_surface_override_material(1, eye_mat)
+		if child.get_child_count() > 0:
+			_apply_eye_pulse_shader(child)
 
 func _setup_camera() -> void:
 	camera_arm = Node3D.new()
