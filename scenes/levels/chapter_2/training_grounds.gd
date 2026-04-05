@@ -179,31 +179,11 @@ func _setup_environment() -> void:
 	fill.light_energy = 0.12
 	add_child(fill)
 
-	# World environment — deep indigo void
-	var env = Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color(0.01, 0.01, 0.04)
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color(0.04, 0.05, 0.12)
-	env.ambient_light_energy = 0.25
-	env.glow_enabled = true
-	env.glow_intensity = 1.0
-	env.glow_bloom = 0.7
-	env.fog_enabled = true
-	env.fog_light_color = Color(0.02, 0.02, 0.06)
-	env.fog_density = 0.012
-	env.volumetric_fog_enabled = true
-	env.volumetric_fog_density = 0.025
-	env.volumetric_fog_albedo = Color(0.02, 0.03, 0.08)
-	env.volumetric_fog_emission = Color(0.01, 0.02, 0.05)
-
-	env.adjustment_enabled = true
-	env.adjustment_contrast = 1.08
-	env.adjustment_saturation = 1.15
-
+	# World environment — now loaded from .tres like civilized code
+	# (goodbye 20 lines of hand-rolled Environment.new(), you served us adequately)
 	var world_env = WorldEnvironment.new()
 	world_env.name = "Environment"
-	world_env.environment = env
+	world_env.environment = preload("res://assets/environments/chapter_2.tres")
 	add_child(world_env)
 
 	_setup_post_processing()
