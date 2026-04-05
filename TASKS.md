@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 4.3 — Playtest Chapter 3
-- **Next task to do:** Task 4.4 — Playtest Chapter 4
+- **Last task completed:** Task 4.4 — Playtest Chapter 4
+- **Next task to do:** Task 4.5 — Playtest Chapter 5
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -159,7 +159,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Ran `prompt_bazaar.tscn` via Godot MCP, captured full debug output over ~30s runtime. **Zero runtime errors** (`finalErrors` empty). All 5 districts loaded, 8 market prop types deployed, 4 puzzles placed, boss arena constructed (System Prompt, 48 instruction tiles), player GLB model initialized with skeleton animations, HUD loaded. Real music loaded: `chapter_3.ogg` confirmed playing ("farewell, procedural bleeps"). Ambient crossfade to 'bazaar_gate' working. Save/checkpoint at 'ch3_gate' confirmed. **Issues cataloged:** (1) [MINOR] Current Level banner still shows "The Token Stream - Tutorial" (Ch1 name) — same issue as Ch1 and Ch2, set by GameManager default rather than chapter overriding it; cosmetic only since HUD displays correct chapter info. (2) [MINOR] ~35 GDScript parse-time warnings (unused variables/parameters) across enemy, boss, puzzle, HUD, and upgrade scripts — same pre-existing set as Ch1/Ch2, not V2.0/V2.1 regressions. No BREAKING or VISUAL issues found. Ch3 correctly calls `start_music("chapter_3")` in its `_ready()` and `start_music("boss")` for boss phase.
 
 ### 4.4 Playtest Chapter 4
-- [ ] Same for chapter 4. Catalog issues.
+- [x] **DONE:** Ran `model_zoo.tscn` via Godot MCP, captured full debug output over ~30s runtime. **Zero runtime errors** (`finalErrors` empty). All 5 exhibits loaded (Zoo Entrance, Fossil Wing, Nightmare Gallery, Office Ruins, Foundation Atrium), museum props deployed, 13 enemies spawned, 3 exhibit puzzles placed, boss arena constructed (Foundation Model, 80 capability demo tiles), player GLB model initialized with skeleton animations, HUD loaded. Real music loaded: `chapter_4.ogg` confirmed playing ("farewell, procedural bleeps"). Ambient crossfade to 'zoo_entrance' working. **Issues cataloged:** (1) [MINOR] Current Level banner still shows "The Token Stream - Tutorial" (Ch1 name) — same issue as Ch1/Ch2/Ch3, set by GameManager default rather than chapter overriding it; cosmetic only since HUD displays correct chapter info. (2) [MINOR] ~35 GDScript parse-time warnings (unused variables/parameters) across enemy, boss, puzzle, HUD, and upgrade scripts — same pre-existing set as Ch1–Ch3, not V2.0/V2.1 regressions. No BREAKING or VISUAL issues found. Ch4 correctly calls `start_music("chapter_4")` in its `_ready()` and `start_boss_music()` for boss phase.
 
 ### 4.5 Playtest Chapter 5
 - [ ] Same for chapter 5. Catalog issues.
