@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 13.7 complete
-- **Last task completed:** Task 13.7 — Tutorial hint visual restyle. Restyled `scenes/ui/first_time_hint.gd` with V2.0 terminal theme: terminal_mono.ttf font on all labels, `dialogue_scanline.gdshader` applied as panel material (subtle scanlines, flicker, noise, green tint), thicker green border (3px) with box-drawing character frame (╔╗╚╝), added bottom decorative border. Slide-in/out animation preserved. reduce_motion fully respected: skips tween animations and disables shader animate flag. No new runtime errors.
-- **Next task to do:** Task 13.8 (Dialogue history viewer restyle)
+- **Last updated by:** Claude (2026-04-05) — Task 13.8 complete
+- **Last task completed:** Task 13.8 — Dialogue history viewer restyle. Restyled `scenes/ui/dialogue_history.gd` with V2.0 terminal scrollback aesthetic: terminal_mono.ttf on all labels, `dialogue_scanline.gdshader` panel overlay (scanlines, flicker, noise, vignette), 3px green border with box-drawing frame (╔╗╚╝), per-speaker color coding (Globbler=green, others=teal), dimmed line-number indices as timestamp stand-ins, entry count subtitle, styled separators. reduce_motion disables shader animation. No new runtime errors.
+- **Next task to do:** Task 13.9 (Chapter summary screen art)
 - **V2.0 MILESTONE SUMMARY (Passes 1–11):**
   - **Pass 1 — Lighting:** 5 Poly Haven HDRIs, 5 WorldEnvironment .tres resources, DirectionalLight3D tuning (4-split shadows, per-chapter color temp). All chapters have FILMIC tonemap, SSAO, SSIL, SDFGI, volumetric fog.
   - **Pass 2 — Globbler Hero:** Custom Blender-built chibi robot GLB (dark metal + neon green), tuned scale (1.4x), collision capsule (r=0.35, h=1.3), third-person camera (distance=6.0, pitch=-0.3, height=1.1m).
@@ -414,7 +414,7 @@ assets/
 - [x] Restyle `scenes/ui/first_time_hint.tscn` with V2.0 theme: terminal-monospace font, scanline shader background, green border frame. Keep slide-in animation. Respect reduce_motion. **Done: Restyled first_time_hint.gd — all labels use terminal_mono.ttf, panel has dialogue_scanline.gdshader material (scanlines + flicker + noise + green tint), 3px green border with box-drawing frame chars (╔╗╚╝), bottom border added. Slide-in/out tweens preserved. reduce_motion disables tweens (instant placement) and shader animation. No new runtime errors.**
 
 ### 13.8 Dialogue history viewer restyle
-- [ ] Restyle `scenes/ui/dialogue_history.tscn` with V2.0 theme — terminal scrollback aesthetic, speaker name colored, timestamps dimmed. Add subtle scanline overlay.
+- [x] Restyle `scenes/ui/dialogue_history.tscn` with V2.0 theme — terminal scrollback aesthetic, speaker name colored, timestamps dimmed. Add subtle scanline overlay. **Done: Restyled dialogue_history.gd with terminal_mono.ttf on all labels, dialogue_scanline.gdshader panel material (scanline_count=120, subtle flicker/noise/vignette), box-drawing frame (╔╗╚╝), per-speaker color map (Globbler=#39FF14, default=#4AE0A5), dimmed line-number indices (003-style), entry count subtitle, styled thin separators. reduce_motion disables shader animate flag. No new runtime errors.**
 
 ### 13.9 Chapter summary screen art
 - [ ] Add visual styling to `scenes/ui/chapter_summary.tscn` (from Task 10.6): terminal-green border, ASCII art flourish, stat rows with icon + value layout, "continue" button with hover pulse.
