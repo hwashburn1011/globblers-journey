@@ -543,6 +543,7 @@ func save_settings() -> void:
 		cfg.set_value("audio", "music_volume", audio.music_volume)
 		cfg.set_value("audio", "sfx_volume", audio.sfx_volume)
 		cfg.set_value("audio", "ui_volume", audio.ui_volume)
+		cfg.set_value("audio", "ambient_volume", audio.ambient_volume)
 	var err := cfg.save(SETTINGS_PATH)
 	if err != OK:
 		push_warning("[GameManager] Failed to save settings — your preferences just got context-wiped.")
@@ -574,11 +575,13 @@ func load_settings() -> void:
 	var audio = get_node_or_null("/root/AudioManager")
 	if audio:
 		if cfg.has_section_key("audio", "music_volume"):
-			audio.set_music_volume(cfg.get_value("audio", "music_volume", 0.7))
+			audio.set_music_volume(cfg.get_value("audio", "music_volume", 0.6))
 		if cfg.has_section_key("audio", "sfx_volume"):
 			audio.set_sfx_volume(cfg.get_value("audio", "sfx_volume", 0.8))
 		if cfg.has_section_key("audio", "ui_volume"):
-			audio.set_ui_volume(cfg.get_value("audio", "ui_volume", 0.6))
+			audio.set_ui_volume(cfg.get_value("audio", "ui_volume", 0.8))
+		if cfg.has_section_key("audio", "ambient_volume"):
+			audio.set_ambient_volume(cfg.get_value("audio", "ambient_volume", 0.5))
 	# Fire reduce_motion signal so any listening nodes update their shaders
 	if reduce_motion:
 		reduce_motion_changed.emit(reduce_motion)

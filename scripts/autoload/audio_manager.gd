@@ -12,10 +12,12 @@ extends Node
 # Each category gets its own volume control
 
 # --- Volume settings (linear 0.0–1.0) ---
-var music_volume := 0.7
+# Mix hierarchy: SFX/UI > dialogue > music > ambient
+# These defaults ensure gameplay sounds pop above the soundtrack.
+var music_volume := 0.6
 var ambient_volume := 0.5
 var sfx_volume := 0.8
-var ui_volume := 0.6
+var ui_volume := 0.8
 
 # --- Player nodes ---
 var _music_player: AudioStreamPlayer
@@ -96,8 +98,8 @@ var _sfx_defs := {
 	"menu_select": { "freq": 800.0, "duration": 0.12, "wave": "square", "env_attack": 0.0, "env_decay": 0.11, "pitch_slide": 200.0, "volume_db": -12.0 },
 	"menu_back": { "freq": 600.0, "duration": 0.1, "wave": "square", "env_attack": 0.0, "env_decay": 0.09, "pitch_slide": -200.0, "volume_db": -12.0 },
 	"menu_open": { "freq": 700.0, "duration": 0.15, "wave": "square", "env_attack": 0.01, "env_decay": 0.13, "pitch_slide": 300.0, "volume_db": -12.0 },
-	"dialogue_advance": { "freq": 1000.0, "duration": 0.06, "wave": "sine", "env_attack": 0.0, "env_decay": 0.05, "volume_db": -16.0 },
-	"dialogue_type": { "freq": 1800.0, "duration": 0.02, "wave": "sine", "env_attack": 0.0, "env_decay": 0.015, "volume_db": -22.0 },
+	"dialogue_advance": { "freq": 1000.0, "duration": 0.06, "wave": "sine", "env_attack": 0.0, "env_decay": 0.05, "volume_db": -10.0 },
+	"dialogue_type": { "freq": 1800.0, "duration": 0.02, "wave": "sine", "env_attack": 0.0, "env_decay": 0.015, "volume_db": -16.0 },
 
 	# --- Hack / Terminal SFX — because every minigame needs bleeps ---
 	"hack_start": { "freq": 500.0, "duration": 0.3, "wave": "square", "env_attack": 0.02, "env_decay": 0.27, "pitch_slide": 150.0, "volume_db": -8.0 },
