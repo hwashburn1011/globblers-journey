@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 1.1 complete
-- **Last task completed:** Task 1.1 — asset folder scaffold + LICENSES.md created
-- **Next task to do:** Task 1.2
+- **Last updated by:** Claude (2026-04-04) — Task 1.2 complete
+- **Last task completed:** Task 1.2 — downloaded 5 Poly Haven HDRIs (1K .hdr) for all chapters
+- **Next task to do:** Task 1.3
 - **Known issues:** All gameplay is CSG placeholder geometry. No HDRIs. No PBR. No real character model. Lighting is default Godot. No post-processing tuning.
 
 ### GOAL OF THIS PASS
@@ -49,7 +49,7 @@ assets/
 - [x] Create directories: `assets/models/player`, `assets/models/enemies`, `assets/models/bosses`, `assets/models/environment`, `assets/blender_source`, `assets/hdri`, `assets/textures/pbr`, `assets/environments`. Create `assets/LICENSES.md` with an empty attribution table (columns: Asset Name, Source, License, URL, Used In). Commit. **Done: all dirs created with .gdkeep for git tracking, LICENSES.md with attribution table header.**
 
 ### 1.2 Download Poly Haven HDRIs
-- [ ] Use `mcp__blender__search_polyhaven_assets` (asset_type="hdris") to find 5 suitable HDRIs: dark industrial/server room (Ch1), neutral studio (Ch2), warm market/bazaar (Ch3), abandoned museum (Ch4), clinical/office (Ch5). Download each 1K via `mcp__blender__download_polyhaven_asset`. Export .hdr from Blender to `assets/hdri/ch{n}_sky.hdr`. Record names+URLs in `assets/LICENSES.md`.
+- [x] Use `mcp__blender__search_polyhaven_assets` (asset_type="hdris") to find 5 suitable HDRIs: dark industrial/server room (Ch1), neutral studio (Ch2), warm market/bazaar (Ch3), abandoned museum (Ch4), clinical/office (Ch5). Download each 1K via `mcp__blender__download_polyhaven_asset`. Export .hdr from Blender to `assets/hdri/ch{n}_sky.hdr`. Record names+URLs in `assets/LICENSES.md`. **Done: Downloaded via Poly Haven API — empty_warehouse_01 (Ch1), blue_photo_studio (Ch2), carpentry_shop_02 (Ch3), abandoned_hall_01 (Ch4), blocky_photo_studio (Ch5). All 1K HDR, ~1.6MB each. LICENSES.md updated.**
 
 ### 1.3 Create base WorldEnvironment template resource
 - [ ] Create `assets/environments/base_env.tres` — Environment resource with: tonemap_mode=FILMIC, exposure=1.0, glow_enabled=true, glow_bloom=0.2, glow_hdr_threshold=1.0, ssao_enabled=true, ssao_radius=1.5, ssil_enabled=true, sdfgi_enabled=true, fog_enabled=true, fog_density=0.01, volumetric_fog_enabled=true. This is the template all chapters will extend.
