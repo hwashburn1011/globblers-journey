@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 6.7 complete
-- **Last task completed:** Task 6.7 — Hallucination Merchant enemy model via blender-mcp
-- **Next task to do:** Task 6.8 (Jailbreaker enemy model via blender-mcp)
+- **Last updated by:** Claude (2026-04-04) — Task 6.8 complete
+- **Last task completed:** Task 6.8 — Jailbreaker enemy model via blender-mcp
+- **Next task to do:** Task 6.9 (Prompt Injector enemy model via blender-mcp)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 IN PROGRESS — enemy visual upgrades. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -206,7 +206,7 @@ assets/
 - [x] Via blender-mcp: cloaked trader-figure with illusion-aura shader, floating wares. Swap in `hallucination_merchant.tscn`. **Done: Built cloaked merchant with tapered cone body, hooded sphere head with peak, two sleeve stubs, three ghostly face planes (gold/magenta/teal), glowing gold eyes, floating wares tray with three glowing trinkets (cube/icosphere/cylinder), two illusion-aura torus rings, five orbiting mystical symbol diamonds, and shoulder mantle pieces. All emissive materials matching magenta/gold color scheme. Exported to `assets/models/enemies/hallucination_merchant.glb`, source saved to `assets/blender_source/hallucination_merchant.blend`. Updated `hallucination_merchant.gd` `_create_visual()` to load GLB with CSG fallback, preserving clone transparency, shimmer animation, face shifting, wares bobbing, and all gameplay mechanics.**
 
 ### 6.8 Jailbreaker model
-- [ ] Via blender-mcp: punk-style humanoid in rebel gear, spray-can + crowbar. Swap in `jailbreaker.tscn`.
+- [x] Via blender-mcp: punk-style humanoid in rebel gear, spray-can + crowbar. Swap in `jailbreaker.tscn`. **Done: Built punk humanoid with dark crimson torso, leather jacket with raised collar, hooded head with mohawk spikes (5 red emissive cones), angry red slit eyes, shoulder studs (6 metal cones), 4 broken chain fragments, metal belt with glowing buckle, combat boots, crowbar (shaft + torus hook + flat end) in right hand, spray can with nozzle and glowing mist in left hand, graffiti tag on chest. All PBR materials with emission. Exported to `assets/models/enemies/jailbreaker.glb`, source saved to `assets/blender_source/jailbreaker.blend`. Updated `jailbreaker.gd` `_create_visual()` to load GLB with CSG fallback, preserving chain swing animation, rush trail particles, status label, and all gameplay mechanics.**
 
 ### 6.9 Prompt Injector model
 - [ ] Via blender-mcp: slim rogue figure in terminal-green hoodie throwing text-shard projectiles. Swap in `prompt_injector.tscn`.
