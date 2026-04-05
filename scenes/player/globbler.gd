@@ -291,6 +291,9 @@ func _build_glb_model() -> void:
 		# Shift down so feet sit at y=0 (boots bottom was at ~0.07m in Blender, scaled = 0.098)
 		glb_instance.position.y = -0.098
 		model_root.add_child(glb_instance)
+		# Apply fresnel rim-light shader to body material only — eyes and screen
+		# get their own shaders later, they don't need extra protagonist energy
+		_apply_rim_shader(glb_instance)
 	else:
 		push_warning("[GLOBBLER] Failed to load GLB model — falling back to existential crisis")
 
@@ -317,6 +320,32 @@ func _build_glb_model() -> void:
 	# Individual limb refs stay null — GLB is one joined mesh, so per-limb CSG
 	# animation gracefully degrades (all animation code is null-guarded).
 	# model_root animations (bob, lean, tilt) still work on the whole model.
+
+func _apply_rim_shader(glb_root: Node) -> void:
+	# Hunt down every MeshInstance3D in the GLB tree and slap a rim-light
+	# on the body material (surface 0) via next_pass — leaves eyes/screen alone
+	var rim_shader := preload("res://assets/shaders/character_rim.gdshader")
+	var rim_mat := ShaderMaterial.new()
+	rim_mat.shader = rim_shader
+	rim_mat.set_shader_parameter("rim_color", Color(0.2, 1.0, 0.1, 1.0))
+	rim_mat.set_shader_parameter("rim_power", 3.0)
+	rim_mat.set_shader_parameter("rim_intensity", 1.5)
+	# Reduce-motion check — no animation in this shader yet, but future-proof
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		rim_mat.set_shader_parameter("rim_intensity", 0.0)
+	for child in glb_root.get_children():
+		if child is MeshInstance3D:
+			# Surface 0 is the body material — apply rim as next_pass overlay
+			var base_mat = child.get_active_material(0)
+			if base_mat:
+				# Duplicate so we don't pollute the imported resource
+				var mat_copy = base_mat.duplicate()
+				mat_copy.next_pass = rim_mat
+				child.set_surface_override_material(0, mat_copy)
+		# Recurse into nested nodes (GLB can have intermediate Node3D parents)
+		if child.get_child_count() > 0:
+			_apply_rim_shader(child)
 
 func _setup_camera() -> void:
 	camera_arm = Node3D.new()

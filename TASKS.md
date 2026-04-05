@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.12 complete
-- **Last task completed:** Task 2.12 — Tune scale, pivot, camera offset
-- **Next task to do:** Task 3.1 (Pass 3: Globbler Shaders & VFX — character rim-light shader)
-- **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. All pre-existing warnings unchanged, zero new runtime errors.
+- **Last updated by:** Claude (2026-04-04) — Task 3.1 complete
+- **Last task completed:** Task 3.1 — Character rim-light shader
+- **Next task to do:** Task 3.2 (Eye emission pulse shader)
+- **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 started — rim-light shader applied to body mesh. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
 Upgrade visual quality from CSG placeholders to stylized indie-game-ship quality (~Death's Door / Tunic / Hi-Fi Rush tier). Hero assets (Globbler, bosses) built in Blender via blender-mcp. Environment via CC0 assets from Poly Haven / Sketchfab. Lighting + post-processing + VFX upgraded in Godot.
@@ -122,7 +122,7 @@ assets/
 # Give the mesh cinematic polish in Godot.
 
 ### 3.1 Character rim-light shader
-- [ ] Create `assets/shaders/character_rim.gdshader` — fresnel-based rim light that adds green outer glow (Color(0.2,1.0,0.1)) with adjustable power (default 3.0) and intensity (1.5). Apply as override material to Globbler body mesh in globbler.tscn. Exclude eyes/screen from rim.
+- [x] Create `assets/shaders/character_rim.gdshader` — fresnel-based rim light that adds green outer glow (Color(0.2,1.0,0.1)) with adjustable power (default 3.0) and intensity (1.5). Apply as override material to Globbler body mesh in globbler.tscn. Exclude eyes/screen from rim. **Done: Created character_rim.gdshader (spatial, blend_mix) with fresnel rim emission (rim_color=(0.2,1.0,0.1), rim_power=3.0, rim_intensity=1.5). Applied in globbler.gd via _apply_rim_shader() — recursively finds all MeshInstance3D nodes in the GLB tree, duplicates surface 0 (body) material, and sets rim shader as next_pass. Eyes (surface 1) and screen (surface 2) are untouched. Respects reduce_motion via GameManager check. Tested via Godot MCP — zero new runtime errors.**
 
 ### 3.2 Eye emission pulse shader
 - [ ] Create `assets/shaders/eye_pulse.gdshader` — animated emission strength oscillating 6.0↔12.0 at 1.5Hz using `TIME`. Also adds slight flicker via `fract(TIME*13.0)`. Apply to eye material in globbler.tscn.
