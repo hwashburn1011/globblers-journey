@@ -39,6 +39,7 @@ var _resolution_option: OptionButton
 var _difficulty_option: OptionButton
 var _reduce_motion_check: CheckBox
 var _dialogue_speed_slider: HSlider
+var _mouse_sens_slider: HSlider
 
 # ASCII Globbler — because 3D models in menus are for people with budgets
 const GLOBBLER_ASCII := """
@@ -562,6 +563,41 @@ func _build_settings_panel() -> void:
 	var controls_header = _create_section_header("── CONTROLS ──")
 	vbox.add_child(controls_header)
 
+	# Mouse Sensitivity slider (0.1–3.0, default 1.0)
+	var sens_row = VBoxContainer.new()
+	sens_row.add_theme_constant_override("separation", 2)
+	var sens_label_row = HBoxContainer.new()
+	var sens_label = Label.new()
+	sens_label.text = "Mouse Sensitivity"
+	sens_label.add_theme_color_override("font_color", GREEN)
+	sens_label.add_theme_font_size_override("font_size", 16)
+	sens_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sens_label_row.add_child(sens_label)
+	var sens_value_label = Label.new()
+	var sens_init = gm.mouse_sensitivity if gm else 1.0
+	sens_value_label.text = "%.1fx" % sens_init
+	sens_value_label.add_theme_color_override("font_color", BRIGHT_GREEN)
+	sens_value_label.add_theme_font_size_override("font_size", 16)
+	sens_label_row.add_child(sens_value_label)
+	sens_row.add_child(sens_label_row)
+	_mouse_sens_slider = HSlider.new()
+	_mouse_sens_slider.min_value = 0.1
+	_mouse_sens_slider.max_value = 3.0
+	_mouse_sens_slider.step = 0.1
+	_mouse_sens_slider.value = sens_init
+	_mouse_sens_slider.custom_minimum_size = Vector2(350, 20)
+	var sens_track = StyleBoxFlat.new()
+	sens_track.bg_color = Color(0.08, 0.12, 0.08)
+	sens_track.set_content_margin_all(4)
+	sens_track.set_corner_radius_all(2)
+	_mouse_sens_slider.add_theme_stylebox_override("slider", sens_track)
+	_mouse_sens_slider.value_changed.connect(func(val: float):
+		sens_value_label.text = "%.1fx" % val
+	)
+	_mouse_sens_slider.value_changed.connect(_on_mouse_sensitivity_changed)
+	sens_row.add_child(_mouse_sens_slider)
+	vbox.add_child(sens_row)
+
 	var controls_label = Label.new()
 	controls_label.text = "WASD/LStick: Move  |  SPACE/A: Jump  |  SHIFT/B: Dash\nE-LClick/RT: Glob  |  R-RClick/LT: Aim  |  F/RB: Wrench\nT/Y: Hack  |  Q/LB: Cycle Glob  |  TAB/Select: Upgrades\nG/D-Up: Agent  |  V/D-Down: Cycle Task  |  RStick: Camera"
 	controls_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -925,6 +961,13 @@ func _on_reduce_motion_toggled(toggled_on: bool) -> void:
 	var gm = get_node_or_null("/root/GameManager")
 	if gm:
 		gm.set_reduce_motion(toggled_on)
+		gm.save_settings()
+
+
+func _on_mouse_sensitivity_changed(value: float) -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm:
+		gm.mouse_sensitivity = value
 		gm.save_settings()
 
 

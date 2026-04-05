@@ -579,8 +579,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	# Mouse look — the OG camera control, still undefeated
 	if event is InputEventMouseMotion and mouse_captured:
 		var motion = event as InputEventMouseMotion
-		camera_yaw -= motion.relative.x * MOUSE_SENSITIVITY
-		camera_pitch -= motion.relative.y * MOUSE_SENSITIVITY
+		var gm_sens = 1.0
+		var gm_node = get_node_or_null("/root/GameManager")
+		if gm_node:
+			gm_sens = gm_node.mouse_sensitivity
+		camera_yaw -= motion.relative.x * MOUSE_SENSITIVITY * gm_sens
+		camera_pitch -= motion.relative.y * MOUSE_SENSITIVITY * gm_sens
 		camera_pitch = clamp(camera_pitch, -1.2, 0.3)
 
 	# Camera zoom via input actions (scroll wheel + D-pad left/right on controller)
