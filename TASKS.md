@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 8.5 complete
-- **Last task completed:** Task 8.5 — Enemy death shatter VFX
-- **Next task to do:** Task 8.6 (Puzzle solve burst)
+- **Last updated by:** Claude (2026-04-04) — Task 8.6 complete
+- **Last task completed:** Task 8.6 — Puzzle solve burst VFX
+- **Next task to do:** Task 8.7 (Boss phase transition flash)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 COMPLETE — all 5 boss visual upgrades done (rm -rf, System Prompt, Local Minimum, Foundation Model, Aligner). All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -270,7 +270,7 @@ assets/
 - [x] Create `scenes/vfx/enemy_shatter.tscn` — polygon shard explosion, 20 particles. Trigger from `base_enemy.gd` on death before queue_free. **Done: 20-particle GPUParticles3D shard burst with orange-to-green color ramp, angular box shards, death flash OmniLight, and self-cleanup. Spawned from `_on_died()` in base_enemy.gd at enemy center before shrink tween.**
 
 ### 8.6 Puzzle solve burst
-- [ ] Create `scenes/vfx/puzzle_solve.tscn` — rising green rings + particle pulse. Trigger from `base_puzzle.gd` on solved state.
+- [x] Create `scenes/vfx/puzzle_solve.tscn` — rising green rings + particle pulse. Trigger from `base_puzzle.gd` on solved state. **Done: Created puzzle_solve.tscn with 6-particle rising green torus rings (ring emission shape, scale curve for grow-then-shrink) + 30-particle spark burst (white-hot to neon green fade, full sphere explosion). OmniLight3D flash with green glow fading over 0.5s. Self-destructs after particle lifetime. Wired into base_puzzle.gd solve() — spawns at puzzle position + 0.5m up via call_deferred.**
 
 ### 8.7 Boss phase transition flash
 - [ ] Create `scenes/vfx/boss_phase_flash.tscn` — screen-space color flash + particle shockwave. Trigger from boss scripts on phase change (emit signal to VFX).
