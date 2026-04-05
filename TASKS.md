@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.7 complete
-- **Last task completed:** Task 2.7 — Apply dark metal PBR material to body
-- **Next task to do:** Task 2.8
-- **Known issues:** All gameplay is CSG placeholder geometry. No real character model in Godot yet. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is in progress — mesh built, now applying materials.
+- **Last updated by:** Claude (2026-04-04) — Task 2.8 complete
+- **Last task completed:** Task 2.8 — Apply emission material to eyes
+- **Next task to do:** Task 2.9
+- **Known issues:** All gameplay is CSG placeholder geometry. No real character model in Godot yet. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is in progress — mesh built, materials being applied (body done, eyes done, screen next).
 
 ### GOAL OF THIS PASS
 Upgrade visual quality from CSG placeholders to stylized indie-game-ship quality (~Death's Door / Tunic / Hi-Fi Rush tier). Hero assets (Globbler, bosses) built in Blender via blender-mcp. Environment via CC0 assets from Poly Haven / Sketchfab. Lighting + post-processing + VFX upgraded in Godot.
@@ -102,7 +102,7 @@ assets/
 - [x] Via `execute_blender_code`: create `globbler_body` material — principled BSDF, base_color=(0.08,0.09,0.08), metallic=0.7, roughness=0.55, clearcoat=0.2. Assign to torso+head+boots. Screenshot with material preview. **Done: Created `globbler_body` Principled BSDF material (base_color=(0.08,0.09,0.08), metallic=0.7, roughness=0.55, coat_weight=0.2) — dark gunmetal with subtle clearcoat sheen. Assigned to Globbler_Body, Boot_Left, Boot_Right, Sole_Left, Sole_Right, and all 4 cables. Also created `globbler_wrench` variant (base_color=(0.12,0.13,0.12), metallic=0.85, roughness=0.4, coat_weight=0.3) — slightly shinier worn-tool look. Verified in Material Preview viewport. Saved to globbler.blend.**
 
 ### 2.8 Apply emission material to eyes
-- [ ] Via `execute_blender_code`: create `globbler_eyes_emissive` material — base_color=(0.22,1.0,0.08), emission_color=(0.22,1.0,0.08), emission_strength=8.0. Assign to eye socket faces. Screenshot.
+- [x] Via `execute_blender_code`: create `globbler_eyes_emissive` material — base_color=(0.22,1.0,0.08), emission_color=(0.22,1.0,0.08), emission_strength=8.0. Assign to eye socket faces. Screenshot. **Done: Created `globbler_eyes_emissive` Principled BSDF material (base_color=(0.22,1.0,0.08), emission_color=(0.22,1.0,0.08), emission_strength=8.0, roughness=0.15 for glossy LED look). Added as second material slot on Globbler_Body. Identified 87 deeply-recessed eye socket faces (Y > -0.15, Z 0.52–0.72, |X| 0.03–0.20) via bmesh analysis and assigned to emissive material. Both angry-tilted eye sockets glow bright neon green against dark metal body. Saved to globbler.blend.**
 
 ### 2.9 Apply emission CRT material to chest screen
 - [ ] Via `execute_blender_code`: create `globbler_screen` material — emission_color=(0.2,0.9,0.2), emission_strength=3.0. Later we'll override with a scanline shader in Godot, but this gives the base glow on export. Screenshot.
