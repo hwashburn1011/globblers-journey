@@ -40,6 +40,7 @@ var _difficulty_option: OptionButton
 var _reduce_motion_check: CheckBox
 var _dialogue_speed_slider: HSlider
 var _mouse_sens_slider: HSlider
+var _invert_y_check: CheckBox
 
 # ASCII Globbler — because 3D models in menus are for people with budgets
 const GLOBBLER_ASCII := """
@@ -598,6 +599,13 @@ func _build_settings_panel() -> void:
 	sens_row.add_child(_mouse_sens_slider)
 	vbox.add_child(sens_row)
 
+	# Invert Y-Axis checkbox — for the flight-sim weirdos
+	var invert_y_row = _create_check_row("Invert Y-Axis")
+	_invert_y_check = invert_y_row.get_meta("checkbox") as CheckBox
+	_invert_y_check.button_pressed = gm.invert_mouse_y if gm else false
+	_invert_y_check.toggled.connect(_on_invert_y_toggled)
+	vbox.add_child(invert_y_row)
+
 	var controls_label = Label.new()
 	controls_label.text = "WASD/LStick: Move  |  SPACE/A: Jump  |  SHIFT/B: Dash\nE-LClick/RT: Glob  |  R-RClick/LT: Aim  |  F/RB: Wrench\nT/Y: Hack  |  Q/LB: Cycle Glob  |  TAB/Select: Upgrades\nG/D-Up: Agent  |  V/D-Down: Cycle Task  |  RStick: Camera"
 	controls_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -968,6 +976,13 @@ func _on_mouse_sensitivity_changed(value: float) -> void:
 	var gm = get_node_or_null("/root/GameManager")
 	if gm:
 		gm.mouse_sensitivity = value
+		gm.save_settings()
+
+
+func _on_invert_y_toggled(toggled_on: bool) -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm:
+		gm.invert_mouse_y = toggled_on
 		gm.save_settings()
 
 

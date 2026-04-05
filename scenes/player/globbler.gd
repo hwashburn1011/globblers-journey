@@ -580,11 +580,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and mouse_captured:
 		var motion = event as InputEventMouseMotion
 		var gm_sens = 1.0
+		var invert_y = false
 		var gm_node = get_node_or_null("/root/GameManager")
 		if gm_node:
 			gm_sens = gm_node.mouse_sensitivity
+			invert_y = gm_node.invert_mouse_y
+		var y_mult = 1.0 if not invert_y else -1.0
 		camera_yaw -= motion.relative.x * MOUSE_SENSITIVITY * gm_sens
-		camera_pitch -= motion.relative.y * MOUSE_SENSITIVITY * gm_sens
+		camera_pitch -= motion.relative.y * MOUSE_SENSITIVITY * gm_sens * y_mult
 		camera_pitch = clamp(camera_pitch, -1.2, 0.3)
 
 	# Camera zoom via input actions (scroll wheel + D-pad left/right on controller)
@@ -819,8 +822,10 @@ func _update_camera(delta: float) -> void:
 	var stick_x = Input.get_axis("look_left", "look_right")
 	var stick_y = Input.get_axis("look_up", "look_down")
 	if abs(stick_x) > 0.01 or abs(stick_y) > 0.01:
+		var gm_invert = get_node_or_null("/root/GameManager")
+		var stick_y_mult = 1.0 if not (gm_invert and gm_invert.invert_mouse_y) else -1.0
 		camera_yaw -= stick_x * STICK_LOOK_SENSITIVITY * delta
-		camera_pitch -= stick_y * STICK_LOOK_SENSITIVITY * delta
+		camera_pitch -= stick_y * STICK_LOOK_SENSITIVITY * delta * stick_y_mult
 		camera_pitch = clamp(camera_pitch, -1.2, 0.3)
 
 	# Camera focuses on chest height — close enough to see our angry eyes, far enough to see the boots

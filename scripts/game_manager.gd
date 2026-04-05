@@ -25,6 +25,8 @@ var display_resolution_index := 1
 
 # Mouse sensitivity — 1.0 is default, 0.1 for snipers, 3.0 for twitchy chaos gremlins
 var mouse_sensitivity := 1.0
+# Invert Y-axis — for the flight-sim pilots among us who think "up" means "nose down"
+var invert_mouse_y := false
 
 # Dialogue speed — seconds per character. 0.005 (impatient speedrunner) to 0.08 (savoring the sarcasm)
 var dialogue_char_delay := 0.03
@@ -534,6 +536,7 @@ func save_settings() -> void:
 	cfg.set_value("display", "fullscreen", display_fullscreen)
 	cfg.set_value("display", "resolution_index", display_resolution_index)
 	cfg.set_value("controls", "mouse_sensitivity", mouse_sensitivity)
+	cfg.set_value("controls", "invert_mouse_y", invert_mouse_y)
 	# Audio volumes live on AudioManager, but we persist them here — one cfg to rule them all
 	var audio = get_node_or_null("/root/AudioManager")
 	if audio:
@@ -558,6 +561,7 @@ func load_settings() -> void:
 	display_fullscreen = cfg.get_value("display", "fullscreen", false)
 	display_resolution_index = cfg.get_value("display", "resolution_index", 1)
 	mouse_sensitivity = cfg.get_value("controls", "mouse_sensitivity", 1.0)
+	invert_mouse_y = cfg.get_value("controls", "invert_mouse_y", false)
 	# Apply display mode — restore whatever the player chose last session
 	if display_fullscreen:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)

@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 10.3 complete
-- **Last task completed:** Task 10.3 — Mouse sensitivity slider (0.1x–3.0x) in settings menu, persisted to settings.cfg, multiplied in globbler.gd mouse input
-- **Next task to do:** Task 10.4 (Add invert-Y toggle)
+- **Last updated by:** Claude (2026-04-05) — Task 10.4 complete
+- **Last task completed:** Task 10.4 — Invert Y-axis toggle in settings menu, persisted to settings.cfg, flips vertical camera in globbler.gd (mouse + stick)
+- **Next task to do:** Task 10.5 (Chapter select thumbnails)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 COMPLETE — all 5 boss visual upgrades done (rm -rf, System Prompt, Local Minimum, Foundation Model, Aligner). All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -328,7 +328,7 @@ assets/
 - [x] Add mouse_sensitivity float (range 0.1–3.0, default 1.0) to GameManager. Multiply against existing camera rotation speed in `globbler.gd` mouse input handling. Persist. **Done: Added `mouse_sensitivity` var (default 1.0) to GameManager, persisted in `[controls]` section of settings.cfg. `load_settings()` restores on startup. In globbler.gd `_unhandled_input`, mouse motion multiplied by `gm.mouse_sensitivity`. HSlider (0.1–3.0, step 0.1) added to CONTROLS section of settings menu with "%.1fx" value label. Callback saves to GameManager + persists. Zero new runtime errors.**
 
 ### 10.4 Add invert-Y toggle
-- [ ] Add invert_mouse_y bool to GameManager + settings checkbox. When true, flip sign on vertical camera look in `globbler.gd`. Persist.
+- [x] Add invert_mouse_y bool to GameManager + settings checkbox. When true, flip sign on vertical camera look in `globbler.gd`. Persist. **Done: Added `invert_mouse_y` bool to GameManager (default false), persisted to settings.cfg under controls/invert_mouse_y. Added "Invert Y-Axis" checkbox in settings menu CONTROLS section (below sensitivity slider). In globbler.gd, both mouse look and right-stick look multiply vertical pitch delta by -1 when enabled.**
 
 ### 10.5 Chapter select thumbnails
 - [ ] Screenshot each chapter spawn area (now with real graphics), save to `assets/ui/chapter_thumb_{n}.png`. Wire into `main_menu.gd` chapter select panel buttons.
