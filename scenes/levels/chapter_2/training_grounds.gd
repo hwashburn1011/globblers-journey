@@ -42,6 +42,21 @@ var deprecated_npc_script := preload("res://scenes/levels/chapter_1/deprecated_n
 # Hint scene — because even neural networks need a tutorial
 var hint_scene := preload("res://scenes/ui/first_time_hint.tscn")
 
+# GLB prop paths — runtime-loaded because the import pipeline has trust issues
+const _PROP_PATHS := {
+	"server_rack": "res://assets/models/environment/arch_server_rack.glb",
+	"cable_bundle": "res://assets/models/environment/arch_cable_bundle.glb",
+	"floor_grate": "res://assets/models/environment/arch_floor_grate.glb",
+	"industrial_panel": "res://assets/models/environment/arch_industrial_panel.glb",
+	"wall_terminal": "res://assets/models/environment/arch_wall_terminal.glb",
+	"motherboard": "res://assets/models/environment/prop_motherboard.glb",
+	"cpu_chip": "res://assets/models/environment/prop_cpu_chip.glb",
+	"ram_stick": "res://assets/models/environment/prop_ram_stick.glb",
+	"keyboard": "res://assets/models/environment/prop_keyboard.glb",
+	"crt_monitor": "res://assets/models/environment/prop_crt_monitor.glb",
+}
+var _prop_scenes := {}  # Populated in _ready() — runtime load, not preload
+
 var player: CharacterBody3D
 var hud: CanvasLayer
 var boss_instance: Node  # The Local Minimum — tracked for phase events
@@ -122,6 +137,7 @@ var _time := 0.0
 
 func _ready() -> void:
 	print("[TRAINING GROUNDS] Initializing neural network... forward pass in progress.")
+	_load_prop_scenes()
 	_setup_environment()
 	_build_rooms()
 	_build_corridors()
@@ -133,6 +149,7 @@ func _ready() -> void:
 	_place_checkpoints()
 	_place_ambient_zones()
 	_place_synapse_rain()
+	_scatter_neural_props()
 	_spawn_player()
 	_spawn_hud()
 	_create_kill_floor()
@@ -196,6 +213,176 @@ func _setup_environment() -> void:
 	add_child(world_env)
 
 	_setup_post_processing()
+
+
+# ============================================================
+# GLB PROP LOADING — because CSG primitives are for prototype peasants
+# ============================================================
+
+func _load_prop_scenes() -> void:
+	# Runtime-load all GLB props — the import pipeline can't be trusted with preload
+	for key in _PROP_PATHS:
+		var res = load(_PROP_PATHS[key])
+		if res:
+			_prop_scenes[key] = res
+		else:
+			push_warning("[TRAINING GROUNDS] Failed to load prop '%s' from %s — CSG fallback engaged" % [key, _PROP_PATHS[key]])
+
+
+func _place_glb_prop(prop_key: String, pos: Vector3, rot_y: float = 0.0, scl: Vector3 = Vector3.ONE) -> Node3D:
+	# Drop a GLB prop into the world — the civilized alternative to CSG box spam
+	if not _prop_scenes.has(prop_key):
+		return _create_static_box(pos, Vector3(0.3, 0.3, 0.3), SYNAPSE_BLUE * 0.3, 0.2)
+	var inst = _prop_scenes[prop_key].instantiate()
+	inst.position = pos
+	inst.rotation.y = rot_y
+	inst.scale = scl
+	add_child(inst)
+	return inst
+
+
+func _create_multimesh_scatter(prop_key: String, positions: Array, base_scale: float = 1.0) -> void:
+	# MultiMesh scatter for bulk neural debris — one draw call to rule them all
+	if not _prop_scenes.has(prop_key):
+		push_warning("[TRAINING GROUNDS] Skipping scatter for missing prop '%s'" % prop_key)
+		return
+	var source_scene = _prop_scenes[prop_key].instantiate()
+	var source_mesh: Mesh = null
+	for child in source_scene.get_children():
+		if child is MeshInstance3D:
+			source_mesh = child.mesh
+			break
+		for grandchild in child.get_children():
+			if grandchild is MeshInstance3D:
+				source_mesh = grandchild.mesh
+				break
+		if source_mesh:
+			break
+	source_scene.queue_free()
+
+	if not source_mesh:
+		push_warning("[TRAINING GROUNDS] Could not extract mesh from prop '%s'. Individual instances it is." % prop_key)
+		for pos in positions:
+			_place_glb_prop(prop_key, pos, randf_range(0, TAU), Vector3.ONE * base_scale * randf_range(0.7, 1.3))
+		return
+
+	var mmi = MultiMeshInstance3D.new()
+	mmi.name = "Scatter_%s" % prop_key
+	var mm = MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = source_mesh
+	mm.instance_count = positions.size()
+	for i in range(positions.size()):
+		var s = base_scale * randf_range(0.8, 1.2)
+		var inst_basis = Basis(Vector3.UP, randf_range(0, TAU)).scaled(Vector3.ONE * s)
+		mm.set_instance_transform(i, Transform3D(inst_basis, positions[i]))
+	mmi.multimesh = mm
+	add_child(mmi)
+
+
+func _scatter_neural_props() -> void:
+	# Scatter neural-network-themed props across all rooms — cleaner than Chapter 1's
+	# e-waste hellscape. This is a TRAINING facility, not a landfill. Mostly.
+	print("[TRAINING GROUNDS] Deploying neural infrastructure... the network is furnishing itself.")
+
+	# --- Input Layer: clean data-intake aesthetic, scattered CPUs = input features ---
+	var input_pos: Vector3 = ROOMS["input_layer"]["pos"]
+	# CPU chips near the data columns — the processing units that ingest features
+	var input_cpus: Array = []
+	for i in range(5):
+		input_cpus.append(input_pos + Vector3(randf_range(-6, 6), 0.02, randf_range(-6, 6)))
+	_create_multimesh_scatter("cpu_chip", input_cpus, 0.7)
+
+	# A keyboard at the input terminal — someone has to type the training commands
+	_place_glb_prop("keyboard", input_pos + Vector3(-2, 0.02, -5.5), randf_range(-0.2, 0.2))
+
+	# Floor grates near the entrance — infrastructure showing through
+	_place_glb_prop("floor_grate", input_pos + Vector3(-6, 0.01, 0), 0.0, Vector3.ONE * 1.2)
+	_place_glb_prop("floor_grate", input_pos + Vector3(6, 0.01, 0), PI / 2.0, Vector3.ONE * 1.2)
+
+	# --- Activation Chamber: denser equipment, this is where the compute happens ---
+	var act_pos: Vector3 = ROOMS["activation"]["pos"]
+	# RAM sticks scattered — weight memory for the hidden layer
+	var act_ram: Array = []
+	for i in range(8):
+		act_ram.append(act_pos + Vector3(randf_range(-8, 8), 0.02, randf_range(-7, 7)))
+	_create_multimesh_scatter("ram_stick", act_ram, 0.6)
+
+	# Motherboards near the dendrite structures — circuit boards as neural substrates
+	for i in range(3):
+		var angle = TAU * i / 3.0 + PI / 6.0
+		_place_glb_prop("motherboard", act_pos + Vector3(cos(angle) * 8.0, 0.02, sin(angle) * 8.0), randf_range(0, TAU), Vector3.ONE * 0.8)
+
+	# Wall terminals on the chamber walls — monitoring activation functions
+	_place_glb_prop("wall_terminal", act_pos + Vector3(-10.3, 2.5, 3), PI / 2.0)
+	_place_glb_prop("wall_terminal", act_pos + Vector3(10.3, 2, -5), -PI / 2.0)
+
+	# Industrial panel — the control surface for this layer's hyperparameters
+	_place_glb_prop("industrial_panel", act_pos + Vector3(-10.3, 1.5, -3), PI / 2.0, Vector3.ONE * 1.2)
+
+	# --- Gradient Falls: cascading tech debris, things break on the way down ---
+	var grad_pos: Vector3 = ROOMS["gradient_falls"]["pos"]
+	# Cable bundles along the stepped terrain — gradients flowing like tangled wires
+	_place_glb_prop("cable_bundle", grad_pos + Vector3(-5, 0, -4), randf_range(0, TAU), Vector3.ONE * 1.3)
+	_place_glb_prop("cable_bundle", grad_pos + Vector3(4, -1.5, 2), randf_range(0, TAU), Vector3.ONE * 1.1)
+
+	# CPU chips scattered down the gradient steps — processing units that rolled downhill
+	var grad_cpus: Array = []
+	for i in range(6):
+		var step_z = grad_pos.z - 6 + i * 2.5
+		var step_y = grad_pos.y - float(i) * 0.6
+		grad_cpus.append(Vector3(grad_pos.x + randf_range(-4, 4), step_y + 0.02, step_z))
+	_create_multimesh_scatter("cpu_chip", grad_cpus, 0.5)
+
+	# Server rack at the side — the compute cluster tracking loss values
+	_place_glb_prop("server_rack", grad_pos + Vector3(-8.5, 0, 3), PI / 2.0, Vector3.ONE * 0.9)
+
+	# CRT monitor near the terminal — showing gradient magnitude in real-time (allegedly)
+	_place_glb_prop("crt_monitor", grad_pos + Vector3(-8, 0.5, -5.5), PI / 4.0, Vector3.ONE * 0.8)
+
+	# --- Dropout Void: sparse and unsettling, like the gaps in the network ---
+	var drop_pos: Vector3 = ROOMS["dropout_void"]["pos"]
+	# Scattered RAM sticks on surviving platforms — orphaned weight memories
+	var drop_ram: Array = []
+	for i in range(4):
+		drop_ram.append(drop_pos + Vector3(randf_range(-5, 5), 0.15, randf_range(-5, 5)))
+	_create_multimesh_scatter("ram_stick", drop_ram, 0.5)
+
+	# A lone wall terminal — monitoring which neurons got dropped
+	_place_glb_prop("wall_terminal", drop_pos + Vector3(8.3, 2.5, -3), -PI / 2.0)
+
+	# Floor grate — the void peers back at you through the infrastructure
+	_place_glb_prop("floor_grate", drop_pos + Vector3(0, 0.01, -5), 0.0, Vector3.ONE * 1.0)
+
+	# --- Loss Plaza: the most organized room, this is the output layer ---
+	var loss_pos: Vector3 = ROOMS["loss_plaza"]["pos"]
+	# CRT monitors flanking the loss display — multiple views of the loss landscape
+	_place_glb_prop("crt_monitor", loss_pos + Vector3(-5, 0.02, -8), 0.0, Vector3.ONE * 0.9)
+	_place_glb_prop("crt_monitor", loss_pos + Vector3(5, 0.02, -8), 0.0, Vector3.ONE * 0.9)
+
+	# Server racks along the back wall — the final compute cluster before the boss
+	_place_glb_prop("server_rack", loss_pos + Vector3(-11, 0, -4), PI / 2.0, Vector3.ONE * 0.85)
+	_place_glb_prop("server_rack", loss_pos + Vector3(11, 0, -4), -PI / 2.0, Vector3.ONE * 0.85)
+
+	# Industrial panels near the observation platform — control surfaces
+	_place_glb_prop("industrial_panel", loss_pos + Vector3(-12.3, 1.5, 3), PI / 2.0, Vector3.ONE * 1.1)
+
+	# Keyboards at the elevated platform — the operator's workstation
+	_place_glb_prop("keyboard", loss_pos + Vector3(-10, 2.1, 0.5), randf_range(-0.15, 0.15))
+	_place_glb_prop("keyboard", loss_pos + Vector3(-10, 2.1, -0.5), randf_range(-0.15, 0.15))
+
+	# Floor grates in a ring — the infrastructure under the output layer is visible
+	for i in range(3):
+		var angle = TAU * i / 3.0
+		_place_glb_prop("floor_grate", loss_pos + Vector3(cos(angle) * 8.0, 0.01, sin(angle) * 8.0), angle, Vector3.ONE * 1.3)
+
+	# Scattered motherboards near the convergence rings — the circuit substrate of learning
+	var loss_boards: Array = []
+	for i in range(4):
+		loss_boards.append(loss_pos + Vector3(randf_range(-8, 8), 0.02, randf_range(-4, 6)))
+	_create_multimesh_scatter("motherboard", loss_boards, 0.7)
+
+	print("[TRAINING GROUNDS] Neural props deployed. %d prop types loaded." % _prop_scenes.size())
 
 
 # ============================================================

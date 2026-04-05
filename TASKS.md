@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 5.1 complete
-- **Last task completed:** Task 5.1 — Chapter 1 Terminal Wastes prop pass
-- **Next task to do:** Task 5.2 (Chapter 2 Training Grounds — prop pass)
-- **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 in progress — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. All pre-existing warnings unchanged, zero new runtime errors.
+- **Last updated by:** Claude (2026-04-04) — Task 5.2 complete
+- **Last task completed:** Task 5.2 — Chapter 2 Training Grounds prop pass
+- **Next task to do:** Task 5.3 (Chapter 3 Prompt Bazaar — prop pass)
+- **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 in progress — Ch1 and Ch2 prop passes done. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
 Upgrade visual quality from CSG placeholders to stylized indie-game-ship quality (~Death's Door / Tunic / Hi-Fi Rush tier). Hero assets (Globbler, bosses) built in Blender via blender-mcp. Environment via CC0 assets from Poly Haven / Sketchfab. Lighting + post-processing + VFX upgraded in Godot.
@@ -168,7 +168,7 @@ assets/
 - [x] In `terminal_wastes.gd`, identify CSG clutter meshes placed as visual dressing (NOT structural walls/floors). Replace with MultiMesh scatters of Pass-4 tech-waste props. Keep puzzle/enemy positions. MCP run to verify no scripts broke. **Done: Replaced CSG server racks with arch_server_rack.glb models (collision preserved), CSG cables with cable_bundle.glb, CSG floppy disks with floppy_disk.glb, CSG pipe with industrial_pipe.glb. Added _scatter_tech_props() with MultiMesh scatters of cpu_chip, ram_stick, motherboard, hard_drive, floppy_disk, crt_monitor, power_supply, floor_grate, wall_terminal, vent_duct, cable_bundle across all 5 rooms. Props loaded at runtime via load() with CSG fallbacks. Fixed tail_mat type inference bugs in globbler.gd and health_component.gd. Zero new runtime errors.**
 
 ### 5.2 Chapter 2 Training Grounds — prop pass
-- [ ] Same as 5.1 for `training_grounds.gd`. Use neural-network-themed scatter (nodes, wires). Cleaner than Chapter 1.
+- [x] Same as 5.1 for `training_grounds.gd`. Use neural-network-themed scatter (nodes, wires). Cleaner than Chapter 1. **Done: Added GLB prop loading system to training_grounds.gd with 10 neural-network-themed props (server_rack, cable_bundle, floor_grate, industrial_panel, wall_terminal, motherboard, cpu_chip, ram_stick, keyboard, crt_monitor). Added _load_prop_scenes(), _place_glb_prop(), _create_multimesh_scatter(), and _scatter_neural_props() functions. Scattered props across all 5 rooms with neural-network theming: Input Layer (CPU chips as input features, keyboard at terminal, floor grates), Activation Chamber (RAM sticks as weight memory, motherboards as neural substrates, wall terminals + industrial panel for monitoring), Gradient Falls (cable bundles along descent steps, CPUs rolling downhill, server rack + CRT for loss tracking), Dropout Void (sparse RAM on surviving platforms, lone wall terminal, floor grate into the void), Loss Plaza (CRT monitors flanking loss display, server racks along back wall, keyboards at operator workstation, floor grates in ring, motherboards near convergence rings). Intentionally cleaner and more organized than Chapter 1's e-waste aesthetic. All 10 prop types loaded successfully. Zero new runtime errors.**
 
 ### 5.3 Chapter 3 Prompt Bazaar — prop pass
 - [ ] Same for `prompt_bazaar.gd`. Use bazaar/market props + lanterns + rugs. Add warm point lights.
