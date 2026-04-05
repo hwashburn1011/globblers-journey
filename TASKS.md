@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 10.5 complete
-- **Last task completed:** Task 10.5 — Chapter select thumbnails rendered in Blender with per-chapter color palettes, wired into chapter select panel as TextureRect images
-- **Next task to do:** Task 10.6 (End-of-chapter stats summary)
+- **Last updated by:** Claude (2026-04-05) — Task 10.6 complete
+- **Last task completed:** Task 10.6 — End-of-chapter stats summary UI (deaths, tokens, time, kills, combo) shown on level complete
+- **Next task to do:** Task 11.1 (Playthrough chapter 1 visual QA)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 COMPLETE — all 5 boss visual upgrades done (rm -rf, System Prompt, Local Minimum, Foundation Model, Aligner). All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -334,7 +334,7 @@ assets/
 - [x] Screenshot each chapter spawn area (now with real graphics), save to `assets/ui/chapter_thumb_{n}.png`. Wire into `main_menu.gd` chapter select panel buttons. **Done: Rendered 5 stylized chapter thumbnails (320x180) in Blender EEVEE using per-chapter color palettes (monoliths, pillars, emissive particles matching fog/accent colors). Saved to assets/ui/chapter_thumb_{1-5}.png. Added TextureRect (80x45, STRETCH_KEEP_ASPECT_COVERED) to each chapter button row in _create_chapter_button(). Locked chapters show dimmed thumbnails (0.3 opacity). Panel widened to 600x480. Also fixed pre-existing bug: _create_check_row() → _create_toggle_row() in invert-Y settings row.**
 
 ### 10.6 End-of-chapter stats summary
-- [ ] Create `scenes/ui/chapter_summary.tscn` — shows deaths, tokens earned, time, kills, combo max. Triggered by GameManager.complete_level() before scene transition. Continue button.
+- [x] Create `scenes/ui/chapter_summary.tscn` — shows deaths, tokens earned, time, kills, combo max. Triggered by GameManager.complete_level() before scene transition. Continue button. **Done: Created chapter_summary.gd + .tscn (CanvasLayer, layer 10) with terminal-green-on-black aesthetic matching HUD. Shows chapter name, time (MM:SS), tokens collected, enemies terminated, max combo, deaths — plus sarcastic comment based on death count. Full-screen dark fade backdrop, center panel with stat rows (label...value layout), animated fade-in (respects reduce_motion). Continue button dismisses with fade-out. Accepts ui_accept/ui_cancel input. Wired into GameManager.complete_level() via _show_chapter_summary() — captures stats dict before reset_level() clears them, instantiates summary as root child. Zero new runtime errors.**
 
 ---
 

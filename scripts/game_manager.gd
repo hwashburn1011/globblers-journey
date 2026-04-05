@@ -622,10 +622,15 @@ func on_enemy_killed() -> void:
 
 func complete_level(_chapter_id = null) -> void:
 	level_goal_reached = true
-	print("[LEVEL COMPLETE] %s cleared!" % level_names.get(current_level, "???"))
+	var chapter_name = level_names.get(current_level, "???")
+	print("[LEVEL COMPLETE] %s cleared!" % chapter_name)
 	print("[STATS] Time: %.1fs | Tokens: %d | Kills: %d | Max Combo: x%d" % [
 		level_time, memory_tokens_collected, enemies_killed, max_combo
 	])
+
+	# Show end-of-chapter stats summary before resetting
+	_show_chapter_summary(chapter_name)
+
 	level_complete.emit(current_level)
 
 	# Unlock new glob patterns for this chapter
@@ -636,6 +641,22 @@ func complete_level(_chapter_id = null) -> void:
 	current_level += 1
 	# Reset stats so the next chapter doesn't inherit stale murder counts
 	reset_level()
+
+
+func _show_chapter_summary(chapter_name: String) -> void:
+	var summary_scene = load("res://scenes/ui/chapter_summary.tscn")
+	if not summary_scene:
+		push_warning("[GameManager] chapter_summary.tscn failed to load — stats lost to the void.")
+		return
+	var summary = summary_scene.instantiate()
+	summary.setup(chapter_name, {
+		"time": level_time,
+		"tokens": memory_tokens_collected,
+		"kills": enemies_killed,
+		"max_combo": max_combo,
+		"deaths": deaths_this_level,
+	})
+	get_tree().root.add_child(summary)
 
 func get_level_intro() -> String:
 	var level_name_text = level_names.get(current_level, "Unknown Level")
