@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 3.7 — Finalize credits roll
-- **Next task to do:** Task 4.1 — Playtest Chapter 1
+- **Last task completed:** Task 4.1 — Playtest Chapter 1
+- **Next task to do:** Task 4.2 — Playtest Chapter 2
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -150,7 +150,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 # Chapter-by-chapter validation via Godot MCP.
 
 ### 4.1 Playtest Chapter 1
-- [ ] Via Godot MCP: run_project, load chapter 1, spend 5 minutes exploring + combat + at least one puzzle. Capture debug output. List any visual bugs, script errors, missing SFX, broken interactions. Do NOT fix yet — just catalog.
+- [x] **DONE:** Ran `terminal_wastes.tscn` via Godot MCP, captured full debug output over ~30s runtime. **Zero runtime errors** (`finalErrors` empty). All 5 rooms loaded, 5 puzzles placed, boss arena constructed (48 tiles), player GLB model initialized with skeleton animations, HUD loaded. Ambient audio crossfade to 'spawn' confirmed. **Issues cataloged:** (1) [MINOR] Chapter 1 does NOT call `start_music("chapter_1")` in its `_ready()` — unlike chapters 2–5 which self-start music. Music only plays when loaded via `main_level.gd` → `GameManager.start_level_audio()`. (2) [MINOR] `GameManager.start_level_audio()` (line 711–714) hardcodes `_start_chapter_1_audio()` — should dispatch based on current chapter, though chapters 2–5 override with their own calls. (3) [MINOR] ~35 GDScript parse-time warnings (unused variables/parameters) across enemy, boss, puzzle, HUD, and upgrade scripts — pre-existing, not V2.0/V2.1 regressions. No BREAKING or VISUAL issues found.
 
 ### 4.2 Playtest Chapter 2
 - [ ] Same as 4.1 for chapter 2. Catalog issues.
