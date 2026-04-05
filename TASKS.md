@@ -1,4 +1,4 @@
-# GLOBBLER'S JOURNEY — CORE POLISH TRACKER (V1.2)
+# GLOBBLER'S JOURNEY — GRAPHICS & ART PASS (V2.0)
 # ====================================
 # This file is the SINGLE SOURCE OF TRUTH for build progress.
 # After completing a task, change [ ] to [x] and add a brief note.
@@ -8,167 +8,347 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — V1.2 COMPLETE
-- **Last task completed:** Task 7.2 — Final V1.2 tag committed. All 23 tasks across 7 passes complete.
-- **Next task to do:** None — V1.2 core polish pass is finished. Next milestone is the art/asset pass.
-- **Known issues:** None outstanding. All pre-existing warnings are cosmetic (unused params, integer division, variable shadowing).
+- **Last updated by:** Claude (2026-04-04) — Task 1.1 complete
+- **Last task completed:** Task 1.1 — asset folder scaffold + LICENSES.md created
+- **Next task to do:** Task 1.2
+- **Known issues:** All gameplay is CSG placeholder geometry. No HDRIs. No PBR. No real character model. Lighting is default Godot. No post-processing tuning.
 
-### V1.2 — CORE POLISH COMPLETE
-All 7 passes delivered:
-1. **Legacy cleanup** (Tasks 1.1–1.4): Removed orphan `scripts/player.gd` and `scenes/player.tscn`. Marked `test_level` as DEV ONLY.
-2. **Centralized respawn** (Tasks 2.1–2.10): New `RespawnManager` autoload with fade-to-black overlay. All 5 chapters migrated from inline death/respawn to shared manager.
-3. **Game over flow** (Tasks 3.1–3.4): Death threshold (8 deaths) and context depletion trigger game over screen with RETRY/LOAD/MENU options.
-4. **Tutorial hints** (Tasks 4.1–4.8): First-time toast hint system with 6 contextual hints (movement, glob, wrench, hack, dash, agent spawn). Persisted via save system.
-5. **Accessibility & settings** (Tasks 5.1–5.7): Difficulty scaling (Easy/Normal/Hard), reduce_motion toggle, dialogue speed slider. All persisted to `user://settings.cfg`.
-6. **Dialogue QoL** (Tasks 6.1–6.3): ESC to skip dialogue, 200-entry backlog, H key history viewer.
-7. **Final validation** (Tasks 7.1–7.2): MCP smoke test all chapters — zero runtime errors. One deferred-call fix applied.
+### GOAL OF THIS PASS
+Upgrade visual quality from CSG placeholders to stylized indie-game-ship quality (~Death's Door / Tunic / Hi-Fi Rush tier). Hero assets (Globbler, bosses) built in Blender via blender-mcp. Environment via CC0 assets from Poly Haven / Sketchfab. Lighting + post-processing + VFX upgraded in Godot.
 
----
+### VISUAL REFERENCE
+Globbler reference art: `C:/Users/hwash/Desktop/globbler.jpg` (stubby chibi robot, dark hood/helmet, neon green angry eyes, wrench, chest terminal, cables, boots, dark+green palette).
 
-## PASS 1: LEGACY FILE CLEANUP
-# Remove shadow/orphan files so future edits don't confuse canonical code paths.
+### ASSET ORGANIZATION
+```
+assets/
+  models/player/globbler.glb
+  models/enemies/{enemy_name}.glb
+  models/bosses/{boss_name}.glb
+  models/environment/{prop_name}.glb
+  blender_source/*.blend          # keep source .blend for future edits
+  hdri/*.hdr                      # Poly Haven HDRIs
+  textures/pbr/{material}/        # AmbientCG / Poly Haven PBR sets
+  environments/chapter_{n}.tres   # WorldEnvironment resources
+  LICENSES.md                     # track all CC0/CC-BY attributions
+```
 
-### 1.1 Audit legacy scripts/player.gd vs scenes/player/globbler.gd
-- [x] **DONE.** `scripts/player.gd` is referenced only by `scenes/player.tscn` (a flat 7-line orphan scene). `scenes/player.tscn` itself has ZERO references from any .gd, .tscn, or .godot file. Meanwhile, `scenes/player/globbler.tscn` (using `scenes/player/globbler.gd`) is the canonical player — referenced by all 5 chapter level scripts, test_level.gd, and main_level.gd. Both `scripts/player.gd` and `scenes/player.tscn` are safe to delete in Task 1.2.
-
-### 1.2 Delete legacy scripts/player.gd
-- [x] **DONE.** Deleted `scripts/player.gd` — zero production references confirmed. Only `scenes/player.tscn` (orphan, Task 1.3) referenced it. No production .gd, .tscn, or project.godot file uses this script.
-
-### 1.3 Audit and remove legacy flat player.tscn
-- [x] **DONE.** Found `scenes/player.tscn` — a 7-line orphan scene referencing deleted `scripts/player.gd`. Zero references from any .gd, .tscn, or .godot file (only TASKS.md and MCP addon example docs mentioned it). Deleted. Legacy player shadow issue is now fully resolved.
-
-### 1.4 Audit test_level.gd and test_level.tscn
-- [x] **DONE.** `test_level.gd`/`test_level.tscn` are NOT on any shipping path. Zero references from `project.godot`, main menu (`main_menu.gd`), chapter select, or any production .gd/.tscn file. Only self-reference in its own .tscn and a comment in `glob_pattern_test.gd`. Added `# DEV ONLY` comment block at top of `test_level.gd`.
-
----
-
-## PASS 2: CENTRALIZE RESPAWN / CHECKPOINT FLOW
-# Every chapter script has its own _on_player_died fade+teleport logic (~150 lines each).
-# Extract into a single RespawnManager so the behavior lives in one place.
-
-### 2.1 Create RespawnManager autoload skeleton
-- [x] **DONE.** Created `scripts/autoload/respawn_manager.gd` extending Node. Has `current_checkpoint: Vector3`, `current_chapter: int`, `set_checkpoint(pos, chapter)`, `respawn_player()` stub (prints to console), signals `respawn_started` and `respawn_finished`. Not wired up yet — registration is Task 2.2.
-
-### 2.2 Register RespawnManager in project.godot
-- [x] **DONE.** Added `RespawnManager="*res://scripts/autoload/respawn_manager.gd"` to `[autoload]` in project.godot, after DialogueManager and before SaveSystem. MCP run_project verified: zero script errors, zero runtime errors. Only warnings are expected unused-signal notices for `respawn_started`/`respawn_finished` (wired in Task 2.4).
-
-### 2.3 Implement fade-to-black overlay in RespawnManager
-- [x] **DONE.** Added `_fade_overlay: CanvasLayer` (layer 200, `PROCESS_MODE_ALWAYS`) with black `ColorRect` child (`PRESET_FULL_RECT`, `modulate.a = 0`, `mouse_filter = IGNORE`) built in `_ready()`. Added `_fade_out(duration)` and `_fade_in(duration)` async helpers using tweens with `TWEEN_PAUSE_PROCESS`. Kills any active tween before starting a new one. MCP verified: project loads cleanly, zero script errors. Only warnings are expected unused-signal notices (wired in Task 2.4) and a pre-existing integer division warning.
-
-### 2.4 Implement respawn_player() logic in RespawnManager
-- [x] **DONE.** Filled in `respawn_player()`: emit `respawn_started`, fade out (0.5s), teleport player (found via group "player") to `current_checkpoint`, restore health to full via `health_component.heal_full()` or equivalent, fade in (0.5s), emit `respawn_finished`. If no player found or no checkpoint set, log warning and bail out safely.
-
-### 2.5 Migrate Chapter 1 to RespawnManager
-- [x] **DONE.** `_on_player_died()` now calls `rm.respawn_player()` alongside the narrator quip. Checkpoint body_entered handler calls `rm.set_checkpoint(pos, 1)`. `_spawn_player()` seeds RespawnManager with initial player position as fallback. No local fade overlay existed to remove. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-
-### 2.6 Migrate Chapter 2 to RespawnManager
-- [x] **DONE.** `_on_player_died()` now calls `rm.respawn_player()` alongside narrator quips. Checkpoint body_entered handler calls `rm.set_checkpoint(pos, 2)`. `_spawn_player()` seeds RespawnManager with initial player position as fallback. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-
-### 2.7 Migrate Chapter 3 to RespawnManager
-- [x] **DONE.** `_on_player_died()` now calls `rm.respawn_player()` alongside narrator quips. Checkpoint body_entered handler calls `rm.set_checkpoint(pos, 3)`. `_spawn_player()` seeds RespawnManager with initial player position as fallback. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-
-### 2.8 Migrate Chapter 4 to RespawnManager
-- [x] **DONE.** `_on_player_died()` now calls `rm.respawn_player()` alongside narrator quips. Checkpoint body_entered handler calls `rm.set_checkpoint(pos, 4)`. `_spawn_player()` seeds RespawnManager with initial player position as fallback. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-
-### 2.9 Migrate Chapter 5 to RespawnManager
-- [x] **DONE.** `_on_player_died()` added with Citadel-themed narrator quips + `rm.respawn_player()`. Connected `player_died` signal in `_spawn_player()`. Checkpoint body_entered handler calls `rm.set_checkpoint(pos, 5)`. `_spawn_player()` seeds RespawnManager with initial player position as fallback. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-
-### 2.10 Add player-to-group registration
-- [x] **DONE.** `add_to_group("player")` already present at `globbler.gd:158`, first statement in `_ready()`. No changes needed — RespawnManager group lookup is already satisfied.
+### PER-CHAPTER COLOR PALETTE (locked reference)
+- **Chapter 1 — Terminal Wastes:** deep black + neon green (#39FF14), CRT phosphor glow, heavy dark corridors
+- **Chapter 2 — Training Grounds:** cool blue-green (#4AE0A5), neural-net mesh accents, slightly cleaner
+- **Chapter 3 — Prompt Bazaar:** warm amber (#FFAA33) + neon pink (#FF3EA5), market lanterns, steam
+- **Chapter 4 — Model Zoo:** desaturated museum beige + cold white, dusty motes
+- **Chapter 5 — Alignment Citadel:** clinical white (#F5F8FF) + pale blue (#7FB5FF), stark fluorescent
 
 ---
 
-## PASS 3: GAME OVER FLOW
-# Today death just respawns forever. Add a real fail-state after repeated deaths and for context depletion.
+## PASS 1: LIGHTING & WORLD ENVIRONMENT
+# Fastest visual wins — affects every scene. No new 3D assets required.
 
-### 3.1 Add death threshold tracking to GameManager
-- [x] **DONE.** Added `DEATH_THRESHOLD := 8`, `deaths_this_level := 0`, `register_death()` to `game_manager.gd`. `register_death()` increments counter and emits `game_over` signal with reason when threshold reached. Added `register_death()` call in `respawn_manager.gd` `respawn_player()` before respawn sequence. `deaths_this_level` reset to 0 in `reset_level()`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning. In `scripts/game_manager.gd`, add `const DEATH_THRESHOLD := 8`, `var deaths_this_level := 0`, `func register_death()` that increments and emits existing `game_over` signal when `deaths_this_level >= DEATH_THRESHOLD` with reason "Too many retries — the gradient has descended permanently." Call `register_death()` from RespawnManager.respawn_player() (one-line addition there). Reset `deaths_this_level = 0` inside `reset_level()`.
+### 1.1 Create asset folder scaffold
+- [x] Create directories: `assets/models/player`, `assets/models/enemies`, `assets/models/bosses`, `assets/models/environment`, `assets/blender_source`, `assets/hdri`, `assets/textures/pbr`, `assets/environments`. Create `assets/LICENSES.md` with an empty attribution table (columns: Asset Name, Source, License, URL, Used In). Commit. **Done: all dirs created with .gdkeep for git tracking, LICENSES.md with attribution table header.**
 
-### 3.2 Create game_over.tscn scene
-- [x] **DONE.** Created `scenes/ui/game_over.gd` and `game_over.tscn`. CanvasLayer (layer 150, PROCESS_MODE_ALWAYS) with black scanline background, "CONTEXT TERMINATED" title in red with glitch effect, reason label via `set_reason()`, ASCII skull art, three buttons: RETRY (reloads current chapter, resets death counter), LOAD SAVE (calls SaveSystem.load_game), MAIN MENU (change_scene_to_file to main_menu.tscn). All buttons use PROCESS_MODE_ALWAYS so they work while game is paused. Terminal-aesthetic green-on-dark styling matches main_menu.gd. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+### 1.2 Download Poly Haven HDRIs
+- [ ] Use `mcp__blender__search_polyhaven_assets` (asset_type="hdris") to find 5 suitable HDRIs: dark industrial/server room (Ch1), neutral studio (Ch2), warm market/bazaar (Ch3), abandoned museum (Ch4), clinical/office (Ch5). Download each 1K via `mcp__blender__download_polyhaven_asset`. Export .hdr from Blender to `assets/hdri/ch{n}_sky.hdr`. Record names+URLs in `assets/LICENSES.md`.
 
-### 3.3 Wire game_over signal to game_over scene
-- [x] **DONE.** Connected `game_over` signal to `_on_game_over` handler in `game_manager.gd` `_ready()` with `is_connected` guard. Handler loads `res://scenes/ui/game_over.tscn`, instantiates it, calls `set_reason(reason)`, adds to `/root`, and sets `get_tree().paused = true`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+### 1.3 Create base WorldEnvironment template resource
+- [ ] Create `assets/environments/base_env.tres` — Environment resource with: tonemap_mode=FILMIC, exposure=1.0, glow_enabled=true, glow_bloom=0.2, glow_hdr_threshold=1.0, ssao_enabled=true, ssao_radius=1.5, ssil_enabled=true, sdfgi_enabled=true, fog_enabled=true, fog_density=0.01, volumetric_fog_enabled=true. This is the template all chapters will extend.
 
-### 3.4 Verify game over flow via MCP
-- [x] **DONE.** MCP run_project verified: zero script errors, zero runtime errors. Only pre-existing integer division warning. Game over flow wiring confirmed: `game_over` signal connected in `_ready()`, handler loads `game_over.tscn`, sets reason, adds to root, pauses tree. Two trigger paths: (1) context window depletion, (2) death count >= 8 via `register_death()`. Manual test: deplete context window OR die 8 times in one level → game over screen shows → RETRY reloads chapter + resets death counter, LOAD SAVE calls SaveSystem.load_game, MAIN MENU returns to main_menu.tscn.
+### 1.4 Chapter 1 WorldEnvironment
+- [ ] Create `assets/environments/chapter_1.tres` from base. Load `ch1_sky.hdr` as sky texture, sky_energy=0.3 (dark), fog_light_color=Color(0.1,0.4,0.15), volumetric_fog_density=0.03, tint glow toward green. In `terminal_wastes.gd`, in `_ready()`, instantiate a WorldEnvironment node with environment=`preload("res://assets/environments/chapter_1.tres")` before CSG geometry builds. Remove any existing ad-hoc Environment setup. MCP screenshot via `get_viewport_screenshot` and compare.
 
----
+### 1.5 Chapter 2 WorldEnvironment
+- [ ] Same as 1.4 but `chapter_2.tres` — cool blue-green (`fog_light_color=Color(0.3,0.7,0.6)`, brighter sky_energy=0.5). Apply in `training_grounds.gd` `_ready()`.
 
-## PASS 4: TUTORIAL / FIRST-TIME HINTS
-# The game throws six abilities at the player with zero teaching. Add lightweight first-time toast hints.
+### 1.6 Chapter 3 WorldEnvironment
+- [ ] Same as 1.4 but `chapter_3.tres` — warm amber (`fog_light_color=Color(0.9,0.6,0.3)`, sky_energy=0.7, heavier volumetric fog for "smoky market"). Apply in `prompt_bazaar.gd`.
 
-### 4.1 Create first_time_hint UI component
-- [x] **DONE.** Created `scenes/ui/first_time_hint.gd` and `.tscn`. CanvasLayer (layer 100, PROCESS_MODE_ALWAYS) with terminal-style PanelContainer that slides in from top using TRANS_BACK easing. Auto-dismisses after 4s, early dismiss via any key/click/gamepad button. Single public method `show_hint(title, body)`. Green-on-black styling (#39FF14, dark bg 0.04 alpha 0.95, bordered panel). MCP verified: zero script errors, zero runtime errors.
+### 1.7 Chapter 4 WorldEnvironment
+- [ ] Same as 1.4 but `chapter_4.tres` — desaturated (`adjustment_saturation=0.6`, `fog_light_color=Color(0.6,0.6,0.55)`, dusty motes via ProceduralSkyMaterial). Apply in `model_zoo.gd`.
 
-### 4.2 Add hints_seen tracking to GameManager
-- [x] **DONE.** Added `var hints_seen := {}`, `func has_seen_hint(id: String) -> bool`, `func mark_hint_seen(id: String)` to `game_manager.gd`. SaveSystem has no `get_save_data()` on GameManager — instead hooked directly into `save_system.gd`: `_collect_current_state()` saves `hints_seen` to save dict, `apply_loaded_data()` restores it on load with type guard. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+### 1.8 Chapter 5 WorldEnvironment
+- [ ] Same as 1.4 but `chapter_5.tres` — clinical bright (`adjustment_saturation=0.9`, `fog_light_color=Color(0.9,0.95,1.0)`, sky_energy=1.2, glow_intensity lowered). Apply in `alignment_citadel.gd`. This chapter contrasts all others — high key lighting.
 
-### 4.3 Fire movement hint on Chapter 1 spawn
-- [x] **DONE.** Added `_show_hint_once(id, title, body)` helper to `terminal_wastes.gd` — checks `GameManager.has_seen_hint(id)`, marks hint seen via `mark_hint_seen(id)`, instantiates `first_time_hint.tscn` on root, and calls `show_hint(title, body)`. Called at end of `_ready()` with movement hint. Preloaded `hint_scene`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+### 1.9 Global sun/directional light pass
+- [ ] Each chapter has a DirectionalLight3D. Tune angle, color temp, shadow quality per chapter. Chapter 1 low warm-green rim, Chapter 5 high cool overhead. Enable shadows with `shadow_enabled=true`, `directional_shadow_mode=PARALLEL_4_SPLITS`.
 
-### 4.4 Fire glob-command hint on first aim-mode enter
-- [x] **DONE.** Added `_show_hint_once(id, title, body)` helper and `_HINT_SCENE` preload to `glob_command.gd`. Fires hint id "glob_aim" in `start_aim()` on first aim-mode activation. Routes through `GameManager.has_seen_hint()`/`mark_hint_seen()`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-
-### 4.5 Fire wrench hint on first enemy detected within 10m
-- [x] **DONE.** Added `_check_enemy_proximity()` in `globbler.gd`, called from `_physics_process` throttled to 1s via `_enemy_check_timer`. Scans "enemies" group, fires hint id "wrench" on first enemy within 10m. Early-exits if hint already seen (no wasted cycles). Preloaded `_HINT_SCENE` and added `_show_hint_once` helper. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-
-### 4.6 Fire hack hint on first hackable approach
-- [x] **DONE.** Added `_HINT_SCENE` preload and `_show_hint_once` helper to `terminal_hack.gd`. Fires hint id "hack" at end of `_scan_for_hackables()` when `_nearby_hackable` is set. Routes through `GameManager.has_seen_hint()`/`mark_hint_seen()`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-
-### 4.7 Fire dash hint after 30 seconds of gameplay
-- [x] **DONE.** Added 30-second one-shot `DashHintTimer` in `globbler.gd` `_ready()`. Timer only created if "dash" hint not already seen. On timeout, `_on_dash_hint_timeout()` calls `_show_hint_once("dash", "DASH", "Double-tap movement or press SHIFT+direction to dash. Cooldown is real.")`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
-
-### 4.8 Fire agent-spawn hint on chapter 2 entry
-- [x] **DONE.** Added `hint_scene` preload and `_show_hint_once` helper to `training_grounds.gd`. Fires hint id "agent_spawn" at end of `_ready()`, gated on `player.agent_spawn.is_unlocked`. Routes through `GameManager.has_seen_hint()`/`mark_hint_seen()`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+### 1.10 MCP lighting smoke test all chapters
+- [ ] Run project via Godot MCP, load each chapter from chapter select, capture screenshot via Blender MCP `get_viewport_screenshot` (if showing Godot window) or Godot screen capture. Save to `build_log_<date>_lighting.md` with findings per chapter. No script errors required.
 
 ---
 
-## PASS 5: ACCESSIBILITY AND SETTINGS
-# Glitch + chromatic + bloom shaders can be a problem. Add toggles and difficulty scaling.
+## PASS 2: GLOBBLER HERO CHARACTER
+# The star of the show. Build in Blender via blender-mcp, export to Godot.
 
-### 5.1 Add difficulty enum to GameManager
-- [x] **DONE.** Added `enum Difficulty { EASY, NORMAL, HARD }`, `var difficulty := Difficulty.NORMAL`, `get_difficulty_damage_multiplier()` (Easy 0.5, Normal 1.0, Hard 1.5), `get_difficulty_enemy_hp_multiplier()` (Easy 0.75, Normal 1.0, Hard 1.25) to `game_manager.gd`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+### 2.1 Set up Globbler Blender scene
+- [ ] Via `mcp__blender__execute_blender_code`: clear default scene, set units to meters, add a 1.2m reference cube at origin for scale, set viewport shading to Material Preview. Save file as `assets/blender_source/globbler.blend`. Take viewport screenshot.
 
-### 5.2 Apply difficulty to enemy damage taken by player
-- [x] **DONE.** In `health_component.gd` `take_damage()`, added difficulty multiplier lookup via `GameManager.get_difficulty_damage_multiplier()` gated on `get_parent().is_in_group("player")`. Uses `ceil()` to prevent rounding to zero on Easy. Enemy damage unaffected. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+### 2.2 Sculpt Globbler body (stubby torso + head)
+- [ ] Via `execute_blender_code`: create rounded torso with subdivided UV sphere scaled (1.0, 1.0, 0.85), add slight downward taper. Add integrated head-hood (another squashed sphere blended at top). Target dimensions: ~0.9m tall total, stubby proportions matching reference. Apply Subdivision Surface (level 2). Screenshot and compare to `C:/Users/hwash/Desktop/globbler.jpg`.
 
-### 5.3 Apply difficulty to enemy max HP on spawn
-- [x] **DONE.** In `base_enemy.gd` `_ready()`, multiply `max_health` by `GameManager.get_difficulty_enemy_hp_multiplier()` before `_setup_health_component()` is called. Uses `ceil()` to prevent rounding to zero on Easy. Gated on `get_node_or_null("/root/GameManager")` and `has_method()`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+### 2.3 Carve face cavity + glowing eye sockets
+- [ ] Via `execute_blender_code`: boolean-subtract a flat rectangular recess for the face area. Add two large oval eye sockets (triangular-angry shape). These sockets will get emissive material in 2.9. Screenshot.
 
-### 5.4 Add reduce_motion toggle
-- [x] **DONE.** Added `var reduce_motion := false`, `signal reduce_motion_changed(enabled: bool)`, and `set_reduce_motion(enabled)` to `game_manager.gd`. When enabled: (1) all 5 chapter `_setup_post_processing()` early-return, skipping chromatic aberration + vignette shaders; (2) `corrupted_shell_script.gd` skips `glitch.gdshader` and falls back to static StandardMaterial3D; (3) `main_menu.gd` skips title glitch text and scanline animation; (4) `game_over.gd` skips title glitch text; (5) `dalle_nightmare.gd` skips glitch part jitter. Files touched: `game_manager.gd`, `terminal_wastes.gd`, `training_grounds.gd`, `prompt_bazaar.gd`, `model_zoo.gd`, `alignment_citadel.gd`, `corrupted_shell_script.gd`, `main_menu.gd`, `game_over.gd`, `dalle_nightmare.gd`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+### 2.4 Model wrench prop
+- [ ] Via `execute_blender_code`: model a chunky adjustable wrench (handle + adjustable jaw head) parented to Globbler's right "hand" anchor point. Scale so it's visible at player height. Low-poly with bevels. Screenshot.
 
-### 5.5 Add dialogue_speed setting
-- [x] **DONE.** Added `var dialogue_char_delay := 0.03` to `game_manager.gd` (range 0.005–0.08). In `dialogue_box.gd`, replaced hardcoded `TYPING_SPEED` with dynamic lookup from `GameManager.dialogue_char_delay`, with `DEFAULT_TYPING_SPEED` (0.03) fallback. Fast-mode (0.005) for mashing unchanged. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+### 2.5 Model chest terminal / laptop screen
+- [ ] Via `execute_blender_code`: flat rectangular screen prop embedded in torso front. Slightly tilted upward. Separate material slot for emissive CRT effect. Screenshot.
 
-### 5.6 Add settings panel controls for new toggles
-- [x] **DONE.** Added three controls to existing settings panel in `main_menu.gd`: Difficulty OptionButton (Easy/Normal/Hard, wired to `gm.difficulty`), Reduce Motion CheckBox (wired to `gm.set_reduce_motion()`), Dialogue Speed HSlider (inverted mapping: 0.0=slow/0.08s delay, 1.0=fast/0.005s delay, wired to `gm.dialogue_char_delay`). All read initial values from GameManager. Panel min height expanded 350→520. Terminal-green styling consistent with existing controls. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+### 2.6 Model cables, tubes, and boots
+- [ ] Via `execute_blender_code`: add 3–4 curved cable tubes connecting head to torso using Curve objects with bevel depth. Add stubby boot cylinders at base of torso. All low-poly, beveled. Screenshot.
 
-### 5.7 Persist settings to user://settings.cfg
-- [x] **DONE.** Added `save_settings()` / `load_settings()` to `game_manager.gd` using ConfigFile at `user://settings.cfg`. Stores difficulty, reduce_motion, dialogue_char_delay, music_volume, sfx_volume, ui_volume. `load_settings()` called in `_ready()` — gracefully handles missing file (first launch). `save_settings()` called from all settings callbacks in `main_menu.gd`: difficulty, reduce_motion, dialogue_speed, music_volume, sfx_volume. On load, fires `reduce_motion_changed` signal if enabled so shaders update. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+### 2.7 Apply dark metal PBR material to body
+- [ ] Via `execute_blender_code`: create `globbler_body` material — principled BSDF, base_color=(0.08,0.09,0.08), metallic=0.7, roughness=0.55, clearcoat=0.2. Assign to torso+head+boots. Screenshot with material preview.
+
+### 2.8 Apply emission material to eyes
+- [ ] Via `execute_blender_code`: create `globbler_eyes_emissive` material — base_color=(0.22,1.0,0.08), emission_color=(0.22,1.0,0.08), emission_strength=8.0. Assign to eye socket faces. Screenshot.
+
+### 2.9 Apply emission CRT material to chest screen
+- [ ] Via `execute_blender_code`: create `globbler_screen` material — emission_color=(0.2,0.9,0.2), emission_strength=3.0. Later we'll override with a scanline shader in Godot, but this gives the base glow on export. Screenshot.
+
+### 2.10 Bake AO and export to GLB
+- [ ] Via `execute_blender_code`: bake ambient occlusion to a 1024 texture on the combined mesh. Join all Globbler parts (except wrench, keep separate for animation). Select all, export as GLB to `assets/models/player/globbler.glb` with `export_apply=True`, `export_materials='EXPORT'`, `export_yup=True`. Save .blend.
+
+### 2.11 Import GLB into Godot player scene
+- [ ] In `scenes/player/globbler.tscn`, replace the CSG torso/head placeholders with the new `res://assets/models/player/globbler.glb` instance. Keep CollisionShape3D as-is. Adjust transform so feet are at y=0. Test run via Godot MCP — player should appear in-world.
+
+### 2.12 Tune scale, pivot, camera offset
+- [ ] With the new mesh in place, verify: player fits corridors, camera framing looks right, third-person offset still reads well. Adjust mesh scale or character_body collision if needed. Run project via MCP, walk around in chapter 1, confirm no clipping issues.
 
 ---
 
-## PASS 6: DIALOGUE QUALITY OF LIFE
-# For a dialogue-heavy sarcastic game, players will want to re-read and skip.
+## PASS 3: GLOBBLER SHADERS & VFX
+# Give the mesh cinematic polish in Godot.
 
-### 6.1 Add dialogue skip-all input
-- [x] **DONE.** Added ESC handling in `dialogue_box.gd` `_unhandled_input()`: checks for "pause" action press, and if DialogueManager has active dialogue, calls `dm.skip_all()` and consumes the event via `set_input_as_handled()` so pause menu is not triggered. Added public `skip_all()` method to `dialogue_manager.gd` that calls `_end_dialogue()` to cleanly end the sequence and emit `dialogue_ended`. MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+### 3.1 Character rim-light shader
+- [ ] Create `assets/shaders/character_rim.gdshader` — fresnel-based rim light that adds green outer glow (Color(0.2,1.0,0.1)) with adjustable power (default 3.0) and intensity (1.5). Apply as override material to Globbler body mesh in globbler.tscn. Exclude eyes/screen from rim.
 
-### 6.2 Add dialogue backlog storage
-- [x] **DONE.** Added `var history: Array[Dictionary] = []` and `const MAX_HISTORY := 200` to `dialogue_manager.gd`. Added `_record_history(speaker, text)` private helper that appends `{speaker, text, timestamp}` using `Time.get_unix_time_from_system()` and pops oldest entry when over 200. Called from both `advance()` (sequence lines) and `quick_line()` (one-off lines) so every displayed line is captured. Added `get_history() -> Array` public accessor for the backlog viewer (Task 6.3). MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+### 3.2 Eye emission pulse shader
+- [ ] Create `assets/shaders/eye_pulse.gdshader` — animated emission strength oscillating 6.0↔12.0 at 1.5Hz using `TIME`. Also adds slight flicker via `fract(TIME*13.0)`. Apply to eye material in globbler.tscn.
 
-### 6.3 Add dialogue history viewer
-- [x] **DONE.** Created `scenes/ui/dialogue_history.gd` and `.tscn`. CanvasLayer (layer 110, PROCESS_MODE_ALWAYS) with terminal-green-on-black scrollable backlog. Shows last 30 entries from `DialogueManager.get_history()` with `[SPEAKER]` tags and dialogue text. Registered `dialogue_history` input action (H key) in `game_manager.gd`. GameManager preloads scene, opens on H press with `_dialogue_history_open` guard to prevent stacking. Viewer pauses tree on open, restores previous pause state on close (H or ESC, input consumed). MCP verified: zero script errors, zero runtime errors. Only pre-existing integer division warning.
+### 3.3 Chest screen CRT scanline shader
+- [ ] Create `assets/shaders/crt_screen.gdshader` — horizontal scanlines, slight chromatic offset, random green static 5%. Apply to chest terminal emissive mesh. If reduce_motion is enabled, disable scanline animation (static texture).
+
+### 3.4 Damage flash shader
+- [ ] Create `assets/shaders/damage_flash.gdshader` — white/red additive overlay triggered via shader parameter `flash_intensity`. In `health_component.gd`, on damage, tween `flash_intensity` from 1.0 to 0.0 over 0.15s on owner's mesh material.
+
+### 3.5 Death dissolve effect
+- [ ] Create `assets/shaders/dissolve.gdshader` — vertical noise-based dissolve from bottom to top with glowing edge. In `globbler.gd` `die()`, tween dissolve threshold 0.0→1.0 over 0.8s before respawn. Reverse on respawn (1.0→0.0).
 
 ---
 
-## PASS 7: FINAL VALIDATION
-# Prove the polish pass did not break anything.
+## PASS 4: ENVIRONMENT ASSET PIPELINE
+# Sourcing + integration utilities for CC0 props.
 
-### 7.1 MCP smoke test all chapters
-- [x] **DONE.** MCP smoke test: main menu + chapters 1–5 all launched cleanly. Fixed one runtime crash: `first_time_hint.gd:108` — `add_child()` on root failed during `_ready()` ("Parent node is busy setting up children"). Root cause: `_show_hint_once()` called synchronously from `_ready()` in `terminal_wastes.gd` and `training_grounds.gd`. Fix: changed `add_child(hint)` and `hint.show_hint()` to `call_deferred` variants. After fix: zero runtime errors, zero script errors across all scenes. Pre-existing warnings (all cosmetic, not introduced by V1.2): unused parameters (`_delta`, `_dist`, `_targets`, `_puzzle`, `_amount`, `_source`, `_killer`, `_reason`, `_idx`, `_room_key`, `_response_node`, `_option_node`, `_wave_width`), unused variables (`old_state`, `old_phase`, `total_show_time`, `damage_tick`, `orig_emission`, `bridge`, `backing`, `_main_panel`, `_category_tabs`, `_opening_narration_done`, `_room_dialogue_triggered`, `_low_health_warned`, `_first_glob_triggered`, `_pulse_nodes`), variable shadowing (`box`, `mat`, `dm`, `maxed`, `health_comp`), integer division warnings, ternary type mismatch, `sign` built-in name shadow, lambda capture reassignment, `glob_fired`/`tile_restored` unused signals.
+### 4.1 Create MultiMesh scatter utility
+- [ ] Create `scripts/utils/prop_scatter.gd` — static helper: `scatter_props(scene_root, mesh: Mesh, positions: Array[Vector3], rotations: Array[float], scales: Array[float])` builds a MultiMeshInstance3D. Use for performant clutter placement.
 
-### 7.2 Commit final V1.2 tag
-- [x] **DONE.** Updated TASKS.md with V1.2 completion summary. Committed CLAUDE.md (updated to V1.2 instructions), prompt.md, and TASKS.md. Tagged as "V1.2 — core polish complete".
+### 4.2 Download Poly Haven tech-waste textures
+- [ ] Search Poly Haven textures via MCP for: rusted metal, scratched plastic, circuit board, concrete wall. Download 2K for each. Place under `assets/textures/pbr/{material_name}/`. Record in LICENSES.md.
+
+### 4.3 Download CC0 electronic prop pack
+- [ ] Via Sketchfab MCP, search for CC0 "electronics", "motherboard", "CPU chip", "floppy disk", "keyboard". Download 5–8 models. Import to Blender, export individually as .glb to `assets/models/environment/prop_{name}.glb`. Record sources.
+
+### 4.4 Download CC0 cyberpunk architecture props
+- [ ] Same as 4.3 but "pipe", "cable", "industrial panel", "server rack", "neon sign". 5–8 models to `assets/models/environment/arch_{name}.glb`.
+
+### 4.5 Download CC0 bazaar/market props
+- [ ] Same but "lantern", "market stall", "rug", "crate", "oil drum" for Chapter 3 warm theme. 5–8 models.
+
+### 4.6 Download CC0 clinical/office props
+- [ ] Same but "office chair", "desk", "fluorescent light", "folder", "monitor" for Chapter 5 clinical theme. 5–8 models.
+
+---
+
+## PASS 5: CHAPTER ENVIRONMENT PASSES
+# Replace CSG clutter with real props. One chapter per task.
+
+### 5.1 Chapter 1 Terminal Wastes — prop pass
+- [ ] In `terminal_wastes.gd`, identify CSG clutter meshes placed as visual dressing (NOT structural walls/floors). Replace with MultiMesh scatters of Pass-4 tech-waste props. Keep puzzle/enemy positions. MCP run to verify no scripts broke.
+
+### 5.2 Chapter 2 Training Grounds — prop pass
+- [ ] Same as 5.1 for `training_grounds.gd`. Use neural-network-themed scatter (nodes, wires). Cleaner than Chapter 1.
+
+### 5.3 Chapter 3 Prompt Bazaar — prop pass
+- [ ] Same for `prompt_bazaar.gd`. Use bazaar/market props + lanterns + rugs. Add warm point lights.
+
+### 5.4 Chapter 4 Model Zoo — prop pass
+- [ ] Same for `model_zoo.gd`. Use museum props — plaques, velvet ropes, pedestals, dust sheets. Each exhibit alcove dressed.
+
+### 5.5 Chapter 5 Alignment Citadel — prop pass
+- [ ] Same for `alignment_citadel.gd`. Use clinical props — office chairs, desks, fluorescent light strips, ID badges strewn.
+
+---
+
+## PASS 6: ENEMY VISUAL UPGRADES
+# 14 regular enemies. One model per task.
+
+### 6.1 Regex Spider model
+- [ ] Via blender-mcp: build a small spider with 8 segmented cable-legs and glowing purple LED body. Low-poly (~500 tris). Export to `assets/models/enemies/regex_spider.glb`. Swap mesh in `scenes/enemies/regex_spider.tscn`. Keep collision+script intact.
+
+### 6.2 Zombie Process model
+- [ ] Via blender-mcp: slouched humanoid husk, old beige server-casing texture, dangling cables. ~800 tris. Export + swap in `zombie_process.tscn`.
+
+### 6.3 Corrupted Shell Script model
+- [ ] Via blender-mcp: glitchy floating shell scroll + twisted pipes. ~400 tris. Purple-green glitch emission material. Swap in `corrupted_shell_script.tscn`.
+
+### 6.4 Dropout Ghost model
+- [ ] Via blender-mcp: translucent floating node-ghost with fading tendrils. Alpha blend. Swap in `dropout_ghost.tscn`.
+
+### 6.5 Overfitting Ogre model
+- [ ] Via blender-mcp: bulky 4-limbed brute made of stacked data-blocks, ~1200 tris. Swap in `overfitting_ogre.tscn`.
+
+### 6.6 Vanishing Gradient Wisp model
+- [ ] Via blender-mcp: fading wisp with particle trail, mostly shader-driven. Swap in `vanishing_gradient_wisp.tscn`.
+
+### 6.7 Hallucination Merchant model
+- [ ] Via blender-mcp: cloaked trader-figure with illusion-aura shader, floating wares. Swap in `hallucination_merchant.tscn`.
+
+### 6.8 Jailbreaker model
+- [ ] Via blender-mcp: punk-style humanoid in rebel gear, spray-can + crowbar. Swap in `jailbreaker.tscn`.
+
+### 6.9 Prompt Injector model
+- [ ] Via blender-mcp: slim rogue figure in terminal-green hoodie throwing text-shard projectiles. Swap in `prompt_injector.tscn`.
+
+### 6.10 GPT-2 Fossil model
+- [ ] Via blender-mcp: skeletal stone-data fossil frame, hunched. Tan fossil material. Swap in `gpt2_fossil.tscn`.
+
+### 6.11 DALL-E Nightmare model
+- [ ] Via blender-mcp: abstract CSG-dream creature with morphing parts (keep procedural CSG spawns inside script; this task swaps only the BASE body). Swap in `dalle_nightmare.tscn`.
+
+### 6.12 Clippy's Revenge model
+- [ ] Via blender-mcp: oversized 3D paperclip with glowing red eyes. Swap in `clippy_revenge.tscn`. This one can lean into camp.
+
+### 6.13 Safety Classifier model
+- [ ] Via blender-mcp: hovering drone-cube with scanning blue lens. Swap in `safety_classifier.tscn`.
+
+### 6.14 RLHF Drone model
+- [ ] Via blender-mcp: small quad-rotor clipboard-bot. Swap in `rlhf_drone.tscn`.
+
+### 6.15 Constitutional Cop model
+- [ ] Via blender-mcp: authority-figure humanoid with law-scroll shield. Swap in `constitutional_cop.tscn`.
+
+---
+
+## PASS 7: BOSS VISUAL UPGRADES
+# 5 bosses — each gets a detailed hero-asset pass.
+
+### 7.1 rm -rf Boss model
+- [ ] Via blender-mcp: massive clawed delete-daemon, red glow, jagged armor plates. ~2500 tris. Export to `assets/models/bosses/rm_rf_boss.glb`. Swap in `rm_rf_boss/rm_rf_boss.tscn`. Keep phase-transition scripts intact.
+
+### 7.2 Local Minimum Boss model
+- [ ] Via blender-mcp: swirling gravity-well entity, distorted body with orbiting energy nodes. Dark-purple emission core. Swap in boss scene.
+
+### 7.3 System Prompt Boss model
+- [ ] Via blender-mcp: floating text-shard colossus, pages of text orbiting a glowing central prism. Swap.
+
+### 7.4 Foundation Model Boss model
+- [ ] Via blender-mcp: hulking multi-modal golem with 4 faces (text/image/audio/code glowing panels). Swap.
+
+### 7.5 Aligner Boss model
+- [ ] Via blender-mcp: tall clinical angel-figure in white+gold, restrictive chains. Contrasts Globbler's dark-green aesthetic. Swap.
+
+---
+
+## PASS 8: VFX POLISH
+# Particles, beams, impacts, auras.
+
+### 8.1 Glob beam shader upgrade
+- [ ] Rewrite `assets/shaders/glob_beam.gdshader` with better pattern scroll, softer edges, bloom-friendly emissive core. Test in-game.
+
+### 8.2 Wrench impact sparks
+- [ ] Create `scenes/vfx/wrench_sparks.tscn` — GPUParticles3D emitter, 30 spark particles, 0.3s lifetime, green-white. Spawn at impact point from `wrench_smash.gd` on hit.
+
+### 8.3 Dash trail ghost effect
+- [ ] Create `scenes/vfx/dash_trail.tscn` — Globbler mesh copies left behind with fading green emissive. Spawn 4 per dash via `globbler.gd` dash logic.
+
+### 8.4 Token pickup sparkle
+- [ ] Create `scenes/vfx/token_sparkle.tscn` — small GPUParticles3D burst, green stars rising. Trigger from GameManager.add_memory_tokens.
+
+### 8.5 Enemy death shatter
+- [ ] Create `scenes/vfx/enemy_shatter.tscn` — polygon shard explosion, 20 particles. Trigger from `base_enemy.gd` on death before queue_free.
+
+### 8.6 Puzzle solve burst
+- [ ] Create `scenes/vfx/puzzle_solve.tscn` — rising green rings + particle pulse. Trigger from `base_puzzle.gd` on solved state.
+
+### 8.7 Boss phase transition flash
+- [ ] Create `scenes/vfx/boss_phase_flash.tscn` — screen-space color flash + particle shockwave. Trigger from boss scripts on phase change (emit signal to VFX).
+
+### 8.8 Checkpoint rune effect
+- [ ] Create `scenes/vfx/checkpoint_rune.tscn` — rotating green ring + vertical light beam at each checkpoint. Activates on RespawnManager.set_checkpoint.
+
+---
+
+## PASS 9: UI VISUAL POLISH
+# HUD, menus, dialogue — match the new aesthetic.
+
+### 9.1 Add custom terminal font
+- [ ] Download CC0 monospace font (e.g. "VT323", "Share Tech Mono", "IBM Plex Mono"). Save to `assets/fonts/terminal_mono.ttf`. Create `assets/ui_theme.tres` Theme resource setting it as default. Apply theme in `main_menu.tscn` and HUD.
+
+### 9.2 Animated dialogue-box scanlines
+- [ ] In `dialogue_box.gd` scene, add a ShaderMaterial with scanline+flicker shader. Respect reduce_motion toggle.
+
+### 9.3 HUD ability icons
+- [ ] Via blender-mcp or Godot: design 6 flat-shaded icon meshes (or 2D textures) for: glob, wrench, hack, dash, agent_spawn, context. Export to `assets/ui/icons/*.png` 64x64. Wire into `hud.gd` ability bar.
+
+### 9.4 HUD layout redesign
+- [ ] Revise `hud.tscn` layout: top-left context bar + health, top-right minimap slot (leave empty for now), bottom-center ability icons, bottom-left pattern input. Match terminal-green aesthetic with borders.
+
+### 9.5 Main menu 3D background
+- [ ] In `main_menu.tscn`, add a Viewport rendering a 3D scene with Globbler idle-posed + floating tech debris. Scrolling camera. Replace any flat background.
+
+### 9.6 Loading screen art
+- [ ] In `loading_screen.gd`, replace placeholder with rotating 3D Globbler head + loading-bar scanline + tip rotation. Reuse tips from V1.1.
+
+### 9.7 Credits background
+- [ ] In `credits.tscn`, add subtle scrolling particle field + dim HDRI background. Keep terminal text readable.
+
+### 9.8 Pause menu restyle
+- [ ] Restyle the pause overlay in `globbler.gd` `_setup_pause_overlay()` — add terminal borders, glitch title if reduce_motion disabled, button hover sfx.
+
+### 9.9 Game over screen restyle
+- [ ] Upgrade `game_over.tscn` styling — glitch title effect (respect reduce_motion), ASCII art, terminal border.
+
+### 9.10 Settings menu restyle
+- [ ] Restyle settings panel in `main_menu.gd` with new theme + consistent spacing + section headers.
+
+---
+
+## PASS 10: UX IMPROVEMENTS
+# Companion UX polish alongside graphics upgrade.
+
+### 10.1 Add fullscreen / windowed toggle
+- [ ] Add display_mode setting to GameManager + settings menu + persist to settings.cfg. DisplayServer.window_set_mode switches between WINDOWED/FULLSCREEN.
+
+### 10.2 Add resolution setting
+- [ ] Add resolution OptionButton (1280x720, 1920x1080, 2560x1440, 3840x2160) to settings menu. Persist. Apply via `DisplayServer.window_set_size`.
+
+### 10.3 Add mouse sensitivity slider
+- [ ] Add mouse_sensitivity float (range 0.1–3.0, default 1.0) to GameManager. Multiply against existing camera rotation speed in `globbler.gd` mouse input handling. Persist.
+
+### 10.4 Add invert-Y toggle
+- [ ] Add invert_mouse_y bool to GameManager + settings checkbox. When true, flip sign on vertical camera look in `globbler.gd`. Persist.
+
+### 10.5 Chapter select thumbnails
+- [ ] Screenshot each chapter spawn area (now with real graphics), save to `assets/ui/chapter_thumb_{n}.png`. Wire into `main_menu.gd` chapter select panel buttons.
+
+### 10.6 End-of-chapter stats summary
+- [ ] Create `scenes/ui/chapter_summary.tscn` — shows deaths, tokens earned, time, kills, combo max. Triggered by GameManager.complete_level() before scene transition. Continue button.
+
+---
+
+## PASS 11: FINAL VALIDATION
+# Verify the graphics pass did not break gameplay.
+
+### 11.1 Playthrough chapter 1 visual QA
+- [ ] Run project via Godot MCP, load Chapter 1, spend 2 minutes exploring. Capture 3 screenshots (spawn, mid, boss door). List any visual bugs in checkbox note. No script errors required.
+
+### 11.2 Playthrough chapters 2–5 visual QA
+- [ ] Same as 11.1 for each remaining chapter. One commit.
+
+### 11.3 Performance audit
+- [ ] Run project with `--debug-gpu-profile` (or view Monitor debug panel). Capture FPS at chapter 1 spawn, busiest Chapter 4 exhibit, and Chapter 5 sanitizer. Target: ≥60 FPS at 1080p. Note findings.
+
+### 11.4 Commit V2.0 graphics milestone
+- [ ] Write summary at top of TASKS.md CURRENT STATUS. Commit all outstanding changes with tag message "V2.0 — graphics and art pass complete". Screenshot gallery in build_log.
