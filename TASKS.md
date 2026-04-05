@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 2.9 — Download CC0 credits music
-- **Next task to do:** Task 2.10 — Download CC0 gameplay SFX pack
+- **Last task completed:** Task 2.10 — Download CC0 gameplay SFX pack
+- **Next task to do:** Task 2.11 — Download CC0 ability SFX
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -98,7 +98,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Downloaded "Lonely Night" by Centurion_of_war from OpenGameArt.org (CC0). Calm, contemplative chiptune loop with a reflective mood — suitable for credits roll. 3.6MB OGG, loopable. Saved to `assets/audio/music/credits.ogg`. Attribution added to LICENSES.md.
 
 ### 2.10 Download CC0 gameplay SFX pack
-- [ ] From OpenGameArt.org or Freesound (CC0 only): footsteps on metal (2 variants), jump, land, dash whoosh, hurt grunt, death. Save to `assets/audio/sfx/player_*.ogg`. Record attributions.
+- [x] **DONE:** Downloaded 7 player SFX from 4 CC0 OpenGameArt sources: (1) yd's "Platformer Sounds" → player_footstep_1.ogg, player_footstep_2.ogg (metal platform steps), player_land.ogg (metal landing impact). (2) qubodup's "15 Vocal Male Strain/Hurt/Pain/Jump Sounds" → player_jump.ogg (effort grunt), player_hurt.ogg (pain grunt). (3) qubodup's "Swish - Bamboo Stick Weapon Swooshes" → player_dash.ogg (swoosh). (4) thebardofblasphemy's "Grunts of Male Death and Pain" → player_death.ogg (2s death grunt clip). All CC0, all saved to assets/audio/sfx/player_*.ogg, all attributions in LICENSES.md.
 
 ### 2.11 Download CC0 ability SFX
 - [ ] Glob cast, wrench impact, hack beep-sequence, agent-spawn pop. Save to `assets/audio/sfx/ability_*.ogg`. Record attributions.

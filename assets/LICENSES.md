@@ -57,5 +57,10 @@ Only CC0 / CC-BY / royalty-free assets are permitted.
 | Elevator Music (music) | OpenGameArt / Pro Sensory (Alex McCulloch) | CC0 | https://opengameart.org/content/elevator-music | Ch5 music — assets/audio/music/chapter_5.ogg |
 | Trance Boss Battle (music) | OpenGameArt / MintoDog | CC0 | https://opengameart.org/content/trance-boss-battle | Boss music — assets/audio/music/boss.ogg |
 | Lonely Night (music) | OpenGameArt / Centurion_of_war | CC0 | https://opengameart.org/content/lonely-night | Credits music — assets/audio/music/credits.ogg |
-| *(Audio — SFX)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Player, ability, UI, enemy SFX — assets/audio/sfx/* |
+| Platformer Sounds (SFX) | OpenGameArt / yd | CC0 | https://opengameart.org/content/platformer-sounds-terminal-interaction-door-shots-bang-and-footsteps | Player footsteps & landing — assets/audio/sfx/player_footstep_{1,2}.ogg, player_land.ogg |
+| Jump Landing Sound (SFX) | OpenGameArt / MentalSanityOff (submitted by qubodup) | CC0 | https://opengameart.org/content/jump-landing-sound | *(available, not used — yd landing preferred)* |
+| 15 Vocal Male Strain/Hurt/Pain/Jump Sounds (SFX) | OpenGameArt / qubodup | CC0 | https://opengameart.org/content/15-vocal-male-strainhurtpainjump-sounds | Player jump & hurt — assets/audio/sfx/player_jump.ogg, player_hurt.ogg |
+| Swish - Bamboo Stick Weapon Swooshes (SFX) | OpenGameArt / qubodup | CC0 | https://opengameart.org/content/swish-bamboo-stick-weapon-swhoshes | Player dash — assets/audio/sfx/player_dash.ogg |
+| Grunts of Male Death and Pain (SFX) | OpenGameArt / thebardofblasphemy | CC0 | https://opengameart.org/content/grunts-male-death-and-pain | Player death — assets/audio/sfx/player_death.ogg |
+| *(Audio — SFX: ability/UI/enemy)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Ability, UI, enemy SFX — assets/audio/sfx/* |
 | *(Audio — ambient)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Ambient loops — assets/audio/ambient/* |
