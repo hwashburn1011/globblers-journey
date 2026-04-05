@@ -52,7 +52,7 @@ func _ready() -> void:
 	star_mat.emission_enabled = true
 	star_mat.emission = Color(0.22, 1.0, 0.08)  # That signature neon green
 	star_mat.emission_energy_multiplier = 4.0
-	star_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLE_BILLBOARD
+	star_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
 	star_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	star_mesh.material = star_mat
 

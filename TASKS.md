@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 8.7 complete
-- **Last task completed:** Task 8.7 — Boss phase transition flash VFX
-- **Next task to do:** Task 8.8 (Checkpoint rune effect)
+- **Last updated by:** Claude (2026-04-05) — Task 8.8 complete
+- **Last task completed:** Task 8.8 — Checkpoint rune VFX
+- **Next task to do:** Task 9.1 (Add custom terminal font)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 COMPLETE — all 5 boss visual upgrades done (rm -rf, System Prompt, Local Minimum, Foundation Model, Aligner). All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -276,7 +276,7 @@ assets/
 - [x] Create `scenes/vfx/boss_phase_flash.tscn` — screen-space color flash + particle shockwave. Trigger from boss scripts on phase change (emit signal to VFX). **Done: Created boss_phase_flash.tscn with expanding torus shockwave ring (scale-curve driven expansion, white-to-green-to-transparent gradient), 40-particle radial spark burst (white-hot to green to red-orange fade, full sphere explosion with angular velocity), dual OmniLight3D flash (primary green at energy 12.0 with two-stage tween fade + orange accent flash). Wired into all 5 boss _transition_to_phase() — spawns at boss global_position via call_deferred for PHASE_2, PHASE_3, and DEFEATED transitions (skips INTRO and PHASE_1 start).**
 
 ### 8.8 Checkpoint rune effect
-- [ ] Create `scenes/vfx/checkpoint_rune.tscn` — rotating green ring + vertical light beam at each checkpoint. Activates on RespawnManager.set_checkpoint.
+- [x] Create `scenes/vfx/checkpoint_rune.tscn` — rotating green ring + vertical light beam at each checkpoint. Activates on RespawnManager.set_checkpoint. **Done: Created checkpoint_rune.gd + .tscn with TorusMesh ring (inner 0.8, outer 1.0, neon green emissive, rotating at 1.2 rad/s), tapered CylinderMesh vertical light beam (5m tall, green translucent), OmniLight3D (green, energy 2.5, range 4m), and ring-shaped GPUParticles3D sparkles (12 particles, 2s lifetime). Starts dormant, activate() triggers scale-up tween + fade-in + particle start. Respects reduce_motion (disables rotation + particles). Wired into all 5 chapter _create_checkpoint() functions — rune instantiated per checkpoint, activated on body_entered alongside existing marker flash. Also fixed pre-existing BILLBOARD_PARTICLE_BILLBOARD bug in 5 VFX scripts (token_sparkle, wrench_sparks, boss_phase_flash, puzzle_solve, enemy_shatter) — corrected to BILLBOARD_PARTICLES for Godot 4.4.1. MCP smoke test: zero new runtime errors.**
 
 ---
 

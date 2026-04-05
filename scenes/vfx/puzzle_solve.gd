@@ -121,7 +121,7 @@ func _ready() -> void:
 	spark_mesh_mat.emission_enabled = true
 	spark_mesh_mat.emission = Color(0.22, 1.0, 0.08)
 	spark_mesh_mat.emission_energy_multiplier = 5.0  # Bloom bait — these sparks WANT to be noticed
-	spark_mesh_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLE_BILLBOARD
+	spark_mesh_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
 	spark_mesh_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	spark_mesh.material = spark_mesh_mat
 

@@ -55,7 +55,7 @@ func _ready() -> void:
 	shard_mat.emission_enabled = true
 	shard_mat.emission = Color(1.0, 0.3, 0.05)
 	shard_mat.emission_energy_multiplier = 4.0  # Bright enough to make bloom weep with joy
-	shard_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLE_BILLBOARD
+	shard_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
 	shard_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	shard_mesh.material = shard_mat
 

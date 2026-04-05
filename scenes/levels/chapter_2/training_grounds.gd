@@ -1240,6 +1240,12 @@ func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> v
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	area.add_child(label)
 
+	# Checkpoint rune VFX — dormant until player triggers
+	var rune_scene = preload("res://scenes/vfx/checkpoint_rune.tscn")
+	var rune = rune_scene.instantiate()
+	rune.position = Vector3(0, -size.y / 2.0, 0)
+	area.add_child(rune)
+
 	var saved_already := [false]
 	var save_sys = get_node_or_null("/root/SaveSystem")
 
@@ -1255,10 +1261,12 @@ func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> v
 			var am_ref = get_node_or_null("/root/AudioManager")
 			if am_ref and am_ref.has_method("play_checkpoint"):
 				am_ref.play_checkpoint()
-			# Flash the marker
+			# Flash the marker + activate rune VFX
 			var tween = create_tween()
 			tween.tween_property(mmat, "emission_energy_multiplier", 3.0, 0.2)
 			tween.tween_property(mmat, "emission_energy_multiplier", 0.8, 0.5)
+			if rune and rune.has_method("activate"):
+				rune.activate()
 			var dm = get_node_or_null("/root/DialogueManager")
 			if dm and dm.has_method("quick_line"):
 				dm.quick_line("GLOBBLER", "Checkpoint. Good. My gradients were getting unstable.")

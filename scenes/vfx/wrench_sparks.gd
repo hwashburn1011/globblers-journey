@@ -52,7 +52,7 @@ func _ready() -> void:
 	spark_mat.emission_enabled = true
 	spark_mat.emission = Color(0.22, 1.0, 0.08)  # #39FF14 adjacent
 	spark_mat.emission_energy_multiplier = 3.0
-	spark_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLE_BILLBOARD
+	spark_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
 	spark_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	spark_mesh.material = spark_mat
 

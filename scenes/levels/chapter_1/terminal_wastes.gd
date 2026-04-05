@@ -1033,6 +1033,12 @@ func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> v
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	area.add_child(label)
 
+	# Checkpoint rune VFX — dormant until player triggers
+	var rune_scene = preload("res://scenes/vfx/checkpoint_rune.tscn")
+	var rune = rune_scene.instantiate()
+	rune.position = Vector3(0, -pos.y + 0.05, 0)
+	area.add_child(rune)
+
 	var saved_already := [false]
 
 	area.body_entered.connect(func(body: Node3D):
@@ -1053,11 +1059,13 @@ func _create_checkpoint(checkpoint_id: String, pos: Vector3, size: Vector3) -> v
 			if am_ref:
 				am_ref.play_checkpoint()
 
-			# Visual feedback — flash the marker
+			# Visual feedback — flash the marker + activate rune VFX
 			if marker:
 				var tween = create_tween()
 				tween.tween_property(mat, "emission_energy_multiplier", 3.0, 0.2)
 				tween.tween_property(mat, "emission_energy_multiplier", 0.5, 0.8)
+			if rune and rune.has_method("activate"):
+				rune.activate()
 
 			# Brief thought from Globbler
 			var dm = get_node_or_null("/root/DialogueManager")
