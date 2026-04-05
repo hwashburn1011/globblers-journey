@@ -31,3 +31,11 @@ Only CC0 / CC-BY / royalty-free assets are permitted.
 | arch_vent_duct (Model) | Procedural (Blender) | N/A | N/A | Architecture prop — rectangular vent duct with louver slats and rivets |
 | arch_wall_terminal (Model) | Procedural (Blender) | N/A | N/A | Architecture prop — wall-mounted terminal with screen, keyboard, status lights |
 | arch_floor_grate (Model) | Procedural (Blender) | N/A | N/A | Architecture prop — 1m² floor grate with grid bars, cross-braces, corner bolts |
+| bazaar_lantern (Model) | Procedural (Blender) | N/A | N/A | Bazaar prop — hanging oil lantern with amber emissive glass, iron frame, hook ring |
+| bazaar_market_stall (Model) | Procedural (Blender) | N/A | N/A | Bazaar prop — wooden market booth with canvas canopy, sign board, pink neon strip |
+| bazaar_rug (Model) | Procedural (Blender) | N/A | N/A | Bazaar prop — flat woven rug with wavy wrinkles, warm red pattern, gold fringes |
+| bazaar_crate (Model) | Procedural (Blender) | N/A | N/A | Bazaar prop — wooden shipping crate with horizontal slat bands, corner posts |
+| bazaar_oil_drum (Model) | Procedural (Blender) | N/A | N/A | Bazaar prop — rusty barrel with bulged profile, rim rings, bung plugs on top |
+| bazaar_clay_pot (Model) | Procedural (Blender) | N/A | N/A | Bazaar prop — terracotta vase with sculpted belly/neck profile, rim ring |
+| bazaar_fabric_banner (Model) | Procedural (Blender) | N/A | N/A | Bazaar prop — draped hanging fabric strip with catenary sag, iron mounting rings |
+| bazaar_spice_sack (Model) | Procedural (Blender) | N/A | N/A | Bazaar prop — burlap sack with lumpy fill, amber spice mound, rope tie |

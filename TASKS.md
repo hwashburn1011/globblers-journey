@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 4.4 complete
-- **Last task completed:** Task 4.4 — Build procedural cyberpunk architecture prop pack (8 models)
-- **Next task to do:** Task 4.5 (Download CC0 bazaar/market props)
+- **Last updated by:** Claude (2026-04-04) — Task 4.5 complete
+- **Last task completed:** Task 4.5 — Build procedural bazaar/market prop pack (8 models)
+- **Next task to do:** Task 4.6 (Download CC0 clinical/office props)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 in progress — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -154,7 +154,7 @@ assets/
 - [x] Same as 4.3 but "pipe", "cable", "industrial panel", "server rack", "neon sign". 5–8 models to `assets/models/environment/arch_{name}.glb`. **Done: Sketchfab integration disabled — built 8 procedural cyberpunk architecture props in Blender instead: arch_industrial_pipe (432v, flanged pipe with bolts and rust band), arch_cable_bundle (296v, 5-cable cluster with zip-tie clamps), arch_industrial_panel (428v, wall panel with gauge/switches/LEDs/button/screen), arch_server_rack (592v, 2m tall rack with 6 server units/LEDs/vents), arch_neon_sign (168v, wall sign with green neon tubes and mounting brackets), arch_vent_duct (264v, rectangular duct with louver slats and rivets), arch_wall_terminal (364v, wall-mounted terminal with screen/keyboard/status lights), arch_floor_grate (232v, 1m² grid with cross-braces and corner bolts). All use 7 shared PBR materials (dark metal, panel metal, neon green emissive, cable rubber, rust accent, red LED, grate). Exported as GLB to assets/models/environment/. Source blend saved to assets/blender_source/architecture_props.blend. All attributions in LICENSES.md.**
 
 ### 4.5 Download CC0 bazaar/market props
-- [ ] Same but "lantern", "market stall", "rug", "crate", "oil drum" for Chapter 3 warm theme. 5–8 models.
+- [x] Same but "lantern", "market stall", "rug", "crate", "oil drum" for Chapter 3 warm theme. 5–8 models. **Done: Sketchfab integration disabled — built 8 procedural bazaar/market props in Blender instead: bazaar_lantern (640v, octagonal iron frame with amber emissive glass panels, cone cap, hook ring), bazaar_market_stall (113v, wooden booth with 4 legs, 4 canopy posts, drooped canvas canopy, sign board with pink neon strip), bazaar_rug (80v, flat woven rug with wavy wrinkles, warm red pattern, gold fringes at ends), bazaar_crate (136v, wooden crate with 3-band horizontal slats, 4 corner posts, dark wood accents), bazaar_oil_drum (1824v, rusty barrel with bulged profile, top/bottom/middle rim rings, cap with bung plugs), bazaar_clay_pot (674v, terracotta vase with sculpted belly-neck-lip profile, SubSurf smooth, rim ring), bazaar_fabric_banner (1252v, draped fabric strip with catenary sag and wave detail, iron mounting rings), bazaar_spice_sack (803v, lumpy burlap sack with amber spice fill mound, rope tie). All use 10 shared PBR materials (wood, iron, amber glow, pink glow, fabric, clay, rust, canvas, rug pattern, spice amber). Exported as GLB to assets/models/environment/. Source blend saved to assets/blender_source/bazaar_props.blend. All attributions in LICENSES.md.**
 
 ### 4.6 Download CC0 clinical/office props
 - [ ] Same but "office chair", "desk", "fluorescent light", "folder", "monitor" for Chapter 5 clinical theme. 5–8 models.
