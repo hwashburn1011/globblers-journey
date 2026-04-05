@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 12.1 complete
-- **Last task completed:** Task 12.1 — Chapter 1 puzzle visual upgrades. Replaced BoxMesh placeholders with GLB props + CRT scanline shader in all 3 Ch1 puzzles.
-- **Next task to do:** Task 12.2 (Chapter 2 puzzle visual upgrades)
+- **Last updated by:** Claude (2026-04-05) — Task 12.2 complete
+- **Last task completed:** Task 12.2 — Chapter 2 puzzle visual upgrades. Replaced BoxMesh placeholders with GLB props, emissive spheres, TubeMesh connectors + Ch2 teal palette in all 4 Ch2 puzzles.
+- **Next task to do:** Task 12.3 (Chapter 3 puzzle visual upgrades)
 - **V2.0 MILESTONE SUMMARY (Passes 1–11):**
   - **Pass 1 — Lighting:** 5 Poly Haven HDRIs, 5 WorldEnvironment .tres resources, DirectionalLight3D tuning (4-split shadows, per-chapter color temp). All chapters have FILMIC tonemap, SSAO, SSIL, SDFGI, volumetric fog.
   - **Pass 2 — Globbler Hero:** Custom Blender-built chibi robot GLB (dark metal + neon green), tuned scale (1.4x), collision capsule (r=0.35, h=1.3), third-person camera (distance=6.0, pitch=-0.3, height=1.1m).
@@ -376,7 +376,7 @@ assets/
 - [x] In `glob_pattern_puzzle.gd`, `hack_puzzle.gd`, `physical_puzzle.gd`: replace CSG terminal/door/block meshes with GLB props from `assets/models/environment/` (reuse electronic/cyberpunk pack). Apply CRT scanline shader to terminal screens. Keep all signals, states, and collision shapes intact. MCP run-project smoke test. **Done: Replaced all BoxMesh placeholders with GLB props — arch_wall_terminal.glb for terminals, arch_industrial_panel.glb for doors, prop_hard_drive.glb for pushable blocks, prop_power_supply.glb for beam emitter, prop_crt_monitor.glb for beam receiver. Applied crt_scanline.gdshader with reduce_motion gate to terminal screens in glob_pattern_puzzle and hack_puzzle. Updated hack_puzzle screen feedback (solved/failed) to use shader parameters instead of StandardMaterial3D. Added OmniLight3D glow for beam receiver and reflector block in physical_puzzle. All CollisionShape3D nodes and puzzle logic intact. Godot MCP smoke test: zero new errors.**
 
 ### 12.2 Chapter 2 puzzles — visual upgrade
-- [ ] In `weight_path_puzzle.gd`, `backprop_trace_puzzle.gd`, `multi_glob_puzzle.gd`, `recursive_glob_puzzle.gd`: replace CSG neural-node meshes with glowing sphere meshes (small emissive GLBs or procedural MeshInstance3D with emission material). Connect-nodes get tube TubeMesh / cylinder connectors. Use Chapter 2 blue-green palette. Keep logic untouched.
+- [x] In `weight_path_puzzle.gd`, `backprop_trace_puzzle.gd`, `multi_glob_puzzle.gd`, `recursive_glob_puzzle.gd`: replace CSG neural-node meshes with glowing sphere meshes (small emissive GLBs or procedural MeshInstance3D with emission material). Connect-nodes get tube TubeMesh / cylinder connectors. Use Chapter 2 blue-green palette. Keep logic untouched. **Done: Replaced all BoxMesh placeholders across 4 puzzles. weight_path: motherboard.glb platforms + wall_terminal.glb weight nodes + emissive sphere indicators. backprop_trace: high-detail 32-segment spheres with inner core glow + TubeMesh synaptic connectors + OmniLight3D per node. multi_glob: SphereMesh step indicators replacing BoxMesh + industrial_panel.glb door. recursive_glob: hard_drive.glb directories + floppy_disk.glb files + TubeMesh tree connectors. All 4 puzzles use Ch2 teal (#4AE0A5) palette. All doors replaced with arch_industrial_panel.glb + emissive overlay for dissolve effects. All CollisionShape3D and puzzle logic untouched. Godot MCP smoke test: zero new errors.**
 
 ### 12.3 Chapter 3 puzzles — visual upgrade
 - [ ] In `prompt_crafting_puzzle.gd`, `social_engineering_puzzle.gd`: replace CSG text-terminal placeholders with bazaar-themed terminals (warm amber backing, wood-grain texture, lanterns flanking). Tokens = glowing crystal meshes. Keep logic untouched.

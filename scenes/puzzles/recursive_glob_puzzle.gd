@@ -30,8 +30,14 @@ var _dir_visuals: Array[Node3D] = []
 var _file_nodes: Array[Node3D] = []
 
 const NEON_GREEN := Color(0.224, 1.0, 0.078)
-const DIR_COLOR := Color(0.08, 0.15, 0.08)
-const FILE_COLOR := Color(0.1, 0.1, 0.15)
+const SYNAPSE_TEAL := Color(0.29, 0.88, 0.65)  # Ch2 teal #4AE0A5
+const DARK_BASE := Color(0.04, 0.1, 0.1)  # Ch2 dark
+const DIR_COLOR := Color(0.04, 0.1, 0.08)
+const FILE_COLOR := Color(0.04, 0.08, 0.1)
+
+const _hard_drive_scene = preload("res://assets/models/environment/prop_hard_drive.glb")
+const _floppy_scene = preload("res://assets/models/environment/prop_floppy_disk.glb")
+const _panel_scene = preload("res://assets/models/environment/arch_industrial_panel.glb")
 
 func _ready() -> void:
 	puzzle_name = "recursive_glob_%d" % puzzle_id
@@ -56,21 +62,19 @@ func _create_directory_tree() -> void:
 		var y = 0.5
 		dir_node.position = Vector3(x, y, z)
 
-		# Directory visual — a dark folder-shaped box
-		var mesh = MeshInstance3D.new()
-		mesh.name = "DirMesh"
-		var box = BoxMesh.new()
-		box.size = Vector3(1.2, 0.8, 0.6)
-		mesh.mesh = box
-		var mat = StandardMaterial3D.new()
-		mat.albedo_color = DIR_COLOR
-		mat.emission_enabled = true
-		mat.emission = NEON_GREEN * 0.2
-		mat.emission_energy_multiplier = 0.3
-		mat.metallic = 0.5
-		mat.roughness = 0.4
-		mesh.material_override = mat
-		dir_node.add_child(mesh)
+		# GLB hard drive prop replacing BoxMesh directory folder
+		var drive_inst = _hard_drive_scene.instantiate()
+		drive_inst.name = "DirMesh"
+		drive_inst.scale = Vector3(1.0, 1.0, 1.0)
+		dir_node.add_child(drive_inst)
+
+		# Emissive teal glow light for directory
+		var dir_light = OmniLight3D.new()
+		dir_light.light_color = SYNAPSE_TEAL
+		dir_light.light_energy = 0.3
+		dir_light.omni_range = 1.5
+		dir_light.position = Vector3(0, 0.3, 0)
+		dir_node.add_child(dir_light)
 
 		# Directory name label
 		var label = Label3D.new()
@@ -78,22 +82,28 @@ func _create_directory_tree() -> void:
 		if label.text == "":
 			label.text = directory_structure[i].rstrip("/")
 		label.font_size = 10
-		label.modulate = NEON_GREEN * 0.7
+		label.modulate = SYNAPSE_TEAL * 0.7
 		label.position = Vector3(0, 0.6, 0)
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		dir_node.add_child(label)
 
 		# Depth indicator line connecting to parent
 		if depth > 0:
+			# TubeMesh connector replacing BoxMesh line
 			var line = MeshInstance3D.new()
-			var line_mesh = BoxMesh.new()
-			line_mesh.size = Vector3(1.5, 0.03, 0.03)
-			line.mesh = line_mesh
+			var tube = TubeMesh.new()
+			tube.top_radius = 0.04
+			tube.bottom_radius = 0.04
+			tube.inner_radius = 0.02
+			tube.height = 1.5
+			tube.radial_segments = 8
+			line.mesh = tube
 			line.position = Vector3(-0.9, 0, 0)
+			line.rotation = Vector3(0, 0, PI / 2.0)  # Rotate to horizontal
 			var line_mat = StandardMaterial3D.new()
-			line_mat.albedo_color = NEON_GREEN * 0.3
+			line_mat.albedo_color = SYNAPSE_TEAL * 0.3
 			line_mat.emission_enabled = true
-			line_mat.emission = NEON_GREEN * 0.3
+			line_mat.emission = SYNAPSE_TEAL * 0.3
 			line_mat.emission_energy_multiplier = 0.5
 			line.material_override = line_mat
 			dir_node.add_child(line)
@@ -143,26 +153,36 @@ func _create_files() -> void:
 		col.shape = shape
 		file_node.add_child(col)
 
-		# Visual — small glowing data slab
-		var mesh = MeshInstance3D.new()
-		mesh.name = "FileMesh"
-		var box = BoxMesh.new()
-		box.size = Vector3(0.5, 0.4, 0.3)
-		mesh.mesh = box
+		# GLB floppy disk prop replacing BoxMesh data slab
+		var floppy_inst = _floppy_scene.instantiate()
+		floppy_inst.name = "FileMesh"
+		floppy_inst.scale = Vector3(0.8, 0.8, 0.8)
+		file_node.add_child(floppy_inst)
+
+		# Emissive glow indicator for file
+		var glow = MeshInstance3D.new()
+		glow.name = "FileGlow"
+		var glow_sphere = SphereMesh.new()
+		glow_sphere.radius = 0.1
+		glow_sphere.height = 0.2
+		glow_sphere.radial_segments = 8
+		glow_sphere.rings = 4
+		glow.mesh = glow_sphere
+		glow.position = Vector3(0, 0.3, 0)
 		var mat = StandardMaterial3D.new()
 		mat.albedo_color = FILE_COLOR
 		mat.emission_enabled = true
-		mat.emission = NEON_GREEN * 0.15
+		mat.emission = SYNAPSE_TEAL * 0.15
 		mat.emission_energy_multiplier = 0.2
 		mat.metallic = 0.4
-		mesh.material_override = mat
-		file_node.add_child(mesh)
+		glow.material_override = mat
+		file_node.add_child(glow)
 
 		# File name label
 		var label = Label3D.new()
 		label.text = fname
 		label.font_size = 8
-		label.modulate = NEON_GREEN * 0.6
+		label.modulate = SYNAPSE_TEAL * 0.6
 		label.position = Vector3(0, 0.35, 0)
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		file_node.add_child(label)
@@ -204,15 +224,25 @@ func _create_door() -> void:
 	col.shape = shape
 	_door.add_child(col)
 
+	# GLB industrial panel replacing BoxMesh door
+	var door_inst = _panel_scene.instantiate()
+	door_inst.name = "DoorPanel"
+	door_inst.scale = Vector3(2.0, 1.5, 1.0)
+	_door.add_child(door_inst)
+
+	# Emissive overlay for tween animation
 	var mesh = MeshInstance3D.new()
 	var box = BoxMesh.new()
-	box.size = Vector3(4, 3, 0.3)
+	box.size = Vector3(4, 3, 0.05)
 	mesh.mesh = box
+	mesh.position = Vector3(0, 0, 0.2)
 	var mat = StandardMaterial3D.new()
-	mat.albedo_color = Color(0.2, 0.18, 0.05)
+	mat.albedo_color = SYNAPSE_TEAL * 0.15
+	mat.albedo_color.a = 0.5
 	mat.emission_enabled = true
-	mat.emission = Color(0.3, 0.25, 0.05)
+	mat.emission = SYNAPSE_TEAL * 0.3
 	mat.emission_energy_multiplier = 0.4
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mesh.material_override = mat
 	_door.add_child(mesh)
 	add_child(_door)
@@ -240,12 +270,12 @@ func _on_solved() -> void:
 		_puzzle_label.text = "[ RECURSION COMPLETE ]\n$ glob -r %s\nFound it.\n// You actually did it. Respect." % required_pattern
 		_puzzle_label.modulate = Color(0.4, 1.0, 0.4)
 
-	# Flash all file nodes green
+	# Flash all file glow indicators green
 	for fnode in _file_nodes:
-		var fmesh = fnode.get_node_or_null("FileMesh")
-		if fmesh and fmesh.material_override:
-			fmesh.material_override.emission = NEON_GREEN
-			fmesh.material_override.emission_energy_multiplier = 1.0
+		var fglow = fnode.get_node_or_null("FileGlow")
+		if fglow and fglow.material_override:
+			fglow.material_override.emission = NEON_GREEN
+			fglow.material_override.emission_energy_multiplier = 2.0
 
 	if _door:
 		var tween = create_tween()
@@ -262,9 +292,9 @@ func _on_reset() -> void:
 		_puzzle_label.text = "[ RECURSIVE GLOB CHALLENGE ]\n$ glob -r %s\n%s\n// OPTIONAL — for the truly stubborn" % [
 			required_pattern, hint_text]
 		_puzzle_label.modulate = Color(1.0, 0.85, 0.2)
-	# Reset file visuals
+	# Reset file glow indicators
 	for fnode in _file_nodes:
-		var fmesh = fnode.get_node_or_null("FileMesh")
-		if fmesh and fmesh.material_override:
-			fmesh.material_override.emission = NEON_GREEN * 0.15
-			fmesh.material_override.emission_energy_multiplier = 0.2
+		var fglow = fnode.get_node_or_null("FileGlow")
+		if fglow and fglow.material_override:
+			fglow.material_override.emission = SYNAPSE_TEAL * 0.15
+			fglow.material_override.emission_energy_multiplier = 0.2

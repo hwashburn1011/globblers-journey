@@ -18,10 +18,14 @@ extends "res://scenes/puzzles/base_puzzle.gd"
 
 const NEON_GREEN := Color(0.224, 1.0, 0.078)
 const WEIGHT_GREEN := Color(0.1, 0.8, 0.3)
-const SYNAPSE_BLUE := Color(0.1, 0.4, 0.9)
-const DARK_GRAY := Color(0.08, 0.08, 0.12)
-const ACTIVE_COLOR := Color(0.15, 0.9, 0.3)
+const SYNAPSE_BLUE := Color(0.29, 0.88, 0.65)  # Ch2 teal #4AE0A5
+const DARK_GRAY := Color(0.04, 0.1, 0.1)  # Ch2 dark base #0A1A1A
+const ACTIVE_COLOR := Color(0.29, 0.88, 0.65)  # Ch2 teal accent
 const INACTIVE_COLOR := Color(0.6, 0.15, 0.1)
+
+const _terminal_scene = preload("res://assets/models/environment/arch_wall_terminal.glb")
+const _panel_scene = preload("res://assets/models/environment/arch_industrial_panel.glb")
+const _motherboard_scene = preload("res://assets/models/environment/prop_motherboard.glb")
 
 var _segments: Array[StaticBody3D] = []
 var _segment_meshes: Array[MeshInstance3D] = []
@@ -158,19 +162,37 @@ func _create_segments() -> void:
 		col.shape = shape
 		seg.add_child(col)
 
+		# GLB motherboard platform replacing BoxMesh
+		var prop_inst = _motherboard_scene.instantiate()
+		prop_inst.name = "SegmentProp"
+		prop_inst.scale = Vector3(1.2, 1.0, 1.5)
+		seg.add_child(prop_inst)
+
+		# Emissive overlay mesh for dynamic color feedback
 		var mesh = MeshInstance3D.new()
 		var box = BoxMesh.new()
-		box.size = Vector3(2.5, 0.4, 3.0)
+		box.size = Vector3(2.5, 0.05, 3.0)
 		mesh.mesh = box
+		mesh.position = Vector3(0, 0.22, 0)
 		var mat = StandardMaterial3D.new()
 		mat.albedo_color = DARK_GRAY
+		mat.albedo_color.a = 0.6
 		mat.emission_enabled = true
 		mat.emission = INACTIVE_COLOR * 0.5
 		mat.emission_energy_multiplier = 0.6
 		mat.metallic = 0.7
 		mat.roughness = 0.4
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		mesh.material_override = mat
 		seg.add_child(mesh)
+
+		# Glow light under segment
+		var light = OmniLight3D.new()
+		light.light_color = SYNAPSE_BLUE
+		light.light_energy = 0.5
+		light.omni_range = 2.0
+		light.position = Vector3(0, -0.3, 0)
+		seg.add_child(light)
 
 		# Weight value display on the segment
 		var val_label = Label3D.new()
@@ -207,20 +229,38 @@ func _create_weight_nodes() -> void:
 		col.shape = shape
 		node.add_child(col)
 
-		# Visual — glowing terminal pillar
-		var mesh = MeshInstance3D.new()
-		var box = BoxMesh.new()
-		box.size = Vector3(0.8, 1.5, 0.8)
-		mesh.mesh = box
+		# GLB wall terminal replacing BoxMesh pillar
+		var terminal_inst = _terminal_scene.instantiate()
+		terminal_inst.name = "WeightTerminal"
+		terminal_inst.scale = Vector3(0.9, 0.9, 0.9)
+		node.add_child(terminal_inst)
+
+		# Emissive glow sphere on top of terminal — neural node indicator
+		var glow_mesh = MeshInstance3D.new()
+		var sphere = SphereMesh.new()
+		sphere.radius = 0.25
+		sphere.height = 0.5
+		sphere.radial_segments = 24
+		sphere.rings = 12
+		glow_mesh.mesh = sphere
+		glow_mesh.position = Vector3(0, 1.6, 0)
 		var mat = StandardMaterial3D.new()
-		mat.albedo_color = SYNAPSE_BLUE * 0.2
+		mat.albedo_color = SYNAPSE_BLUE * 0.3
 		mat.emission_enabled = true
 		mat.emission = SYNAPSE_BLUE
-		mat.emission_energy_multiplier = 1.0
+		mat.emission_energy_multiplier = 1.5
 		mat.metallic = 0.8
-		mat.roughness = 0.3
-		mesh.material_override = mat
-		node.add_child(mesh)
+		mat.roughness = 0.2
+		glow_mesh.material_override = mat
+		node.add_child(glow_mesh)
+
+		# Point light for terminal glow
+		var light = OmniLight3D.new()
+		light.light_color = SYNAPSE_BLUE
+		light.light_energy = 0.8
+		light.omni_range = 2.5
+		light.position = Vector3(0, 1.0, 0)
+		node.add_child(light)
 
 		# GlobTarget component — makes it selectable
 		var gt = Node.new()
@@ -279,17 +319,25 @@ func _create_door() -> void:
 	col.shape = shape
 	_door.add_child(col)
 
+	# GLB industrial panel replacing BoxMesh door
+	var door_inst = _panel_scene.instantiate()
+	door_inst.name = "DoorPanel"
+	door_inst.scale = Vector3(total_width / 2.0, 2.0, 1.0)
+	_door.add_child(door_inst)
+
+	# Emissive overlay for dissolve effect
 	var mesh = MeshInstance3D.new()
 	var box = BoxMesh.new()
-	box.size = Vector3(total_width, 4.0, 0.3)
+	box.size = Vector3(total_width, 4.0, 0.05)
 	mesh.mesh = box
+	mesh.position = Vector3(0, 0, 0.2)
 	var mat = StandardMaterial3D.new()
-	mat.albedo_color = WEIGHT_GREEN * 0.15
+	mat.albedo_color = SYNAPSE_BLUE * 0.15
+	mat.albedo_color.a = 0.6
 	mat.emission_enabled = true
-	mat.emission = WEIGHT_GREEN
+	mat.emission = SYNAPSE_BLUE
 	mat.emission_energy_multiplier = 0.5
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.albedo_color.a = 0.6
 	mesh.material_override = mat
 	_door.add_child(mesh)
 
