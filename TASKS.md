@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.2 complete
-- **Last task completed:** Task 2.2 — Sculpt Globbler body (stubby torso + head)
-- **Next task to do:** Task 2.3
+- **Last updated by:** Claude (2026-04-04) — Task 2.3 complete
+- **Last task completed:** Task 2.3 — Carve face cavity + glowing eye sockets
+- **Next task to do:** Task 2.4
 - **Known issues:** All gameplay is CSG placeholder geometry. No PBR. No real character model. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is in progress.
 
 ### GOAL OF THIS PASS
@@ -87,7 +87,7 @@ assets/
 - [x] Via `execute_blender_code`: create rounded torso with subdivided UV sphere scaled (1.0, 1.0, 0.85), add slight downward taper. Add integrated head-hood (another squashed sphere blended at top). Target dimensions: ~0.9m tall total, stubby proportions matching reference. Apply Subdivision Surface (level 2). Screenshot and compare to `C:/Users/hwash/Desktop/globbler.jpg`. **Done: Built single UV sphere (32 seg, 24 rings) with vertex-level sculpting — top half expanded 1.3x for large chibi hood-dome, subtle waist pinch at mid-section, stocky torso below, tapered bottom for boot attachment. Front visor overhang pushed forward. Wider side-to-side than front-to-back. SubSurf level 2 + smooth shading. Final body height: 0.645m (bottom at 0.15m, top at 0.84m), with boots will reach ~0.9m target. Saved to assets/blender_source/globbler.blend.**
 
 ### 2.3 Carve face cavity + glowing eye sockets
-- [ ] Via `execute_blender_code`: boolean-subtract a flat rectangular recess for the face area. Add two large oval eye sockets (triangular-angry shape). These sockets will get emissive material in 2.9. Screenshot.
+- [x] Via `execute_blender_code`: boolean-subtract a flat rectangular recess for the face area. Add two large oval eye sockets (triangular-angry shape). These sockets will get emissive material in 2.9. Screenshot. **Done: Applied SubSurf (12K verts) then used vertex-displacement sculpting to carve face. Wide flat face cavity recess on front of head dome (Z 0.48–0.75, 915 verts pushed inward up to 7cm). Two large angry-tilted eye sockets (20° inward tilt, 137 verts each, pushed up to 13cm cumulative depth over 3 passes). Eyes have triangular-angry expression matching reference — inner corners higher, outer corners lower. SubSurf level 1 re-added for smooth shading. Saved to assets/blender_source/globbler.blend.**
 
 ### 2.4 Model wrench prop
 - [ ] Via `execute_blender_code`: model a chunky adjustable wrench (handle + adjustable jaw head) parented to Globbler's right "hand" anchor point. Scale so it's visible at player height. Low-poly with bevels. Screenshot.
