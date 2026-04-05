@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 1.10 complete
-- **Last task completed:** Task 1.10 — MCP lighting smoke test all chapters
-- **Next task to do:** Task 2.1
-- **Known issues:** All gameplay is CSG placeholder geometry. No PBR. No real character model. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete.
+- **Last updated by:** Claude (2026-04-04) — Task 2.1 complete
+- **Last task completed:** Task 2.1 — Set up Globbler Blender scene
+- **Next task to do:** Task 2.2
+- **Known issues:** All gameplay is CSG placeholder geometry. No PBR. No real character model. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is in progress.
 
 ### GOAL OF THIS PASS
 Upgrade visual quality from CSG placeholders to stylized indie-game-ship quality (~Death's Door / Tunic / Hi-Fi Rush tier). Hero assets (Globbler, bosses) built in Blender via blender-mcp. Environment via CC0 assets from Poly Haven / Sketchfab. Lighting + post-processing + VFX upgraded in Godot.
@@ -81,7 +81,7 @@ assets/
 # The star of the show. Build in Blender via blender-mcp, export to Godot.
 
 ### 2.1 Set up Globbler Blender scene
-- [ ] Via `mcp__blender__execute_blender_code`: clear default scene, set units to meters, add a 1.2m reference cube at origin for scale, set viewport shading to Material Preview. Save file as `assets/blender_source/globbler.blend`. Take viewport screenshot.
+- [x] Via `mcp__blender__execute_blender_code`: clear default scene, set units to meters, add a 1.2m reference cube at origin for scale, set viewport shading to Material Preview. Save file as `assets/blender_source/globbler.blend`. Take viewport screenshot. **Done: Cleared defaults, set metric units (meters), added 1.2m wireframe reference cube at origin + dark ground plane, set viewport to Material Preview. Saved globbler.blend to assets/blender_source/.**
 
 ### 2.2 Sculpt Globbler body (stubby torso + head)
 - [ ] Via `execute_blender_code`: create rounded torso with subdivided UV sphere scaled (1.0, 1.0, 0.85), add slight downward taper. Add integrated head-hood (another squashed sphere blended at top). Target dimensions: ~0.9m tall total, stubby proportions matching reference. Apply Subdivision Surface (level 2). Screenshot and compare to `C:/Users/hwash/Desktop/globbler.jpg`.
