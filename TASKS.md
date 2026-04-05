@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 6.8 complete
-- **Last task completed:** Task 6.8 — Jailbreaker enemy model via blender-mcp
-- **Next task to do:** Task 6.9 (Prompt Injector enemy model via blender-mcp)
+- **Last updated by:** Claude (2026-04-04) — Task 6.9 complete
+- **Last task completed:** Task 6.9 — Prompt Injector enemy model via blender-mcp
+- **Next task to do:** Task 6.10 (GPT-2 Fossil enemy model via blender-mcp)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 IN PROGRESS — enemy visual upgrades. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -209,7 +209,7 @@ assets/
 - [x] Via blender-mcp: punk-style humanoid in rebel gear, spray-can + crowbar. Swap in `jailbreaker.tscn`. **Done: Built punk humanoid with dark crimson torso, leather jacket with raised collar, hooded head with mohawk spikes (5 red emissive cones), angry red slit eyes, shoulder studs (6 metal cones), 4 broken chain fragments, metal belt with glowing buckle, combat boots, crowbar (shaft + torus hook + flat end) in right hand, spray can with nozzle and glowing mist in left hand, graffiti tag on chest. All PBR materials with emission. Exported to `assets/models/enemies/jailbreaker.glb`, source saved to `assets/blender_source/jailbreaker.blend`. Updated `jailbreaker.gd` `_create_visual()` to load GLB with CSG fallback, preserving chain swing animation, rush trail particles, status label, and all gameplay mechanics.**
 
 ### 6.9 Prompt Injector model
-- [ ] Via blender-mcp: slim rogue figure in terminal-green hoodie throwing text-shard projectiles. Swap in `prompt_injector.tscn`.
+- [x] Via blender-mcp: slim rogue figure in terminal-green hoodie throwing text-shard projectiles. Swap in `prompt_injector.tscn`. **Done: Built slim rogue hacker with dark terminal-green hoodie (subdivided, fabric roughness), hood with peak overhang, pale skin head, dark face mask/visor, glowing green slit eyes, hoodie strings with green accent emission, circuit strip decorations on shoulders, code line accents on chest, slim arms with forearms reaching forward, hands, belt with 4 pouches, dark pants, boots with subdivision. Added wrist terminal with glowing screen on left forearm, 5 floating text-shard projectiles (cyan-green emissive flat cubes) around hands and hood. All PBR materials with emission. Exported to `assets/models/enemies/prompt_injector.glb`, source saved to `assets/blender_source/prompt_injector.blend`. Updated `prompt_injector.gd` `_create_visual()` to load GLB with CSG fallback, preserving orbiting code fragments, drip particles, status label, glow light, and all gameplay mechanics.**
 
 ### 6.10 GPT-2 Fossil model
 - [ ] Via blender-mcp: skeletal stone-data fossil frame, hunched. Tan fossil material. Swap in `gpt2_fossil.tscn`.
