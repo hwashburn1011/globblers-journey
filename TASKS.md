@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 2.8 — Download CC0 boss music
-- **Next task to do:** Task 2.9 — Download CC0 credits music
+- **Last task completed:** Task 2.9 — Download CC0 credits music
+- **Next task to do:** Task 2.10 — Download CC0 gameplay SFX pack
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -95,7 +95,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Downloaded "Trance Boss Battle" by MintoDog from OpenGameArt.org (CC0). Intense trance boss battle track, 150 BPM, loopable. 3.4MB OGG, stereo 44100 Hz. Saved to `assets/audio/music/boss.ogg`. Attribution added to LICENSES.md.
 
 ### 2.9 Download CC0 credits music
-- [ ] Bittersweet synthwave for credits rollout (~3 min). `assets/audio/music/credits.ogg`.
+- [x] **DONE:** Downloaded "Lonely Night" by Centurion_of_war from OpenGameArt.org (CC0). Calm, contemplative chiptune loop with a reflective mood — suitable for credits roll. 3.6MB OGG, loopable. Saved to `assets/audio/music/credits.ogg`. Attribution added to LICENSES.md.
 
 ### 2.10 Download CC0 gameplay SFX pack
 - [ ] From OpenGameArt.org or Freesound (CC0 only): footsteps on metal (2 variants), jump, land, dash whoosh, hurt grunt, death. Save to `assets/audio/sfx/player_*.ogg`. Record attributions.
