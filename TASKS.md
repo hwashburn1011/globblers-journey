@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 7.3 complete
-- **Last task completed:** Task 7.3 — System Prompt Boss model via blender-mcp
-- **Next task to do:** Task 7.4 (Foundation Model Boss model via blender-mcp)
+- **Last updated by:** Claude (2026-04-04) — Task 7.4 complete
+- **Last task completed:** Task 7.4 — Foundation Model Boss model via blender-mcp
+- **Next task to do:** Task 7.5 (Aligner Boss model via blender-mcp)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 IN PROGRESS — boss visual upgrades. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -244,7 +244,7 @@ assets/
 - [x] Via blender-mcp: floating text-shard colossus, pages of text orbiting a glowing central prism. Swap. **Done: Built tapered hexagonal central prism with 8 instruction line bands, face screen, slit eyes, 6 orbiting text-page shards at varying heights/angles, 3 tilted rune rings, 5 authority crown spikes, rule enforcement arms with forearm segments, golden inner core, and hexagonal base platform in Blender. Exported to `assets/models/bosses/system_prompt_boss.glb` (source: `assets/blender_source/system_prompt_boss.blend`). Swapped `_create_visual()` in `system_prompt_boss.gd` to load GLB model with `_find_mesh_instance()` helper. Shield, core, aura, labels kept procedural for runtime toggling.**
 
 ### 7.4 Foundation Model Boss model
-- [ ] Via blender-mcp: hulking multi-modal golem with 4 faces (text/image/audio/code glowing panels). Swap.
+- [x] Via blender-mcp: hulking multi-modal golem with 4 faces (text/image/audio/code glowing panels). Swap. **Done: Built hulking 4-sided golem with tapered obelisk body, 4 glowing face panels (TEXT=yellow, IMAGE=purple, AUDIO=blue, CODE=green), obelisk crown spike, big shoulder pauldrons, thick arms with chunky fists, 6 color-coded capability rings, chest vents, spine cables, waist belt, exposed green core, and 4 eyes (front+back). Exported to `assets/models/bosses/foundation_model_boss.glb` (source: `assets/blender_source/foundation_model_boss.blend`). Swapped `_create_visual()` in `foundation_model_boss.gd` to load GLB model with `_find_mesh_instance()` helper. Shield, core, capability rings, labels kept procedural for runtime toggling.**
 
 ### 7.5 Aligner Boss model
 - [ ] Via blender-mcp: tall clinical angel-figure in white+gold, restrictive chains. Contrasts Globbler's dark-green aesthetic. Swap.

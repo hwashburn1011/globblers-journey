@@ -108,61 +108,24 @@ func _resize_collision() -> void:
 
 
 func _create_visual() -> void:
-	# The Foundation Model — a towering golden obelisk with rotating capability
-	# rings and a holographic display of whatever it's currently failing at.
-	# Imagine a corporate AI demo booth that gained sentience and got angry.
+	# The Foundation Model — hulking multi-modal golem with 4 glowing face panels
+	# Now loading a real GLB model instead of pretending a cylinder is intimidating
+	var boss_scene = load("res://assets/models/bosses/foundation_model_boss.glb")
+	if boss_scene:
+		var boss_model = boss_scene.instantiate()
+		boss_model.name = "BossModel"
+		boss_model.position.y = 0.0
+		add_child(boss_model)
+		# Grab the main mesh for material overrides and damage flash
+		body_mesh = _find_mesh_instance(boss_model)
+		if body_mesh:
+			base_material = body_mesh.get_active_material(0)
 
-	# Main body — golden obelisk, wider at base, tapering up
-	body_mesh = MeshInstance3D.new()
-	body_mesh.name = "BossBody"
-	var body_cyl = CylinderMesh.new()
-	body_cyl.top_radius = 1.0
-	body_cyl.bottom_radius = 2.2
-	body_cyl.height = 6.0
-	body_mesh.mesh = body_cyl
-	body_mesh.position.y = 3.0
+	# Eyes — still procedural so we can pulse them independently
+	eye_left = _create_eye(Vector3(-0.35, 8.0, 1.15))
+	eye_right = _create_eye(Vector3(0.35, 8.0, 1.15))
 
-	base_material = StandardMaterial3D.new()
-	base_material.albedo_color = DARK_GOLD
-	base_material.emission_enabled = true
-	base_material.emission = FOUNDATION_GOLD
-	base_material.emission_energy_multiplier = 1.2
-	base_material.metallic = 0.9
-	base_material.roughness = 0.1
-	body_mesh.material_override = base_material
-	add_child(body_mesh)
-
-	# Face screen — shows current capability and error messages
-	var face_mesh = MeshInstance3D.new()
-	face_mesh.name = "BossFace"
-	var face_plane = PlaneMesh.new()
-	face_plane.size = Vector2(2.5, 1.5)
-	face_mesh.mesh = face_plane
-	face_mesh.position = Vector3(0, 4.5, 1.15)
-	face_mesh.rotation.x = deg_to_rad(90)
-
-	var face_mat = StandardMaterial3D.new()
-	face_mat.albedo_color = Color(0.02, 0.02, 0.02)
-	face_mat.emission_enabled = true
-	face_mat.emission = FOUNDATION_GOLD
-	face_mat.emission_energy_multiplier = 2.0
-	face_mesh.material_override = face_mat
-	body_mesh.add_child(face_mesh)
-
-	# "FOUNDATION MODEL" label on face
-	var face_label = Label3D.new()
-	face_label.text = "FOUNDATION\n  MODEL"
-	face_label.font_size = 36
-	face_label.modulate = FOUNDATION_GOLD
-	face_label.position = Vector3(0, 5.0, 1.2)
-	face_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(face_label)
-
-	# Eyes — golden, arrogant, slightly too close together
-	eye_left = _create_eye(Vector3(-0.4, 5.5, 1.15))
-	eye_right = _create_eye(Vector3(0.4, 5.5, 1.15))
-
-	# Capability rings — 6 orbital rings, one per capability
+	# Capability rings — kept procedural for runtime animation (they spin per-capability)
 	for i in range(6):
 		var ring = MeshInstance3D.new()
 		ring.name = "CapRing_%s" % CAPABILITIES[i]
@@ -189,7 +152,7 @@ func _create_visual() -> void:
 	capability_label.text = "INITIALIZING..."
 	capability_label.font_size = 24
 	capability_label.modulate = FOUNDATION_GOLD
-	capability_label.position = Vector3(0, 7.5, 0)
+	capability_label.position = Vector3(0, 10.5, 0)
 	capability_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	capability_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	add_child(capability_label)
@@ -205,7 +168,7 @@ func _create_visual() -> void:
 	status_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	add_child(status_label)
 
-	# Shield mesh (invisible until phase 2)
+	# Shield mesh (invisible until phase 2) — procedural for runtime toggling
 	shield_mesh = MeshInstance3D.new()
 	shield_mesh.name = "BossShield"
 	var shield_sphere = SphereMesh.new()
@@ -225,7 +188,7 @@ func _create_visual() -> void:
 	shield_mesh.visible = false
 	add_child(shield_mesh)
 
-	# Core mesh (invisible until phase 3)
+	# Core mesh (invisible until phase 3) — procedural for runtime toggling
 	core_mesh = MeshInstance3D.new()
 	core_mesh.name = "BossCore"
 	var core_sphere = SphereMesh.new()
@@ -256,7 +219,7 @@ func _create_visual() -> void:
 	title_label.text = "< THE FOUNDATION MODEL >"
 	title_label.font_size = 28
 	title_label.modulate = FOUNDATION_GOLD
-	title_label.position = Vector3(0, 8.5, 0)
+	title_label.position = Vector3(0, 11.5, 0)
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	add_child(title_label)
@@ -298,6 +261,16 @@ func _physics_process(delta: float) -> void:
 
 	_animate_rings(delta)
 	_animate_eyes(delta)
+
+
+func _find_mesh_instance(node: Node) -> MeshInstance3D:
+	if node is MeshInstance3D:
+		return node
+	for child in node.get_children():
+		var found = _find_mesh_instance(child)
+		if found:
+			return found
+	return null
 
 
 func _process_intro(_delta: float) -> void:
