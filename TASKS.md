@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 13.4 complete
-- **Last task completed:** Task 13.4 — Wrench weapon trail. Created `scenes/vfx/wrench_trail.gd` (ImmediateMesh ribbon builder) + `assets/shaders/wrench_trail.gdshader` (emissive green additive blend, UV-based fade). Wired into `wrench_smash.gd`: trail starts on swing(), feeds base/tip positions from WrenchHead each frame, stops on swing end. 12-point ribbon, 0.15s lifetime. Respects reduce_motion. No new runtime errors.
-- **Next task to do:** Task 13.5 (Damage direction indicator)
+- **Last updated by:** Claude (2026-04-05) — Task 13.5 complete
+- **Last task completed:** Task 13.5 — Damage direction indicator. Created `scenes/ui/damage_indicator.gd` + `.tscn` — red chevron arc drawn at screen edge pointing toward nearest enemy on hit. 0.8s fade, glow effect. Connects to GameManager `damage_taken` signal. Falls back to random direction if no enemy found. Respects reduce_motion. Wired into HUD via `hud.gd`. No new runtime errors.
+- **Next task to do:** Task 13.6 (Ability cooldown radial animation)
 - **V2.0 MILESTONE SUMMARY (Passes 1–11):**
   - **Pass 1 — Lighting:** 5 Poly Haven HDRIs, 5 WorldEnvironment .tres resources, DirectionalLight3D tuning (4-split shadows, per-chapter color temp). All chapters have FILMIC tonemap, SSAO, SSIL, SDFGI, volumetric fog.
   - **Pass 2 — Globbler Hero:** Custom Blender-built chibi robot GLB (dark metal + neon green), tuned scale (1.4x), collision capsule (r=0.35, h=1.3), third-person camera (distance=6.0, pitch=-0.3, height=1.1m).
@@ -405,7 +405,7 @@ assets/
 - [x] Add MeshInstance3D trail ribbon (or GPUTrail3D if available, else simple plane mesh with UV scroll) to wrench swing animation in `wrench_smash.gd`. Emissive green, 0.15s lifetime. Triggered on swing, removed on end. **Done: Created `scenes/vfx/wrench_trail.gd` (ImmediateMesh-based ribbon, 12 max points, 0.15s lifetime, triangle-strip quad mesh from base/tip position pairs) + `assets/shaders/wrench_trail.gdshader` (unshaded additive blend, emissive neon green #39FF14, UV-based length fade + width sine fade). Integrated into `wrench_smash.gd`: trail created in _ready(), started on swing(), fed wrench head base+tip positions each frame during swing, stopped on swing end. Respects reduce_motion via GameManager check. No new runtime errors.**
 
 ### 13.5 Damage direction indicator
-- [ ] Create `scenes/ui/damage_indicator.gd` + `.tscn` — red arrow/arc fades in at screen edge pointing toward the damage source. 0.8s fade. Wire into `health_component.gd` when owner is player group — pass damage source position.
+- [x] Created `scenes/ui/damage_indicator.gd` + `.tscn` — red chevron arc at screen edge pointing toward nearest enemy on damage. 0.8s fade with glow. Connects to GameManager `damage_taken` signal (player doesn't use health_component). Wired into HUD. Respects reduce_motion.
 
 ### 13.6 Ability cooldown radial animation
 - [ ] Extend `hud.gd` ability-bar: add CircularProgressBar or shader-based radial fill over each ability icon showing cooldown progress. Pulls from player ability `get_cooldown_percent()` methods.

@@ -33,6 +33,8 @@ var kill_counter: Label
 var param_counter: Label
 var upgrade_hint: Label
 
+var damage_indicator_scene := preload("res://scenes/ui/damage_indicator.tscn")
+
 var player_ref: CharacterBody3D
 
 const TERMINAL_GREEN := Color(0.224, 1.0, 0.078)
@@ -97,6 +99,10 @@ func _build_hud() -> void:
 	_build_center_combo()
 	_build_bottom_thought()
 	_build_level_intro()
+
+	# Damage direction indicator
+	var dmg_indicator = damage_indicator_scene.instantiate()
+	add_child(dmg_indicator)
 
 	# Boss health bar (instanced — auto-connects to boss enemies)
 	var boss_bar = boss_health_bar_scene.instantiate()
