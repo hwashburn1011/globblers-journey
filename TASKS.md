@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 2.13 — Download CC0 enemy SFX
-- **Next task to do:** Task 2.14 — Wire music tracks into AudioManager
+- **Last task completed:** Task 2.14 — Wire music tracks into AudioManager
+- **Next task to do:** Task 2.15 — Wire SFX into AudioManager
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -110,7 +110,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Downloaded 9 enemy SFX from rubberduck's "80 CC0 Creature SFX #2" on OpenGameArt.org (CC0). All OGG format: (1) enemy_alert_1.ogg ← grunt_06 (19KB), enemy_alert_2.ogg ← grunt_07 (22KB), enemy_alert_3.ogg ← grunt_08 (18KB). (2) enemy_attack_1.ogg ← attack_01 (12KB), enemy_attack_2.ogg ← attack_02 (41KB), enemy_attack_3.ogg ← attack_03 (27KB). (3) enemy_death_1.ogg ← die_01 (20KB), enemy_death_2.ogg ← die_02 (32KB), enemy_death_3.ogg ← die_03 (21KB). All saved to assets/audio/sfx/enemy_*.ogg. Attribution added to LICENSES.md.
 
 ### 2.14 Wire music tracks into AudioManager
-- [ ] In `scripts/autoload/audio_manager.gd`, add a `_loaded_music: Dictionary` map. In `start_music(track_name)`, attempt to `load("res://assets/audio/music/" + track_name + ".ogg")` first. On success, play the loaded stream. On failure, fall back to existing procedural synth. Same pattern for `boss_music`. Keep procedural as safety net.
+- [x] **DONE:** Added `_loaded_music: Dictionary` cache and `_try_load_music(track_name)` helper to `audio_manager.gd`. Uses `ResourceLoader.exists()` + `load()` with caching to avoid reloading. Modified `start_music()` (chapters 1-5 + credits), `_start_boss_music()`, and `start_menu_music()` to try loading real .ogg from `res://assets/audio/music/` first, falling back to procedural synth if no file found. All 8 tracks (menu, chapter_1-5, boss, credits) wired. Procedural generation code preserved as safety net.
 
 ### 2.15 Wire SFX into AudioManager
 - [ ] Add `_loaded_sfx: Dictionary` map. In the existing `play_sfx(sfx_name)` path, attempt to load `res://assets/audio/sfx/<name>.ogg` first, fall back to procedural synth. Covers player, ability, UI, and enemy SFX from Tasks 2.10–2.13.

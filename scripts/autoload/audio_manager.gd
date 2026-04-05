@@ -122,6 +122,10 @@ var _ui_sfx_names := [
 # Cached generated audio streams — no need to regenerate every bleep
 var _sfx_cache: Dictionary = {}
 
+# Loaded music streams — real .ogg files from assets/audio/music/
+# "Turns out real music sounds better than procedural bleeps. Who knew."
+var _loaded_music: Dictionary = {}
+
 
 func _ready() -> void:
 	print("[AUDIO] Initializing The Globbler's sound system. Brace your speakers.")
@@ -176,6 +180,22 @@ func _precache_sfx() -> void:
 	# Pre-generate all SFX audio streams so playback is instant
 	for sfx_name in _sfx_defs:
 		_sfx_cache[sfx_name] = _generate_sfx(sfx_name)
+
+
+## Try to load a real .ogg music track from disk, with caching.
+## Returns the AudioStream on success, null on failure (triggering procedural fallback).
+func _try_load_music(track_name: String) -> AudioStream:
+	if _loaded_music.has(track_name):
+		return _loaded_music[track_name]
+	var path := "res://assets/audio/music/" + track_name + ".ogg"
+	if ResourceLoader.exists(path):
+		var stream = load(path)
+		if stream:
+			print("[AUDIO] Loaded real music: %s — farewell, procedural bleeps." % track_name)
+			_loaded_music[track_name] = stream
+			return stream
+	print("[AUDIO] No .ogg found for '%s' — procedural synth rides again." % track_name)
+	return null
 
 
 # --- Procedural sound generation ---
@@ -547,13 +567,24 @@ func start_music(track_name: String) -> void:
 
 	match track_name:
 		"chapter_1", "chapter_2", "chapter_3", "chapter_4", "chapter_5":
-			# All chapters reuse the same generated loop for now — unique tracks coming Soon™
 			_last_chapter_music = track_name
-			_music_player.stream = _generate_music_loop(false)
+			var loaded := _try_load_music(track_name)
+			if loaded:
+				_music_player.stream = loaded
+			else:
+				_music_player.stream = _generate_music_loop(false)
 			_music_player.volume_db = linear_to_db(music_volume) + BASE_VOLUME_DB
 			_music_player.play()
 		"boss":
 			_start_boss_music()
+		"credits":
+			var loaded := _try_load_music("credits")
+			if loaded:
+				_music_player.stream = loaded
+			else:
+				_music_player.stream = _generate_music_loop(false)
+			_music_player.volume_db = linear_to_db(music_volume) + BASE_VOLUME_DB
+			_music_player.play()
 		"none":
 			_music_player.stop()
 			_boss_music_player.stop()
@@ -566,7 +597,11 @@ func _start_boss_music() -> void:
 	tween.tween_property(_music_player, "volume_db", -40.0, 1.0)
 	tween.tween_callback(_music_player.stop)
 
-	_boss_music_player.stream = _generate_music_loop(true)
+	var loaded := _try_load_music("boss")
+	if loaded:
+		_boss_music_player.stream = loaded
+	else:
+		_boss_music_player.stream = _generate_music_loop(true)
 	_boss_music_player.volume_db = -40.0
 	_boss_music_player.play()
 	var fade_in = create_tween()
@@ -640,7 +675,11 @@ func _start_chapter_1_audio() -> void:
 func start_menu_music() -> void:
 	if _menu_music_player.playing:
 		return
-	_menu_music_player.stream = _generate_menu_music()
+	var loaded := _try_load_music("menu")
+	if loaded:
+		_menu_music_player.stream = loaded
+	else:
+		_menu_music_player.stream = _generate_menu_music()
 	_menu_music_player.volume_db = linear_to_db(music_volume) + BASE_VOLUME_DB - 2.0
 	_menu_music_player.play()
 
