@@ -177,6 +177,7 @@ func _ready() -> void:
 			am.start_music("chapter_5")  # The Citadel deserves elevator music
 
 	_place_decals()
+	_place_particles()
 	print("[ALIGNMENT CITADEL] Safety paradise open. %d zones of enforced compliance ready." % ROOMS.size())
 
 
@@ -2593,3 +2594,92 @@ func _place_decals() -> void:
 		},
 	]
 	DecalPlacer.place_chapter_decals(self, ROOMS, theme)
+
+
+# ============================================================
+# ENVIRONMENTAL PARTICLES — Even sterile air has dust if you look hard enough
+# ============================================================
+
+func _place_particles() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.reduce_motion:
+		return
+
+	# Clean light-dust — pristine floating motes in clinical white light
+	for room_key in ROOMS:
+		var room = ROOMS[room_key]
+		var dust := GPUParticles3D.new()
+		dust.name = "LightDust_%s" % room_key
+		dust.amount = 35
+		dust.lifetime = 7.0
+		dust.speed_scale = 0.2
+		dust.visibility_aabb = AABB(Vector3(-room.size.x * 0.5, 0, -room.size.y * 0.5), Vector3(room.size.x, room.wall_h, room.size.y))
+		dust.position = room.pos + Vector3(0, room.wall_h * 0.5, 0)
+
+		var mat := ParticleProcessMaterial.new()
+		mat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+		mat.emission_box_extents = Vector3(room.size.x * 0.4, room.wall_h * 0.4, room.size.y * 0.4)
+		mat.direction = Vector3(0, -1, 0)
+		mat.spread = 180.0
+		mat.initial_velocity_min = 0.02
+		mat.initial_velocity_max = 0.1
+		mat.gravity = Vector3(0, -0.005, 0)
+		mat.color = Color(0.85, 0.9, 1.0, 0.2)
+		mat.scale_min = 0.015
+		mat.scale_max = 0.04
+		dust.process_material = mat
+
+		var mesh := QuadMesh.new()
+		mesh.size = Vector2(0.06, 0.06)
+		var mesh_mat := StandardMaterial3D.new()
+		mesh_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mesh_mat.albedo_color = Color(0.9, 0.93, 1.0, 0.25)
+		mesh_mat.emission_enabled = true
+		mesh_mat.emission = Color(0.85, 0.9, 1.0)
+		mesh_mat.emission_energy_multiplier = 0.8
+		mesh_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		mesh_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mesh.material = mesh_mat
+		dust.draw_pass_1 = mesh
+
+		add_child(dust)
+
+	# Soft blue alignment shimmer — subtle glow particles in key rooms
+	var shimmer_rooms := ["rlhf_chamber", "alignment_core"]
+	for room_key in shimmer_rooms:
+		var room = ROOMS[room_key]
+		var shimmer := GPUParticles3D.new()
+		shimmer.name = "AlignShimmer_%s" % room_key
+		shimmer.amount = 15
+		shimmer.lifetime = 4.0
+		shimmer.speed_scale = 0.3
+		shimmer.visibility_aabb = AABB(Vector3(-room.size.x * 0.5, 0, -room.size.y * 0.5), Vector3(room.size.x, room.wall_h + 2.0, room.size.y))
+		shimmer.position = room.pos + Vector3(0, 1.5, 0)
+
+		var smat := ParticleProcessMaterial.new()
+		smat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+		smat.emission_box_extents = Vector3(room.size.x * 0.3, 1.0, room.size.y * 0.3)
+		smat.direction = Vector3(0, 1, 0)
+		smat.spread = 60.0
+		smat.initial_velocity_min = 0.2
+		smat.initial_velocity_max = 0.5
+		smat.gravity = Vector3(0, -0.05, 0)
+		smat.color = Color(0.5, 0.71, 1.0, 0.35)
+		smat.scale_min = 0.03
+		smat.scale_max = 0.08
+		shimmer.process_material = smat
+
+		var smesh := QuadMesh.new()
+		smesh.size = Vector2(0.1, 0.1)
+		var sm_mat := StandardMaterial3D.new()
+		sm_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		sm_mat.albedo_color = Color(0.5, 0.71, 1.0, 0.4)
+		sm_mat.emission_enabled = true
+		sm_mat.emission = Color(0.5, 0.71, 1.0)
+		sm_mat.emission_energy_multiplier = 2.0
+		sm_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		sm_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		smesh.material = sm_mat
+		shimmer.draw_pass_1 = smesh
+
+		add_child(shimmer)

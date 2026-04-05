@@ -176,6 +176,7 @@ func _ready() -> void:
 			am.start_music("chapter_4")
 
 	_place_decals()
+	_place_particles()
 	print("[MODEL ZOO] Safari park open. %d exhibits ready for visitors." % ROOMS.size())
 
 
@@ -2857,3 +2858,52 @@ func _place_decals() -> void:
 		},
 	]
 	DecalPlacer.place_chapter_decals(self, ROOMS, theme)
+
+
+# ============================================================
+# ENVIRONMENTAL PARTICLES — Museum air, stale but atmospheric
+# ============================================================
+
+func _place_particles() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.reduce_motion:
+		return
+
+	# Dust motes — the kind you see in a shaft of museum light
+	for room_key in ROOMS:
+		var room = ROOMS[room_key]
+		var dust := GPUParticles3D.new()
+		dust.name = "MuseumDust_%s" % room_key
+		dust.amount = 50
+		dust.lifetime = 8.0
+		dust.speed_scale = 0.15
+		dust.visibility_aabb = AABB(Vector3(-room.size.x * 0.5, 0, -room.size.y * 0.5), Vector3(room.size.x, room.wall_h, room.size.y))
+		dust.position = room.pos + Vector3(0, room.wall_h * 0.5, 0)
+
+		var mat := ParticleProcessMaterial.new()
+		mat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+		mat.emission_box_extents = Vector3(room.size.x * 0.45, room.wall_h * 0.4, room.size.y * 0.45)
+		mat.direction = Vector3(0, -1, 0)
+		mat.spread = 180.0
+		mat.initial_velocity_min = 0.02
+		mat.initial_velocity_max = 0.08
+		mat.gravity = Vector3(0, -0.01, 0)
+		mat.color = Color(0.91, 0.85, 0.69, 0.25)
+		mat.scale_min = 0.02
+		mat.scale_max = 0.06
+		dust.process_material = mat
+
+		var mesh := QuadMesh.new()
+		mesh.size = Vector2(0.08, 0.08)
+		var mesh_mat := StandardMaterial3D.new()
+		mesh_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mesh_mat.albedo_color = Color(0.91, 0.85, 0.69, 0.3)
+		mesh_mat.emission_enabled = true
+		mesh_mat.emission = Color(0.91, 0.85, 0.69)
+		mesh_mat.emission_energy_multiplier = 0.5
+		mesh_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		mesh_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mesh.material = mesh_mat
+		dust.draw_pass_1 = mesh
+
+		add_child(dust)

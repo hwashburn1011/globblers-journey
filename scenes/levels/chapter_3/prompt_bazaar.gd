@@ -164,6 +164,7 @@ func _ready() -> void:
 			am.start_music("chapter_3")
 
 	_place_decals()
+	_place_particles()
 	print("[PROMPT BAZAAR] Market open. %d districts ready for browsing." % ROOMS.size())
 
 
@@ -2360,3 +2361,89 @@ func _place_decals() -> void:
 		},
 	]
 	DecalPlacer.place_chapter_decals(self, ROOMS, theme)
+
+
+# ============================================================
+# ENVIRONMENTAL PARTICLES — The market never cools down
+# ============================================================
+
+func _place_particles() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.reduce_motion:
+		return
+
+	# Warm embers — floating market heat and lantern sparks
+	for room_key in ROOMS:
+		var room = ROOMS[room_key]
+		var embers := GPUParticles3D.new()
+		embers.name = "Embers_%s" % room_key
+		embers.amount = 40
+		embers.lifetime = 5.0
+		embers.speed_scale = 0.35
+		embers.visibility_aabb = AABB(Vector3(-room.size.x * 0.5, 0, -room.size.y * 0.5), Vector3(room.size.x, room.wall_h, room.size.y))
+		embers.position = room.pos + Vector3(0, room.wall_h * 0.4, 0)
+
+		var mat := ParticleProcessMaterial.new()
+		mat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+		mat.emission_box_extents = Vector3(room.size.x * 0.4, room.wall_h * 0.3, room.size.y * 0.4)
+		mat.direction = Vector3(0, 1, 0)
+		mat.spread = 120.0
+		mat.initial_velocity_min = 0.1
+		mat.initial_velocity_max = 0.25
+		mat.gravity = Vector3(0, 0.08, 0)
+		mat.color = Color(1.0, 0.55, 0.1, 0.5)
+		mat.scale_min = 0.02
+		mat.scale_max = 0.05
+		embers.process_material = mat
+
+		var mesh := QuadMesh.new()
+		mesh.size = Vector2(0.06, 0.06)
+		var mesh_mat := StandardMaterial3D.new()
+		mesh_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mesh_mat.albedo_color = Color(1.0, 0.6, 0.15, 0.7)
+		mesh_mat.emission_enabled = true
+		mesh_mat.emission = Color(1.0, 0.5, 0.1)
+		mesh_mat.emission_energy_multiplier = 2.5
+		mesh_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		mesh_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mesh.material = mesh_mat
+		embers.draw_pass_1 = mesh
+
+		add_child(embers)
+
+	# Warm smoke wisps — rising from market stalls and cooking fires
+	var smoke_rooms := ["bazaar_gate", "token_exchange", "auction_hall"]
+	for room_key in smoke_rooms:
+		var room = ROOMS[room_key]
+		var smoke := GPUParticles3D.new()
+		smoke.name = "Smoke_%s" % room_key
+		smoke.amount = 15
+		smoke.lifetime = 7.0
+		smoke.speed_scale = 0.2
+		smoke.visibility_aabb = AABB(Vector3(-room.size.x * 0.5, 0, -room.size.y * 0.5), Vector3(room.size.x, room.wall_h + 3.0, room.size.y))
+		smoke.position = room.pos + Vector3(0, 1.0, 0)
+
+		var smat := ParticleProcessMaterial.new()
+		smat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+		smat.emission_box_extents = Vector3(room.size.x * 0.3, 0.5, room.size.y * 0.3)
+		smat.direction = Vector3(0, 1, 0)
+		smat.spread = 25.0
+		smat.initial_velocity_min = 0.15
+		smat.initial_velocity_max = 0.3
+		smat.gravity = Vector3(0, -0.03, 0)
+		smat.color = Color(0.4, 0.25, 0.1, 0.15)
+		smat.scale_min = 0.15
+		smat.scale_max = 0.4
+		smoke.process_material = smat
+
+		var smesh := QuadMesh.new()
+		smesh.size = Vector2(0.5, 0.5)
+		var sm_mat := StandardMaterial3D.new()
+		sm_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		sm_mat.albedo_color = Color(0.35, 0.2, 0.1, 0.12)
+		sm_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		sm_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		smesh.material = sm_mat
+		smoke.draw_pass_1 = smesh
+
+		add_child(smoke)

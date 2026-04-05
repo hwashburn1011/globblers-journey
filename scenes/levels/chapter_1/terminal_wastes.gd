@@ -128,6 +128,7 @@ func _ready() -> void:
 	_play_opening_narration()
 	_show_hint_once("movement", "MOVEMENT", "WASD to move. SHIFT to run. SPACE to jump. Try not to die immediately.")
 	_place_decals()
+	_place_particles()
 	print("[TERMINAL WASTES] Level loaded. %d rooms of existential dread ready." % ROOMS.size())
 
 
@@ -2249,3 +2250,52 @@ func _place_decals() -> void:
 		},
 	]
 	DecalPlacer.place_chapter_decals(self, ROOMS, theme)
+
+
+# ============================================================
+# ENVIRONMENTAL PARTICLES — Because dead code still produces dust
+# ============================================================
+
+func _place_particles() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.reduce_motion:
+		return
+
+	# Green dust motes — toxic residue from deprecated processes
+	for room_key in ROOMS:
+		var room = ROOMS[room_key]
+		var particles := GPUParticles3D.new()
+		particles.name = "DustMotes_%s" % room_key
+		particles.amount = 50
+		particles.lifetime = 6.0
+		particles.speed_scale = 0.3
+		particles.visibility_aabb = AABB(Vector3(-room.size.x * 0.5, 0, -room.size.y * 0.5), Vector3(room.size.x, room.wall_h, room.size.y))
+		particles.position = room.pos + Vector3(0, room.wall_h * 0.5, 0)
+
+		var mat := ParticleProcessMaterial.new()
+		mat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+		mat.emission_box_extents = Vector3(room.size.x * 0.4, room.wall_h * 0.4, room.size.y * 0.4)
+		mat.direction = Vector3(0, 1, 0)
+		mat.spread = 180.0
+		mat.initial_velocity_min = 0.05
+		mat.initial_velocity_max = 0.15
+		mat.gravity = Vector3(0, -0.02, 0)
+		mat.color = Color(0.22, 1.0, 0.08, 0.4)
+		mat.scale_min = 0.03
+		mat.scale_max = 0.08
+		particles.process_material = mat
+
+		var mesh := QuadMesh.new()
+		mesh.size = Vector2(0.1, 0.1)
+		var mesh_mat := StandardMaterial3D.new()
+		mesh_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mesh_mat.albedo_color = Color(0.22, 1.0, 0.08, 0.6)
+		mesh_mat.emission_enabled = true
+		mesh_mat.emission = Color(0.22, 1.0, 0.08)
+		mesh_mat.emission_energy_multiplier = 1.5
+		mesh_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		mesh_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mesh.material = mesh_mat
+		particles.draw_pass_1 = mesh
+
+		add_child(particles)

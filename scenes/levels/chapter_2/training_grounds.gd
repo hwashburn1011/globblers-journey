@@ -173,6 +173,7 @@ func _ready() -> void:
 		_show_hint_once("agent_spawn", "SUB-AGENTS", "G to spawn a mini-agent. They will fail you. That is expected.")
 
 	_place_decals()
+	_place_particles()
 	print("[TRAINING GROUNDS] Network loaded. %d neuron-rooms ready for traversal." % ROOMS.size())
 
 
@@ -2404,3 +2405,92 @@ func _place_decals() -> void:
 		},
 	]
 	DecalPlacer.place_chapter_decals(self, ROOMS, theme)
+
+
+# ============================================================
+# ENVIRONMENTAL PARTICLES — Neural activity never sleeps
+# ============================================================
+
+func _place_particles() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.reduce_motion:
+		return
+
+	# Floating neural-node sparks — synaptic residue in the training loop
+	for room_key in ROOMS:
+		var room = ROOMS[room_key]
+		var particles := GPUParticles3D.new()
+		particles.name = "NeuralSparks_%s" % room_key
+		particles.amount = 40
+		particles.lifetime = 5.0
+		particles.speed_scale = 0.4
+		particles.visibility_aabb = AABB(Vector3(-room.size.x * 0.5, 0, -room.size.y * 0.5), Vector3(room.size.x, room.wall_h, room.size.y))
+		particles.position = room.pos + Vector3(0, room.wall_h * 0.5, 0)
+
+		var mat := ParticleProcessMaterial.new()
+		mat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+		mat.emission_box_extents = Vector3(room.size.x * 0.4, room.wall_h * 0.4, room.size.y * 0.4)
+		mat.direction = Vector3(0, 1, 0)
+		mat.spread = 180.0
+		mat.initial_velocity_min = 0.1
+		mat.initial_velocity_max = 0.3
+		mat.gravity = Vector3(0, 0.05, 0)
+		mat.color = Color(0.29, 0.88, 0.65, 0.5)
+		mat.scale_min = 0.02
+		mat.scale_max = 0.06
+		particles.process_material = mat
+
+		var mesh := QuadMesh.new()
+		mesh.size = Vector2(0.08, 0.08)
+		var mesh_mat := StandardMaterial3D.new()
+		mesh_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mesh_mat.albedo_color = Color(0.29, 0.88, 0.65, 0.6)
+		mesh_mat.emission_enabled = true
+		mesh_mat.emission = Color(0.29, 0.88, 0.65)
+		mesh_mat.emission_energy_multiplier = 2.0
+		mesh_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		mesh_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mesh.material = mesh_mat
+		particles.draw_pass_1 = mesh
+
+		add_child(particles)
+
+	# Dim teal upward wisps — gradient descent visualization
+	var wisp_rooms := ["gradient_falls", "loss_plaza"]
+	for room_key in wisp_rooms:
+		var room = ROOMS[room_key]
+		var wisps := GPUParticles3D.new()
+		wisps.name = "GradientWisps_%s" % room_key
+		wisps.amount = 20
+		wisps.lifetime = 4.0
+		wisps.speed_scale = 0.5
+		wisps.visibility_aabb = AABB(Vector3(-room.size.x * 0.5, 0, -room.size.y * 0.5), Vector3(room.size.x, room.wall_h + 2.0, room.size.y))
+		wisps.position = room.pos + Vector3(0, 0.5, 0)
+
+		var wmat := ParticleProcessMaterial.new()
+		wmat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+		wmat.emission_box_extents = Vector3(room.size.x * 0.3, 0.5, room.size.y * 0.3)
+		wmat.direction = Vector3(0, 1, 0)
+		wmat.spread = 30.0
+		wmat.initial_velocity_min = 0.3
+		wmat.initial_velocity_max = 0.6
+		wmat.gravity = Vector3(0, -0.1, 0)
+		wmat.color = Color(0.1, 0.4, 0.35, 0.3)
+		wmat.scale_min = 0.05
+		wmat.scale_max = 0.12
+		wisps.process_material = wmat
+
+		var wmesh := QuadMesh.new()
+		wmesh.size = Vector2(0.15, 0.3)
+		var wm_mat := StandardMaterial3D.new()
+		wm_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		wm_mat.albedo_color = Color(0.15, 0.5, 0.4, 0.35)
+		wm_mat.emission_enabled = true
+		wm_mat.emission = Color(0.15, 0.5, 0.4)
+		wm_mat.emission_energy_multiplier = 1.0
+		wm_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		wm_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		wmesh.material = wm_mat
+		wisps.draw_pass_1 = wmesh
+
+		add_child(wisps)
