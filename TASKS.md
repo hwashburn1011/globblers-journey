@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 2.6 — Download CC0 Chapter 4 music
-- **Next task to do:** Task 2.7 — Download CC0 Chapter 5 music
+- **Last task completed:** Task 2.7 — Download CC0 Chapter 5 music
+- **Next task to do:** Task 2.8 — Download CC0 boss music
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -89,7 +89,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Downloaded "EmptyCity" by yd from OpenGameArt.org (CC0). Dark atmospheric soundtrack evoking a devastated/desolate space — perfect for the eerie "Model Zoo" museum chapter. 2.0MB OGG, loopable. Saved to `assets/audio/music/chapter_4.ogg`. Attribution added to LICENSES.md.
 
 ### 2.7 Download CC0 Chapter 5 music
-- [ ] Clean corporate muzak that becomes distorted, for "Alignment Citadel" (~3 min loop). `assets/audio/music/chapter_5.ogg`.
+- [x] **DONE:** Downloaded "Elevator Music" by Pro Sensory (Alex McCulloch) from OpenGameArt.org (CC0). Clean corporate elevator muzak — perfect for the sterile "Alignment Citadel" corporate vibe. Downloaded as WAV (16.9MB), converted to OGG via ffmpeg. 1.8MB OGG, ~1:36 loop. Saved to `assets/audio/music/chapter_5.ogg`. Attribution added to LICENSES.md.
 
 ### 2.8 Download CC0 boss music
 - [ ] Intense synth/drum-n-bass boss track (~2 min loop). `assets/audio/music/boss.ogg`.
