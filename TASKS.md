@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 3.5 complete
-- **Last task completed:** Task 3.5 — Death dissolve effect
-- **Next task to do:** Task 4.1 (Create MultiMesh scatter utility — PASS 3 COMPLETE)
+- **Last updated by:** Claude (2026-04-04) — Task 4.1 complete
+- **Last task completed:** Task 4.1 — MultiMesh scatter utility
+- **Next task to do:** Task 4.2 (Download Poly Haven tech-waste textures)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 in progress — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -142,7 +142,7 @@ assets/
 # Sourcing + integration utilities for CC0 props.
 
 ### 4.1 Create MultiMesh scatter utility
-- [ ] Create `scripts/utils/prop_scatter.gd` — static helper: `scatter_props(scene_root, mesh: Mesh, positions: Array[Vector3], rotations: Array[float], scales: Array[float])` builds a MultiMeshInstance3D. Use for performant clutter placement.
+- [x] Create `scripts/utils/prop_scatter.gd` — static helper: `scatter_props(scene_root, mesh: Mesh, positions: Array[Vector3], rotations: Array[float], scales: Array[float])` builds a MultiMeshInstance3D. Use for performant clutter placement. **Done: Created PropScatter class (class_name, extends RefCounted) with 3 static methods: scatter_props() (builds MMI from explicit positions/rotations/scales arrays), scatter_random() (convenience wrapper with random Y rotation + uniform scale range), generate_grid_positions() (grid layout with optional jitter for rectangular fill). All methods return MultiMeshInstance3D. Tested via Godot MCP — zero new runtime errors.**
 
 ### 4.2 Download Poly Haven tech-waste textures
 - [ ] Search Poly Haven textures via MCP for: rusted metal, scratched plastic, circuit board, concrete wall. Download 2K for each. Place under `assets/textures/pbr/{material_name}/`. Record in LICENSES.md.
