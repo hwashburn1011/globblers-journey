@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 2.4 — Download CC0 Chapter 2 music
-- **Next task to do:** Task 2.5 — Download CC0 Chapter 3 music
+- **Last task completed:** Task 2.5 — Download CC0 Chapter 3 music
+- **Next task to do:** Task 2.6 — Download CC0 Chapter 4 music
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -83,7 +83,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Downloaded "Experiment G" by tricksntraps from OpenGameArt.org (CC0). Cyberpunk/synth lab track, 6.1MB OGG, from T & T Free Cyberpunk Pack. Saved to `assets/audio/music/chapter_2.ogg`. Attribution added to LICENSES.md.
 
 ### 2.5 Download CC0 Chapter 3 music
-- [ ] Warm/market/world-fusion for "Prompt Bazaar" (~3 min loop). `assets/audio/music/chapter_3.ogg`.
+- [x] **DONE:** Downloaded "Town4 - Bazaar" by SubspaceAudio (Juhani Junkala) from OpenGameArt.org (CC0). Warm bazaar/market loop, 3.8MB OGG, from JRPG Music Pack #2 [Towns]. Saved to `assets/audio/music/chapter_3.ogg`. Attribution added to LICENSES.md.
 
 ### 2.6 Download CC0 Chapter 4 music
 - [ ] Eerie museum ambient with digital echoes for "Model Zoo" (~3 min loop). `assets/audio/music/chapter_4.ogg`.
