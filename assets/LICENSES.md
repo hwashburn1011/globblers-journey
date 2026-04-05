@@ -64,5 +64,5 @@ Only CC0 / CC-BY / royalty-free assets are permitted.
 | Grunts of Male Death and Pain (SFX) | OpenGameArt / thebardofblasphemy | CC0 | https://opengameart.org/content/grunts-male-death-and-pain | Player death — assets/audio/sfx/player_death.ogg |
 | Sci-Fi Sounds (SFX) | OpenGameArt / Kenney | CC0 | https://opengameart.org/content/sci-fi-sounds | Ability SFX — assets/audio/sfx/ability_glob_cast.ogg (laserLarge), ability_wrench.ogg (impactMetal), ability_hack.ogg (computerNoise), ability_agent_spawn.ogg (forceField) |
 | Interface Sounds (SFX) | OpenGameArt / Kenney | CC0 | https://opengameart.org/content/interface-sounds | UI SFX — assets/audio/sfx/ui_hover.ogg (select_003), ui_click.ogg (click_001), ui_dialogue_advance.ogg (confirmation_001), ui_dialogue_blip.ogg (tick_001), ui_pause_open.ogg (open_001), ui_pause_close.ogg (close_001), ui_token_pickup.ogg (pluck_001) |
-| *(Audio — SFX: enemy)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Enemy SFX — assets/audio/sfx/* |
+| 80 CC0 Creature SFX #2 (SFX) | OpenGameArt / rubberduck | CC0 | https://opengameart.org/content/80-cc0-creture-sfx-2 | Enemy SFX — assets/audio/sfx/enemy_alert_{1,2,3}.ogg (grunt_06-08), enemy_attack_{1,2,3}.ogg (attack_01-03), enemy_death_{1,2,3}.ogg (die_01-03) |
 | *(Audio — ambient)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Ambient loops — assets/audio/ambient/* |

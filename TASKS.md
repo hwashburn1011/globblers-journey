@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 2.12 — Download CC0 UI SFX
-- **Next task to do:** Task 2.13 — Download CC0 enemy SFX
+- **Last task completed:** Task 2.13 — Download CC0 enemy SFX
+- **Next task to do:** Task 2.14 — Wire music tracks into AudioManager
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -107,7 +107,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Downloaded 7 UI SFX from Kenney's "Interface Sounds" pack on OpenGameArt.org (CC0). All OGG format: (1) ui_hover.ogg ← select_003 (rollover highlight, 7KB). (2) ui_click.ogg ← click_001 (button click, 5KB). (3) ui_dialogue_advance.ogg ← confirmation_001 (confirm/advance chime, 9KB). (4) ui_dialogue_blip.ogg ← tick_001 (typing blip tick, 4KB). (5) ui_pause_open.ogg ← open_001 (menu open, 10KB). (6) ui_pause_close.ogg ← close_001 (menu close, 10KB). (7) ui_token_pickup.ogg ← pluck_001 (token pickup pluck, 6KB). All saved to assets/audio/sfx/ui_*.ogg. Attribution added to LICENSES.md.
 
 ### 2.13 Download CC0 enemy SFX
-- [ ] Generic enemy alert, attack, death (3 variants of each). Save to `assets/audio/sfx/enemy_*.ogg`. Record attributions.
+- [x] **DONE:** Downloaded 9 enemy SFX from rubberduck's "80 CC0 Creature SFX #2" on OpenGameArt.org (CC0). All OGG format: (1) enemy_alert_1.ogg ← grunt_06 (19KB), enemy_alert_2.ogg ← grunt_07 (22KB), enemy_alert_3.ogg ← grunt_08 (18KB). (2) enemy_attack_1.ogg ← attack_01 (12KB), enemy_attack_2.ogg ← attack_02 (41KB), enemy_attack_3.ogg ← attack_03 (27KB). (3) enemy_death_1.ogg ← die_01 (20KB), enemy_death_2.ogg ← die_02 (32KB), enemy_death_3.ogg ← die_03 (21KB). All saved to assets/audio/sfx/enemy_*.ogg. Attribution added to LICENSES.md.
 
 ### 2.14 Wire music tracks into AudioManager
 - [ ] In `scripts/autoload/audio_manager.gd`, add a `_loaded_music: Dictionary` map. In `start_music(track_name)`, attempt to `load("res://assets/audio/music/" + track_name + ".ogg")` first. On success, play the loaded stream. On failure, fall back to existing procedural synth. Same pattern for `boss_music`. Keep procedural as safety net.
