@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 1.2 — Gitignore build logs and generated artifacts
-- **Next task to do:** Task 1.3 — Gitignore verification pass
+- **Last task completed:** Task 1.3 — Gitignore verification pass
+- **Next task to do:** Task 1.4 — Verify .gdkeep placeholders removed where unneeded
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -60,7 +60,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** `.gitignore` already had `build_log_*.txt` and `/build/`. Added `build_log_*.md` and `*.pdb`. Ran `git rm --cached` on two tracked build log .md files (`build_log_2026-04-04_lighting.md`, `build_log_2026-04-05_performance.md`). All build artifacts now properly ignored.
 
 ### 1.3 Gitignore verification pass
-- [ ] Run `git status` and verify no generated/temp artifacts are tracked. Check for `.import` files that reference deleted source assets. Delete orphans. Commit any remaining cleanup.
+- [x] **DONE:** Ran `git status` — no temp/generated artifacts tracked except one `.blend1` backup file (`assets/blender_source/globbler.blend1`). Removed it from tracking via `git rm --cached` and added `*.blend1` to `.gitignore`. Verified all `.import` files have corresponding source assets (no orphans). No `.tmp`, `.bak`, `.swp`, `.pyc`, or `.DS_Store` files tracked. `tools/blender-mcp/` correctly untracked.
 
 ### 1.4 Verify .gdkeep placeholders removed where unneeded
 - [ ] Grep for `.gdkeep` files in `assets/`. If the folder now contains real assets, delete the `.gdkeep`. Keep only in genuinely empty scaffolding folders. Commit.

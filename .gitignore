@@ -11,3 +11,6 @@ build_log_*.md
 
 # Debug symbols
 *.pdb
+
+# Blender backup files
+*.blend1
