@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 6.11 complete
-- **Last task completed:** Task 6.11 — DALL-E Nightmare enemy model via blender-mcp
-- **Next task to do:** Task 6.12 (Clippy's Revenge enemy model via blender-mcp)
+- **Last updated by:** Claude (2026-04-04) — Task 6.12 complete
+- **Last task completed:** Task 6.12 — Clippy's Revenge enemy model via blender-mcp
+- **Next task to do:** Task 6.13 (Safety Classifier enemy model via blender-mcp)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 IN PROGRESS — enemy visual upgrades. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -218,7 +218,7 @@ assets/
 - [x] Via blender-mcp: abstract CSG-dream creature with morphing parts (keep procedural CSG spawns inside script; this task swaps only the BASE body). Swap in `dalle_nightmare.tscn`. **Done: Built asymmetric nightmare blob body with deformed UV sphere torso (vertex-displaced for organic wrongness), 7 misplaced yellow eyes with void-black pupils, gash mouth, 4 wrong arms (one long tentacle-arm with teal taper + bony fingers, one comically stubby arm, one back arm, one shoulder-leg), asymmetric legs (chunky left, thin right with wrong feet), horn protrusion, 4 back fins, 8 floating glitch shards, 6 error pixel cubes, 3 melting tendrils with drip blobs. All PBR materials (NightmarePurple, GlitchTeal, ErrorMagenta, WrongEyeYellow, VoidBlack). Exported to `assets/models/enemies/dalle_nightmare.glb`, source saved to `assets/blender_source/dalle_nightmare.blend`. Updated `dalle_nightmare.gd` `_create_visual()` to load GLB with CSG fallback, preserving distortion aura particles, morph flash, status label, glow light, and all gameplay mechanics.**
 
 ### 6.12 Clippy's Revenge model
-- [ ] Via blender-mcp: oversized 3D paperclip with glowing red eyes. Swap in `clippy_revenge.tscn`. This one can lean into camp.
+- [x] Via blender-mcp: oversized 3D paperclip with glowing red eyes. Swap in `clippy_revenge.tscn`. This one can lean into camp. **Done: Built oversized double-loop paperclip with metallic silver-blue wire body, googly eyes with glowing red pupils (emission strength 8.0), angry eyebrows, sinister grin mouth, and wire arms with hand spheres. Exported to `assets/models/enemies/clippy_revenge.glb`, source saved to `assets/blender_source/clippy_revenge.blend`. Updated `clippy_revenge.gd` to load GLB with CSG fallback. Wire segments from GLB added to `wire_segments` array for rage mode material override.**
 
 ### 6.13 Safety Classifier model
 - [ ] Via blender-mcp: hovering drone-cube with scanning blue lens. Swap in `safety_classifier.tscn`.
