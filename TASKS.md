@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 7.1 complete
-- **Last task completed:** Task 7.1 — rm -rf Boss model via blender-mcp
-- **Next task to do:** Task 7.2 (Local Minimum Boss model via blender-mcp)
+- **Last updated by:** Claude (2026-04-04) — Task 7.2 complete
+- **Last task completed:** Task 7.2 — Local Minimum Boss model via blender-mcp
+- **Next task to do:** Task 7.3 (System Prompt Boss model via blender-mcp)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 IN PROGRESS — boss visual upgrades. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -238,7 +238,7 @@ assets/
 - [x] Via blender-mcp: massive clawed delete-daemon with angular head, horns, red glowing eyes, jagged shoulder/back spikes, big claws (3 per hand), chest armor plates, glowing red emission cracks, belt, tail. 2058 tris. Exported to `assets/models/bosses/rm_rf_boss.glb`, source at `assets/blender_source/rm_rf_boss.blend`. Updated `rm_rf_boss.gd` _create_visual() to load GLB model; shield/core/eyes remain procedural for gameplay control.
 
 ### 7.2 Local Minimum Boss model
-- [ ] Via blender-mcp: swirling gravity-well entity, distorted body with orbiting energy nodes. Dark-purple emission core. Swap in boss scene.
+- [x] Via blender-mcp: swirling gravity-well entity, distorted body with orbiting energy nodes. Dark-purple emission core. Swap in boss scene. **Done: Built twisted vortex funnel body with 3 tilted contour rings, 6 orbiting energy nodes (alternating red/gold), tapered gravity arms, face screen, and deep-purple emissive core in Blender. Exported to `assets/models/bosses/local_minimum_boss.glb` (source: `assets/blender_source/local_minimum_boss.blend`). Swapped `_create_visual()` in `local_minimum_boss.gd` to load GLB model with `_find_mesh_instance()` helper. Shield, core, gravity indicator, labels kept procedural for runtime toggling.**
 
 ### 7.3 System Prompt Boss model
 - [ ] Via blender-mcp: floating text-shard colossus, pages of text orbiting a glowing central prism. Swap.
