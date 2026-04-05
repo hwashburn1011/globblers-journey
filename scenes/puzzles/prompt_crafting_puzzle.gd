@@ -70,18 +70,21 @@ func _create_persona_terminal() -> void:
 	_persona_terminal.name = "PersonaTerminal"
 	_persona_terminal.position = Vector3(0, 0, -1)
 
-	# Terminal body — dark slab with amber trim (bazaar aesthetic)
-	var body = MeshInstance3D.new()
-	var bmesh = BoxMesh.new()
-	bmesh.size = Vector3(2.0, 2.5, 0.6)
-	body.mesh = bmesh
-	body.position = Vector3(0, 1.25, 0)
-	var bmat = StandardMaterial3D.new()
-	bmat.albedo_color = Color(0.1, 0.08, 0.06)
-	bmat.metallic = 0.7
-	bmat.roughness = 0.3
-	body.material_override = bmat
-	_persona_terminal.add_child(body)
+	# Terminal body — bazaar market stall GLB replacing BoxMesh slab
+	var stall_scene = preload("res://assets/models/environment/bazaar_market_stall.glb")
+	var stall_inst = stall_scene.instantiate()
+	stall_inst.name = "TerminalBody"
+	stall_inst.position = Vector3(0, 0, 0)
+	stall_inst.scale = Vector3(1.2, 1.2, 0.8)
+	# Warm wood-grain tint on all mesh children
+	var wood_mat = StandardMaterial3D.new()
+	wood_mat.albedo_color = Color(0.22, 0.14, 0.08)
+	wood_mat.metallic = 0.1
+	wood_mat.roughness = 0.75
+	for child in stall_inst.get_children():
+		if child is MeshInstance3D:
+			child.material_override = wood_mat
+	_persona_terminal.add_child(stall_inst)
 
 	# Collision
 	var col = CollisionShape3D.new()
@@ -91,33 +94,41 @@ func _create_persona_terminal() -> void:
 	col.position = Vector3(0, 1.25, 0)
 	_persona_terminal.add_child(col)
 
-	# Glowing screen face — shows the persona's requirements
+	# Glowing screen face — CRT scanline shader with warm amber bazaar theme
 	_persona_screen = MeshInstance3D.new()
-	var smesh = BoxMesh.new()
-	smesh.size = Vector3(1.6, 1.4, 0.05)
-	_persona_screen.mesh = smesh
+	var screen_quad = QuadMesh.new()
+	screen_quad.size = Vector2(1.6, 1.4)
+	_persona_screen.mesh = screen_quad
 	_persona_screen.position = Vector3(0, 1.5, 0.33)
-	var smat = StandardMaterial3D.new()
-	smat.albedo_color = Color(0.02, 0.06, 0.06)
-	smat.emission_enabled = true
-	smat.emission = PROMPT_CYAN
-	smat.emission_energy_multiplier = 0.4
-	_persona_screen.material_override = smat
+	var crt_mat = ShaderMaterial.new()
+	crt_mat.shader = preload("res://assets/shaders/crt_scanline.gdshader")
+	crt_mat.set_shader_parameter("screen_color", BAZAAR_AMBER)
+	crt_mat.set_shader_parameter("bg_color", Color(0.06, 0.03, 0.01))
+	crt_mat.set_shader_parameter("scanline_count", 60.0)
+	crt_mat.set_shader_parameter("glow_energy", 2.0)
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		crt_mat.set_shader_parameter("flicker_amount", 0.0)
+		crt_mat.set_shader_parameter("scroll_speed", 0.0)
+	_persona_screen.material_override = crt_mat
 	_persona_terminal.add_child(_persona_screen)
 
-	# Amber accent strip at top
-	var accent = MeshInstance3D.new()
-	var amesh = BoxMesh.new()
-	amesh.size = Vector3(2.0, 0.08, 0.62)
-	accent.mesh = amesh
-	accent.position = Vector3(0, 2.55, 0)
-	var amat = StandardMaterial3D.new()
-	amat.albedo_color = BAZAAR_AMBER * 0.3
-	amat.emission_enabled = true
-	amat.emission = BAZAAR_AMBER
-	amat.emission_energy_multiplier = 1.5
-	accent.material_override = amat
-	_persona_terminal.add_child(accent)
+	# Flanking bazaar lanterns — warm amber glow on each side
+	var lantern_scene = preload("res://assets/models/environment/bazaar_lantern.glb")
+	for side in [-1.0, 1.0]:
+		var lantern = lantern_scene.instantiate()
+		lantern.name = "Lantern_%s" % ("L" if side < 0 else "R")
+		lantern.position = Vector3(side * 1.4, 0, 0.2)
+		lantern.scale = Vector3(0.8, 0.8, 0.8)
+		_persona_terminal.add_child(lantern)
+		# Warm point light per lantern
+		var light = OmniLight3D.new()
+		light.light_color = BAZAAR_AMBER
+		light.light_energy = 1.5
+		light.omni_range = 3.0
+		light.omni_attenuation = 1.5
+		light.position = Vector3(side * 1.4, 2.0, 0.3)
+		_persona_terminal.add_child(light)
 
 	add_child(_persona_terminal)
 
@@ -163,26 +174,54 @@ func _create_prompt_fragments() -> void:
 		fragment.freeze = true
 		fragment.add_to_group("prompt_fragments")
 
-		# Collision
+		# Collision — sphere shape to match crystal visual
 		var col = CollisionShape3D.new()
-		var fshape = BoxShape3D.new()
-		fshape.size = Vector3(1.0, 0.6, 0.1)
+		var fshape = SphereShape3D.new()
+		fshape.radius = 0.3
 		col.shape = fshape
 		fragment.add_child(col)
 
-		# Visual — glowing prompt tablet
-		var mesh = MeshInstance3D.new()
-		var fmesh = BoxMesh.new()
-		fmesh.size = Vector3(1.0, 0.6, 0.1)
-		mesh.mesh = fmesh
+		# Visual — glowing crystal sphere (replacing BoxMesh tablet)
 		var fcolor: Color = TAG_COLORS.get(tag, Color(0.5, 0.5, 0.5))
+		# Outer crystal shell
+		var crystal = MeshInstance3D.new()
+		var cmesh = SphereMesh.new()
+		cmesh.radius = 0.3
+		cmesh.height = 0.6
+		cmesh.radial_segments = 16
+		cmesh.rings = 12
+		crystal.mesh = cmesh
 		var mat = StandardMaterial3D.new()
-		mat.albedo_color = fcolor * 0.3
+		mat.albedo_color = fcolor * 0.2
 		mat.emission_enabled = true
 		mat.emission = fcolor
-		mat.emission_energy_multiplier = 1.5
-		mesh.material_override = mat
-		fragment.add_child(mesh)
+		mat.emission_energy_multiplier = 2.0
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.albedo_color.a = 0.7
+		mat.roughness = 0.1
+		mat.metallic = 0.3
+		crystal.material_override = mat
+		fragment.add_child(crystal)
+		# Inner core glow — smaller brighter sphere
+		var core = MeshInstance3D.new()
+		var core_mesh = SphereMesh.new()
+		core_mesh.radius = 0.12
+		core_mesh.height = 0.24
+		core.mesh = core_mesh
+		var core_mat = StandardMaterial3D.new()
+		core_mat.albedo_color = fcolor
+		core_mat.emission_enabled = true
+		core_mat.emission = fcolor
+		core_mat.emission_energy_multiplier = 4.0
+		core.material_override = core_mat
+		fragment.add_child(core)
+		# Per-crystal point light
+		var crystal_light = OmniLight3D.new()
+		crystal_light.light_color = fcolor
+		crystal_light.light_energy = 0.8
+		crystal_light.omni_range = 1.5
+		crystal_light.omni_attenuation = 2.0
+		fragment.add_child(crystal_light)
 
 		# Tag label on the fragment
 		var flabel = Label3D.new()
@@ -227,17 +266,18 @@ func _create_submit_zone() -> void:
 	col.shape = shape
 	_submit_zone.add_child(col)
 
-	# Visual indicator — faint green floor glow marking the drop zone
+	# Visual indicator — faint amber floor glow marking the drop zone (bazaar palette)
 	var indicator = MeshInstance3D.new()
-	var imesh = BoxMesh.new()
-	imesh.size = Vector3(3.0, 0.02, 2.0)
+	var imesh = QuadMesh.new()
+	imesh.size = Vector2(3.0, 2.0)
 	indicator.mesh = imesh
 	indicator.position = Vector3(0, -0.9, 0)
+	indicator.rotation_degrees = Vector3(-90, 0, 0)
 	var imat = StandardMaterial3D.new()
-	imat.albedo_color = NEON_GREEN * 0.1
+	imat.albedo_color = BAZAAR_AMBER * 0.15
 	imat.emission_enabled = true
-	imat.emission = NEON_GREEN
-	imat.emission_energy_multiplier = 0.5
+	imat.emission = BAZAAR_AMBER
+	imat.emission_energy_multiplier = 0.6
 	imat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	imat.albedo_color.a = 0.3
 	indicator.material_override = imat
@@ -267,17 +307,22 @@ func _create_door() -> void:
 	col.shape = shape
 	_door.add_child(col)
 
-	var mesh = MeshInstance3D.new()
-	var box = BoxMesh.new()
-	box.size = Vector3(4, 3, 0.3)
-	mesh.mesh = box
-	var mat = StandardMaterial3D.new()
-	mat.albedo_color = Color(0.12, 0.1, 0.08)
-	mat.emission_enabled = true
-	mat.emission = BAZAAR_AMBER * 0.3
-	mat.emission_energy_multiplier = 0.4
-	mesh.material_override = mat
-	_door.add_child(mesh)
+	# Door — arch industrial panel GLB with warm amber emissive overlay
+	var door_scene = preload("res://assets/models/environment/arch_industrial_panel.glb")
+	var door_inst = door_scene.instantiate()
+	door_inst.name = "DoorMesh"
+	door_inst.scale = Vector3(2.0, 1.5, 1.0)
+	var door_mat = StandardMaterial3D.new()
+	door_mat.albedo_color = Color(0.15, 0.1, 0.06)
+	door_mat.emission_enabled = true
+	door_mat.emission = BAZAAR_AMBER * 0.3
+	door_mat.emission_energy_multiplier = 0.6
+	door_mat.metallic = 0.5
+	door_mat.roughness = 0.4
+	for child in door_inst.get_children():
+		if child is MeshInstance3D:
+			child.material_override = door_mat
+	_door.add_child(door_inst)
 
 	add_child(_door)
 
@@ -390,15 +435,27 @@ func _dissolve_fragment(fragment: Node3D) -> void:
 
 func _flash_screen(color: Color) -> void:
 	if _persona_screen and _persona_screen.material_override:
-		var orig_emission = _persona_screen.material_override.emission
-		var orig_energy = _persona_screen.material_override.emission_energy_multiplier
-		_persona_screen.material_override.emission = color
-		_persona_screen.material_override.emission_energy_multiplier = 3.0
-		get_tree().create_timer(0.5).timeout.connect(func():
-			if is_instance_valid(_persona_screen) and _persona_screen.material_override:
-				_persona_screen.material_override.emission = orig_emission
-				_persona_screen.material_override.emission_energy_multiplier = orig_energy
-		)
+		var mat = _persona_screen.material_override
+		if mat is ShaderMaterial:
+			var orig_color = mat.get_shader_parameter("screen_color")
+			var orig_energy = mat.get_shader_parameter("glow_energy")
+			mat.set_shader_parameter("screen_color", color)
+			mat.set_shader_parameter("glow_energy", 5.0)
+			get_tree().create_timer(0.5).timeout.connect(func():
+				if is_instance_valid(_persona_screen) and _persona_screen.material_override:
+					mat.set_shader_parameter("screen_color", orig_color)
+					mat.set_shader_parameter("glow_energy", orig_energy)
+			)
+		else:
+			var orig_emission = mat.emission
+			var orig_energy = mat.emission_energy_multiplier
+			mat.emission = color
+			mat.emission_energy_multiplier = 3.0
+			get_tree().create_timer(0.5).timeout.connect(func():
+				if is_instance_valid(_persona_screen) and _persona_screen.material_override:
+					mat.emission = orig_emission
+					mat.emission_energy_multiplier = orig_energy
+			)
 
 
 func _on_solved() -> void:
@@ -408,8 +465,13 @@ func _on_solved() -> void:
 		_puzzle_label.modulate = Color(0.4, 1.0, 0.4)
 
 	if _persona_screen and _persona_screen.material_override:
-		_persona_screen.material_override.emission = NEON_GREEN
-		_persona_screen.material_override.emission_energy_multiplier = 2.0
+		var mat = _persona_screen.material_override
+		if mat is ShaderMaterial:
+			mat.set_shader_parameter("screen_color", NEON_GREEN)
+			mat.set_shader_parameter("glow_energy", 3.0)
+		else:
+			mat.emission = NEON_GREEN
+			mat.emission_energy_multiplier = 2.0
 
 	if _door:
 		var tween = create_tween()

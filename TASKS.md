@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 12.2 complete
-- **Last task completed:** Task 12.2 — Chapter 2 puzzle visual upgrades. Replaced BoxMesh placeholders with GLB props, emissive spheres, TubeMesh connectors + Ch2 teal palette in all 4 Ch2 puzzles.
-- **Next task to do:** Task 12.3 (Chapter 3 puzzle visual upgrades)
+- **Last updated by:** Claude (2026-04-05) — Task 12.3 complete
+- **Last task completed:** Task 12.3 — Chapter 3 puzzle visual upgrades. Replaced BoxMesh placeholders with bazaar GLB props, crystal fragment spheres, CRT scanline shader screens, flanking lanterns in both Ch3 puzzles.
+- **Next task to do:** Task 12.4 (Chapter 4 puzzle visual upgrades)
 - **V2.0 MILESTONE SUMMARY (Passes 1–11):**
   - **Pass 1 — Lighting:** 5 Poly Haven HDRIs, 5 WorldEnvironment .tres resources, DirectionalLight3D tuning (4-split shadows, per-chapter color temp). All chapters have FILMIC tonemap, SSAO, SSIL, SDFGI, volumetric fog.
   - **Pass 2 — Globbler Hero:** Custom Blender-built chibi robot GLB (dark metal + neon green), tuned scale (1.4x), collision capsule (r=0.35, h=1.3), third-person camera (distance=6.0, pitch=-0.3, height=1.1m).
@@ -379,7 +379,7 @@ assets/
 - [x] In `weight_path_puzzle.gd`, `backprop_trace_puzzle.gd`, `multi_glob_puzzle.gd`, `recursive_glob_puzzle.gd`: replace CSG neural-node meshes with glowing sphere meshes (small emissive GLBs or procedural MeshInstance3D with emission material). Connect-nodes get tube TubeMesh / cylinder connectors. Use Chapter 2 blue-green palette. Keep logic untouched. **Done: Replaced all BoxMesh placeholders across 4 puzzles. weight_path: motherboard.glb platforms + wall_terminal.glb weight nodes + emissive sphere indicators. backprop_trace: high-detail 32-segment spheres with inner core glow + TubeMesh synaptic connectors + OmniLight3D per node. multi_glob: SphereMesh step indicators replacing BoxMesh + industrial_panel.glb door. recursive_glob: hard_drive.glb directories + floppy_disk.glb files + TubeMesh tree connectors. All 4 puzzles use Ch2 teal (#4AE0A5) palette. All doors replaced with arch_industrial_panel.glb + emissive overlay for dissolve effects. All CollisionShape3D and puzzle logic untouched. Godot MCP smoke test: zero new errors.**
 
 ### 12.3 Chapter 3 puzzles — visual upgrade
-- [ ] In `prompt_crafting_puzzle.gd`, `social_engineering_puzzle.gd`: replace CSG text-terminal placeholders with bazaar-themed terminals (warm amber backing, wood-grain texture, lanterns flanking). Tokens = glowing crystal meshes. Keep logic untouched.
+- [x] In `prompt_crafting_puzzle.gd`, `social_engineering_puzzle.gd`: replace CSG text-terminal placeholders with bazaar-themed terminals (warm amber backing, wood-grain texture, lanterns flanking). Tokens = glowing crystal meshes. Keep logic untouched. **Done: Replaced all BoxMesh placeholders across both Ch3 puzzles. prompt_crafting: bazaar_market_stall.glb terminal body with wood-grain material + CRT scanline shader screen (warm amber) + flanking bazaar_lantern.glb with OmniLight3D + SphereMesh crystal fragments (translucent outer shell + bright inner core + per-crystal OmniLight3D) replacing flat tablet BoxMesh + arch_industrial_panel.glb door with amber overlay + QuadMesh amber floor drop-zone indicator. social_engineering: bazaar_market_stall.glb terminal body + CRT scanline shader screen + flanking bazaar_lantern.glb + bazaar_crate.glb response card platforms replacing BoxMesh cards + arch_industrial_panel.glb door. Both puzzles: _flash_screen() and _on_solved() updated to handle ShaderMaterial CRT parameters. All CollisionShape3D and puzzle logic untouched. Godot MCP smoke test: zero new errors.**
 
 ### 12.4 Chapter 4 puzzles — visual upgrade
 - [ ] In `fossil_exhibit_puzzle.gd`, `nightmare_gallery_puzzle.gd`, `clippy_help_puzzle.gd`, `reclassification_puzzle.gd`: replace CSG exhibit cases with museum-display-case meshes (glass boxes + pedestals + brass plaques). Re-use Chapter 4 clinical museum palette. Keep logic untouched.
