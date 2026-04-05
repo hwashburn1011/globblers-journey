@@ -119,9 +119,29 @@ var _fence_posts: Array[MeshInstance3D] = []
 var _hologram_meshes: Array[Dictionary] = []
 var _time := 0.0
 
+# GLB prop paths — museum exhibits deserve real geometry, not CSG shame
+const _PROP_PATHS := {
+	"server_rack": "res://assets/models/environment/arch_server_rack.glb",
+	"crt_monitor": "res://assets/models/environment/prop_crt_monitor.glb",
+	"motherboard": "res://assets/models/environment/prop_motherboard.glb",
+	"cpu_chip": "res://assets/models/environment/prop_cpu_chip.glb",
+	"hard_drive": "res://assets/models/environment/prop_hard_drive.glb",
+	"keyboard": "res://assets/models/environment/prop_keyboard.glb",
+	"cable_bundle": "res://assets/models/environment/arch_cable_bundle.glb",
+	"industrial_panel": "res://assets/models/environment/arch_industrial_panel.glb",
+	"floor_grate": "res://assets/models/environment/arch_floor_grate.glb",
+	"wall_terminal": "res://assets/models/environment/arch_wall_terminal.glb",
+	"filing_cabinet": "res://assets/models/environment/clinical_filing_cabinet.glb",
+	"office_chair": "res://assets/models/environment/clinical_office_chair.glb",
+	"office_monitor": "res://assets/models/environment/clinical_office_monitor.glb",
+	"office_desk": "res://assets/models/environment/clinical_office_desk.glb",
+}
+var _prop_scenes := {}  # Runtime-loaded GLB PackedScenes
+
 
 func _ready() -> void:
 	print("[MODEL ZOO] Initializing digital safari... please keep hands inside the exhibit at all times.")
+	_load_prop_scenes()
 	_setup_environment()
 	_build_rooms()
 	_build_corridors()
@@ -130,6 +150,7 @@ func _ready() -> void:
 	_populate_nightmare_gallery()
 	_populate_office_ruins()
 	_populate_foundation_atrium()
+	_scatter_museum_props()
 	_place_checkpoints()
 	_place_ambient_zones()
 	_place_data_dust()
@@ -2372,6 +2393,312 @@ func _on_boss_phase_changed(phase) -> void:
 # ============================================================
 # ANIMATION — the museum breathes, flickers, and creaks
 # ============================================================
+
+# ============================================================
+# GLB PROP SYSTEM — because CSG boxes are fossils too
+# ============================================================
+
+func _load_prop_scenes() -> void:
+	# Runtime-load all museum GLB props — the digital equivalent of unpacking crates
+	for key in _PROP_PATHS:
+		var res = load(_PROP_PATHS[key])
+		if res:
+			_prop_scenes[key] = res
+		else:
+			push_warning("[MODEL ZOO] Failed to load prop '%s' from %s — CSG fallback, how embarrassing for a museum" % [key, _PROP_PATHS[key]])
+
+
+func _place_glb_prop(prop_key: String, pos: Vector3, rot_y: float = 0.0, scl: Vector3 = Vector3.ONE) -> Node3D:
+	# Drop a GLB prop into the museum — instant class upgrade over CSG
+	if not _prop_scenes.has(prop_key):
+		return _create_static_box(pos, Vector3(0.3, 0.3, 0.3), EXHIBIT_TEAL * 0.3, 0.2)
+	var inst = _prop_scenes[prop_key].instantiate()
+	inst.position = pos
+	inst.rotation.y = rot_y
+	inst.scale = scl
+	add_child(inst)
+	return inst
+
+
+func _create_multimesh_scatter(prop_key: String, positions: Array, base_scale: float = 1.0) -> void:
+	# MultiMesh scatter for bulk clutter — one draw call, many fossils
+	if not _prop_scenes.has(prop_key):
+		push_warning("[MODEL ZOO] Skipping scatter for missing prop '%s'" % prop_key)
+		return
+	var source_scene = _prop_scenes[prop_key].instantiate()
+	var source_mesh: Mesh = null
+	for child in source_scene.get_children():
+		if child is MeshInstance3D:
+			source_mesh = child.mesh
+			break
+		for grandchild in child.get_children():
+			if grandchild is MeshInstance3D:
+				source_mesh = grandchild.mesh
+				break
+		if source_mesh:
+			break
+	source_scene.queue_free()
+
+	if not source_mesh:
+		# Fallback to individual instances — the museum equivalent of hand-placing fossils
+		for pos in positions:
+			_place_glb_prop(prop_key, pos, randf_range(0, TAU), Vector3.ONE * base_scale * randf_range(0.7, 1.3))
+		return
+
+	var mmi = MultiMeshInstance3D.new()
+	mmi.name = "Scatter_%s" % prop_key
+	var mm = MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = source_mesh
+	mm.instance_count = positions.size()
+	for i in range(positions.size()):
+		var s = base_scale * randf_range(0.8, 1.2)
+		var inst_basis = Basis(Vector3.UP, randf_range(0, TAU)).scaled(Vector3.ONE * s)
+		mm.set_instance_transform(i, Transform3D(inst_basis, positions[i]))
+	mmi.multimesh = mm
+	add_child(mmi)
+
+
+func _add_museum_spotlight(pos: Vector3, color: Color = FOSSIL_AMBER, energy: float = 0.6, light_range: float = 4.0) -> void:
+	# Warm exhibit spotlight — every artifact deserves its moment
+	var light = OmniLight3D.new()
+	light.position = pos
+	light.light_color = color
+	light.light_energy = energy
+	light.omni_range = light_range
+	light.omni_attenuation = 1.8
+	add_child(light)
+
+
+func _scatter_museum_props() -> void:
+	# Dress every exhibit hall with GLB props — the museum renovation nobody asked for
+	_scatter_entrance_props()
+	_scatter_fossil_wing_props()
+	_scatter_nightmare_gallery_props()
+	_scatter_office_ruins_props()
+	_scatter_foundation_atrium_props()
+	print("[MODEL ZOO] Museum prop pass complete. The exhibits look almost respectable.")
+
+
+func _scatter_entrance_props() -> void:
+	# Zoo Entrance — visitor services area with kiosks and infrastructure
+	var pos: Vector3 = ROOMS["zoo_entrance"]["pos"]
+
+	# Server rack as information kiosk near the ticket booth
+	_place_glb_prop("server_rack", pos + Vector3(-6.5, 0, 3), PI * 0.5, Vector3.ONE * 0.8)
+	_add_museum_spotlight(pos + Vector3(-6.5, 3, 3), EXHIBIT_TEAL, 0.5, 3.0)
+
+	# Keyboard at the ticket booth terminal — still waiting for input since the budget cuts
+	_place_glb_prop("keyboard", pos + Vector3(-4, 1.3, 2.5), 0.0, Vector3.ONE * 1.2)
+
+	# CRT monitor as visitor info display opposite the map
+	_place_glb_prop("crt_monitor", pos + Vector3(4, 2.5, 3), PI, Vector3.ONE * 1.0)
+	_add_museum_spotlight(pos + Vector3(4, 3.5, 3), NEON_GREEN, 0.3, 2.5)
+
+	# Wall terminals flanking the welcome arch — "scan your ticket here"
+	_place_glb_prop("wall_terminal", pos + Vector3(-3.5, 2.0, -0.5), 0.0, Vector3.ONE * 0.9)
+	_place_glb_prop("wall_terminal", pos + Vector3(3.5, 2.0, -0.5), PI, Vector3.ONE * 0.9)
+
+	# Floor grates at the entrance threshold — infrastructure showing through
+	var entrance_grate_positions: Array = []
+	for i in range(3):
+		entrance_grate_positions.append(pos + Vector3(-2 + i * 2.0, 0.02, -3.0))
+	_create_multimesh_scatter("floor_grate", entrance_grate_positions, 0.8)
+
+	# Cable bundles running along the base of walls — the museum's digital veins
+	_place_glb_prop("cable_bundle", pos + Vector3(-7, 0.2, 0), 0.0, Vector3.ONE * 1.0)
+	_place_glb_prop("cable_bundle", pos + Vector3(7, 0.2, 0), PI, Vector3.ONE * 1.0)
+
+
+func _scatter_fossil_wing_props() -> void:
+	# Fossil Wing — archaeological dig meets server room archive
+	var pos: Vector3 = ROOMS["fossil_wing"]["pos"]
+
+	# Motherboards as "archaeological specimens" displayed near exhibit cases
+	_place_glb_prop("motherboard", pos + Vector3(-8, 1.8, -5), 0.3, Vector3.ONE * 1.5)
+	_place_glb_prop("motherboard", pos + Vector3(8, 1.8, 5), -0.3, Vector3.ONE * 1.5)
+	_add_museum_spotlight(pos + Vector3(-8, 3.0, -5), FOSSIL_AMBER, 0.7, 3.5)
+	_add_museum_spotlight(pos + Vector3(8, 3.0, 5), FOSSIL_AMBER, 0.7, 3.5)
+
+	# CPU chips scattered around the dig site — fossilized processors
+	var fossil_chip_positions: Array = []
+	for i in range(6):
+		var angle = randf_range(0, TAU)
+		var dist = randf_range(1.5, 3.5)
+		fossil_chip_positions.append(pos + Vector3(cos(angle) * dist + 0.0, 0.05, sin(angle) * dist - 8.0))
+	_create_multimesh_scatter("cpu_chip", fossil_chip_positions, 0.7)
+
+	# Hard drives as "data fossils" along the wing walls
+	_place_glb_prop("hard_drive", pos + Vector3(-11, 0.5, -3), 0.5, Vector3.ONE * 1.0)
+	_place_glb_prop("hard_drive", pos + Vector3(-11, 0.5, 3), -0.2, Vector3.ONE * 1.0)
+	_place_glb_prop("hard_drive", pos + Vector3(11, 0.5, -3), 0.8, Vector3.ONE * 1.0)
+	_place_glb_prop("hard_drive", pos + Vector3(11, 0.5, 3), -0.6, Vector3.ONE * 1.0)
+
+	# CRT monitors as exhibit information screens beside display cases
+	_place_glb_prop("crt_monitor", pos + Vector3(-5, 1.0, -8), 0.0, Vector3.ONE * 0.9)
+	_place_glb_prop("crt_monitor", pos + Vector3(5, 1.0, -8), PI, Vector3.ONE * 0.9)
+	_add_museum_spotlight(pos + Vector3(-5, 2.5, -8), EXHIBIT_TEAL, 0.4, 2.5)
+	_add_museum_spotlight(pos + Vector3(5, 2.5, -8), EXHIBIT_TEAL, 0.4, 2.5)
+
+	# Industrial panel as dig site control station
+	_place_glb_prop("industrial_panel", pos + Vector3(4, 1.5, -8.5), PI * 0.5, Vector3.ONE * 1.0)
+
+	# Server rack near the information kiosk — the wing's archive
+	_place_glb_prop("server_rack", pos + Vector3(-12, 0, -1), PI * 0.25, Vector3.ONE * 0.9)
+	_add_museum_spotlight(pos + Vector3(-12, 4, -1), FOSSIL_AMBER, 0.5, 4.0)
+
+	# Floor grates around the central exhibit — maintenance access below the fossils
+	var fossil_grate_positions: Array = []
+	for angle_i in range(4):
+		var angle = angle_i * TAU / 4.0 + PI / 4.0
+		fossil_grate_positions.append(pos + Vector3(cos(angle) * 5.5, 0.02, sin(angle) * 5.5))
+	_create_multimesh_scatter("floor_grate", fossil_grate_positions, 0.9)
+
+	# Keyboards at analysis workstations along the back wall
+	_place_glb_prop("keyboard", pos + Vector3(-12, 1.0, 5), 0.1, Vector3.ONE * 1.0)
+	_place_glb_prop("keyboard", pos + Vector3(12, 1.0, 5), -0.1, Vector3.ONE * 1.0)
+
+
+func _scatter_nightmare_gallery_props() -> void:
+	# Nightmare Gallery — cables everywhere, monitors flickering, panels glitching
+	var pos: Vector3 = ROOMS["nightmare_gallery"]["pos"]
+
+	# Cable bundles tangled across the gallery floor — things are NOT maintained here
+	_place_glb_prop("cable_bundle", pos + Vector3(-7, 0.1, -4), 0.3, Vector3.ONE * 1.2)
+	_place_glb_prop("cable_bundle", pos + Vector3(7, 0.1, 4), -0.5, Vector3.ONE * 1.2)
+	_place_glb_prop("cable_bundle", pos + Vector3(-3, 0.1, 6), PI * 0.7, Vector3.ONE * 0.9)
+	_place_glb_prop("cable_bundle", pos + Vector3(4, 0.1, -5), PI * 1.3, Vector3.ONE * 1.0)
+
+	# CRT monitors in corners — showing static / error patterns
+	_place_glb_prop("crt_monitor", pos + Vector3(-8.5, 0.8, -8.5), PI * 0.25, Vector3.ONE * 1.1)
+	_place_glb_prop("crt_monitor", pos + Vector3(8.5, 0.8, 8.5), PI * 1.25, Vector3.ONE * 1.1)
+	_add_museum_spotlight(pos + Vector3(-8.5, 2.5, -8.5), NIGHTMARE_PURPLE, 0.4, 3.0)
+	_add_museum_spotlight(pos + Vector3(8.5, 2.5, 8.5), NIGHTMARE_PURPLE, 0.4, 3.0)
+
+	# Industrial panels on gallery walls — broken control systems
+	_place_glb_prop("industrial_panel", pos + Vector3(-9, 2.5, 0), PI * 0.5, Vector3.ONE * 1.0)
+	_place_glb_prop("industrial_panel", pos + Vector3(9, 2.5, 0), PI * 1.5, Vector3.ONE * 1.0)
+
+	# Floor grates — you can hear things skittering below
+	var nightmare_grate_positions: Array = []
+	nightmare_grate_positions.append(pos + Vector3(-5, 0.02, 0))
+	nightmare_grate_positions.append(pos + Vector3(5, 0.02, 0))
+	nightmare_grate_positions.append(pos + Vector3(0, 0.02, 5))
+	_create_multimesh_scatter("floor_grate", nightmare_grate_positions, 1.0)
+
+	# Wall terminals — gallery security systems (all offline, naturally)
+	_place_glb_prop("wall_terminal", pos + Vector3(0, 2.0, -9.5), 0.0, Vector3.ONE * 0.8)
+	_place_glb_prop("wall_terminal", pos + Vector3(0, 2.0, 9.5), PI, Vector3.ONE * 0.8)
+
+	# Motherboard — art exhibit labeled "NEURAL SUBSTRATE" propped against wall
+	_place_glb_prop("motherboard", pos + Vector3(-9, 1.0, -6), PI * 0.4, Vector3.ONE * 1.8)
+	_add_museum_spotlight(pos + Vector3(-9, 2.5, -6), NIGHTMARE_PURPLE, 0.5, 3.0)
+
+
+func _scatter_office_ruins_props() -> void:
+	# Office Ruins — Clippy's abandoned cubicle farm, now with actual office furniture
+	var pos: Vector3 = ROOMS["office_ruins"]["pos"]
+
+	# Filing cabinets — the graveyard of TPS reports and model configs
+	_place_glb_prop("filing_cabinet", pos + Vector3(-8, 0, -7), 0.1, Vector3.ONE * 0.9)
+	_place_glb_prop("filing_cabinet", pos + Vector3(-8, 0, -5), -0.05, Vector3.ONE * 0.9)
+	_place_glb_prop("filing_cabinet", pos + Vector3(8, 0, 6), PI, Vector3.ONE * 0.9)
+	_add_museum_spotlight(pos + Vector3(-8, 3, -6), CLIPPY_BLUE, 0.3, 4.0)
+
+	# Office chairs — scattered, overturned, mid-evacuation
+	_place_glb_prop("office_chair", pos + Vector3(-3, 0, 5), 1.2, Vector3.ONE * 0.9)
+	_place_glb_prop("office_chair", pos + Vector3(4, 0, -3), -0.8, Vector3.ONE * 0.85)
+	_place_glb_prop("office_chair", pos + Vector3(2, 0, 6), 2.5, Vector3.ONE * 0.9)
+	_place_glb_prop("office_chair", pos + Vector3(-5, 0, -2), 0.4, Vector3.ONE * 0.95)
+
+	# Office monitors — more BSoDs, this time with style
+	_place_glb_prop("office_monitor", pos + Vector3(-6, 0.85, -4), 0.3, Vector3.ONE * 0.8)
+	_place_glb_prop("office_monitor", pos + Vector3(0, 0.85, -4), -0.1, Vector3.ONE * 0.8)
+	_place_glb_prop("office_monitor", pos + Vector3(6, 0.85, 4), PI + 0.2, Vector3.ONE * 0.8)
+
+	# Office desks to supplement existing cubicle geometry
+	_place_glb_prop("office_desk", pos + Vector3(-7, 0, 2), 0.0, Vector3.ONE * 0.7)
+	_place_glb_prop("office_desk", pos + Vector3(7, 0, -2), PI, Vector3.ONE * 0.7)
+
+	# Keyboards on surviving desks — keys probably sticky from desperation
+	_place_glb_prop("keyboard", pos + Vector3(-6, 0.85, -4.3), 0.15, Vector3.ONE * 0.9)
+	_place_glb_prop("keyboard", pos + Vector3(0, 0.85, -4.3), -0.05, Vector3.ONE * 0.9)
+
+	# Cable bundles — the office infrastructure's last gasp
+	_place_glb_prop("cable_bundle", pos + Vector3(-8.5, 0.1, 0), PI * 0.5, Vector3.ONE * 1.0)
+	_place_glb_prop("cable_bundle", pos + Vector3(8.5, 0.1, 0), PI * 1.5, Vector3.ONE * 1.0)
+
+	# CRT monitor in the corner — security feed of Clippy, always watching
+	_place_glb_prop("crt_monitor", pos + Vector3(-8.5, 1.5, 7), PI * 0.3, Vector3.ONE * 1.0)
+	_add_museum_spotlight(pos + Vector3(-8.5, 3, 7), CLIPPY_BLUE, 0.4, 3.0)
+
+	# Floor grate near the water cooler — maintenance shaft Clippy uses to ambush
+	_place_glb_prop("floor_grate", pos + Vector3(-7, 0.02, 5), 0.0, Vector3.ONE * 0.9)
+
+	# Server rack — office file server, still humming ominously
+	_place_glb_prop("server_rack", pos + Vector3(8, 0, -7), PI * 0.75, Vector3.ONE * 0.8)
+	_add_museum_spotlight(pos + Vector3(8, 3, -7), Color(0.8, 0.8, 0.7), 0.3, 3.0)
+
+
+func _scatter_foundation_atrium_props() -> void:
+	# Foundation Atrium — grand hall with computation banks and infrastructure
+	var pos: Vector3 = ROOMS["foundation_atrium"]["pos"]
+
+	# Server racks flanking the approach to the boss gate — computation banks
+	_place_glb_prop("server_rack", pos + Vector3(-12, 0, -8), PI * 0.5, Vector3.ONE * 1.0)
+	_place_glb_prop("server_rack", pos + Vector3(12, 0, -8), PI * 1.5, Vector3.ONE * 1.0)
+	_place_glb_prop("server_rack", pos + Vector3(-12, 0, 0), PI * 0.5, Vector3.ONE * 1.0)
+	_place_glb_prop("server_rack", pos + Vector3(12, 0, 0), PI * 1.5, Vector3.ONE * 1.0)
+	_add_museum_spotlight(pos + Vector3(-12, 5, -4), FOUNDATION_GOLD, 0.6, 5.0)
+	_add_museum_spotlight(pos + Vector3(12, 5, -4), FOUNDATION_GOLD, 0.6, 5.0)
+
+	# Motherboards along the walls — the Foundation Model's layers on display
+	_place_glb_prop("motherboard", pos + Vector3(-13, 2.0, -5), PI * 0.5, Vector3.ONE * 2.0)
+	_place_glb_prop("motherboard", pos + Vector3(-13, 2.0, 5), PI * 0.5, Vector3.ONE * 2.0)
+	_place_glb_prop("motherboard", pos + Vector3(13, 2.0, -5), PI * 1.5, Vector3.ONE * 2.0)
+	_place_glb_prop("motherboard", pos + Vector3(13, 2.0, 5), PI * 1.5, Vector3.ONE * 2.0)
+	_add_museum_spotlight(pos + Vector3(-13, 4, -5), EXHIBIT_TEAL, 0.4, 3.0)
+	_add_museum_spotlight(pos + Vector3(-13, 4, 5), EXHIBIT_TEAL, 0.4, 3.0)
+	_add_museum_spotlight(pos + Vector3(13, 4, -5), EXHIBIT_TEAL, 0.4, 3.0)
+	_add_museum_spotlight(pos + Vector3(13, 4, 5), EXHIBIT_TEAL, 0.4, 3.0)
+
+	# Industrial panels beside the boss gate — system status readouts
+	_place_glb_prop("industrial_panel", pos + Vector3(-5, 2.0, -11), 0.0, Vector3.ONE * 1.1)
+	_place_glb_prop("industrial_panel", pos + Vector3(5, 2.0, -11), 0.0, Vector3.ONE * 1.1)
+
+	# CRT monitors at observation posts around the central hologram
+	_place_glb_prop("crt_monitor", pos + Vector3(-6, 1.0, 8), 0.2, Vector3.ONE * 1.0)
+	_place_glb_prop("crt_monitor", pos + Vector3(6, 1.0, 8), -0.2, Vector3.ONE * 1.0)
+	_place_glb_prop("crt_monitor", pos + Vector3(-6, 1.0, -4), PI + 0.1, Vector3.ONE * 1.0)
+	_place_glb_prop("crt_monitor", pos + Vector3(6, 1.0, -4), PI - 0.1, Vector3.ONE * 1.0)
+
+	# CPU chip scatter around the floor ring inlays — data debris
+	var atrium_chip_positions: Array = []
+	for i in range(8):
+		var angle = i * TAU / 8.0 + 0.2
+		atrium_chip_positions.append(pos + Vector3(cos(angle) * 10.0, 0.05, sin(angle) * 10.0))
+	_create_multimesh_scatter("cpu_chip", atrium_chip_positions, 0.6)
+
+	# Floor grates in the grand hall — infrastructure beneath the spectacle
+	var atrium_grate_positions: Array = []
+	atrium_grate_positions.append(pos + Vector3(-8, 0.02, 8))
+	atrium_grate_positions.append(pos + Vector3(8, 0.02, 8))
+	atrium_grate_positions.append(pos + Vector3(-8, 0.02, -8))
+	atrium_grate_positions.append(pos + Vector3(8, 0.02, -8))
+	_create_multimesh_scatter("floor_grate", atrium_grate_positions, 1.0)
+
+	# Wall terminals at pillar bases — Foundation Model monitoring stations
+	_place_glb_prop("wall_terminal", pos + Vector3(-10, 1.5, 0), PI * 0.5, Vector3.ONE * 0.9)
+	_place_glb_prop("wall_terminal", pos + Vector3(10, 1.5, 0), PI * 1.5, Vector3.ONE * 0.9)
+
+	# Cable bundles running between server racks — the Foundation needs a LOT of compute
+	_place_glb_prop("cable_bundle", pos + Vector3(-12, 0.2, -4), 0.0, Vector3.ONE * 1.3)
+	_place_glb_prop("cable_bundle", pos + Vector3(12, 0.2, -4), PI, Vector3.ONE * 1.3)
+
+	# Keyboards at observation desks near the entrance
+	_place_glb_prop("keyboard", pos + Vector3(-6, 0.8, 9), 0.0, Vector3.ONE * 1.0)
+	_place_glb_prop("keyboard", pos + Vector3(6, 0.8, 9), 0.0, Vector3.ONE * 1.0)
+
 
 func _process(delta: float) -> void:
 	_time += delta
