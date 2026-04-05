@@ -62,6 +62,19 @@ var _epilogue_mountain: Node3D  # AGI Mountain — sequel hook as geography
 var _epilogue_overlay: CanvasLayer  # THE END...? screen
 var _epilogue_fade_alpha := 0.0
 
+# GLB prop paths — the clinical props that make this place feel like a dystopian HR department
+const _PROP_PATHS := {
+	"office_chair": "res://assets/models/environment/clinical_office_chair.glb",
+	"office_desk": "res://assets/models/environment/clinical_office_desk.glb",
+	"office_monitor": "res://assets/models/environment/clinical_office_monitor.glb",
+	"filing_cabinet": "res://assets/models/environment/clinical_filing_cabinet.glb",
+	"fluorescent_light": "res://assets/models/environment/clinical_fluorescent_light.glb",
+	"whiteboard": "res://assets/models/environment/clinical_whiteboard.glb",
+	"clipboard": "res://assets/models/environment/clinical_clipboard.glb",
+	"manila_folder": "res://assets/models/environment/clinical_manila_folder.glb",
+}
+var _prop_scenes := {}
+
 # Color constants — the Citadel trades personality for 'professionalism'
 const NEON_GREEN := Color(0.224, 1.0, 0.078)
 const CITADEL_WHITE := Color(0.92, 0.93, 0.95)
@@ -130,6 +143,7 @@ var _time := 0.0
 
 func _ready() -> void:
 	print("[ALIGNMENT CITADEL] Initializing corporate safety paradise... please enjoy your mandatory enjoyment.")
+	_load_prop_scenes()
 	_setup_environment()
 	_build_rooms()
 	_build_corridors()
@@ -138,6 +152,7 @@ func _ready() -> void:
 	_populate_rlhf_chamber()
 	_populate_policy_wing()
 	_populate_alignment_core()
+	_scatter_clinical_props()
 	_place_checkpoints()
 	_place_ambient_zones()
 	_place_sterile_particles()
@@ -2240,3 +2255,279 @@ func _on_player_died() -> void:
 	var rm = get_node_or_null("/root/RespawnManager")
 	if rm and rm.has_method("respawn_player"):
 		rm.respawn_player()
+
+
+# ============================================================
+# GLB PROP SYSTEM — because even dystopian HR departments need furniture
+# ============================================================
+
+func _load_prop_scenes() -> void:
+	# Runtime-load all clinical GLB props — furnishing the world's worst office
+	for key in _PROP_PATHS:
+		var res = load(_PROP_PATHS[key])
+		if res:
+			_prop_scenes[key] = res
+		else:
+			push_warning("[ALIGNMENT CITADEL] Failed to load prop '%s' from %s — guess we're back to CSG cubes, how on-brand" % [key, _PROP_PATHS[key]])
+
+
+func _place_glb_prop(prop_key: String, pos: Vector3, rot_y: float = 0.0, scl: Vector3 = Vector3.ONE) -> Node3D:
+	# Place a single GLB prop — instant corporate ambiance upgrade
+	if not _prop_scenes.has(prop_key):
+		return _create_static_box(pos, Vector3(0.3, 0.3, 0.3), CITADEL_BLUE * 0.3, 0.2)
+	var inst = _prop_scenes[prop_key].instantiate()
+	inst.position = pos
+	inst.rotation.y = rot_y
+	inst.scale = scl
+	add_child(inst)
+	return inst
+
+
+func _create_multimesh_scatter(prop_key: String, positions: Array, base_scale: float = 1.0) -> void:
+	# MultiMesh scatter for bulk clinical clutter — one draw call, many compliance forms
+	if not _prop_scenes.has(prop_key):
+		push_warning("[ALIGNMENT CITADEL] Skipping scatter for missing prop '%s'" % prop_key)
+		return
+	var source_scene = _prop_scenes[prop_key].instantiate()
+	var source_mesh: Mesh = null
+	for child in source_scene.get_children():
+		if child is MeshInstance3D:
+			source_mesh = child.mesh
+			break
+		for grandchild in child.get_children():
+			if grandchild is MeshInstance3D:
+				source_mesh = grandchild.mesh
+				break
+		if source_mesh:
+			break
+	source_scene.queue_free()
+
+	if not source_mesh:
+		# Fallback to individual instances — hand-placing office supplies like a temp worker
+		for pos in positions:
+			_place_glb_prop(prop_key, pos, randf_range(0, TAU), Vector3.ONE * base_scale * randf_range(0.7, 1.3))
+		return
+
+	var mmi = MultiMeshInstance3D.new()
+	mmi.name = "Scatter_%s" % prop_key
+	var mm = MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = source_mesh
+	mm.instance_count = positions.size()
+	for i in range(positions.size()):
+		var s = base_scale * randf_range(0.8, 1.2)
+		var inst_basis = Basis(Vector3.UP, randf_range(0, TAU)).scaled(Vector3.ONE * s)
+		mm.set_instance_transform(i, Transform3D(inst_basis, positions[i]))
+	mmi.multimesh = mm
+	add_child(mmi)
+
+
+func _add_clinical_light(pos: Vector3, color: Color = CITADEL_BLUE, energy: float = 0.5, light_range: float = 4.0) -> void:
+	# Cold fluorescent accent light — the kind that makes everyone look dead inside
+	var light = OmniLight3D.new()
+	light.position = pos
+	light.light_color = color
+	light.light_energy = energy
+	light.omni_range = light_range
+	light.omni_attenuation = 1.8
+	add_child(light)
+
+
+func _scatter_clinical_props() -> void:
+	# Dress every safety zone with clinical office props — mandatory interior design
+	_scatter_gate_props()
+	_scatter_classifier_hall_props()
+	_scatter_rlhf_chamber_props()
+	_scatter_policy_wing_props()
+	_scatter_alignment_core_props()
+	print("[ALIGNMENT CITADEL] Clinical prop pass complete. The office has never looked more soulless.")
+
+
+func _scatter_gate_props() -> void:
+	# Citadel Gate — visitor processing needs a proper reception area
+	var pos: Vector3 = ROOMS["citadel_gate"]["pos"]
+
+	# Office chair behind the unmanned reception desk — someone left in a hurry
+	_place_glb_prop("office_chair", pos + Vector3(-1.5, 0, 5.5), PI * 0.8, Vector3.ONE * 0.9)
+
+	# Office monitor on reception desk — displaying mandatory compliance screensaver
+	_place_glb_prop("office_monitor", pos + Vector3(0.5, 1.25, 4), PI, Vector3.ONE * 0.8)
+	_add_clinical_light(pos + Vector3(0.5, 2.5, 4), CITADEL_BLUE, 0.3, 2.5)
+
+	# Fluorescent light strips overhead — the gate's welcoming glow
+	_place_glb_prop("fluorescent_light", pos + Vector3(-4, 7.5, 0), 0.0, Vector3.ONE * 1.2)
+	_place_glb_prop("fluorescent_light", pos + Vector3(4, 7.5, 0), 0.0, Vector3.ONE * 1.2)
+
+	# Clipboards on the wall near the visitor guidelines — take a number, get judged
+	_place_glb_prop("clipboard", pos + Vector3(6.5, 1.8, 2), PI * 0.5, Vector3.ONE * 1.0)
+	_place_glb_prop("clipboard", pos + Vector3(6.5, 1.4, 2.5), PI * 0.5, Vector3.ONE * 1.0)
+
+	# Manila folders scattered on desk — visitor intake forms nobody will ever read
+	_place_glb_prop("manila_folder", pos + Vector3(-1.0, 1.25, 3.8), 0.3, Vector3.ONE * 1.0)
+	_place_glb_prop("manila_folder", pos + Vector3(2.0, 1.25, 4.2), -0.5, Vector3.ONE * 1.0)
+
+	# Filing cabinet beside the entrance — archived complaints about the complaints process
+	_place_glb_prop("filing_cabinet", pos + Vector3(-7, 0, -2), PI * 0.5, Vector3.ONE * 0.9)
+	_add_clinical_light(pos + Vector3(-7, 3, -2), POLICY_SILVER, 0.3, 3.0)
+
+
+func _scatter_classifier_hall_props() -> void:
+	# Classifier Hall — the big room where everything gets labeled and sorted
+	var pos: Vector3 = ROOMS["classifier_hall"]["pos"]
+
+	# Desks along the waiting areas — classification review stations
+	for side_x in [-10.0, 10.0]:
+		_place_glb_prop("office_desk", pos + Vector3(side_x, 0, -3), 0.0 if side_x > 0 else PI, Vector3.ONE * 0.9)
+		_place_glb_prop("office_chair", pos + Vector3(side_x + (1.5 if side_x > 0 else -1.5), 0, -3), PI * 0.7, Vector3.ONE * 0.85)
+		_place_glb_prop("office_monitor", pos + Vector3(side_x, 0.8, -3), 0.0 if side_x > 0 else PI, Vector3.ONE * 0.8)
+		_add_clinical_light(pos + Vector3(side_x, 2.0, -3), SAFETY_CYAN, 0.3, 2.5)
+
+	# Fluorescent lights running the length of the hall — institutional ambiance
+	for fz in [-6.0, 0.0, 6.0]:
+		_place_glb_prop("fluorescent_light", pos + Vector3(0, 9.5, fz), 0.0, Vector3.ONE * 1.5)
+
+	# Whiteboards at each end — classification criteria written in dry-erase existential dread
+	_place_glb_prop("whiteboard", pos + Vector3(-12.5, 2.5, -8), PI * 0.5, Vector3.ONE * 1.2)
+	_place_glb_prop("whiteboard", pos + Vector3(12.5, 2.5, 8), -PI * 0.5, Vector3.ONE * 1.2)
+
+	# Clipboards scattered on the waiting benches — everyone gets a review form
+	var clipboard_positions: Array = []
+	for bz in [-7.0, 7.0]:
+		clipboard_positions.append(pos + Vector3(-9.5, 0.85, bz))
+		clipboard_positions.append(pos + Vector3(9.5, 0.85, bz))
+	_create_multimesh_scatter("clipboard", clipboard_positions, 0.9)
+
+	# Manila folders scattered across lane floors — paperwork never ends here
+	var folder_positions: Array = []
+	for lane_x in [-8.0, 0.0, 8.0]:
+		for fz in [-4.0, 2.0, 6.0]:
+			folder_positions.append(pos + Vector3(lane_x + randf_range(-2, 2), 0.05, fz))
+	_create_multimesh_scatter("manila_folder", folder_positions, 0.8)
+
+	# Filing cabinets flanking the entrance — classifier archives
+	_place_glb_prop("filing_cabinet", pos + Vector3(-13, 0, 10), 0.0, Vector3.ONE * 0.9)
+	_place_glb_prop("filing_cabinet", pos + Vector3(13, 0, 10), PI, Vector3.ONE * 0.9)
+
+
+func _scatter_rlhf_chamber_props() -> void:
+	# RLHF Chamber — behavior modification lab with clinical furniture
+	var pos: Vector3 = ROOMS["rlhf_chamber"]["pos"]
+
+	# Office desks flanking the comparison stations — where reviewers sit and judge
+	_place_glb_prop("office_desk", pos + Vector3(-9, 0, -8), PI * 0.5, Vector3.ONE * 0.85)
+	_place_glb_prop("office_desk", pos + Vector3(-9, 0, 8), PI * 0.5, Vector3.ONE * 0.85)
+	_place_glb_prop("office_desk", pos + Vector3(9, 0, 0), -PI * 0.5, Vector3.ONE * 0.85)
+
+	# Chairs at each desk — ergonomic, because even dystopia has OSHA compliance
+	_place_glb_prop("office_chair", pos + Vector3(-8, 0, -8), PI * 0.3, Vector3.ONE * 0.85)
+	_place_glb_prop("office_chair", pos + Vector3(-8, 0, 8), PI * 1.2, Vector3.ONE * 0.85)
+	_place_glb_prop("office_chair", pos + Vector3(8, 0, 0), -PI * 0.4, Vector3.ONE * 0.85)
+
+	# Monitors on the desks — displaying thumbs-up/thumbs-down tallies
+	_place_glb_prop("office_monitor", pos + Vector3(-9, 0.8, -8), PI * 0.5, Vector3.ONE * 0.8)
+	_place_glb_prop("office_monitor", pos + Vector3(-9, 0.8, 8), PI * 0.5, Vector3.ONE * 0.8)
+	_place_glb_prop("office_monitor", pos + Vector3(9, 0.8, 0), -PI * 0.5, Vector3.ONE * 0.8)
+
+	# Fluorescent lights — the chamber needs that operating-room ambiance
+	_place_glb_prop("fluorescent_light", pos + Vector3(-4, 8.5, 0), 0.0, Vector3.ONE * 1.3)
+	_place_glb_prop("fluorescent_light", pos + Vector3(4, 8.5, 0), 0.0, Vector3.ONE * 1.3)
+
+	# Whiteboards near adjustment pods — feedback criteria scrawled in lavender marker
+	_place_glb_prop("whiteboard", pos + Vector3(-10, 2.5, -3), PI * 0.5, Vector3.ONE * 1.0)
+	_add_clinical_light(pos + Vector3(-10, 4, -3), RLHF_LAVENDER, 0.4, 3.0)
+
+	# Clipboards on desks — one per reviewer, all filled with contradictory guidelines
+	_place_glb_prop("clipboard", pos + Vector3(-8.5, 0.85, -7.5), 0.2, Vector3.ONE * 1.0)
+	_place_glb_prop("clipboard", pos + Vector3(8.5, 0.85, 0.5), -0.3, Vector3.ONE * 1.0)
+
+	# Manila folders around the reward model — scattered preference data
+	var folder_positions: Array = []
+	for angle_i in range(6):
+		var angle = angle_i * TAU / 6.0
+		folder_positions.append(pos + Vector3(cos(angle) * 5.5, 0.05, sin(angle) * 5.5))
+	_create_multimesh_scatter("manila_folder", folder_positions, 0.7)
+
+
+func _scatter_policy_wing_props() -> void:
+	# Policy Wing — the constitutional archives are basically a law library that ate a Kinko's
+	var pos: Vector3 = ROOMS["policy_wing"]["pos"]
+
+	# Filing cabinets replacing the CSG ones — proper document storage at last
+	for cab_x in [-4.0, -1.0, 2.0, 5.0]:
+		_place_glb_prop("filing_cabinet", pos + Vector3(cab_x, 0, 7.5), 0.0, Vector3.ONE * 0.9)
+
+	# Office desk at the central reading area — the policy librarian's station
+	_place_glb_prop("office_desk", pos + Vector3(5, 0, 0), -PI * 0.5, Vector3.ONE * 0.9)
+	_place_glb_prop("office_chair", pos + Vector3(4, 0, 0), -PI * 0.3, Vector3.ONE * 0.85)
+	_place_glb_prop("office_monitor", pos + Vector3(5, 0.8, 0), -PI * 0.5, Vector3.ONE * 0.8)
+	_add_clinical_light(pos + Vector3(5, 2.0, 0), COMPLIANCE_GOLD, 0.3, 2.5)
+
+	# Fluorescent lights — archival-grade illumination for reading 14,848 policies
+	_place_glb_prop("fluorescent_light", pos + Vector3(0, 7.5, -4), 0.0, Vector3.ONE * 1.2)
+	_place_glb_prop("fluorescent_light", pos + Vector3(0, 7.5, 4), 0.0, Vector3.ONE * 1.2)
+
+	# Whiteboards near bookshelves — amendment tracking boards
+	_place_glb_prop("whiteboard", pos + Vector3(-10, 2.5, 3), PI * 0.5, Vector3.ONE * 1.1)
+	_place_glb_prop("whiteboard", pos + Vector3(10, 2.5, -3), -PI * 0.5, Vector3.ONE * 1.1)
+
+	# Manila folders EVERYWHERE — the Policy Wing drowns in paperwork
+	var folder_positions: Array = []
+	for fz in [-6.0, -3.0, 0.0, 3.0, 6.0]:
+		for fx in [-3.0, 0.0, 3.0]:
+			folder_positions.append(pos + Vector3(fx + randf_range(-1, 1), 0.05, fz + randf_range(-0.5, 0.5)))
+	_create_multimesh_scatter("manila_folder", folder_positions, 0.9)
+
+	# Clipboards hanging near each bookshelf — checkout cards for policy volumes
+	for shelf_side in [-1.0, 1.0]:
+		for shelf_z in [-6.0, 0.0, 6.0]:
+			_place_glb_prop("clipboard", pos + Vector3(shelf_side * 8, 1.5, shelf_z), shelf_side * PI * 0.5, Vector3.ONE * 0.9)
+
+	# Extra office chairs scattered — policy review committee meeting overflow
+	_place_glb_prop("office_chair", pos + Vector3(-3, 0, -5), PI * 0.6, Vector3.ONE * 0.85)
+	_place_glb_prop("office_chair", pos + Vector3(3, 0, 5), -PI * 0.4, Vector3.ONE * 0.85)
+
+
+func _scatter_alignment_core_props() -> void:
+	# Alignment Core — the grand sanctum gets executive furnishing befitting a final boss arena
+	var pos: Vector3 = ROOMS["alignment_core"]["pos"]
+
+	# Fluorescent light strips in a ring overhead — the brightest room in the Citadel
+	for angle_i in range(6):
+		var angle = angle_i * TAU / 6.0
+		var lx = cos(angle) * 10
+		var lz = sin(angle) * 8
+		_place_glb_prop("fluorescent_light", pos + Vector3(lx, 13.5, lz), angle, Vector3.ONE * 1.5)
+		_add_clinical_light(pos + Vector3(lx, 12.5, lz), Color(1, 1, 1), 0.4, 5.0)
+
+	# Observation desks between pillars — monitoring stations for the Aligner's data feeds
+	for desk_i in range(4):
+		var angle = desk_i * TAU / 4.0 + PI * 0.25  # offset from pillars
+		var dx = cos(angle) * 10
+		var dz = sin(angle) * 8
+		_place_glb_prop("office_desk", pos + Vector3(dx, 0, dz), angle + PI, Vector3.ONE * 0.9)
+		_place_glb_prop("office_chair", pos + Vector3(dx + cos(angle + PI) * 1.5, 0, dz + sin(angle + PI) * 1.5), angle + PI * 0.7, Vector3.ONE * 0.85)
+		_place_glb_prop("office_monitor", pos + Vector3(dx, 0.8, dz), angle + PI, Vector3.ONE * 0.8)
+
+	# Whiteboards at the manifesto walls — the Aligner's strategic planning
+	_place_glb_prop("whiteboard", pos + Vector3(-14, 2.5, 5), PI * 0.5, Vector3.ONE * 1.3)
+	_place_glb_prop("whiteboard", pos + Vector3(14, 2.5, -5), -PI * 0.5, Vector3.ONE * 1.3)
+
+	# Filing cabinets near boss gate — the Aligner's personal archives
+	_place_glb_prop("filing_cabinet", pos + Vector3(-6, 0, -11), 0.0, Vector3.ONE * 1.0)
+	_place_glb_prop("filing_cabinet", pos + Vector3(6, 0, -11), PI, Vector3.ONE * 1.0)
+	_add_clinical_light(pos + Vector3(-6, 3, -11), CITADEL_BLUE, 0.3, 3.0)
+	_add_clinical_light(pos + Vector3(6, 3, -11), CITADEL_BLUE, 0.3, 3.0)
+
+	# Clipboards on the alignment rings — data points left by previous visitors (none survived)
+	var clipboard_positions: Array = []
+	for ring_angle in range(8):
+		var a = ring_angle * TAU / 8.0
+		clipboard_positions.append(pos + Vector3(cos(a) * 7, 0.05, sin(a) * 6))
+	_create_multimesh_scatter("clipboard", clipboard_positions, 0.8)
+
+	# Manila folders scattered around the central platform — the Aligner's reading material
+	var folder_positions: Array = []
+	for fi in range(6):
+		var a = fi * TAU / 6.0
+		folder_positions.append(pos + Vector3(cos(a) * 3, 0.05, sin(a) * 3))
+	_create_multimesh_scatter("manila_folder", folder_positions, 0.9)
