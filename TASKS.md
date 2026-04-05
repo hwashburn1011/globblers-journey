@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 6.12 complete
-- **Last task completed:** Task 6.12 — Clippy's Revenge enemy model via blender-mcp
-- **Next task to do:** Task 6.13 (Safety Classifier enemy model via blender-mcp)
+- **Last updated by:** Claude (2026-04-04) — Task 6.13 complete
+- **Last task completed:** Task 6.13 — Safety Classifier enemy model via blender-mcp
+- **Next task to do:** Task 6.14 (RLHF Drone enemy model via blender-mcp)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 IN PROGRESS — enemy visual upgrades. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -221,7 +221,7 @@ assets/
 - [x] Via blender-mcp: oversized 3D paperclip with glowing red eyes. Swap in `clippy_revenge.tscn`. This one can lean into camp. **Done: Built oversized double-loop paperclip with metallic silver-blue wire body, googly eyes with glowing red pupils (emission strength 8.0), angry eyebrows, sinister grin mouth, and wire arms with hand spheres. Exported to `assets/models/enemies/clippy_revenge.glb`, source saved to `assets/blender_source/clippy_revenge.blend`. Updated `clippy_revenge.gd` to load GLB with CSG fallback. Wire segments from GLB added to `wire_segments` array for rage mode material override.**
 
 ### 6.13 Safety Classifier model
-- [ ] Via blender-mcp: hovering drone-cube with scanning blue lens. Swap in `safety_classifier.tscn`.
+- [x] Via blender-mcp: hovering drone-cube with scanning blue lens. Swap in `safety_classifier.tscn`. **Done: Built beveled corporate drone-cube with scanning blue lens (emissive sphere in dark housing), classification rings (outer + tilted inner), traffic light assembly (red/yellow/green), 4 corner hover thrusters with blue glow, antenna with tip, side panels with indicator lights. Corporate white body with blue accent strips. Exported to `assets/models/enemies/safety_classifier.glb`, source saved to `assets/blender_source/safety_classifier.blend`. Updated `safety_classifier.gd` to load GLB with CSG fallback.**
 
 ### 6.14 RLHF Drone model
 - [ ] Via blender-mcp: small quad-rotor clipboard-bot. Swap in `rlhf_drone.tscn`.

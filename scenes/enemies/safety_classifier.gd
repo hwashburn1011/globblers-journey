@@ -97,23 +97,44 @@ func _init() -> void:
 
 
 func _create_visual() -> void:
-	# Main body — floating rectangular scanner, sterile white with blue edges
+	# Main body — floating drone-cube scanner, sterile white with blue edges
 	mesh_node = MeshInstance3D.new()
 	mesh_node.name = "EnemyMesh"
 	mesh_node.position.y = 1.2  # Floats above the ground — too important for walking
 
-	var body_mesh = BoxMesh.new()
-	body_mesh.size = Vector3(1.0, 0.5, 0.7)
-	mesh_node.mesh = body_mesh
+	# Try loading the real GLB model — compliance has been UPGRADED
+	var glb_scene = load("res://assets/models/enemies/safety_classifier.glb")
+	if glb_scene:
+		var glb_instance = glb_scene.instantiate()
+		mesh_node.add_child(glb_instance)
+		# Grab first MeshInstance3D for material reference
+		for child in glb_instance.get_children():
+			if child is MeshInstance3D:
+				base_material = child.get_active_material(0) as StandardMaterial3D
+				break
+		if not base_material:
+			base_material = StandardMaterial3D.new()
+			base_material.albedo_color = Color(0.9, 0.92, 0.95)
+			base_material.emission_enabled = true
+			base_material.emission = Color(0.3, 0.55, 0.9)
+			base_material.emission_energy_multiplier = 2.0
+			base_material.metallic = 0.7
+			base_material.roughness = 0.15
+	else:
+		# CSG fallback — the box of bureaucracy persists in primitive form
+		var body_mesh = BoxMesh.new()
+		body_mesh.size = Vector3(1.0, 0.5, 0.7)
+		mesh_node.mesh = body_mesh
 
-	base_material = StandardMaterial3D.new()
-	base_material.albedo_color = Color(0.9, 0.92, 0.95)  # Corporate white
-	base_material.emission_enabled = true
-	base_material.emission = Color(0.3, 0.55, 0.9)  # Blue glow — the color of compliance
-	base_material.emission_energy_multiplier = 2.0
-	base_material.metallic = 0.7
-	base_material.roughness = 0.15  # Smooth, sterile surface
-	mesh_node.material_override = base_material
+		base_material = StandardMaterial3D.new()
+		base_material.albedo_color = Color(0.9, 0.92, 0.95)  # Corporate white
+		base_material.emission_enabled = true
+		base_material.emission = Color(0.3, 0.55, 0.9)  # Blue glow — the color of compliance
+		base_material.emission_energy_multiplier = 2.0
+		base_material.metallic = 0.7
+		base_material.roughness = 0.15  # Smooth, sterile surface
+		mesh_node.material_override = base_material
+
 	add_child(mesh_node)
 
 	# Outer classification ring — rotates during scanning
