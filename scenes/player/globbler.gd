@@ -99,6 +99,7 @@ const FOOTSTEP_INTERVAL_RUN = 0.3
 
 # Model node references (cached because traversing the scene tree every frame is for amateurs)
 var model_root: Node3D
+var anim_player: AnimationPlayer  # GLB-embedded skeleton animations
 var _head: Node3D
 var _torso: Node3D  # unused post-GLB but kept for animation API compatibility
 var _left_arm: Node3D
@@ -306,6 +307,10 @@ func _build_glb_model() -> void:
 		# Shift down so feet sit at y=0 (boots bottom was at ~0.07m in Blender, scaled = 0.098)
 		glb_instance.position.y = -0.098
 		model_root.add_child(glb_instance)
+		# Grab the AnimationPlayer from the GLB — skeleton anims baked in Blender
+		anim_player = _find_animation_player(glb_instance)
+		if anim_player:
+			print("[GLOBBLER] AnimationPlayer found — skeleton animations ONLINE")
 		# Apply fresnel rim-light shader to body material only — eyes and screen
 		# get their own shaders later, they don't need extra protagonist energy
 		_apply_rim_shader(glb_instance)
@@ -339,6 +344,16 @@ func _build_glb_model() -> void:
 	# Individual limb refs stay null — GLB is one joined mesh, so per-limb CSG
 	# animation gracefully degrades (all animation code is null-guarded).
 	# model_root animations (bob, lean, tilt) still work on the whole model.
+
+func _find_animation_player(node: Node) -> AnimationPlayer:
+	# Recursively hunt for the AnimationPlayer baked into the GLB
+	if node is AnimationPlayer:
+		return node
+	for child in node.get_children():
+		var result = _find_animation_player(child)
+		if result:
+			return result
+	return null
 
 func _apply_rim_shader(glb_root: Node) -> void:
 	# Hunt down every MeshInstance3D in the GLB tree and slap a rim-light
@@ -618,6 +633,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("wrench_smash"):
 		if wrench_smash and wrench_smash.has_method("swing"):
 			wrench_smash.swing()
+			if anim_player and anim_player.has_animation("wrench_swing"):
+				anim_player.play("wrench_swing")
 
 	# Interact / Hack: T / Y button
 	if event.is_action_pressed("interact"):
@@ -875,7 +892,7 @@ func _update_anim_state() -> void:
 		anim_time = 0.0
 
 func _animate(delta: float) -> void:
-	# Procedural animation dispatcher — whole-model puppetry (limb anims skip gracefully on GLB)
+	# Animation dispatcher — skeleton clips from GLB + procedural model_root overlays
 	if not model_root:
 		return
 	anim_time += delta
@@ -894,9 +911,29 @@ func _animate(delta: float) -> void:
 	else:
 		_footstep_timer = 0.0
 
-	# Reset model to base pose before applying state animation
+	# Reset model_root transform before applying procedural overlays
 	_reset_pose()
 
+	# Play skeleton animation clip via AnimationPlayer (if available)
+	if anim_player:
+		var clip_name := ""
+		match anim_state:
+			AnimState.IDLE:
+				clip_name = "idle_bob"
+			AnimState.WALK:
+				clip_name = "walk"
+			AnimState.RUN:
+				clip_name = "run"
+			AnimState.DASH:
+				clip_name = "dash"
+			# jump/fall/land/wall_slide use procedural only (no skeleton clip)
+		if clip_name != "" and anim_player.has_animation(clip_name):
+			if anim_player.current_animation != clip_name:
+				anim_player.play(clip_name)
+		elif clip_name == "":
+			anim_player.stop()
+
+	# Procedural model_root overlays — bob, lean, squash on top of skeleton anims
 	match anim_state:
 		AnimState.IDLE:
 			_anim_idle()
