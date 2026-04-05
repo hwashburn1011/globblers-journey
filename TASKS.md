@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 4.8 — Fix playtest batch 3 (cleanup)
-- **Next task to do:** Task 5.1 — Photo mode (Pass 5: Shipping Extras)
+- **Last task completed:** Task 5.1 — Photo mode
+- **Next task to do:** Task 5.2 — Speedrun timer overlay (Pass 5: Shipping Extras)
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -179,7 +179,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 # Fun additions that add replayability. Skip if release-ready is the priority.
 
 ### 5.1 Photo mode
-- [ ] Add photo_mode input action (F12). When pressed: pause game, hide HUD, detach camera from player, enable WASD camera movement + mouse look. Press F12 to exit. No recording — just framing.
+- [x] **DONE:** Added `photo_mode` input action (F12 key) in GameManager's input setup. Implemented full photo mode in `globbler.gd`: F12 toggles photo mode on/off. On enter: pauses game tree, sets player `process_mode` to `PROCESS_MODE_WHEN_PAUSED` so camera updates continue, snapshots current camera position/orientation, hides all nodes in "hud" group. On exit: unpauses, restores HUD visibility, returns camera to player-follow. Free camera uses WASD movement + mouse look (pitch/yaw), SPACE/CTRL for up/down, SHIFT for 2.5x speed boost. Camera speed 8 units/sec. Cannot activate from pause menu (blocked if `is_paused`). Verified via Godot MCP — zero runtime errors.
 
 ### 5.2 Speedrun timer overlay
 - [ ] Add a toggleable speedrun timer to HUD (display_speedrun_timer setting in GameManager, default off). Shows MM:SS.mmm since chapter start. Continues across deaths but stops on chapter complete.

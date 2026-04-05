@@ -439,6 +439,12 @@ func _register_input_actions() -> void:
 	mc_joy.button_index = JOY_BUTTON_A
 	InputMap.action_add_event("menu_confirm", mc_joy)
 
+	# --- Photo mode: F12 — freeze the world, float the camera, frame the shot ---
+	_add.call("photo_mode")
+	var pm_key = InputEventKey.new()
+	pm_key.keycode = KEY_F12
+	InputMap.action_add_event("photo_mode", pm_key)
+
 	# --- Dialogue history: H / D-pad Left + Select (for the sarcasm archivists) ---
 	_add.call("dialogue_history")
 	var dh_key = InputEventKey.new()

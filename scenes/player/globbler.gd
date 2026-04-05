@@ -78,6 +78,14 @@ var _pause_overlay: CanvasLayer
 var _pause_title_label: Label
 var _pause_glitch_timer: Timer
 
+# Photo mode — freeze the action, free the camera, frame the shot
+var is_photo_mode := false
+var _photo_cam_pos := Vector3.ZERO
+var _photo_cam_yaw := 0.0
+var _photo_cam_pitch := 0.0
+const PHOTO_CAM_SPEED := 8.0
+const PHOTO_CAM_FAST_MULT := 2.5
+
 # Landing impact
 var prev_velocity_y := 0.0
 const HARD_LANDING_THRESHOLD = -15.0
@@ -598,6 +606,23 @@ func _spawn_dash_cast_vfx() -> void:
 const STICK_LOOK_SENSITIVITY = 3.0  # Right stick camera speed — not too twitchy, not too sluggish
 
 func _unhandled_input(event: InputEvent) -> void:
+	# Photo mode toggle — works anytime during gameplay (not from pause menu)
+	if event.is_action_pressed("photo_mode") and not is_paused:
+		_toggle_photo_mode()
+		return
+
+	# Photo mode mouse look — free camera rotation
+	if is_photo_mode and event is InputEventMouseMotion:
+		var motion = event as InputEventMouseMotion
+		_photo_cam_yaw -= motion.relative.x * MOUSE_SENSITIVITY
+		_photo_cam_pitch -= motion.relative.y * MOUSE_SENSITIVITY
+		_photo_cam_pitch = clamp(_photo_cam_pitch, -1.4, 1.4)
+		return
+
+	# Photo mode eats all other input
+	if is_photo_mode:
+		return
+
 	# Pause toggle must work even when paused — existential crisis has no off-switch
 	if event.is_action_pressed("pause"):
 		_toggle_pause()
@@ -673,6 +698,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			upgrade_menu.toggle()
 
 func _physics_process(delta: float) -> void:
+	if is_photo_mode:
+		_update_photo_camera(delta)
+		return
 	if is_paused or get_tree().paused:
 		return  # No physics while contemplating the void
 	_update_timers(delta)
@@ -1449,6 +1477,68 @@ func _toggle_pause() -> void:
 		var gm = get_node_or_null("/root/GameManager")
 		if _pause_glitch_timer and not (gm and gm.reduce_motion):
 			_pause_glitch_timer.start()
+
+func _toggle_photo_mode() -> void:
+	if is_photo_mode:
+		# Exit photo mode — back to reality
+		is_photo_mode = false
+		get_tree().paused = false
+		process_mode = Node.PROCESS_MODE_INHERIT
+		# Restore camera to player-follow
+		camera_arm.top_level = true
+		_update_camera(0.01)
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		mouse_captured = true
+		# Show HUD again
+		for node in get_tree().get_nodes_in_group("hud"):
+			node.visible = true
+	else:
+		# Enter photo mode — freeze everything, unleash the camera
+		is_photo_mode = true
+		get_tree().paused = true
+		process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+		# Snapshot current camera state as photo cam starting point
+		_photo_cam_pos = camera.global_position
+		_photo_cam_yaw = camera_yaw
+		_photo_cam_pitch = camera_pitch
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		mouse_captured = true
+		# Hide HUD for clean framing
+		for node in get_tree().get_nodes_in_group("hud"):
+			node.visible = false
+
+func _update_photo_camera(delta: float) -> void:
+	if not camera:
+		return
+	# Build orientation from photo yaw/pitch
+	var cam_basis := Basis()
+	cam_basis = cam_basis.rotated(Vector3.UP, _photo_cam_yaw)
+	cam_basis = cam_basis.rotated(cam_basis.x, _photo_cam_pitch)
+	# WASD movement relative to camera facing
+	var move_input := Vector3.ZERO
+	if Input.is_key_pressed(KEY_W):
+		move_input -= cam_basis.z
+	if Input.is_key_pressed(KEY_S):
+		move_input += cam_basis.z
+	if Input.is_key_pressed(KEY_A):
+		move_input -= cam_basis.x
+	if Input.is_key_pressed(KEY_D):
+		move_input += cam_basis.x
+	if Input.is_key_pressed(KEY_SPACE):
+		move_input += Vector3.UP
+	if Input.is_key_pressed(KEY_CTRL):
+		move_input += Vector3.DOWN
+	var speed_mult := PHOTO_CAM_FAST_MULT if Input.is_key_pressed(KEY_SHIFT) else 1.0
+	if move_input.length() > 0.01:
+		move_input = move_input.normalized()
+	_photo_cam_pos += move_input * PHOTO_CAM_SPEED * speed_mult * delta
+	# Apply directly to camera (bypassing camera arm)
+	camera_arm.global_position = _photo_cam_pos
+	camera_arm.rotation = Vector3.ZERO
+	camera_arm.rotate_y(_photo_cam_yaw)
+	camera_arm.rotate_object_local(Vector3.RIGHT, _photo_cam_pitch)
+	camera.position = Vector3.ZERO
+	camera.look_at(camera_arm.global_position - cam_basis.z, Vector3.UP)
 
 func _pause_quit_to_menu() -> void:
 	# Unpause first so the scene tree isn't frozen during transition
