@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.6 complete
-- **Last task completed:** Task 2.6 — Model cables, tubes, and boots
-- **Next task to do:** Task 2.7
-- **Known issues:** All gameplay is CSG placeholder geometry. No PBR. No real character model. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is in progress.
+- **Last updated by:** Claude (2026-04-04) — Task 2.7 complete
+- **Last task completed:** Task 2.7 — Apply dark metal PBR material to body
+- **Next task to do:** Task 2.8
+- **Known issues:** All gameplay is CSG placeholder geometry. No real character model in Godot yet. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is in progress — mesh built, now applying materials.
 
 ### GOAL OF THIS PASS
 Upgrade visual quality from CSG placeholders to stylized indie-game-ship quality (~Death's Door / Tunic / Hi-Fi Rush tier). Hero assets (Globbler, bosses) built in Blender via blender-mcp. Environment via CC0 assets from Poly Haven / Sketchfab. Lighting + post-processing + VFX upgraded in Godot.
@@ -99,7 +99,7 @@ assets/
 - [x] Via `execute_blender_code`: add 3–4 curved cable tubes connecting head to torso using Curve objects with bevel depth. Add stubby boot cylinders at base of torso. All low-poly, beveled. Screenshot. **Done: Built 4 bezier-curve cables (2 front, 2 back) with bevel depth 0.010–0.012 connecting head dome (Z~0.70) to torso shoulders (Z~0.42–0.45), curving outward naturally. Built 2 stubby tapered boot cylinders (12-vert, beveled, SubSurf level 1) at base (Z=0.07) with wider soles and tread strips. All parented to Globbler_Body. Saved to assets/blender_source/globbler.blend.**
 
 ### 2.7 Apply dark metal PBR material to body
-- [ ] Via `execute_blender_code`: create `globbler_body` material — principled BSDF, base_color=(0.08,0.09,0.08), metallic=0.7, roughness=0.55, clearcoat=0.2. Assign to torso+head+boots. Screenshot with material preview.
+- [x] Via `execute_blender_code`: create `globbler_body` material — principled BSDF, base_color=(0.08,0.09,0.08), metallic=0.7, roughness=0.55, clearcoat=0.2. Assign to torso+head+boots. Screenshot with material preview. **Done: Created `globbler_body` Principled BSDF material (base_color=(0.08,0.09,0.08), metallic=0.7, roughness=0.55, coat_weight=0.2) — dark gunmetal with subtle clearcoat sheen. Assigned to Globbler_Body, Boot_Left, Boot_Right, Sole_Left, Sole_Right, and all 4 cables. Also created `globbler_wrench` variant (base_color=(0.12,0.13,0.12), metallic=0.85, roughness=0.4, coat_weight=0.3) — slightly shinier worn-tool look. Verified in Material Preview viewport. Saved to globbler.blend.**
 
 ### 2.8 Apply emission material to eyes
 - [ ] Via `execute_blender_code`: create `globbler_eyes_emissive` material — base_color=(0.22,1.0,0.08), emission_color=(0.22,1.0,0.08), emission_strength=8.0. Assign to eye socket faces. Screenshot.
