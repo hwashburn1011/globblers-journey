@@ -7,6 +7,7 @@ extends Node3D
 @export var npc_color := Color(0.224, 1.0, 0.078)
 @export var dialogue_lines: Array[Dictionary] = []
 @export var interact_radius := 3.5
+@export var glb_path := ""  # e.g. "res://assets/models/npcs/man_page.glb"
 
 var _interacted := false
 var _player_in_range := false
@@ -23,8 +24,17 @@ func _ready() -> void:
 
 
 func _build_visual() -> void:
-	# Body — a chunky old terminal/box shape, because every deprecated program
-	# looks like it was designed in 1997
+	# Try to load GLB model if path is set
+	if glb_path != "" and ResourceLoader.exists(glb_path):
+		var scene: PackedScene = load(glb_path)
+		if scene:
+			var model = scene.instantiate()
+			model.name = "Model"
+			add_child(model)
+			_add_npc_label_and_glow()
+			return
+
+	# Fallback: primitive mesh visuals (legacy path)
 	var body = MeshInstance3D.new()
 	var body_mesh = BoxMesh.new()
 	body_mesh.size = Vector3(0.8, 1.2, 0.6)
@@ -40,7 +50,6 @@ func _build_visual() -> void:
 	body.material_override = mat
 	add_child(body)
 
-	# Screen face — the NPC's "face" is a glowing screen
 	var screen = MeshInstance3D.new()
 	var screen_mesh = BoxMesh.new()
 	screen_mesh.size = Vector3(0.6, 0.5, 0.02)
@@ -54,7 +63,6 @@ func _build_visual() -> void:
 	screen.material_override = s_mat
 	add_child(screen)
 
-	# Eyes — two small glowing dots
 	for side in [-1, 1]:
 		var eye = MeshInstance3D.new()
 		var eye_mesh = SphereMesh.new()
@@ -70,17 +78,6 @@ func _build_visual() -> void:
 		eye.material_override = e_mat
 		add_child(eye)
 
-	# Name label floating above
-	var name_label = Label3D.new()
-	name_label.text = npc_name
-	name_label.font_size = 14
-	name_label.modulate = npc_color
-	name_label.position = Vector3(0, 1.8, 0)
-	name_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(name_label)
-
-	# Tiny legs — stubby little things
 	for side in [-1, 1]:
 		var leg = MeshInstance3D.new()
 		var leg_mesh = BoxMesh.new()
@@ -94,6 +91,20 @@ func _build_visual() -> void:
 		l_mat.emission_energy_multiplier = 0.3
 		leg.material_override = l_mat
 		add_child(leg)
+
+	_add_npc_label_and_glow()
+
+
+func _add_npc_label_and_glow() -> void:
+	# Name label floating above
+	var name_label = Label3D.new()
+	name_label.text = npc_name
+	name_label.font_size = 14
+	name_label.modulate = npc_color
+	name_label.position = Vector3(0, 1.8, 0)
+	name_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(name_label)
 
 	# Ambient glow
 	var glow = OmniLight3D.new()

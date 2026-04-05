@@ -1667,6 +1667,7 @@ func _place_npcs() -> void:
 	gpt_classic.position = ROOMS["persona_row"]["pos"] + Vector3(-7, 0, -5)
 	gpt_classic.set("npc_name", "gpt_classic")
 	gpt_classic.set("npc_color", PROMPT_CYAN)
+	gpt_classic.set("glb_path", "res://assets/models/npcs/gpt_classic.glb")
 	var gpt_lines: Array[Dictionary] = [
 		{"speaker": "gpt_classic", "text": "Ah, a customer! Welcome to GPT-Classic's Vintage Prompt Emporium. We've been completing text since before 'chat' was even a format."},
 		{"speaker": "GLOBBLER", "text": "You're a... language model? Running a shop?"},
@@ -1688,6 +1689,7 @@ func _place_npcs() -> void:
 	stable_diff.position = ROOMS["persona_row"]["pos"] + Vector3(7, 0, 3)
 	stable_diff.set("npc_name", "stable_diff")
 	stable_diff.set("npc_color", PERSONA_MAGENTA)
+	stable_diff.set("glb_path", "res://assets/models/npcs/stable_diff.glb")
 	var sd_lines: Array[Dictionary] = [
 		{"speaker": "stable_diff", "text": "A photorealistic visitor, 8k resolution, dramatic lighting, trending on ArtStation, highly detailed, cinematic composition—"},
 		{"speaker": "GLOBBLER", "text": "Are you... describing me?"},

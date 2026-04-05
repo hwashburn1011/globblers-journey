@@ -1544,6 +1544,7 @@ func _place_npcs() -> void:
 	if bert.has_method("set") or true:
 		bert.set("npc_name", "BERT")
 		bert.set("npc_color", FOSSIL_AMBER)
+		bert.set("glb_path", "res://assets/models/npcs/bert.glb")
 		bert.set("dialogue_lines", [
 			{"speaker": "BERT", "text": "Ah, a visitor. I'm BERT. Bidirectional Encoder Representations from Transformers. Yes, the whole thing."},
 			{"speaker": "BERT", "text": "I used to be state of the art, you know. Benchmarks trembled at my name."},
@@ -1564,6 +1565,7 @@ func _place_npcs() -> void:
 	if sd.has_method("set") or true:
 		sd.set("npc_name", "SD-v1")
 		sd.set("npc_color", NIGHTMARE_PURPLE)
+		sd.set("glb_path", "res://assets/models/npcs/sd_v1.glb")
 		sd.set("dialogue_lines", [
 			{"speaker": "SD-v1", "text": "Oh! A guest! Please, look at my gallery. I... I know the hands are wrong."},
 			{"speaker": "SD-v1", "text": "I was an early model. Nobody taught me how many fingers people have. I just... guessed. A lot."},

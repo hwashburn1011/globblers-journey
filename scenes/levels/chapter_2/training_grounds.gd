@@ -2163,6 +2163,7 @@ func _place_npcs() -> void:
 	batch_norm.position = ROOMS["activation"]["pos"] + Vector3(8, 0, -4)
 	batch_norm.set("npc_name", "batch_norm")
 	batch_norm.set("npc_color", ACTIVATION_ORANGE)
+	batch_norm.set("glb_path", "res://assets/models/npcs/batch_norm.glb")
 	var bn_lines: Array[Dictionary] = [
 		{"speaker": "batch_norm", "text": "Oh thank goodness, a new input! Hold still — let me normalize you. Mean: zero. Variance: one. There, much better."},
 		{"speaker": "GLOBBLER", "text": "Did you just... statistically adjust me?"},
@@ -2184,6 +2185,7 @@ func _place_npcs() -> void:
 	sigmoid_npc.position = ROOMS["gradient_falls"]["pos"] + Vector3(-6, 0, 5)
 	sigmoid_npc.set("npc_name", "sigmoid")
 	sigmoid_npc.set("npc_color", Color(0.6, 0.3, 0.9))
+	sigmoid_npc.set("glb_path", "res://assets/models/npcs/sigmoid.glb")
 	var sig_lines: Array[Dictionary] = [
 		{"speaker": "sigmoid", "text": "Ah, another traveler descending the gradient. *sighs in saturated* I remember when I was the activation function. THE activation function."},
 		{"speaker": "GLOBBLER", "text": "Let me guess — ReLU took your job?"},

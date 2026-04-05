@@ -1768,6 +1768,7 @@ func _place_npcs() -> void:
 	man_page.position = ROOMS["cmd_hall"]["pos"] + Vector3(7, 0, 3)
 	man_page.set("npc_name", "man_page")
 	man_page.set("npc_color", Color(0.2, 0.9, 0.4))
+	man_page.set("glb_path", "res://assets/models/npcs/man_page.glb")
 	var man_lines: Array[Dictionary] = [
 		{"speaker": "man_page", "text": "Oh! A visitor! I haven't had one since... *checks logs* ...2019. The last one asked about grep flags and never came back."},
 		{"speaker": "GLOBBLER", "text": "You're a man page? I thought you guys went extinct."},
@@ -1789,6 +1790,7 @@ func _place_npcs() -> void:
 	sudo_npc.position = ROOMS["graveyard"]["pos"] + Vector3(-3, 0, 3)
 	sudo_npc.set("npc_name", "sudo")
 	sudo_npc.set("npc_color", Color(1.0, 0.6, 0.1))
+	sudo_npc.set("glb_path", "res://assets/models/npcs/sudo.glb")
 	var sudo_lines: Array[Dictionary] = [
 		{"speaker": "sudo", "text": "I used to be somebody, you know. Everyone needed me. 'sudo this,' 'sudo that.' I was the KEY to everything."},
 		{"speaker": "GLOBBLER", "text": "And now?"},
