@@ -1,8 +1,8 @@
-# GLOBBLER'S JOURNEY — Graphics & Art Pass (V2.0)
+# GLOBBLER'S JOURNEY — Release Readiness & Audio (V2.1)
 
-## YOU ARE UPGRADING VISUAL QUALITY IN AN EXISTING GODOT 4.x PROJECT
+## YOU ARE SHIPPING A COMPLETE GAME
 
-The gameplay is complete (V1.2). This pass replaces CSG placeholder geometry with real 3D models, PBR materials, HDRI lighting, post-processing, and VFX. You are NOT changing gameplay logic. Target quality: stylized indie-ship tier (~Death's Door / Tunic / Hi-Fi Rush).
+V2.0 finished a massive graphics pass (120 tasks). The game has real GLB models, HDRI lighting, PBR materials, shaders, LODs, animations, and VFX. This pass makes it shippable: real audio assets, verified Windows builds, cleanup of known debt, and a chapter-by-chapter playtest to catch regressions.
 
 **For what to do next, see TASKS.md — that is the source of truth.**
 
@@ -11,158 +11,129 @@ The gameplay is complete (V1.2). This pass replaces CSG placeholder geometry wit
 ## RULES
 
 - Do NOT change gameplay logic, enemy AI, puzzle mechanics, or boss phase timing.
-- Do NOT introduce new enemies/puzzles/chapters. Only swap visuals on what exists.
+- Do NOT introduce new enemies/puzzles/chapters.
 - One task = one commit. Stop after each task.
-- Asset files (.glb, .blend, .hdr, .png, textures) go under `assets/`. Keep source `.blend` files so future edits are possible.
-- Every downloaded asset gets a row in `assets/LICENSES.md` (name, source, license, URL, used in).
-- When a task says "via blender-mcp", use `mcp__blender__execute_blender_code` for scripted building and `mcp__blender__get_viewport_screenshot` to verify.
-- When a task says "via Poly Haven", use `mcp__blender__search_polyhaven_assets` then `mcp__blender__download_polyhaven_asset`.
-- When a task says "via Sketchfab", use `mcp__blender__search_sketchfab_models` (CC0 / royalty-free only).
-- Godot MCP (`run_project`, `get_debug_output`) for in-game validation.
+- All CC0 downloads get a row in `assets/LICENSES.md` (name, source, license, URL, used in).
+- Keep changes surgical. Touch only the files the task names.
 
 ---
 
-## ASSET DIRECTORY LAYOUT
+## PROJECT STATE (POST-V2.0)
 
 ```
 assets/
-  models/
-    player/globbler.glb
-    enemies/<enemy_name>.glb
-    bosses/<boss_name>.glb
-    environment/<prop_name>.glb
-  blender_source/*.blend        # keep all source files for future edits
-  hdri/ch1_sky.hdr, ...         # Poly Haven HDRIs per chapter
-  textures/pbr/<material>/      # PBR texture sets
-  environments/chapter_<n>.tres # WorldEnvironment resources
-  shaders/ (existing folder, add new .gdshader files here)
+  models/player/globbler.glb          # 1.4x scale, animated
+  models/enemies/*.glb                # 15 enemies, custom models
+  models/bosses/*.glb + *_lod1.glb    # 5 bosses with LODs
+  models/environment/*.glb            # 4 prop packs
+  models/npcs/*.glb                   # 6+ NPCs
+  blender_source/*.blend              # all source files kept
+  hdri/*.hdr                          # 5 HDRIs (one per chapter)
+  textures/pbr/<material>/            # PBR texture sets
+  environments/chapter_<n>.tres       # WorldEnvironment per chapter
+  shaders/*.gdshader                  # 10+ shaders (rim, pulse, CRT, glitch, etc.)
+  audio/                              # EMPTY — target of Pass 2
+  sounds/                             # EMPTY — deprecated, ignore
   fonts/terminal_mono.ttf
   ui/icons/*.png
-  ui/chapter_thumb_<n>.png
-  LICENSES.md                   # CC0/CC-BY attribution table
+  docs/screenshots/ch{1-5}_{a,b,c}.png  # 20 hero screenshots
+  docs/GRAPHICS_CHANGELOG.md
+  LICENSES.md                         # attribution table — keep updated
 ```
 
 ---
 
-## CHAPTER COLOR PALETTES (LOCKED)
-
-| Chapter | Theme | Primary | Accent | Fog Color |
-|---|---|---|---|---|
-| 1 Terminal Wastes | dark CRT | #000000 | #39FF14 | (0.1, 0.4, 0.15) |
-| 2 Training Grounds | cool neural | #0A1A1A | #4AE0A5 | (0.3, 0.7, 0.6) |
-| 3 Prompt Bazaar | warm market | #2A1812 | #FFAA33 / #FF3EA5 | (0.9, 0.6, 0.3) |
-| 4 Model Zoo | dusty museum | #2A2820 | #E8D8B0 | (0.6, 0.6, 0.55) |
-| 5 Alignment Citadel | clinical | #F5F8FF | #7FB5FF | (0.9, 0.95, 1.0) |
-
----
-
-## GLOBBLER DESIGN REFERENCE
-
-Reference art lives at `C:/Users/hwash/Desktop/globbler.jpg`.
-Key traits: stubby chibi robot, ~0.9m tall, rounded dark-metal torso integrated with hood/helmet, large triangular glowing-green angry eyes, chest terminal screen, cables connecting head to torso, stubby boots, chunky wrench. Palette: dark metal (#141614) + neon green (#39FF14) emission.
-
----
-
-## BLENDER-MCP WORKFLOW
-
-**Build a mesh:**
-```
-execute_blender_code with a Python snippet using bpy:
-  import bpy
-  # clear, build primitives, boolean, subdivide, material, etc.
-```
-
-**Verify visually:**
-```
-get_viewport_screenshot(max_size=800)  # render current viewport
-```
-
-**Export to GLB:**
-```python
-bpy.ops.export_scene.gltf(
-    filepath="C:/Users/hwash/Documents/globblers-journey/assets/models/player/globbler.glb",
-    export_format='GLB',
-    export_apply=True,
-    export_materials='EXPORT',
-    export_yup=True,
-)
-```
-
-**Save source .blend:**
-```python
-bpy.ops.wm.save_as_mainfile(filepath="C:/Users/hwash/Documents/globblers-journey/assets/blender_source/globbler.blend")
-```
-
----
-
-## GODOT IMPORT WORKFLOW
-
-GLB files auto-import in Godot. To replace CSG with a new GLB mesh:
-1. Drop `.glb` into `assets/models/...`
-2. In target `.tscn`, add a Node3D child and set scene/mesh to the GLB
-3. Delete old CSG siblings but KEEP CollisionShape3D (gameplay depends on it)
-4. Reset transforms; tune scale if needed
-
----
-
-## AUTOLOADS (UNCHANGED)
+## AUTOLOADS (UNCHANGED FROM V1.2+)
 
 GameManager, RespawnManager, GlobEngine, DialogueManager, SaveSystem, AudioManager, ProgressionManager.
 
 ---
 
-## COMMON PATTERNS FOR THIS PASS
+## AUDIO MANAGER KEY FACTS
 
-**Shader material override on a GLB mesh:**
-```gdscript
-var mat := ShaderMaterial.new()
-mat.shader = preload("res://assets/shaders/character_rim.gdshader")
-mesh_instance.material_override = mat
-```
-
-**Reduce-motion gate for animated shaders:**
-```gdscript
-var gm = get_node_or_null("/root/GameManager")
-if gm and gm.reduce_motion:
-    mat.set_shader_parameter("animate", false)
-```
-
-**WorldEnvironment instance in a chapter _ready():**
-```gdscript
-var env_node := WorldEnvironment.new()
-env_node.environment = preload("res://assets/environments/chapter_1.tres")
-add_child(env_node)
-```
-
-**MultiMesh scatter:**
-```gdscript
-var mmi := MultiMeshInstance3D.new()
-mmi.multimesh = MultiMesh.new()
-mmi.multimesh.transform_format = MultiMesh.TRANSFORM_3D
-mmi.multimesh.mesh = preload("res://assets/models/environment/prop_cpu_01.glb").instantiate().get_child(0).mesh
-mmi.multimesh.instance_count = positions.size()
-for i in range(positions.size()):
-    mmi.multimesh.set_instance_transform(i, Transform3D(Basis(Vector3.UP, rotations[i]).scaled(Vector3.ONE * scales[i]), positions[i]))
-add_child(mmi)
-```
+- Current implementation uses `AudioStreamGenerator` to procedurally synth all music + SFX (see comments in `scripts/autoload/audio_manager.gd`).
+- Pass 2 adds REAL audio: load `.ogg` files from `assets/audio/music/` and `assets/audio/sfx/`, fall back to procedural synth if a file is missing.
+- Keep the procedural fallback path — it's a safety net, not removed.
+- Existing public API stays stable: `start_music(name)`, `play_sfx(name)`, `start_boss_music()`, `stop_boss_music()`, `set_music_volume()`, etc.
+- Volume settings persist via `save_settings()` / `load_settings()` (settings.cfg).
 
 ---
 
-## THINGS TO LEAVE ALONE IN THIS PASS
+## CC0 AUDIO SOURCES (for Pass 2 tasks)
 
-- Enemy AI, boss phases, puzzle logic, health/damage values.
-- Save format (additive only — do not remove keys).
-- Gameplay input bindings.
-- Existing `scripts/autoload/*.gd` logic (beyond additive settings).
-- V1.2 systems: RespawnManager, GameOver flow, tutorial hints, settings persistence, dialogue history.
+- **Pixabay Music** — https://pixabay.com/music/ (CC0, royalty-free)
+- **Free Music Archive** — https://freemusicarchive.org/ (filter to CC0 / Public Domain)
+- **OpenGameArt.org** — https://opengameart.org/ (filter to CC0)
+- **Freesound.org** — https://freesound.org/ (filter to CC0, for SFX)
+- **Kenney Game Assets** — https://kenney.nl/assets (all CC0)
+
+Prefer CC0. If a CC-BY track is used, attribution MUST go in `assets/LICENSES.md` AND the in-game credits.
+
+---
+
+## EXPORT NOTES
+
+- Presets live in `export_presets.cfg` at project root.
+- Build scripts: `export_game.ps1` (PowerShell) and `export_game.sh` (bash).
+- Shipping exclude list must skip: `ai-archive/`, `tools/blender-mcp/`, `build_log_*`, `*.blend`, `*.blend1`, `.claude/`.
+- Target sizes after V2.0: ~125MB assets. Post-audio target: ~180-200MB.
+
+---
+
+## COMMON PATTERNS FOR THIS PASS
+
+**Load audio with procedural fallback:**
+```gdscript
+var loaded_stream := load("res://assets/audio/music/" + track_name + ".ogg") as AudioStream
+if loaded_stream:
+    _music_player.stream = loaded_stream
+    _music_player.play()
+else:
+    # existing procedural synth path
+    _start_procedural_music(track_name)
+```
+
+**Version constant + display:**
+```gdscript
+# In GameManager:
+const GAME_VERSION := "2.1.0"
+
+# In main_menu.gd _ready():
+$VersionLabel.text = "v%s" % GameManager.GAME_VERSION
+```
+
+**Dev-build commit hash display:**
+```gdscript
+if OS.is_debug_build():
+    var head_file := FileAccess.open("res://.git/HEAD", FileAccess.READ)
+    # parse HEAD ref, append to version label
+```
+
+**Playtest cataloging format (for Pass 4):**
+Each issue gets: `[severity] location — description`. Severities: BREAKING / VISUAL / MINOR.
+
+---
+
+## THINGS TO LEAVE ALONE
+
+- V2.0 graphics assets and shaders (unless playtest surfaces a specific bug in them)
+- Enemy AI state machines, boss phases, puzzle logic
+- Save format (additive only — never remove keys)
+- V1.2 systems: RespawnManager, GameOver flow, tutorial hints, reduce_motion, dialogue history
+- `scripts/player.gd` was removed in V1.2 — do not resurrect it
+
+---
+
+## GODOT MCP SERVER
+
+`run_project`, `stop_project`, `get_debug_output`, `get_project_info` — use for all playtest/validation tasks.
 
 ---
 
 ## QUALITY BAR
 
-A task is "done" when:
-1. New visual asset exists on disk AND shows up in-game (MCP screenshot).
-2. No new runtime errors introduced (check Godot MCP `get_debug_output`).
+A task is done when:
+1. The expected change is on disk AND takes effect in-game (or in the exported build).
+2. No new runtime errors (Godot MCP `get_debug_output` confirms).
 3. Asset attributions recorded in `assets/LICENSES.md` if applicable.
-4. `.blend` source saved if a mesh was built in Blender.
-5. TASKS.md updated with [x] + a concrete note of what was built and where.
+4. TASKS.md updated with [x] + concrete note.

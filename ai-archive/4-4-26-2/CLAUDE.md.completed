@@ -1,0 +1,107 @@
+# GLOBBLER'S JOURNEY — Bug Fix & Polish Build
+
+## YOU ARE FIXING BUGS IN AN EXISTING GODOT 4.x PROJECT (GDScript)
+
+This is a complete game with 5 chapters. All content exists. You are NOT building new content — you are fixing bugs, broken logic, and missing features identified in a code review.
+
+**For what to fix next, see TASKS.md — that is the source of truth.**
+
+---
+
+## RULES
+
+- Do NOT create new scenes, levels, enemies, or puzzles. Everything already exists.
+- Do NOT refactor or reorganize code unless the task specifically says to.
+- Do NOT add features beyond what the task describes.
+- Fix the exact bug described. Test your fix makes sense by reading surrounding code.
+- Keep changes minimal and surgical. Touch only the files mentioned in the task.
+- GDScript only. Sarcastic comments in Globbler's voice where appropriate.
+- After fixing, update TASKS.md and commit.
+
+---
+
+## PROJECT LAYOUT
+
+```
+scenes/
+  player/globbler.gd, globbler.tscn
+  player/abilities/glob_command.gd, wrench_smash.gd, terminal_hack.gd, agent_spawn.gd, mini_agent.gd
+  enemies/base_enemy.gd + per-enemy .gd files
+  enemies/rm_rf_boss/, local_minimum_boss/, system_prompt_boss/, foundation_model_boss/, aligner_boss/
+  puzzles/base_puzzle.gd + per-puzzle .gd files
+  levels/chapter_1/terminal_wastes.gd, chapter_2/training_grounds.gd, chapter_3/prompt_bazaar.gd, chapter_4/model_zoo.gd, chapter_5/alignment_citadel.gd
+  ui/hud.gd, dialogue_box.gd, context_window_bar.gd, glob_pattern_input.gd, upgrade_menu.gd
+  main/main_menu.gd, loading_screen.gd, credits.gd
+scripts/
+  game_manager.gd (autoload)
+  autoload/glob_engine.gd, dialogue_manager.gd, save_system.gd, audio_manager.gd, progression_manager.gd
+  components/glob_target.gd, health_component.gd
+```
+
+---
+
+## AUTOLOADS (registered in project.godot)
+
+GameManager, GlobEngine, DialogueManager, SaveSystem, AudioManager, ProgressionManager
+
+---
+
+## KEY PATTERNS
+
+- All autoload lookups use `get_node_or_null("/root/AutoloadName")`
+- Enemies extend base_enemy.gd with state machine: Patrol, Alert, Chase, Attack, Stunned, Death
+- Puzzles extend base_puzzle.gd with states: Locked, Active, Solved, Failed
+- Boss fights have separate boss .gd and arena .gd files
+- Level scripts build everything in code via _ready() (no .tscn scene trees)
+- Dialogue uses DialogueManager.start_dialogue(lines_array) or .quick_line(speaker, text)
+- Abilities are child nodes of the player, set up in globbler.gd _ready()
+
+---
+
+## GODOT MCP SERVER
+
+You have access to a Godot MCP server for testing. Key tools:
+- `run_project` — Launch game in debug mode
+- `stop_project` — Stop the running game
+- `get_debug_output` — Capture console errors/warnings
+- `get_project_info` — Project structure details
+
+Use these to validate fixes when the task says to test.
+
+---
+
+## COMMON FIX PATTERNS
+
+**Replacing recursive timer projectiles with _physics_process:**
+```gdscript
+# BAD (exponential timers):
+get_tree().create_timer(0.016).timeout.connect(_process_projectile.bind(proj))
+
+# GOOD (attach script to projectile):
+var script = GDScript.new()
+script.source_code = """
+extends Node3D
+var velocity := Vector3.ZERO
+var speed := 10.0
+func _physics_process(delta):
+    global_position += velocity * speed * delta
+"""
+script.reload()
+proj.set_script(script)
+```
+
+**Tween callback fix:**
+```gdscript
+# BAD:
+tween.tween_callback(_door.queue_free)
+# GOOD:
+tween.tween_callback(func(): _door.queue_free())
+```
+
+**Pause system pattern:**
+```gdscript
+# Pause: set tree paused and ensure UI nodes have process_mode = PROCESS_MODE_WHEN_PAUSED
+get_tree().paused = true
+# Unpause:
+get_tree().paused = false
+```
