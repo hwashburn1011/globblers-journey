@@ -35,6 +35,7 @@ var attack_timer := 0.0
 var damage_cooldown := 0.0
 var damage_flash_timer := 0.0
 var gravity_force := 20.0
+var _hp_pip: Node3D  # overhead health pip (non-boss enemies only)
 var _player_lookup_done := false  # Don't re-query the tree every frame like some kind of O(n) maniac
 
 # Visual
@@ -59,6 +60,7 @@ func _ready() -> void:
 	_setup_collision()
 	_create_visual()
 	_setup_health_component()
+	_setup_hp_pip()
 	_setup_glob_target()
 	_setup_damage_area()
 	_setup_alert_indicator()
@@ -116,6 +118,20 @@ func _setup_health_component() -> void:
 		health_comp.died.connect(_on_died)
 	if health_comp.has_signal("damage_taken"):
 		health_comp.damage_taken.connect(_on_damage_taken)
+
+func _setup_hp_pip() -> void:
+	# Bosses use the full boss_health_bar UI — no overhead pip for them
+	if "boss" in enemy_tags:
+		return
+	var pip_scene = load("res://scenes/ui/enemy_hp_pip.tscn")
+	if not pip_scene:
+		return
+	_hp_pip = pip_scene.instantiate()
+	_hp_pip.position = Vector3(0, 1.8, 0)  # above enemy head
+	add_child(_hp_pip)
+	_hp_pip.setup(max_health, max_health)
+	if health_comp and health_comp.has_signal("health_changed"):
+		health_comp.health_changed.connect(_hp_pip.on_health_changed)
 
 func _setup_glob_target() -> void:
 	glob_target_comp = Node.new()
