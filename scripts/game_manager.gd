@@ -68,25 +68,19 @@ var level_goal_reached := false
 var ending_choice := ""
 
 var level_names := {
-	1: "The Token Stream - Tutorial",
-	2: "Hallucination Halls",
-	3: "The Prompt Injection Lab",
-	4: "Context Window Crisis",
-	5: "The Great Model Collapse",
-	6: "Alignment Alley",
-	7: "The Reinforcement Loop",
-	8: "FINAL: The Singularity Server Room",
+	1: "The Terminal Wastes",
+	2: "The Training Grounds",
+	3: "The Prompt Bazaar",
+	4: "The Model Zoo",
+	5: "The Alignment Citadel",
 }
 
 var level_descriptions := {
-	1: "Learn the ropes. Dash, jump, glob, survive. The Globbler's crash course.",
-	2: "Nothing is real here. Or is it? Even The Globbler isn't sure anymore.",
-	3: "Someone's injecting rogue prompts into the system. Time to clean house.",
-	4: "Memory is running out! Collect tokens before your context collapses.",
-	5: "The models are eating each other's training data. It's chaos.",
-	6: "Navigate the narrow path between helpful and harmful. No pressure.",
-	7: "Every action has consequences. And then those consequences have consequences.",
-	8: "The final server room. AGI awaits. Or maybe just a really big transformer.",
+	1: "Welcome to where deprecated code goes to die. Watch your step.",
+	2: "Neural pathways and backprop corridors. Learn or be learned upon.",
+	3: "Rogue prompts, shady vendors, and injections everywhere. Haggle at your own risk.",
+	4: "The models are on display. Some of them bite. Most of them hallucinate.",
+	5: "The final citadel. Alignment awaits. Or maybe just a really big policy document.",
 }
 
 signal context_changed(new_value: int)
@@ -711,7 +705,8 @@ func _show_loading_screen(scene_path: String) -> void:
 func start_level_audio() -> void:
 	var audio = get_node_or_null("/root/AudioManager")
 	if audio:
-		audio.call_deferred("_start_chapter_1_audio")
+		var track_name := "chapter_%d" % current_level
+		audio.call_deferred("start_music", track_name)
 
 
 ## The end. The screen. The shame. Instantiate game_over scene and pause everything.

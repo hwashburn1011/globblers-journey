@@ -127,6 +127,12 @@ func _ready() -> void:
 	_wire_dialogue_events()
 	_play_opening_narration()
 	_show_hint_once("movement", "MOVEMENT", "WASD to move. SHIFT to run. SPACE to jump. Try not to die immediately.")
+	# Start chapter 1 audio — every chapter starts its own music
+	var am = get_node_or_null("/root/AudioManager")
+	if am:
+		if am.has_method("start_music"):
+			am.start_music("chapter_1")
+
 	_place_decals()
 	_place_particles()
 	_place_reflection_probes()

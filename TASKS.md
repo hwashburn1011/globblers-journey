@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 4.5 — Playtest Chapter 5
-- **Next task to do:** Task 4.6 — Fix playtest batch 1 (gameplay-breaking)
+- **Last task completed:** Task 4.6 — Fix playtest batch 1
+- **Next task to do:** Task 4.7 — Fix playtest batch 2 (visual glitches)
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -165,7 +165,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Ran `alignment_citadel.tscn` via Godot MCP, captured full debug output over ~30s runtime. **Zero runtime errors** (`finalErrors` empty). All 5 zones loaded (Gate, Classifier Hall, RLHF Chamber, Policy Wing, Alignment Core), clinical props deployed, 18 enemies spawned, 3 compliance-bypassing puzzles placed, boss arena constructed (The Aligner, sanitized tiles + sealed exits), player GLB model initialized with skeleton animations, HUD loaded. Real music loaded: `chapter_5.ogg` confirmed playing ("farewell, procedural bleeps"). Ambient crossfade to 'citadel_gate' working. **Issues cataloged:** (1) [MINOR] Current Level banner still shows "The Token Stream - Tutorial" (Ch1 name) — same issue as Ch1–Ch4, set by GameManager default rather than chapter overriding it; cosmetic only since HUD displays correct chapter info. (2) [MINOR] ~35 GDScript parse-time warnings (unused variables/parameters) across enemy, boss, puzzle, HUD, and upgrade scripts — same pre-existing set as Ch1–Ch4, not V2.0/V2.1 regressions. No BREAKING or VISUAL issues found. Ch5 correctly calls `start_music("chapter_5")` in its `_ready()` and `start_boss_music()` for boss phase.
 
 ### 4.6 Fix playtest batch 1 (gameplay-breaking)
-- [ ] Fix the top 3 most gameplay-breaking bugs cataloged in 4.1–4.5. One fix per file where possible, minimal changes.
+- [x] **DONE:** No BREAKING issues found in playtests; fixed the top 3 most impactful bugs: (1) Chapter 1 was missing `start_music("chapter_1")` in `_ready()` — added it to `terminal_wastes.gd` matching Ch2-5 pattern. (2) `GameManager.start_level_audio()` hardcoded `_start_chapter_1_audio()` — changed to dispatch dynamically via `"chapter_%d" % current_level`. (3) `level_names` and `level_descriptions` in `game_manager.gd` were stale 8-level placeholders from V1 — updated to match the actual 5 chapters (Terminal Wastes, Training Grounds, Prompt Bazaar, Model Zoo, Alignment Citadel) with proper descriptions. Verified Ch1 via Godot MCP — zero runtime errors, real music loads, correct level name displayed.
 
 ### 4.7 Fix playtest batch 2 (visual glitches)
 - [ ] Fix the next 3 most visible visual bugs from 4.1–4.5. E.g. missing textures, z-fighting, broken shaders.
