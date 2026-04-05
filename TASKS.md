@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 8.3 complete
-- **Last task completed:** Task 8.3 — Dash trail ghost effect
-- **Next task to do:** Task 8.4 (Token pickup sparkle)
+- **Last updated by:** Claude (2026-04-04) — Task 8.4 complete
+- **Last task completed:** Task 8.4 — Token pickup sparkle VFX
+- **Next task to do:** Task 8.5 (Enemy death shatter)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 COMPLETE — all 5 boss visual upgrades done (rm -rf, System Prompt, Local Minimum, Foundation Model, Aligner). All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -264,7 +264,7 @@ assets/
 - [x] Create `scenes/vfx/dash_trail.tscn` — Globbler mesh copies left behind with fading green emissive. Spawn 4 per dash via `globbler.gd` dash logic. **Done: Created dash_trail.tscn + .gd — duplicates GlobblerModel node tree, replaces all materials with unshaded translucent neon green (alpha 0.6→0, emission fading 2.0→0), self-destructs after 0.35s. Hooked into globbler.gd _handle_dash() — spawns first ghost immediately on dash start, then 3 more at evenly-spaced intervals across DASH_DURATION (0.18s / 4 = 0.045s apart). Ghosts parented to scene root so they stay in place while Globbler zooms away. Reduce-motion gated. Zero gameplay logic changes.**
 
 ### 8.4 Token pickup sparkle
-- [ ] Create `scenes/vfx/token_sparkle.tscn` — small GPUParticles3D burst, green stars rising. Trigger from GameManager.add_memory_tokens.
+- [x] Create `scenes/vfx/token_sparkle.tscn` — small GPUParticles3D burst, green stars rising. Trigger from GameManager.add_memory_tokens. **Done: Created token_sparkle.tscn + .gd — 16 GPUParticles3D green star quads rising upward in a 45° cone, neon green→white→transparent color ramp, emissive material with 4x energy for bloom pickup, billboard quads, self-destructs after 0.8s. Hooked into memory_token.gd _on_body_entered() — spawns sparkle at token's global_position before queue_free(). Zero gameplay logic changes.**
 
 ### 8.5 Enemy death shatter
 - [ ] Create `scenes/vfx/enemy_shatter.tscn` — polygon shard explosion, 20 particles. Trigger from `base_enemy.gd` on death before queue_free.
