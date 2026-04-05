@@ -6,6 +6,8 @@ extends Node3D
 
 const SWING_DURATION := 0.3
 const HIT_RANGE := 2.0
+const SMASH_PROMPT_RANGE := 3.0
+const _PROMPT_SCENE := preload("res://scenes/ui/interaction_prompt.tscn")
 
 # Upgradeable stats — ProgressionManager says I can hit harder
 var damage := 2
@@ -24,6 +26,11 @@ var hit_area: Area3D
 # Impact sparks — because every good hit deserves a light show
 var _wrench_sparks_scene: PackedScene = preload("res://scenes/vfx/wrench_sparks.tscn")
 
+# Proximity prompt for smashable targets
+var _interaction_prompt: Node = null
+var _scan_timer := 0.0
+const SCAN_INTERVAL := 0.25
+
 # References
 var player: CharacterBody3D
 
@@ -37,6 +44,8 @@ func _ready() -> void:
 
 func setup(p: CharacterBody3D) -> void:
 	player = p
+	_interaction_prompt = _PROMPT_SCENE.instantiate()
+	add_child(_interaction_prompt)
 
 func _create_hit_area() -> void:
 	hit_area = Area3D.new()
@@ -85,6 +94,12 @@ func _create_swing_particles() -> void:
 func _process(delta: float) -> void:
 	if cooldown_timer > 0:
 		cooldown_timer -= delta
+
+	# Throttled proximity scan for smashable switches/gears
+	_scan_timer += delta
+	if _scan_timer >= SCAN_INTERVAL:
+		_scan_timer = 0.0
+		_scan_for_smashables()
 
 	if is_swinging:
 		swing_timer -= delta
@@ -195,3 +210,19 @@ func get_cooldown_percent() -> float:
 	if cooldown_timer <= 0:
 		return 1.0
 	return 1.0 - (cooldown_timer / attack_cooldown)
+
+func _scan_for_smashables() -> void:
+	if not player or not _interaction_prompt:
+		return
+	var found := false
+	for node in get_tree().get_nodes_in_group("switches"):
+		if not is_instance_valid(node) or not node is Node3D:
+			continue
+		var dist := player.global_position.distance_to((node as Node3D).global_position)
+		if dist < SMASH_PROMPT_RANGE:
+			found = true
+			break
+	if found:
+		_interaction_prompt.show_prompt("[F] SMASH")
+	else:
+		_interaction_prompt.hide_prompt()

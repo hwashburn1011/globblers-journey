@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 13.2 complete
-- **Last task completed:** Task 13.2 — Enemy over-head health pip. Created `scenes/ui/enemy_hp_pip.gd` + `.tscn` — small 3-bar billboard indicator (QuadMesh bars, unshaded) positioned above enemies at y=1.8. Shows on damage, auto-hides after 2s. Color shifts green→orange→red at 50%/25% HP. Wired into `base_enemy.gd` via health_changed signal from HealthComponent. Bosses excluded via enemy_tags check. No new runtime errors.
-- **Next task to do:** Task 13.3 (Interaction prompt UI)
+- **Last updated by:** Claude (2026-04-05) — Task 13.3 complete
+- **Last task completed:** Task 13.3 — Interaction prompt UI. Created `scenes/ui/interaction_prompt.gd` + `.tscn` — CanvasLayer-based pulsing terminal-green "[KEY] ACTION" label (bottom-center screen). Wired into `terminal_hack.gd` (shows "[T] HACK" when nearby hackable detected via existing proximity scan) and `wrench_smash.gd` (shows "[F] SMASH" near switches via new throttled proximity scan at 3.0m range). Pulsing alpha animation respects reduce_motion. Terminal mono font, dark panel with green border. No new runtime errors.
+- **Next task to do:** Task 13.4 (Wrench weapon trail)
 - **V2.0 MILESTONE SUMMARY (Passes 1–11):**
   - **Pass 1 — Lighting:** 5 Poly Haven HDRIs, 5 WorldEnvironment .tres resources, DirectionalLight3D tuning (4-split shadows, per-chapter color temp). All chapters have FILMIC tonemap, SSAO, SSIL, SDFGI, volumetric fog.
   - **Pass 2 — Globbler Hero:** Custom Blender-built chibi robot GLB (dark metal + neon green), tuned scale (1.4x), collision capsule (r=0.35, h=1.3), third-person camera (distance=6.0, pitch=-0.3, height=1.1m).
@@ -399,7 +399,7 @@ assets/
 - [x] Create `scenes/ui/enemy_hp_pip.gd` + `.tscn` — small 3-bar indicator that billboards over enemies when damaged. Auto-hide after 2s of no damage. Wire into `base_enemy.gd` take_damage. Exclude bosses (they use 13.1). **Done: Created enemy_hp_pip.gd + .tscn with 3 QuadMesh bars (unshaded, no-depth-test, billboard via look_at camera). Shows on damage via health_changed signal, hides after 2s. Color shifts green→orange→red. Wired into base_enemy.gd _setup_hp_pip() after health component setup, skipped for "boss" tagged enemies. No new runtime errors.**
 
 ### 13.3 Interaction prompt UI
-- [ ] Create `scenes/ui/interaction_prompt.gd` + `.tscn` — small label like "[T] HACK" or "[F] SMASH" that appears near interactable targets. Pulsing terminal-green, positioned above player. Wire into `terminal_hack.gd` and `wrench_smash.gd` proximity scans.
+- [x] Create `scenes/ui/interaction_prompt.gd` + `.tscn` — small label like "[T] HACK" or "[F] SMASH" that appears near interactable targets. Pulsing terminal-green, positioned above player. Wire into `terminal_hack.gd` and `wrench_smash.gd` proximity scans. **Done: Created interaction_prompt.gd + .tscn (CanvasLayer, bottom-center screen). Pulsing green label with dark panel + green border, terminal mono font. terminal_hack.gd shows "[T] HACK" on nearby hackable detection, hides when out of range or hacking. wrench_smash.gd adds throttled proximity scan (SCAN_INTERVAL=0.25s, SMASH_PROMPT_RANGE=3.0) for "switches" group, shows "[F] SMASH". Both use separate prompt instances. Respects reduce_motion. No new runtime errors.**
 
 ### 13.4 Wrench weapon trail
 - [ ] Add MeshInstance3D trail ribbon (or GPUTrail3D if available, else simple plane mesh with UV scroll) to wrench swing animation in `wrench_smash.gd`. Emissive green, 0.15s lifetime. Triggered on swing, removed on end.

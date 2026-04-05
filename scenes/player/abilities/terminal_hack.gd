@@ -9,11 +9,13 @@ extends Node3D
 
 const INTERACT_RANGE := 3.5
 const _HINT_SCENE := preload("res://scenes/ui/first_time_hint.tscn")
+const _PROMPT_SCENE := preload("res://scenes/ui/interaction_prompt.tscn")
 
 var player: CharacterBody3D
 var _nearby_hackable: Node = null
 var _is_hacking := false
 var _hack_ui: Control = null
+var _interaction_prompt: Node = null
 
 # Minigame state
 var _sequence: Array[int] = []
@@ -43,6 +45,8 @@ func _on_tree_changed(_node: Node) -> void:
 
 func setup(p: CharacterBody3D) -> void:
 	player = p
+	_interaction_prompt = _PROMPT_SCENE.instantiate()
+	add_child(_interaction_prompt)
 
 func _process(delta: float) -> void:
 	if _is_hacking:
@@ -90,6 +94,11 @@ func _scan_for_hackables() -> void:
 	# First time spotting a hackable? Drop the tutorial hint — hand-holding, but necessary
 	if _nearby_hackable:
 		_show_hint_once("hack", "TERMINAL HACK", "Press T near glowing terminals. Repeat the arrow sequence.")
+		if _interaction_prompt and _interaction_prompt.has_method("show_prompt"):
+			_interaction_prompt.show_prompt("[T] HACK")
+	else:
+		if _interaction_prompt and _interaction_prompt.has_method("hide_prompt"):
+			_interaction_prompt.hide_prompt()
 
 func try_interact() -> void:
 	if _is_hacking:
@@ -114,6 +123,8 @@ func try_interact() -> void:
 	hackable_comp.start_hack()
 	_start_minigame()
 	hack_started.emit(_nearby_hackable)
+	if _interaction_prompt and _interaction_prompt.has_method("hide_prompt"):
+		_interaction_prompt.hide_prompt()
 	# "Initiating hack sequence. Try not to drool on the keyboard."
 	var audio = get_node_or_null("/root/AudioManager")
 	if audio:
