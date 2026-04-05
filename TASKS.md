@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 6.4 complete
-- **Last task completed:** Task 6.4 — Dropout Ghost enemy model via blender-mcp
-- **Next task to do:** Task 6.5 (Overfitting Ogre enemy model via blender-mcp)
+- **Last updated by:** Claude (2026-04-04) — Task 6.5 complete
+- **Last task completed:** Task 6.5 — Overfitting Ogre enemy model via blender-mcp
+- **Next task to do:** Task 6.6 (Vanishing Gradient Wisp enemy model via blender-mcp)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 IN PROGRESS — enemy visual upgrades. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -197,7 +197,7 @@ assets/
 - [x] Via blender-mcp: translucent floating node-ghost with fading tendrils. Alpha blend. Swap in `dropout_ghost.tscn`. **Done: Built teardrop ghost body with tapered tendrils (6 wispy cones), hollow void eyes, 8 orbiting neural-node spheres, and probability marker panel. All spectral blue with emissive glow. Exported to `assets/models/enemies/dropout_ghost.glb`, source saved to `assets/blender_source/dropout_ghost.blend`. Updated `dropout_ghost.gd` `_create_visual()` to load GLB with CSG fallback, preserving alpha-blend dropout mechanic.**
 
 ### 6.5 Overfitting Ogre model
-- [ ] Via blender-mcp: bulky 4-limbed brute made of stacked data-blocks, ~1200 tris. Swap in `overfitting_ogre.tscn`.
+- [x] Via blender-mcp: bulky 4-limbed brute made of stacked data-blocks, ~1200 tris. Swap in `overfitting_ogre.tscn`. **Done: Built chunky 4-limbed ogre from stacked data-block torso (3 layers), blocky head with brow ridge, amber rectangular eyes, 4 arms (2 main + 2 sub-arms), shoulder protrusions, green neon memory bank cubes on back and skull, chest status plate, belt data-bus strip. 652 tris. Exported to `assets/models/enemies/overfitting_ogre.glb`, source saved to `assets/blender_source/overfitting_ogre.blend`. Updated `overfitting_ogre.gd` `_create_visual()` to load GLB with CSG fallback, preserving confidence label and all gameplay mechanics.**
 
 ### 6.6 Vanishing Gradient Wisp model
 - [ ] Via blender-mcp: fading wisp with particle trail, mostly shader-driven. Swap in `vanishing_gradient_wisp.tscn`.
