@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 5.1 — Photo mode
-- **Next task to do:** Task 5.2 — Speedrun timer overlay (Pass 5: Shipping Extras)
+- **Last task completed:** Task 5.2 — Speedrun timer overlay
+- **Next task to do:** Task 5.3 — Lore doc collectibles data structure (Pass 5: Shipping Extras)
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -182,7 +182,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Added `photo_mode` input action (F12 key) in GameManager's input setup. Implemented full photo mode in `globbler.gd`: F12 toggles photo mode on/off. On enter: pauses game tree, sets player `process_mode` to `PROCESS_MODE_WHEN_PAUSED` so camera updates continue, snapshots current camera position/orientation, hides all nodes in "hud" group. On exit: unpauses, restores HUD visibility, returns camera to player-follow. Free camera uses WASD movement + mouse look (pitch/yaw), SPACE/CTRL for up/down, SHIFT for 2.5x speed boost. Camera speed 8 units/sec. Cannot activate from pause menu (blocked if `is_paused`). Verified via Godot MCP — zero runtime errors.
 
 ### 5.2 Speedrun timer overlay
-- [ ] Add a toggleable speedrun timer to HUD (display_speedrun_timer setting in GameManager, default off). Shows MM:SS.mmm since chapter start. Continues across deaths but stops on chapter complete.
+- [x] **DONE:** Added `display_speedrun_timer` bool to GameManager (default false), persisted in settings.cfg under `gameplay/speedrun_timer`. Added `get_speedrun_time()` returning `MM:SS.mmm` format. In HUD, added gold-colored speedrun label (font size 14, yellow `Color(1.0, 0.85, 0.0, 0.9)`) positioned just below the existing timer panel. Visibility driven by `display_speedrun_timer` — hidden when off. Timer updates every frame using `level_time` (continues across deaths since `reset_level()` doesn't reset `level_time` on death, only on full level restart). Freezes display when `level_goal_reached` is true (chapter complete). Verified via Godot MCP — zero runtime errors.
 
 ### 5.3 Lore doc collectibles — data structure
 - [ ] Add `lore_docs_found: Dictionary` to GameManager + `add_lore_doc(id, title, body)` + `has_found_lore_doc(id)`. Include in save data. Signal `lore_doc_collected(id)`.

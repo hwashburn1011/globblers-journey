@@ -32,6 +32,7 @@ var damage_overlay: ColorRect
 var kill_counter: Label
 var param_counter: Label
 var upgrade_hint: Label
+var speedrun_label: Label
 
 var damage_indicator_scene := preload("res://scenes/ui/damage_indicator.tscn")
 var cooldown_radial_shader := preload("res://assets/shaders/cooldown_radial.gdshader")
@@ -261,6 +262,26 @@ func _build_top_center_timer() -> void:
 	timer_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	timer_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	timer_panel.add_child(timer_label)
+
+	# Speedrun timer — sits just below the normal timer, only visible when enabled
+	speedrun_label = Label.new()
+	speedrun_label.name = "SpeedrunLabel"
+	speedrun_label.text = "00:00.000"
+	speedrun_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0, 0.9))
+	speedrun_label.add_theme_font_size_override("font_size", 14)
+	apply_text_shadow(speedrun_label, Vector2(1, 1), 2)
+	speedrun_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	speedrun_label.anchor_left = 0.5
+	speedrun_label.anchor_top = 0.0
+	speedrun_label.anchor_right = 0.5
+	speedrun_label.anchor_bottom = 0.0
+	speedrun_label.offset_left = -60.0
+	speedrun_label.offset_top = 44.0
+	speedrun_label.offset_right = 60.0
+	speedrun_label.offset_bottom = 64.0
+	speedrun_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	speedrun_label.visible = false
+	add_child(speedrun_label)
 
 func _build_bottom_center_abilities() -> void:
 	# === BOTTOM CENTER: Ability icons + cooldowns in terminal panel ===
@@ -605,6 +626,12 @@ func _process(delta: float) -> void:
 	var game_mgr = get_node_or_null("/root/GameManager")
 	if game_mgr and timer_label:
 		timer_label.text = game_mgr.get_formatted_time()
+
+	# Speedrun timer — show MM:SS.mmm, freeze on chapter complete
+	if game_mgr and speedrun_label:
+		speedrun_label.visible = game_mgr.display_speedrun_timer
+		if speedrun_label.visible and not game_mgr.level_goal_reached:
+			speedrun_label.text = game_mgr.get_speedrun_time()
 
 	# Update ability cooldowns from player
 	if not player_ref:

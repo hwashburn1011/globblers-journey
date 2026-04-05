@@ -33,6 +33,9 @@ var invert_mouse_y := false
 # Dialogue speed — seconds per character. 0.005 (impatient speedrunner) to 0.08 (savoring the sarcasm)
 var dialogue_char_delay := 0.03
 
+# Speedrun timer — off by default, because most players don't need the existential dread of watching seconds tick
+var display_speedrun_timer := false
+
 var current_level := 1
 var memory_tokens_collected := 0
 var total_memory_tokens := 0
@@ -535,6 +538,7 @@ func save_settings() -> void:
 	cfg.set_value("gameplay", "difficulty", difficulty)
 	cfg.set_value("gameplay", "reduce_motion", reduce_motion)
 	cfg.set_value("gameplay", "dialogue_char_delay", dialogue_char_delay)
+	cfg.set_value("gameplay", "speedrun_timer", display_speedrun_timer)
 	cfg.set_value("display", "fullscreen", display_fullscreen)
 	cfg.set_value("display", "resolution_index", display_resolution_index)
 	cfg.set_value("controls", "mouse_sensitivity", mouse_sensitivity)
@@ -561,6 +565,7 @@ func load_settings() -> void:
 	difficulty = cfg.get_value("gameplay", "difficulty", Difficulty.NORMAL)
 	reduce_motion = cfg.get_value("gameplay", "reduce_motion", false)
 	dialogue_char_delay = cfg.get_value("gameplay", "dialogue_char_delay", 0.03)
+	display_speedrun_timer = cfg.get_value("gameplay", "speedrun_timer", false)
 	display_fullscreen = cfg.get_value("display", "fullscreen", false)
 	display_resolution_index = cfg.get_value("display", "resolution_index", 1)
 	mouse_sensitivity = cfg.get_value("controls", "mouse_sensitivity", 1.0)
@@ -672,6 +677,12 @@ func get_formatted_time() -> String:
 	var minutes = int(level_time) / 60
 	var seconds = int(level_time) % 60
 	return "%02d:%02d" % [minutes, seconds]
+
+func get_speedrun_time() -> String:
+	var minutes = int(level_time) / 60
+	var seconds = int(level_time) % 60
+	var millis = int(fmod(level_time, 1.0) * 1000)
+	return "%02d:%02d.%03d" % [minutes, seconds, millis]
 
 func reset_level() -> void:
 	deaths_this_level = 0
