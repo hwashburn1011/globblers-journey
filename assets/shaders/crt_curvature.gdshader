@@ -4,6 +4,7 @@ shader_type canvas_item;
 // "Every screen deserves to look like it was manufactured in 1987."
 // Applied as a full-screen ColorRect on a high CanvasLayer.
 
+uniform sampler2D SCREEN_TEXTURE : hint_screen_texture, filter_linear_mipmap;
 uniform float barrel_strength : hint_range(0.0, 0.15) = 0.04;
 uniform float scanline_count : hint_range(100.0, 1000.0) = 400.0;
 uniform float scanline_alpha : hint_range(0.0, 0.3) = 0.06;

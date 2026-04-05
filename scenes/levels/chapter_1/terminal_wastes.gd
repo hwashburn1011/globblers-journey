@@ -2317,9 +2317,9 @@ func _place_particles() -> void:
 func _place_reflection_probes() -> void:
 	for room_key in ROOMS:
 		var r = ROOMS[room_key]
-		var probe := ReflectionProbe3D.new()
+		var probe := ReflectionProbe.new()
 		probe.name = "ReflectionProbe_" + room_key
-		probe.update_mode = ReflectionProbe3D.UPDATE_ONCE
+		probe.update_mode = ReflectionProbe.UPDATE_ONCE
 		probe.box_projection = true
 		probe.size = Vector3(r["size"].x, r["wall_h"], r["size"].y)
 		probe.position = r["pos"] + Vector3(0, r["wall_h"] * 0.5, 0)
@@ -2327,9 +2327,9 @@ func _place_reflection_probes() -> void:
 
 	# Boss arena probe — rm_rf arena (8x6 grid, TILE_SIZE 2.5)
 	var nexus_pos: Vector3 = ROOMS["nexus"]["pos"]
-	var boss_probe := ReflectionProbe3D.new()
+	var boss_probe := ReflectionProbe.new()
 	boss_probe.name = "ReflectionProbe_boss_arena"
-	boss_probe.update_mode = ReflectionProbe3D.UPDATE_ONCE
+	boss_probe.update_mode = ReflectionProbe.UPDATE_ONCE
 	boss_probe.box_projection = true
 	boss_probe.size = Vector3(22.0, 10.0, 17.0)
 	boss_probe.position = nexus_pos + Vector3(0, 5.0, -22)
