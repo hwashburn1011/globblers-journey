@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 6.2 complete
-- **Last task completed:** Task 6.2 — Zombie Process enemy model via blender-mcp
-- **Next task to do:** Task 6.3 (Corrupted Shell Script enemy model via blender-mcp)
+- **Last updated by:** Claude (2026-04-04) — Task 6.3 complete
+- **Last task completed:** Task 6.3 — Corrupted Shell Script enemy model via blender-mcp
+- **Next task to do:** Task 6.4 (Dropout Ghost enemy model via blender-mcp)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 IN PROGRESS — enemy visual upgrades. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -191,7 +191,7 @@ assets/
 - [x] Via blender-mcp: slouched humanoid husk, old beige server-casing texture, dangling cables. ~800 tris. Export + swap in `zombie_process.tscn`. **Done: Built procedural Zombie Process in Blender — 692 verts, 1226 tris. Slouched server-casing torso with beveled edges, tilted drooping head unit, dangling arms with exposed joint innards, stumpy legs, 5 dangling cables with glow tips, cracked damage panel, vent slits, chest status screen, dim green LED eyes. 4 materials: zombie_server_casing (aged beige), zombie_innards (dark exposed circuitry), zombie_glow (green emission=4.0), zombie_cable (dark rubber). Exported GLB to assets/models/enemies/zombie_process.glb. Updated zombie_process.gd: replaced _create_visual() CSG code with GLB loader (scale 1.5x) + CSG fallback + PID label preserved. Source blend saved to assets/blender_source/zombie_process.blend.**
 
 ### 6.3 Corrupted Shell Script model
-- [ ] Via blender-mcp: glitchy floating shell scroll + twisted pipes. ~400 tris. Purple-green glitch emission material. Swap in `corrupted_shell_script.tscn`.
+- [x] Via blender-mcp: glitchy floating shell scroll + twisted pipes. ~400 tris. Purple-green glitch emission material. Swap in `corrupted_shell_script.tscn`. **Done: Built procedural Corrupted Shell Script in Blender — 628 verts, 576 faces. Dark purple scroll body with irregular edges, top/bottom curl rings, 3 twisted green-glowing pipes wrapping around body, 5 floating glitch shards (purple emission=5.0), broken corruption halo ring, green terminal text panel, pipe end caps. 4 materials: shell_scroll (purple emission), shell_pipe (green glow), shell_glitch (bright purple emission), shell_text (neon green). Exported GLB to assets/models/enemies/corrupted_shell_script.glb. Updated corrupted_shell_script.gd: replaced _create_visual() CSG code with GLB loader (scale 1.2x) + glitch shader overlay + CSG fallback. Source blend saved to assets/blender_source/corrupted_shell_script.blend.**
 
 ### 6.4 Dropout Ghost model
 - [ ] Via blender-mcp: translucent floating node-ghost with fading tendrils. Alpha blend. Swap in `dropout_ghost.tscn`.
