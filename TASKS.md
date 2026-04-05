@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 12.5 complete
-- **Last task completed:** Task 12.5 — Chapter 5 puzzle visual upgrades. Built 3 citadel GLB props (policy_terminal, vote_pedestal, option_tablet) in Blender with clinical white + holographic blue materials. Replaced BoxMesh placeholders in constitutional_loophole_puzzle.gd (terminal, door, option tablets) and rlhf_feedback_puzzle.gd (terminal, vote pedestals, door) with GLB models.
-- **Next task to do:** Task 13.1 (Boss health bar UI)
+- **Last updated by:** Claude (2026-04-05) — Task 13.1 complete
+- **Last task completed:** Task 13.1 — Boss health bar UI. Created `scenes/ui/boss_health_bar.gd` + `.tscn` — full-width slim bar at top of screen with terminal-green styling, boss name label, 3 phase dots, smooth-lerp HP bar with delayed ghost bar for damage visualization, and HP color shifts (green→orange→red). Auto-connects to any boss enemy via tag scan. Fades in on boss encounter entry (PHASE_1+), fades out 2s after defeat. Wired into HUD via instanced scene.
+- **Next task to do:** Task 13.2 (Enemy over-head health pip)
 - **V2.0 MILESTONE SUMMARY (Passes 1–11):**
   - **Pass 1 — Lighting:** 5 Poly Haven HDRIs, 5 WorldEnvironment .tres resources, DirectionalLight3D tuning (4-split shadows, per-chapter color temp). All chapters have FILMIC tonemap, SSAO, SSIL, SDFGI, volumetric fog.
   - **Pass 2 — Globbler Hero:** Custom Blender-built chibi robot GLB (dark metal + neon green), tuned scale (1.4x), collision capsule (r=0.35, h=1.3), third-person camera (distance=6.0, pitch=-0.3, height=1.1m).
@@ -393,7 +393,7 @@ assets/
 # Combat feel, interaction clarity, and visual feedback not yet addressed.
 
 ### 13.1 Boss health bar UI
-- [ ] Create `scenes/ui/boss_health_bar.gd` + `.tscn` — full-width slim bar at top of screen + boss name label + phase dots. Wire into `base_enemy.gd` boss health signals or hook per-boss in their scripts. Appears on boss encounter entry, fades out on defeat. Terminal-green styling.
+- [x] Create `scenes/ui/boss_health_bar.gd` + `.tscn` — full-width slim bar at top of screen + boss name label + phase dots. Wire into `base_enemy.gd` boss health signals or hook per-boss in their scripts. Appears on boss encounter entry, fades out on defeat. Terminal-green styling. **Done: Created boss_health_bar.gd + .tscn with terminal-green styled panel (top 70% width), smooth-lerp HP bar + delayed ghost bar (red) for damage viz, boss display name mapping, 3 phase indicator dots, HP color shifts (green→orange→red at 50%/25%), fade-in on PHASE_1+ entry, fade-out 2s after defeat. Auto-scans enemies group for "boss" tag, connects health_changed/boss_phase_changed/boss_defeated signals. Instanced in hud.gd _build_hud(). No new runtime errors.**
 
 ### 13.2 Enemy over-head health pip
 - [ ] Create `scenes/ui/enemy_hp_pip.gd` + `.tscn` — small 3-bar indicator that billboards over enemies when damaged. Auto-hide after 2s of no damage. Wire into `base_enemy.gd` take_damage. Exclude bosses (they use 13.1).

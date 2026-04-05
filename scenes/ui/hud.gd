@@ -13,6 +13,7 @@ var combo_display_timer := 0.0
 var context_bar_scene := preload("res://scenes/ui/context_window_bar.tscn")
 var dialogue_box_scene := preload("res://scenes/ui/dialogue_box.tscn")
 var glob_input_scene := preload("res://scenes/ui/glob_pattern_input.tscn")
+var boss_health_bar_scene := preload("res://scenes/ui/boss_health_bar.tscn")
 
 var context_bar_node: VBoxContainer
 var dialogue_box_node: PanelContainer
@@ -96,6 +97,10 @@ func _build_hud() -> void:
 	_build_center_combo()
 	_build_bottom_thought()
 	_build_level_intro()
+
+	# Boss health bar (instanced — auto-connects to boss enemies)
+	var boss_bar = boss_health_bar_scene.instantiate()
+	add_child(boss_bar)
 
 	# Dialogue box (instanced)
 	dialogue_box_node = dialogue_box_scene.instantiate()
