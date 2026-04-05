@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 2.16 — Audio mix balance pass
-- **Next task to do:** Task 3.1 — Validate export_presets.cfg
+- **Last task completed:** Task 3.1 — Validate export_presets.cfg
+- **Next task to do:** Task 3.2 — Add .export-ignore patterns
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -124,7 +124,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 # Prove the game actually builds and runs outside the editor.
 
 ### 3.1 Validate export_presets.cfg
-- [ ] Read `export_presets.cfg`. Verify Windows Desktop preset exists, exclude filters don't skip `assets/audio/` or new shaders, embed_pck is set correctly. Document any fixes needed.
+- [x] **DONE:** Windows Desktop preset exists with `embed_pck=true` (correct for single-file distribution) and `export_filter="all_resources"`. `assets/audio/` and shaders are NOT excluded — they will ship correctly. Exclude filter has `*.txt,*.md,*.ps1,*.py,prompt.md,build_log_*,globbler_loop.ps1,tools/*` — `.md` is fine since no .md files are runtime resources. Missing patterns for `ai-archive/*`, `*.blend`, `*.blend1`, `.claude/*` — that's Task 3.2. Updated `file_version` and `product_version` from `1.0.0.0` → `2.1.0.0` to match V2.1 release. Linux preset also present with same settings.
 
 ### 3.2 Add .export-ignore patterns
 - [ ] Add patterns to export preset's `exclude_filter` for: `ai-archive/`, `tools/blender-mcp/`, `build_log_*`, `*.blend`, `*.blend1`. These shouldn't ship in the final build.
