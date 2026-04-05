@@ -1023,7 +1023,7 @@ func _finalize_ending() -> void:
 
 	# Roll credits — you earned it, you sarcastic little glob utility
 	get_tree().create_timer(3.0).timeout.connect(func():
-		get_tree().change_scene_to_file("res://scenes/main/credits.tscn")
+		ChapterTransition.transition_to(get_tree(), "res://scenes/main/credits.tscn")
 	, CONNECT_ONE_SHOT)
 
 

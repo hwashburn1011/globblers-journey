@@ -237,7 +237,7 @@ func _on_retry() -> void:
 		chapter = gm.current_level
 		gm.deaths_this_level = 0
 	var scene_path: String = CHAPTER_SCENES.get(chapter, CHAPTER_SCENES[1])
-	get_tree().change_scene_to_file(scene_path)
+	ChapterTransition.transition_to(get_tree(), scene_path)
 	queue_free()
 
 
@@ -262,7 +262,7 @@ func _on_main_menu() -> void:
 	var gm = get_node_or_null("/root/GameManager")
 	if gm:
 		gm.deaths_this_level = 0
-	get_tree().change_scene_to_file("res://scenes/main/main_menu.tscn")
+	ChapterTransition.transition_to(get_tree(), "res://scenes/main/main_menu.tscn")
 	queue_free()
 
 

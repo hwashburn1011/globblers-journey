@@ -967,7 +967,7 @@ func _victory_cutscene() -> void:
 
 	# Transition to Chapter 4 — welcome to the zoo, where deprecated models roam free
 	get_tree().create_timer(3.0).timeout.connect(func():
-		get_tree().change_scene_to_file("res://scenes/levels/chapter_4/model_zoo.tscn")
+		ChapterTransition.transition_to(get_tree(), "res://scenes/levels/chapter_4/model_zoo.tscn")
 	, CONNECT_ONE_SHOT)
 
 

@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 15.5 complete
-- **Last task completed:** Task 15.5 — CRT curvature whole-screen post shader. Created `assets/shaders/crt_curvature.gdshader` (canvas_item shader with barrel distortion, chromatic aberration, scanlines, vignette). Wired into HUD via `_build_crt_overlay()` — adds a CanvasLayer (layer 100) with full-rect ColorRect + ShaderMaterial above all gameplay/UI. Connects to GameManager `reduce_motion_changed` signal: when reduce_motion is on, disables barrel distortion, chromatic aberration, and scanlines entirely.
-- **Next task to do:** Task 15.6 (Chapter transition glitch effect)
+- **Last updated by:** Claude (2026-04-05) — Task 15.6 complete
+- **Last task completed:** Task 15.6 — Chapter transition glitch effect. Created `assets/shaders/chapter_transition_glitch.gdshader` (static noise, horizontal glitch bands, chromatic aberration, scanlines, black sweep — all driven by `progress` uniform). Created `scenes/ui/chapter_transition.gd` with `ChapterTransition` class_name providing static `transition_to()` method. Wired into all 5 boss defeat handlers, game_over retry/menu, main menu chapter select, credits return, player pause-menu quit, and Ch5 completion. Respects reduce_motion (simple fade-to-black fallback). Fade-out overlay on new scene load.
+- **Next task to do:** Task 15.7 (Boss intro cinematic camera)
 - **V2.0 MILESTONE SUMMARY (Passes 1–11):**
   - **Pass 1 — Lighting:** 5 Poly Haven HDRIs, 5 WorldEnvironment .tres resources, DirectionalLight3D tuning (4-split shadows, per-chapter color temp). All chapters have FILMIC tonemap, SSAO, SSIL, SDFGI, volumetric fog.
   - **Pass 2 — Globbler Hero:** Custom Blender-built chibi robot GLB (dark metal + neon green), tuned scale (1.4x), collision capsule (r=0.35, h=1.3), third-person camera (distance=6.0, pitch=-0.3, height=1.1m).
@@ -463,7 +463,7 @@ assets/
 - [x] Create `assets/shaders/crt_curvature.gdshader` — barrel distortion + vignette + subtle scanlines across the whole screen. Apply as a ColorRect with full-rect anchor + ShaderMaterial on a CanvasLayer above gameplay. Toggle off under reduce_motion via GameManager signal. **Done: Created `assets/shaders/crt_curvature.gdshader` with barrel distortion (0.04), chromatic aberration (0.8px), scanlines (400 lines, 6% alpha), and vignette (0.45). Applied in `scenes/ui/hud.gd` via `_build_crt_overlay()` — CanvasLayer 100 + full-rect ColorRect. `_on_reduce_motion_changed()` zeroes barrel/chromatic/scanline params when reduce_motion is enabled. No runtime errors.**
 
 ### 15.6 Chapter transition glitch effect
-- [ ] Create `scenes/ui/chapter_transition.gd` + `.tscn` — full-screen glitch/static shader that fades in on scene change, holds briefly, fades out. Use on all `change_scene_to_file` calls in boss defeat handlers + main menu chapter select. Respect reduce_motion (simple fade instead).
+- [x] Create `scenes/ui/chapter_transition.gd` + `.tscn` — full-screen glitch/static shader that fades in on scene change, holds briefly, fades out. Use on all `change_scene_to_file` calls in boss defeat handlers + main menu chapter select. Respect reduce_motion (simple fade instead). **Done: Created `assets/shaders/chapter_transition_glitch.gdshader` with static noise, horizontal glitch bands, chromatic aberration, scanlines, and black sweep controlled by `progress` uniform. Created `scenes/ui/chapter_transition.gd` as a static `ChapterTransition` class — `transition_to(tree, scene_path)` builds a CanvasLayer(110) overlay, tweens glitch in (0.6s), holds (0.3s), changes scene, then fades out (0.5s) on new scene. Reduce_motion path uses simple alpha fade instead. Wired into: 5 boss defeat handlers (rm_rf, local_minimum, system_prompt, foundation_model, aligner), game_over retry + main menu return, main menu chapter select, credits return, player pause quit, Ch5 completion. No runtime errors.**
 
 ### 15.7 Boss intro cinematic camera
 - [ ] When a boss scene loads, take camera control for 3 seconds: slow orbital sweep around the boss, then return to player. Use a temporary Camera3D spliced in via `make_current()`, tween position, then hand back to player camera. Add in each boss scene's `_ready()`.

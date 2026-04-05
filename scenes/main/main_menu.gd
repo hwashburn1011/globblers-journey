@@ -1024,23 +1024,57 @@ func _transition_to_game() -> void:
 	if audio:
 		audio.stop_menu_music()
 
-	# Brief fade-to-black, then show loading screen with sarcastic tips
-	var fade = ColorRect.new()
-	fade.color = Color(0, 0, 0, 0)
-	fade.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	fade.z_index = 100
-	add_child(fade)
+	# Glitch transition out, then show loading screen
+	var game_mgr = get_node_or_null("/root/GameManager")
+	var reduce := false
+	if game_mgr and "reduce_motion" in game_mgr:
+		reduce = game_mgr.reduce_motion
 
-	var tween = create_tween()
-	tween.tween_property(fade, "color:a", 1.0, 0.4)
-	tween.tween_callback(func():
-		var game_mgr = get_node_or_null("/root/GameManager")
-		var level = 1
-		if game_mgr:
-			level = game_mgr.current_level
-		var scene_path = _get_level_scene(level)
-		_show_loading_screen(scene_path)
-	)
+	var layer := CanvasLayer.new()
+	layer.name = "MenuTransitionLayer"
+	layer.layer = 110
+	get_tree().root.add_child(layer)
+
+	var rect := ColorRect.new()
+	rect.anchors_preset = Control.PRESET_FULL_RECT
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	if reduce:
+		rect.color = Color(0, 0, 0, 0)
+		layer.add_child(rect)
+		var tween = create_tween()
+		tween.tween_property(rect, "color:a", 1.0, 0.5)
+		tween.tween_callback(func():
+			if is_instance_valid(layer):
+				layer.queue_free()
+			var level = 1
+			if game_mgr:
+				level = game_mgr.current_level
+			_show_loading_screen(_get_level_scene(level))
+		)
+	else:
+		var mat := ShaderMaterial.new()
+		mat.shader = preload("res://assets/shaders/chapter_transition_glitch.gdshader")
+		mat.set_shader_parameter("progress", 0.0)
+		mat.set_shader_parameter("animate", true)
+		rect.material = mat
+		rect.color = Color(1, 1, 1, 1)
+		layer.add_child(rect)
+
+		var tween = create_tween()
+		tween.tween_method(func(val: float):
+			if is_instance_valid(mat):
+				mat.set_shader_parameter("progress", val)
+				mat.set_shader_parameter("time_offset", val * 10.0)
+		, 0.0, 1.0, 0.6)
+		tween.tween_callback(func():
+			if is_instance_valid(layer):
+				layer.queue_free()
+			var level = 1
+			if game_mgr:
+				level = game_mgr.current_level
+			_show_loading_screen(_get_level_scene(level))
+		)
 
 
 func _get_level_scene(level: int) -> String:

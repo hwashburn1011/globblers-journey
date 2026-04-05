@@ -472,4 +472,4 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _return_to_menu() -> void:
 	print("[CREDITS] Back to the menu. Globbler appreciates your patience. (He doesn't, actually.)")
-	get_tree().change_scene_to_file("res://scenes/main/main_menu.tscn")
+	ChapterTransition.transition_to(get_tree(), "res://scenes/main/main_menu.tscn")

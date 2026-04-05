@@ -2248,7 +2248,7 @@ func _return_to_main_menu() -> void:
 		save_sys.checkpoint_save()
 	# Show credits before returning to menu — they scrolled through 5 chapters,
 	# the least we can do is scroll some text at them
-	get_tree().change_scene_to_file("res://scenes/main/credits.tscn")
+	ChapterTransition.transition_to(get_tree(), "res://scenes/main/credits.tscn")
 
 
 func _on_player_died() -> void:

@@ -542,7 +542,7 @@ func _victory_cutscene() -> void:
 
 	# Transition to Chapter 2 after a brief delay so the player can read dialogue
 	get_tree().create_timer(3.0).timeout.connect(func():
-		get_tree().change_scene_to_file("res://scenes/levels/chapter_2/training_grounds.tscn")
+		ChapterTransition.transition_to(get_tree(), "res://scenes/levels/chapter_2/training_grounds.tscn")
 	, CONNECT_ONE_SHOT)
 
 # Override base enemy damage handler — boss has phase-specific invulnerability

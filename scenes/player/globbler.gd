@@ -1420,7 +1420,7 @@ func _pause_quit_to_menu() -> void:
 		_pause_glitch_timer.stop()
 	get_tree().paused = false
 	is_paused = false
-	get_tree().change_scene_to_file("res://scenes/main/main_menu.tscn")
+	ChapterTransition.transition_to(get_tree(), "res://scenes/main/main_menu.tscn")
 
 func _check_enemy_proximity() -> void:
 	var gm = get_node_or_null("/root/GameManager")
