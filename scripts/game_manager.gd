@@ -131,6 +131,11 @@ func _ready() -> void:
 	print("==============================")
 	load_settings()
 	level_started = true
+	# Spawn the achievement popup overlay — always listening
+	var popup_scene = load("res://scenes/ui/achievement_popup.tscn")
+	if popup_scene:
+		var popup = popup_scene.instantiate()
+		add_child(popup)
 
 
 ## Register all custom input actions with keyboard + gamepad bindings

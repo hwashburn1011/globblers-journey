@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 5.7 — Simple achievements framework
-- **Next task to do:** Task 5.8 — Achievement popup UI
+- **Last task completed:** Task 5.8 — Achievement popup UI
+- **Next task to do:** Task 5.9 — Wire achievement triggers
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -200,7 +200,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Added `ACHIEVEMENT_DEFS` constant dict with 10 achievements (first_blood, first_death, first_puzzle, ch1-5_complete, combo_master, lore_completionist) with sarcastic titles/descriptions. Added `achievements_unlocked: Dictionary` var, `unlock_achievement(id)` (looks up title/desc from ACHIEVEMENT_DEFS, ignores duplicates, emits signal), `has_achievement(id)` query, and `achievement_unlocked(id, title, desc)` signal to GameManager. Wired into SaveSystem: `save_data["achievements"]` added to default schema, `_collect_current_state()` deep-copies from GameManager, `apply_loaded_data()` restores on load. Save format is additive. Verified via Godot MCP — zero runtime errors.
 
 ### 5.8 Achievement popup UI
-- [ ] Create `scenes/ui/achievement_popup.tscn` — slides in from bottom-right, 3s display, shows title + desc + icon. Triggered by `achievement_unlocked` signal.
+- [x] **DONE:** Created `scenes/ui/achievement_popup.tscn` + `achievement_popup.gd` (CanvasLayer, layer 110, PROCESS_MODE_ALWAYS). Popup is a PanelContainer anchored bottom-right with terminal-green border, ★ icon, title ("ACHIEVEMENT: <name>"), and description. Slides in from below using Tween (TRANS_BACK ease-out), holds 3s, slides out (TRANS_QUAD ease-in). Supports queue — if multiple achievements fire simultaneously, they display sequentially. Plays `ui_click` SFX on show. Instantiated automatically by GameManager in `_ready()` via `load("res://scenes/ui/achievement_popup.tscn")`. Connected to `GameManager.achievement_unlocked` signal. Verified via Godot MCP — zero runtime errors.
 
 ### 5.9 Wire achievement triggers
 - [ ] Wire the 10 achievement IDs to actual game events: first kill, first death, first puzzle solved, chapter complete (5 achievements), boss defeat (5 achievements), max combo >= 10, all lore docs found.
