@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 2.3 — Download CC0 Chapter 1 music
-- **Next task to do:** Task 2.4 — Download CC0 Chapter 2 music
+- **Last task completed:** Task 2.4 — Download CC0 Chapter 2 music
+- **Next task to do:** Task 2.5 — Download CC0 Chapter 3 music
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -80,7 +80,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Downloaded "A Wonderful Nightmare" by SpiderDave from OpenGameArt.org (CC0). Dark/spooky OGG track, 5.2MB. Saved to `assets/audio/music/chapter_1.ogg`. Attribution added to LICENSES.md.
 
 ### 2.4 Download CC0 Chapter 2 music
-- [ ] Neural/synth/analog lab vibe for "Training Grounds" (~3 min loop). `assets/audio/music/chapter_2.ogg`.
+- [x] **DONE:** Downloaded "Experiment G" by tricksntraps from OpenGameArt.org (CC0). Cyberpunk/synth lab track, 6.1MB OGG, from T & T Free Cyberpunk Pack. Saved to `assets/audio/music/chapter_2.ogg`. Attribution added to LICENSES.md.
 
 ### 2.5 Download CC0 Chapter 3 music
 - [ ] Warm/market/world-fusion for "Prompt Bazaar" (~3 min loop). `assets/audio/music/chapter_3.ogg`.

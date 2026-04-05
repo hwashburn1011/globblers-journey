@@ -51,6 +51,7 @@ Only CC0 / CC-BY / royalty-free assets are permitted.
 | rlhf_drone (Model) | Procedural (Blender) | N/A | N/A | Ch5 enemy — quad-rotor clipboard-bot with antennas, eye, reward beam emitter, compliance checklist |
 | Menu Music (loop) | OpenGameArt / wipics | CC0 | https://opengameart.org/content/menu-music-1 | Main menu music — assets/audio/music/menu.ogg |
 | A Wonderful Nightmare (music) | OpenGameArt / SpiderDave | CC0 | https://opengameart.org/content/a-wonderful-nightmare | Ch1 music — assets/audio/music/chapter_1.ogg |
-| *(Audio — music, remaining)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Ch2–5, boss, credits music — assets/audio/music/* |
+| Experiment G (music) | OpenGameArt / tricksntraps | CC0 | https://opengameart.org/content/t-t-free-cyberpunk-pack | Ch2 music — assets/audio/music/chapter_2.ogg |
+| *(Audio — music, remaining)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Ch3–5, boss, credits music — assets/audio/music/* |
 | *(Audio — SFX)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Player, ability, UI, enemy SFX — assets/audio/sfx/* |
 | *(Audio — ambient)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Ambient loops — assets/audio/ambient/* |
