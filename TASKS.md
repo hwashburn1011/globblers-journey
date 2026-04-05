@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 13.10 complete
-- **Last task completed:** Task 13.10 — Splash / boot screen. Created `scenes/main/splash.tscn` + `splash.gd` with fake terminal boot sequence (typewriter BIOS lines), then fade-in ASCII Globbler logo + "GlobTech Industries" studio text, auto-transitions to main_menu after 3s. Uses `dialogue_scanline.gdshader` overlay for CRT effect. Press any key to skip. Fade-out transition. Updated `project.godot` main_scene to splash.tscn. reduce_motion disables shader animation. No new runtime errors.
-- **Next task to do:** Task 13.11 (Glob target highlight shader)
+- **Last updated by:** Claude (2026-04-05) — Task 13.11 complete
+- **Last task completed:** Task 13.11 — Glob target highlight shader. Created `assets/shaders/glob_target_highlight.gdshader` (pulsing green emission + fresnel outline, cull_front for outline effect, `animate` uniform for reduce_motion). Rewrote `scripts/components/glob_target.gd` to use ShaderMaterial via `next_pass` instead of swapping the entire material to a StandardMaterial3D — base material now stays visible underneath. Removed the separate GlowOverlay MeshInstance3D (no longer needed). Respects reduce_motion.
+- **Next task to do:** Task 13.12 (Hackable terminal beacon pulse)
 - **V2.0 MILESTONE SUMMARY (Passes 1–11):**
   - **Pass 1 — Lighting:** 5 Poly Haven HDRIs, 5 WorldEnvironment .tres resources, DirectionalLight3D tuning (4-split shadows, per-chapter color temp). All chapters have FILMIC tonemap, SSAO, SSIL, SDFGI, volumetric fog.
   - **Pass 2 — Globbler Hero:** Custom Blender-built chibi robot GLB (dark metal + neon green), tuned scale (1.4x), collision capsule (r=0.35, h=1.3), third-person camera (distance=6.0, pitch=-0.3, height=1.1m).
@@ -423,7 +423,7 @@ assets/
 - [x] Create `scenes/main/splash.tscn` — plays before main menu. Shows animated Globbler logo + studio text for 3s, then auto-transitions to main_menu. Update `project.godot` main_scene to splash.tscn. **Done: Created `scenes/main/splash.gd` + `splash.tscn` — fake terminal boot sequence with typewriter BIOS lines (sarcasm module, wrench drivers, angry eye emitters), fade-in box-drawing ASCII logo ("GLOBBLER'S JOURNEY — An Agentic Puzzle Platformer"), "GlobTech Industries — 2026" studio text, dialogue_scanline.gdshader CRT overlay (200 scanlines, vignette, noise, flicker), 3s auto-transition to main_menu with 0.4s fade-out, skip on any key press. reduce_motion disables shader animate. Updated project.godot main_scene to splash.tscn. No new runtime errors.**
 
 ### 13.11 Glob target highlight shader
-- [ ] Replace material-swap highlight in `glob_target.gd` `set_highlighted()` with a ShaderMaterial that pulses green emission + fresnel outline. Cleaner than current approach.
+- [x] Replace material-swap highlight in `glob_target.gd` `set_highlighted()` with a ShaderMaterial that pulses green emission + fresnel outline. Created `assets/shaders/glob_target_highlight.gdshader` (cull_front outline, pulsing fresnel, animate uniform). Updated `glob_target.gd` to apply shader via `next_pass` on base material instead of swapping — base material stays visible. Removed old StandardMaterial3D swap and GlowOverlay mesh. Respects reduce_motion.
 
 ### 13.12 Hackable terminal beacon pulse
 - [ ] Add subtle vertical light beam + ring pulse to hackable terminals (`hackable.gd`) when player is within interaction range. Fades out when hacked. Respects reduce_motion.
