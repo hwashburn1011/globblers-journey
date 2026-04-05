@@ -1,0 +1,70 @@
+[gd_resource type="Environment" load_steps=3 format=3 uid="uid://ch4_model_zoo_env"]
+
+[ext_resource type="Texture2D" uid="uid://ch4_sky_hdri" path="res://assets/hdri/ch4_sky.hdr" id="1_ch4sky"]
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ch4"]
+panorama = ExtResource("1_ch4sky")
+
+[sub_resource type="Sky" id="Sky_ch4"]
+sky_material = SubResource("PanoramaSkyMaterial_ch4")
+
+[resource]
+; ============================================================
+; Chapter 4: Model Zoo — WorldEnvironment
+; "A museum where deprecated AI models come to haunt tourists.
+;  The dust is mostly dead parameters. Don't touch the exhibits."
+; Desaturated, dusty, cool institutional lighting. After hours vibes.
+; ============================================================
+
+; --- Sky (abandoned hall HDRI — perfectly musty and forgotten) ---
+background_mode = 2
+sky = SubResource("Sky_ch4")
+sky_custom_fov = 0.0
+background_energy_multiplier = 0.4
+
+; --- Ambient light — dim institutional overhead, exhibits light themselves ---
+ambient_light_source = 1
+ambient_light_color = Color(0.05, 0.06, 0.08, 1)
+ambient_light_energy = 0.25
+
+; --- Tonemap (FILMIC = 3) ---
+tonemap_mode = 3
+tonemap_exposure = 1.0
+
+; --- Glow (bloom) — moderate, exhibit spotlights and dusty halos ---
+glow_enabled = true
+glow_intensity = 1.1
+glow_strength = 1.0
+glow_bloom = 0.7
+glow_hdr_threshold = 0.9
+glow_blend_mode = 0
+
+; --- SSAO (museum clutter and alcoves need deep contact shadows) ---
+ssao_enabled = true
+ssao_radius = 1.5
+ssao_intensity = 2.0
+
+; --- SSIL ---
+ssil_enabled = true
+ssil_radius = 5.0
+ssil_intensity = 1.0
+
+; --- SDFGI ---
+sdfgi_enabled = true
+sdfgi_use_occlusion = true
+
+; --- Fog — dusty desaturated beige, like neglected museum air ducts ---
+fog_enabled = true
+fog_light_color = Color(0.6, 0.6, 0.55, 1)
+fog_density = 0.008
+
+; --- Volumetric Fog (light dusty motes floating through exhibit halls) ---
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.015
+volumetric_fog_albedo = Color(0.03, 0.04, 0.05, 1)
+volumetric_fog_emission = Color(0.015, 0.02, 0.025, 1)
+
+; --- Post-processing — desaturated and slightly contrasty, everything looks archived ---
+adjustment_enabled = true
+adjustment_contrast = 1.15
+adjustment_saturation = 0.6

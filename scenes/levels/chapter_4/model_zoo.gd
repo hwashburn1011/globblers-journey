@@ -176,31 +176,10 @@ func _setup_environment() -> void:
 	fill.light_energy = 0.1
 	add_child(fill)
 
-	# World environment — dark museum after closing time
-	var env = Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color(0.015, 0.02, 0.03)
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color(0.05, 0.06, 0.08)
-	env.ambient_light_energy = 0.25
-	env.glow_enabled = true
-	env.glow_intensity = 1.1
-	env.glow_bloom = 0.7
-	env.fog_enabled = true
-	env.fog_light_color = Color(0.03, 0.04, 0.05)
-	env.fog_density = 0.008
-	env.volumetric_fog_enabled = true
-	env.volumetric_fog_density = 0.015
-	env.volumetric_fog_albedo = Color(0.03, 0.04, 0.05)
-	env.volumetric_fog_emission = Color(0.015, 0.02, 0.025)
-
-	env.adjustment_enabled = true
-	env.adjustment_contrast = 1.15
-	env.adjustment_saturation = 1.1
-
+	# World environment — preloaded .tres because we're civilized now
 	var world_env = WorldEnvironment.new()
 	world_env.name = "Environment"
-	world_env.environment = env
+	world_env.environment = preload("res://assets/environments/chapter_4.tres")
 	add_child(world_env)
 
 	_setup_post_processing()
