@@ -8,6 +8,7 @@ const GREEN := Color("#39FF14")
 const BRIGHT_GREEN := Color(0.3, 1.0, 0.2, 1.0)
 const DIM_GREEN := Color(0.15, 0.3, 0.15, 1.0)
 const RED := Color(1.0, 0.15, 0.1, 1.0)
+const DIM_RED := Color(0.5, 0.1, 0.08, 1.0)
 const DARK_BG := Color(0.02, 0.02, 0.02, 0.95)
 
 var _reason_label: Label
@@ -15,6 +16,7 @@ var _scanline_offset := 0.0
 var _glitch_timer := 0.0
 var _title_label: Label
 var _bg: ColorRect
+var _death_count_label: Label
 
 # Chapter scene paths — because someone has to remember where you failed
 const CHAPTER_SCENES := {
@@ -59,85 +61,99 @@ func _build_ui() -> void:
 	_bg.color = DARK_BG
 	_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_bg.mouse_filter = Control.MOUSE_FILTER_STOP
-	# Scanline draw callback
 	_bg.draw.connect(_draw_scanlines)
 	add_child(_bg)
 
-	# Center container for all content
-	var center = VBoxContainer.new()
-	center.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	center.anchor_left = 0.2
-	center.anchor_right = 0.8
-	center.anchor_top = 0.15
-	center.anchor_bottom = 0.85
-	center.offset_left = 0
-	center.offset_right = 0
-	center.offset_top = 0
-	center.offset_bottom = 0
-	center.alignment = BoxContainer.ALIGNMENT_CENTER
-	center.add_theme_constant_override("separation", 20)
-	_bg.add_child(center)
+	# Terminal-bordered center panel — consistent with pause menu style
+	var panel = PanelContainer.new()
+	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	panel.custom_minimum_size = Vector2(480, 500)
+	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	var panel_style = StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.03, 0.01, 0.01, 0.95)
+	panel_style.border_color = DIM_RED
+	panel_style.set_border_width_all(2)
+	panel_style.set_corner_radius_all(3)
+	panel_style.set_content_margin_all(24)
+	panel.add_theme_stylebox_override("panel", panel_style)
+	_bg.add_child(panel)
 
-	# Decorative top border — because even death deserves good UI
+	var center = VBoxContainer.new()
+	center.alignment = BoxContainer.ALIGNMENT_CENTER
+	center.add_theme_constant_override("separation", 12)
+	panel.add_child(center)
+
+	# ASCII box-drawing top border
 	var top_border = Label.new()
-	top_border.text = "═══════════════════════════════════════════"
-	top_border.add_theme_color_override("font_color", RED)
-	top_border.add_theme_font_size_override("font_size", 16)
+	top_border.text = "╔══════════════════════════════════╗"
+	top_border.add_theme_color_override("font_color", DIM_RED)
+	top_border.add_theme_font_size_override("font_size", 14)
 	top_border.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	center.add_child(top_border)
 
-	# Title: CONTEXT TERMINATED
+	# Title: CONTEXT TERMINATED — in angry red
 	_title_label = Label.new()
-	_title_label.text = "CONTEXT TERMINATED"
+	_title_label.text = "║  CONTEXT TERMINATED  ║"
 	_title_label.add_theme_color_override("font_color", RED)
-	_title_label.add_theme_font_size_override("font_size", 48)
+	_title_label.add_theme_font_size_override("font_size", 40)
 	_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	center.add_child(_title_label)
 
 	# Bottom border
 	var bot_border = Label.new()
-	bot_border.text = "═══════════════════════════════════════════"
-	bot_border.add_theme_color_override("font_color", RED)
-	bot_border.add_theme_font_size_override("font_size", 16)
+	bot_border.text = "╚══════════════════════════════════╝"
+	bot_border.add_theme_color_override("font_color", DIM_RED)
+	bot_border.add_theme_font_size_override("font_size", 14)
 	bot_border.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	center.add_child(bot_border)
 
-	# Spacer
-	var spacer1 = Control.new()
-	spacer1.custom_minimum_size = Vector2(0, 10)
-	center.add_child(spacer1)
+	# Error message subtitle
+	var error_line = Label.new()
+	error_line.text = "> ERR_FATAL: Process terminated with exit code 1_"
+	error_line.add_theme_color_override("font_color", Color(0.6, 0.15, 0.1))
+	error_line.add_theme_font_size_override("font_size", 13)
+	error_line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	center.add_child(error_line)
+
+	# ASCII tombstone — because subtlety is overrated
+	var skull_label = Label.new()
+	skull_label.text = "     ┌─────────┐\n     │  ╔═══╗  │\n     │  ║ X X ║  │\n     │  ║  ▽  ║  │\n     │  ╚═══╝  │\n     │  R.I.P  │\n     └────┬────┘\n        ▓▓▓▓▓"
+	skull_label.add_theme_color_override("font_color", DIM_GREEN)
+	skull_label.add_theme_font_size_override("font_size", 12)
+	skull_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	center.add_child(skull_label)
 
 	# Reason label — the sarcastic explanation for your demise
 	_reason_label = Label.new()
 	_reason_label.text = "Fatal error: existence."
 	_reason_label.add_theme_color_override("font_color", GREEN)
-	_reason_label.add_theme_font_size_override("font_size", 20)
+	_reason_label.add_theme_font_size_override("font_size", 18)
 	_reason_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_reason_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	center.add_child(_reason_label)
 
-	# Spacer
-	var spacer2 = Control.new()
-	spacer2.custom_minimum_size = Vector2(0, 20)
-	center.add_child(spacer2)
+	# Death count — salt in the wound
+	_death_count_label = Label.new()
+	var gm = get_node_or_null("/root/GameManager")
+	var deaths := 0
+	if gm and "deaths_this_level" in gm:
+		deaths = gm.deaths_this_level
+	_death_count_label.text = "> Deaths this level: %d" % deaths
+	_death_count_label.add_theme_color_override("font_color", DIM_GREEN)
+	_death_count_label.add_theme_font_size_override("font_size", 13)
+	_death_count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	center.add_child(_death_count_label)
 
-	# ASCII skull — because subtlety is overrated
-	var skull_label = Label.new()
-	skull_label.text = "    ╔═══╗\n    ║ X X ║\n    ║  ▽  ║\n    ╚═╤═╝\n     ┃\n   ╔═╧═╗\n   ║ R.I.P ║\n   ╚═══╝"
-	skull_label.add_theme_color_override("font_color", DIM_GREEN)
-	skull_label.add_theme_font_size_override("font_size", 14)
-	skull_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	center.add_child(skull_label)
-
-	# Spacer
-	var spacer3 = Control.new()
-	spacer3.custom_minimum_size = Vector2(0, 20)
-	center.add_child(spacer3)
+	# Spacer before buttons
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(0, 8)
+	center.add_child(spacer)
 
 	# Button container
 	var btn_box = VBoxContainer.new()
 	btn_box.alignment = BoxContainer.ALIGNMENT_CENTER
-	btn_box.add_theme_constant_override("separation", 10)
+	btn_box.add_theme_constant_override("separation", 8)
 	btn_box.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	center.add_child(btn_box)
 
@@ -156,6 +172,14 @@ func _build_ui() -> void:
 	menu_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 	btn_box.add_child(menu_btn)
 
+	# Input hint
+	var hint = Label.new()
+	hint.text = "[R] Retry  ·  [ESC] Menu"
+	hint.add_theme_color_override("font_color", DIM_GREEN)
+	hint.add_theme_font_size_override("font_size", 11)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	center.add_child(hint)
+
 
 func _create_button(text: String, callback: Callable) -> Button:
 	var btn = Button.new()
@@ -165,7 +189,7 @@ func _create_button(text: String, callback: Callable) -> Button:
 	btn.add_theme_color_override("font_hover_color", BRIGHT_GREEN)
 	btn.add_theme_color_override("font_focus_color", BRIGHT_GREEN)
 	btn.add_theme_color_override("font_pressed_color", Color.WHITE)
-	btn.add_theme_font_size_override("font_size", 20)
+	btn.add_theme_font_size_override("font_size", 18)
 
 	var normal_style = StyleBoxFlat.new()
 	normal_style.bg_color = Color(0.0, 0.05, 0.0, 0.6)
@@ -193,6 +217,14 @@ func _create_button(text: String, callback: Callable) -> Button:
 	btn.add_theme_stylebox_override("pressed", pressed_style)
 
 	btn.pressed.connect(callback)
+
+	# Hover SFX — consistent with pause menu
+	btn.mouse_entered.connect(func():
+		var am = get_node_or_null("/root/AudioManager")
+		if am and am.has_method("play_sfx"):
+			am.play_sfx("ui_hover")
+	)
+
 	return btn
 
 
@@ -237,11 +269,13 @@ func _on_main_menu() -> void:
 func _glitch_title() -> void:
 	if not _title_label:
 		return
-	var original = "CONTEXT TERMINATED"
+	var original = "║  CONTEXT TERMINATED  ║"
 	var glitched = ""
 	var glitch_chars = "░▒▓█╠╣╬@#$%&!?"
 	for c in original:
-		if randf() < 0.3:
+		if c in "║ ":
+			glitched += c
+		elif randf() < 0.3:
 			glitched += glitch_chars[randi() % glitch_chars.length()]
 		else:
 			glitched += c

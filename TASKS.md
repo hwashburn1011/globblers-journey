@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 9.8 complete
-- **Last task completed:** Task 9.8 — Pause menu restyle
-- **Next task to do:** Task 9.9 (Game over screen restyle)
+- **Last updated by:** Claude (2026-04-05) — Task 9.9 complete
+- **Last task completed:** Task 9.9 — Game over screen restyle
+- **Next task to do:** Task 9.10 (Settings menu restyle)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 COMPLETE — all 5 boss visual upgrades done (rm -rf, System Prompt, Local Minimum, Foundation Model, Aligner). All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -308,7 +308,7 @@ assets/
 - [x] Restyle the pause overlay in `globbler.gd` `_setup_pause_overlay()` — add terminal borders, glitch title if reduce_motion disabled, button hover sfx. **Done:** Restyled with terminal-bordered PanelContainer, ASCII box-drawing title frame, styled buttons with normal/hover/pressed/focus states matching main menu, glitch timer on title text (respects reduce_motion), button hover SFX via AudioManager. File: `scenes/player/globbler.gd`.
 
 ### 9.9 Game over screen restyle
-- [ ] Upgrade `game_over.tscn` styling — glitch title effect (respect reduce_motion), ASCII art, terminal border.
+- [x] Restyled `game_over.gd` with terminal-bordered PanelContainer (red border for death theme), ASCII box-drawing title frame with `║ CONTEXT TERMINATED ║`, improved ASCII tombstone art, error subtitle line, death count display, button hover SFX via AudioManager, glitch effect preserves box-drawing chars (respects reduce_motion), input hint footer. Consistent button styling with pause menu. Zero new runtime errors.
 
 ### 9.10 Settings menu restyle
 - [ ] Restyle settings panel in `main_menu.gd` with new theme + consistent spacing + section headers.
