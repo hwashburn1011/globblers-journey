@@ -175,6 +175,7 @@ func _ready() -> void:
 		if am.has_method("start_music"):
 			am.start_music("chapter_4")
 
+	_place_decals()
 	print("[MODEL ZOO] Safari park open. %d exhibits ready for visitors." % ROOMS.size())
 
 
@@ -2810,3 +2811,49 @@ void fragment() {
 
 	canvas.add_child(rect)
 	add_child(canvas)
+
+
+# ============================================================
+# DECALS
+# ============================================================
+
+func _place_decals() -> void:
+	# Chapter 4: dusty museum — dust patches, oil puddles, scorch marks, faded warning stripes
+	var theme := [
+		{
+			"texture": "dust_patch",
+			"size": Vector3(3.5, 1.0, 3.5),
+			"count_per_room": 2,
+			"floor": true,
+			"modulate": Color(0.91, 0.85, 0.69, 0.5),
+		},
+		{
+			"texture": "oil_puddle",
+			"size": Vector3(2.0, 0.8, 2.0),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.4, 0.38, 0.3, 0.4),
+		},
+		{
+			"texture": "scorch_mark",
+			"size": Vector3(1.5, 0.8, 1.5),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.5, 0.45, 0.35, 0.4),
+		},
+		{
+			"texture": "warning_stripes",
+			"size": Vector3(2.5, 0.5, 0.8),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.7, 0.65, 0.45, 0.4),
+		},
+		{
+			"texture": "dust_patch",
+			"size": Vector3(2.5, 2.0, 2.5),
+			"count_per_room": 1,
+			"floor": false,
+			"modulate": Color(0.8, 0.75, 0.6, 0.35),
+		},
+	]
+	DecalPlacer.place_chapter_decals(self, ROOMS, theme)

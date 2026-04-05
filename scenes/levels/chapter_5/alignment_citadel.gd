@@ -176,6 +176,7 @@ func _ready() -> void:
 		if am.has_method("start_music"):
 			am.start_music("chapter_5")  # The Citadel deserves elevator music
 
+	_place_decals()
 	print("[ALIGNMENT CITADEL] Safety paradise open. %d zones of enforced compliance ready." % ROOMS.size())
 
 
@@ -2540,3 +2541,55 @@ func _scatter_alignment_core_props() -> void:
 		var a = fi * TAU / 6.0
 		folder_positions.append(pos + Vector3(cos(a) * 3, 0.05, sin(a) * 3))
 	_create_multimesh_scatter("manila_folder", folder_positions, 0.9)
+
+
+# ============================================================
+# DECALS
+# ============================================================
+
+func _place_decals() -> void:
+	# Chapter 5: clinical white — light pools, runic circles (alignment sigils), clean warning stripes
+	var theme := [
+		{
+			"texture": "light_pool",
+			"emission": "light_pool",
+			"emission_energy": 1.0,
+			"size": Vector3(4.0, 1.0, 4.0),
+			"count_per_room": 2,
+			"floor": true,
+			"modulate": Color(0.5, 0.71, 1.0, 0.5),
+		},
+		{
+			"texture": "runic_circle",
+			"emission": "runic_circle",
+			"emission_energy": 1.2,
+			"size": Vector3(3.5, 1.0, 3.5),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.5, 0.71, 1.0, 0.6),
+		},
+		{
+			"texture": "warning_stripes",
+			"size": Vector3(3.0, 0.5, 0.8),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.85, 0.88, 1.0, 0.5),
+		},
+		{
+			"texture": "dust_patch",
+			"size": Vector3(2.0, 0.8, 2.0),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.9, 0.92, 1.0, 0.25),
+		},
+		{
+			"texture": "light_pool",
+			"emission": "light_pool",
+			"emission_energy": 0.8,
+			"size": Vector3(2.5, 2.5, 2.5),
+			"count_per_room": 1,
+			"floor": false,
+			"modulate": Color(0.5, 0.71, 1.0, 0.35),
+		},
+	]
+	DecalPlacer.place_chapter_decals(self, ROOMS, theme)

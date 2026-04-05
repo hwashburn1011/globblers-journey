@@ -172,6 +172,7 @@ func _ready() -> void:
 	if player and player.agent_spawn and player.agent_spawn.get("is_unlocked"):
 		_show_hint_once("agent_spawn", "SUB-AGENTS", "G to spawn a mini-agent. They will fail you. That is expected.")
 
+	_place_decals()
 	print("[TRAINING GROUNDS] Network loaded. %d neuron-rooms ready for traversal." % ROOMS.size())
 
 
@@ -2351,3 +2352,55 @@ func _show_hint_once(id: String, title: String, body: String) -> void:
 	# Deferred so it works when called from _ready() — root might still be setting up kids
 	get_tree().root.add_child.call_deferred(hint)
 	hint.show_hint.call_deferred(title, body)
+
+
+# ============================================================
+# DECALS
+# ============================================================
+
+func _place_decals() -> void:
+	# Chapter 2: cool neural — circuit traces, runic circles (neural sigils), scorch marks
+	var theme := [
+		{
+			"texture": "circuit_traces",
+			"emission": "circuit_emission",
+			"emission_energy": 2.5,
+			"size": Vector3(3.0, 1.0, 3.0),
+			"count_per_room": 2,
+			"floor": true,
+			"modulate": Color(0.29, 0.88, 0.65, 0.8),
+		},
+		{
+			"texture": "runic_circle",
+			"emission": "runic_circle",
+			"emission_energy": 1.5,
+			"size": Vector3(4.0, 1.0, 4.0),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.29, 0.88, 0.65, 0.7),
+		},
+		{
+			"texture": "scorch_mark",
+			"size": Vector3(1.5, 0.8, 1.5),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.2, 0.5, 0.4, 0.5),
+		},
+		{
+			"texture": "circuit_traces",
+			"emission": "circuit_emission",
+			"emission_energy": 2.0,
+			"size": Vector3(2.5, 2.0, 2.5),
+			"count_per_room": 1,
+			"floor": false,
+			"modulate": Color(0.29, 0.88, 0.65, 0.5),
+		},
+		{
+			"texture": "oil_puddle",
+			"size": Vector3(1.8, 0.8, 1.8),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.15, 0.4, 0.35, 0.5),
+		},
+	]
+	DecalPlacer.place_chapter_decals(self, ROOMS, theme)

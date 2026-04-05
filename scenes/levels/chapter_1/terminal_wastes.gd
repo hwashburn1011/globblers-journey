@@ -127,6 +127,7 @@ func _ready() -> void:
 	_wire_dialogue_events()
 	_play_opening_narration()
 	_show_hint_once("movement", "MOVEMENT", "WASD to move. SHIFT to run. SPACE to jump. Try not to die immediately.")
+	_place_decals()
 	print("[TERMINAL WASTES] Level loaded. %d rooms of existential dread ready." % ROOMS.size())
 
 
@@ -2198,3 +2199,53 @@ func _show_hint_once(id: String, title: String, body: String) -> void:
 	# Deferred so it works when called from _ready() — root might still be setting up kids
 	get_tree().root.add_child.call_deferred(hint)
 	hint.show_hint.call_deferred(title, body)
+
+
+# ============================================================
+# DECALS
+# ============================================================
+
+func _place_decals() -> void:
+	# Chapter 1: dark CRT wasteland — oil puddles, scorch marks, glowing circuit traces, warning stripes
+	var theme := [
+		{
+			"texture": "oil_puddle",
+			"size": Vector3(2.5, 1.0, 2.5),
+			"count_per_room": 2,
+			"floor": true,
+			"modulate": Color(0.8, 1.0, 0.8, 0.7),
+		},
+		{
+			"texture": "scorch_mark",
+			"size": Vector3(1.8, 0.8, 1.8),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.5, 0.7, 0.5, 0.6),
+		},
+		{
+			"texture": "circuit_traces",
+			"emission": "circuit_emission",
+			"emission_energy": 3.0,
+			"size": Vector3(3.0, 1.0, 3.0),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.22, 1.0, 0.08, 0.9),
+		},
+		{
+			"texture": "warning_stripes",
+			"size": Vector3(3.5, 0.5, 1.0),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.8, 0.9, 0.2, 0.7),
+		},
+		{
+			"texture": "circuit_traces",
+			"emission": "circuit_emission",
+			"emission_energy": 2.0,
+			"size": Vector3(2.0, 1.5, 2.0),
+			"count_per_room": 1,
+			"floor": false,
+			"modulate": Color(0.22, 1.0, 0.08, 0.6),
+		},
+	]
+	DecalPlacer.place_chapter_decals(self, ROOMS, theme)

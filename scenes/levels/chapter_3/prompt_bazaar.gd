@@ -36,7 +36,7 @@ var social_eng_script := preload("res://scenes/puzzles/social_engineering_puzzle
 var boss_script := preload("res://scenes/enemies/system_prompt_boss/system_prompt_boss.gd")
 var boss_arena_script := preload("res://scenes/enemies/system_prompt_boss/system_prompt_arena.gd")
 
-# NPC script — AI personas hawking their wares since the last training run
+# NPC script ��� AI personas hawking their wares since the last training run
 var deprecated_npc_script := preload("res://scenes/levels/chapter_1/deprecated_npc.gd")
 
 var player: CharacterBody3D
@@ -163,6 +163,7 @@ func _ready() -> void:
 		if am.has_method("start_music"):
 			am.start_music("chapter_3")
 
+	_place_decals()
 	print("[PROMPT BAZAAR] Market open. %d districts ready for browsing." % ROOMS.size())
 
 
@@ -2309,3 +2310,53 @@ void fragment() {
 
 	canvas.add_child(rect)
 	add_child(canvas)
+
+
+# ============================================================
+# DECALS
+# ============================================================
+
+func _place_decals() -> void:
+	# Chapter 3: warm bazaar — ember glows, scorch marks, oil puddles, warning stripes
+	var theme := [
+		{
+			"texture": "ember_glow",
+			"emission": "ember_glow",
+			"emission_energy": 2.0,
+			"size": Vector3(2.5, 1.0, 2.5),
+			"count_per_room": 2,
+			"floor": true,
+			"modulate": Color(1.0, 0.67, 0.2, 0.8),
+		},
+		{
+			"texture": "scorch_mark",
+			"size": Vector3(2.0, 0.8, 2.0),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.6, 0.3, 0.15, 0.6),
+		},
+		{
+			"texture": "oil_puddle",
+			"size": Vector3(2.0, 0.8, 2.0),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(0.5, 0.3, 0.1, 0.5),
+		},
+		{
+			"texture": "runic_circle",
+			"emission": "runic_circle",
+			"emission_energy": 1.8,
+			"size": Vector3(3.0, 1.0, 3.0),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(1.0, 0.24, 0.65, 0.7),
+		},
+		{
+			"texture": "warning_stripes",
+			"size": Vector3(3.0, 0.5, 0.8),
+			"count_per_room": 1,
+			"floor": true,
+			"modulate": Color(1.0, 0.7, 0.1, 0.6),
+		},
+	]
+	DecalPlacer.place_chapter_decals(self, ROOMS, theme)
