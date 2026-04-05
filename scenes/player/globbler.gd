@@ -35,6 +35,12 @@ const CAMERA_MIN_DIST = 2.5
 const CAMERA_MAX_DIST = 12.0
 const CAMERA_SMOOTHING = 8.0
 
+# Dynamic FOV — sprint widens the view, aiming tightens it
+const FOV_DEFAULT = 70.0
+const FOV_SPRINT = 80.0
+const FOV_AIM = 60.0
+const FOV_LERP_SPEED = 5.0
+
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 # State tracking
@@ -853,6 +859,16 @@ func _update_camera(delta: float) -> void:
 	camera_arm.rotate_object_local(Vector3.RIGHT, camera_pitch)
 	camera.position = Vector3(0, 0, camera_distance)
 	camera.look_at(camera_arm.global_position, Vector3.UP)
+
+	# Dynamic FOV — sprint pushes wide, aim pulls tight, disabled if reduce_motion
+	var gm_fov = get_node_or_null("/root/GameManager")
+	if not (gm_fov and gm_fov.get("reduce_motion")):
+		var target_fov := FOV_DEFAULT
+		if glob_command and glob_command.get("is_aiming"):
+			target_fov = FOV_AIM
+		elif anim_state == AnimState.RUN:
+			target_fov = FOV_SPRINT
+		camera.fov = lerp(camera.fov, target_fov, FOV_LERP_SPEED * delta)
 
 	if camera_shake_amount > 0:
 		var shake_offset = Vector3(

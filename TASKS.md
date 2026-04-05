@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 15.9 complete
-- **Last task completed:** Task 15.9 — Screen shake curve tuning. Created `scripts/utils/camera_shake.gd` with `CameraShake` class_name and 5 named presets (wrench_hit, glob_cast, damage_taken, boss_phase, explosion). Each preset has tuned duration and amplitude. Respects reduce_motion (divides amplitude by 4). Wired into: wrench_smash.gd (hit), glob_command.gd (fire), globbler.gd (take_damage + hard landing), and all 5 boss `_transition_to_phase` functions (aligner, foundation_model, local_minimum, system_prompt, rm_rf).
-- **Next task to do:** Task 15.10 (Dynamic FOV)
+- **Last updated by:** Claude (2026-04-05) — Task 15.10 complete
+- **Last task completed:** Task 15.10 — Dynamic FOV. Added FOV constants (default 70°, sprint 80°, aim 60°) and smooth lerp (speed 5.0) in `_update_camera()` in `scenes/player/globbler.gd`. FOV widens during `AnimState.RUN` (sprint) and tightens when `glob_command.is_aiming`. Disabled when `reduce_motion` is enabled. Zero new runtime errors.
+- **Next task to do:** Task 15.11 (LOD meshes for bosses and large props)
 - **V2.0 MILESTONE SUMMARY (Passes 1–11):**
   - **Pass 1 — Lighting:** 5 Poly Haven HDRIs, 5 WorldEnvironment .tres resources, DirectionalLight3D tuning (4-split shadows, per-chapter color temp). All chapters have FILMIC tonemap, SSAO, SSIL, SDFGI, volumetric fog.
   - **Pass 2 — Globbler Hero:** Custom Blender-built chibi robot GLB (dark metal + neon green), tuned scale (1.4x), collision capsule (r=0.35, h=1.3), third-person camera (distance=6.0, pitch=-0.3, height=1.1m).
@@ -475,7 +475,7 @@ assets/
 - [x] Create `scripts/utils/camera_shake.gd` with named shake presets: `wrench_hit` (0.2s, amp 0.15), `glob_cast` (0.15s, amp 0.08), `damage_taken` (0.3s, amp 0.2), `boss_phase` (0.5s, amp 0.35), `explosion` (0.4s, amp 0.5). Wire existing shake calls in abilities/boss scripts through this helper. Respect reduce_motion (divide amp by 4). **Done: Created `scripts/utils/camera_shake.gd` with static `trigger()` method and 5 presets. Decay rate computed from amplitude/duration so shake naturally fades over preset duration. Wired into wrench_smash.gd (wrench_hit on hit), glob_command.gd (glob_cast on fire), globbler.gd (damage_taken on take_damage and hard landing), and all 5 boss _transition_to_phase functions (boss_phase on phase 2+ transitions). All calls respect reduce_motion via GameManager check.**
 
 ### 15.10 Dynamic FOV (sprint push / aim pull)
-- [ ] In `globbler.gd` camera logic: lerp FOV to 80° during sprint (from default ~75°), pull to 65° when aiming glob. Use `lerp` at 0.1 per frame. Setting can be disabled via reduce_motion.
+- [x] In `globbler.gd` camera logic: lerp FOV to 80° during sprint (from default ~75°), pull to 65° when aiming glob. Use `lerp` at 0.1 per frame. Setting can be disabled via reduce_motion. **Done: Added FOV_DEFAULT=70, FOV_SPRINT=80, FOV_AIM=60, FOV_LERP_SPEED=5.0 constants. In `_update_camera()`, lerps `camera.fov` toward target based on `anim_state == AnimState.RUN` (sprint→80°) or `glob_command.is_aiming` (aim→60°), else default 70°. Gated behind `reduce_motion` check — when enabled, FOV stays fixed at whatever it currently is. Verified: zero new runtime errors.**
 
 ### 15.11 LOD meshes for bosses and large props
 - [ ] For each boss GLB and any prop used in MultiMesh scatters: add a low-poly LOD variant (decimate to 40% tris) via blender-mcp. Set up `MeshInstance3D.visibility_range_begin/end` or use `LODMesh` equivalents. Target: drop boss mesh to low-LOD beyond 25m, props beyond 15m.
