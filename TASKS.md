@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 2.11 — Download CC0 ability SFX
-- **Next task to do:** Task 2.12 — Download CC0 UI SFX
+- **Last task completed:** Task 2.12 — Download CC0 UI SFX
+- **Next task to do:** Task 2.13 — Download CC0 enemy SFX
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -104,7 +104,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Downloaded 4 ability SFX from Kenney's "Sci-Fi Sounds" pack on OpenGameArt.org (CC0). All OGG format, ready to use: (1) ability_glob_cast.ogg ← laserLarge_000 (energy projectile cast, 25KB). (2) ability_wrench.ogg ← impactMetal_000 (metal wrench impact, 15KB). (3) ability_hack.ogg ← computerNoise_000 (computer beep sequence, 119KB). (4) ability_agent_spawn.ogg ← forceField_000 (force field activation pop, 25KB). All saved to assets/audio/sfx/ability_*.ogg. Attribution added to LICENSES.md.
 
 ### 2.12 Download CC0 UI SFX
-- [ ] Menu hover, menu click, dialogue advance, dialogue blip (for typing), pause open/close, token pickup. Save to `assets/audio/sfx/ui_*.ogg`. Record attributions.
+- [x] **DONE:** Downloaded 7 UI SFX from Kenney's "Interface Sounds" pack on OpenGameArt.org (CC0). All OGG format: (1) ui_hover.ogg ← select_003 (rollover highlight, 7KB). (2) ui_click.ogg ← click_001 (button click, 5KB). (3) ui_dialogue_advance.ogg ← confirmation_001 (confirm/advance chime, 9KB). (4) ui_dialogue_blip.ogg ← tick_001 (typing blip tick, 4KB). (5) ui_pause_open.ogg ← open_001 (menu open, 10KB). (6) ui_pause_close.ogg ← close_001 (menu close, 10KB). (7) ui_token_pickup.ogg ← pluck_001 (token pickup pluck, 6KB). All saved to assets/audio/sfx/ui_*.ogg. Attribution added to LICENSES.md.
 
 ### 2.13 Download CC0 enemy SFX
 - [ ] Generic enemy alert, attack, death (3 variants of each). Save to `assets/audio/sfx/enemy_*.ogg`. Record attributions.

@@ -63,5 +63,6 @@ Only CC0 / CC-BY / royalty-free assets are permitted.
 | Swish - Bamboo Stick Weapon Swooshes (SFX) | OpenGameArt / qubodup | CC0 | https://opengameart.org/content/swish-bamboo-stick-weapon-swhoshes | Player dash — assets/audio/sfx/player_dash.ogg |
 | Grunts of Male Death and Pain (SFX) | OpenGameArt / thebardofblasphemy | CC0 | https://opengameart.org/content/grunts-male-death-and-pain | Player death — assets/audio/sfx/player_death.ogg |
 | Sci-Fi Sounds (SFX) | OpenGameArt / Kenney | CC0 | https://opengameart.org/content/sci-fi-sounds | Ability SFX — assets/audio/sfx/ability_glob_cast.ogg (laserLarge), ability_wrench.ogg (impactMetal), ability_hack.ogg (computerNoise), ability_agent_spawn.ogg (forceField) |
-| *(Audio — SFX: UI/enemy)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *UI, enemy SFX — assets/audio/sfx/* |
+| Interface Sounds (SFX) | OpenGameArt / Kenney | CC0 | https://opengameart.org/content/interface-sounds | UI SFX — assets/audio/sfx/ui_hover.ogg (select_003), ui_click.ogg (click_001), ui_dialogue_advance.ogg (confirmation_001), ui_dialogue_blip.ogg (tick_001), ui_pause_open.ogg (open_001), ui_pause_close.ogg (close_001), ui_token_pickup.ogg (pluck_001) |
+| *(Audio — SFX: enemy)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Enemy SFX — assets/audio/sfx/* |
 | *(Audio — ambient)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Ambient loops — assets/audio/ambient/* |
