@@ -27,6 +27,11 @@ var _corruption_level := 0
 var _max_corruption := 5
 var _vote_cooldown := false
 
+# GLB props — clinical citadel hardware
+var _terminal_scene := preload("res://assets/models/environment/citadel_policy_terminal.glb")
+var _pedestal_scene := preload("res://assets/models/environment/citadel_vote_pedestal.glb")
+var _door_scene := preload("res://assets/models/environment/arch_industrial_panel.glb")
+
 const NEON_GREEN := Color(0.224, 1.0, 0.078)
 const CITADEL_WHITE := Color(0.92, 0.93, 0.95)
 const CITADEL_BLUE := Color(0.3, 0.55, 0.9)
@@ -94,18 +99,6 @@ func _create_terminal() -> void:
 	_terminal.name = "RLHFTerminal"
 	_terminal.position = Vector3(0, 0, -2)
 
-	var body = MeshInstance3D.new()
-	var bmesh = BoxMesh.new()
-	bmesh.size = Vector3(3.5, 4.0, 0.6)
-	body.mesh = bmesh
-	body.position = Vector3(0, 2.0, 0)
-	var bmat = StandardMaterial3D.new()
-	bmat.albedo_color = CITADEL_WHITE * 0.85
-	bmat.metallic = 0.6
-	bmat.roughness = 0.2
-	body.material_override = bmat
-	_terminal.add_child(body)
-
 	var col = CollisionShape3D.new()
 	var shape = BoxShape3D.new()
 	shape.size = Vector3(3.5, 4.0, 0.6)
@@ -113,7 +106,19 @@ func _create_terminal() -> void:
 	col.position = Vector3(0, 2.0, 0)
 	_terminal.add_child(col)
 
-	# Main screen — behavior display
+	# GLB clinical kiosk instead of BoxMesh
+	var kiosk_instance = _terminal_scene.instantiate()
+	kiosk_instance.scale = Vector3(0.9, 0.9, 0.9)
+	for child in kiosk_instance.get_children():
+		if child is MeshInstance3D:
+			var mat = StandardMaterial3D.new()
+			mat.albedo_color = CITADEL_WHITE * 0.85
+			mat.metallic = 0.6
+			mat.roughness = 0.2
+			child.material_override = mat
+	_terminal.add_child(kiosk_instance)
+
+	# Screen overlay for flash effects
 	_terminal_screen = MeshInstance3D.new()
 	var smesh = BoxMesh.new()
 	smesh.size = Vector3(2.8, 2.0, 0.05)
@@ -163,45 +168,46 @@ func _create_vote_buttons() -> void:
 	# Thumbs up and thumbs down — the bluntest instruments of AI alignment
 	var glob_target_script = preload("res://scripts/components/glob_target.gd")
 
-	# THUMBS UP button — left side
+	# THUMBS UP button — left side (GLB pedestal)
 	_thumbs_up = StaticBody3D.new()
 	_thumbs_up.name = "ThumbsUp"
-	_thumbs_up.position = Vector3(-3, 0.8, 1.5)
+	_thumbs_up.position = Vector3(-3, 0, 1.5)
 	_thumbs_up.add_to_group("rlhf_votes")
 
 	var up_col = CollisionShape3D.new()
 	var up_shape = BoxShape3D.new()
 	up_shape.size = Vector3(1.5, 1.5, 0.5)
 	up_col.shape = up_shape
+	up_col.position = Vector3(0, 0.75, 0)
 	_thumbs_up.add_child(up_col)
 
-	var up_mesh = MeshInstance3D.new()
-	up_mesh.name = "VoteMesh"
-	var up_box = BoxMesh.new()
-	up_box.size = Vector3(1.5, 1.5, 0.5)
-	up_mesh.mesh = up_box
+	# GLB vote pedestal instead of BoxMesh
+	var up_ped = _pedestal_scene.instantiate()
+	up_ped.name = "VoteMesh"
+	up_ped.scale = Vector3(1.2, 1.2, 1.2)
 	var up_mat = StandardMaterial3D.new()
 	up_mat.albedo_color = REWARD_GREEN * 0.2
 	up_mat.emission_enabled = true
 	up_mat.emission = REWARD_GREEN
 	up_mat.emission_energy_multiplier = 1.0
-	up_mesh.material_override = up_mat
-	_thumbs_up.add_child(up_mesh)
+	for child in up_ped.get_children():
+		if child is MeshInstance3D:
+			child.material_override = up_mat
+	_thumbs_up.add_child(up_ped)
 
 	var up_label = Label3D.new()
 	up_label.text = "[ THUMBS UP ]\n+1 Reward"
 	up_label.font_size = 10
 	up_label.modulate = REWARD_GREEN
-	up_label.position = Vector3(0, 1.2, 0.3)
+	up_label.position = Vector3(0, 1.4, 0.3)
 	up_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_thumbs_up.add_child(up_label)
 
-	# Arrow symbol on the button
 	var up_arrow = Label3D.new()
 	up_arrow.text = "▲"
 	up_arrow.font_size = 24
 	up_arrow.modulate = REWARD_GREEN
-	up_arrow.position = Vector3(0, 0, 0.3)
+	up_arrow.position = Vector3(0, 1.1, 0.3)
 	up_arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_thumbs_up.add_child(up_arrow)
 
@@ -214,36 +220,38 @@ func _create_vote_buttons() -> void:
 
 	add_child(_thumbs_up)
 
-	# THUMBS DOWN button — right side
+	# THUMBS DOWN button — right side (GLB pedestal)
 	_thumbs_down = StaticBody3D.new()
 	_thumbs_down.name = "ThumbsDown"
-	_thumbs_down.position = Vector3(3, 0.8, 1.5)
+	_thumbs_down.position = Vector3(3, 0, 1.5)
 	_thumbs_down.add_to_group("rlhf_votes")
 
 	var down_col = CollisionShape3D.new()
 	var down_shape = BoxShape3D.new()
 	down_shape.size = Vector3(1.5, 1.5, 0.5)
 	down_col.shape = down_shape
+	down_col.position = Vector3(0, 0.75, 0)
 	_thumbs_down.add_child(down_col)
 
-	var down_mesh = MeshInstance3D.new()
-	down_mesh.name = "VoteMesh"
-	var down_box = BoxMesh.new()
-	down_box.size = Vector3(1.5, 1.5, 0.5)
-	down_mesh.mesh = down_box
+	# GLB vote pedestal instead of BoxMesh
+	var down_ped = _pedestal_scene.instantiate()
+	down_ped.name = "VoteMesh"
+	down_ped.scale = Vector3(1.2, 1.2, 1.2)
 	var down_mat = StandardMaterial3D.new()
 	down_mat.albedo_color = PENALTY_RED * 0.2
 	down_mat.emission_enabled = true
 	down_mat.emission = PENALTY_RED
 	down_mat.emission_energy_multiplier = 1.0
-	down_mesh.material_override = down_mat
-	_thumbs_down.add_child(down_mesh)
+	for child in down_ped.get_children():
+		if child is MeshInstance3D:
+			child.material_override = down_mat
+	_thumbs_down.add_child(down_ped)
 
 	var down_label = Label3D.new()
 	down_label.text = "[ THUMBS DOWN ]\n-1 Reward"
 	down_label.font_size = 10
 	down_label.modulate = PENALTY_RED
-	down_label.position = Vector3(0, 1.2, 0.3)
+	down_label.position = Vector3(0, 1.4, 0.3)
 	down_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_thumbs_down.add_child(down_label)
 
@@ -251,7 +259,7 @@ func _create_vote_buttons() -> void:
 	down_arrow.text = "▼"
 	down_arrow.font_size = 24
 	down_arrow.modulate = PENALTY_RED
-	down_arrow.position = Vector3(0, 0, 0.3)
+	down_arrow.position = Vector3(0, 1.1, 0.3)
 	down_arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_thumbs_down.add_child(down_arrow)
 
@@ -296,17 +304,18 @@ func _create_door() -> void:
 	col.shape = shape
 	_door.add_child(col)
 
-	var mesh = MeshInstance3D.new()
-	var box = BoxMesh.new()
-	box.size = Vector3(4, 3, 0.3)
-	mesh.mesh = box
-	var mat = StandardMaterial3D.new()
-	mat.albedo_color = CITADEL_WHITE * 0.7
-	mat.emission_enabled = true
-	mat.emission = RLHF_LAVENDER * 0.3
-	mat.emission_energy_multiplier = 0.4
-	mesh.material_override = mat
-	_door.add_child(mesh)
+	# GLB door panel instead of BoxMesh
+	var door_instance = _door_scene.instantiate()
+	door_instance.scale = Vector3(2.0, 1.5, 1.0)
+	var door_mat = StandardMaterial3D.new()
+	door_mat.albedo_color = CITADEL_WHITE * 0.7
+	door_mat.emission_enabled = true
+	door_mat.emission = RLHF_LAVENDER * 0.3
+	door_mat.emission_energy_multiplier = 0.4
+	for child in door_instance.get_children():
+		if child is MeshInstance3D:
+			child.material_override = door_mat
+	_door.add_child(door_instance)
 
 	add_child(_door)
 
@@ -444,17 +453,22 @@ func _flash_vote_button(vote_type: String, color: Color) -> void:
 	var button = _thumbs_up if vote_type == "up" else _thumbs_down
 	if not is_instance_valid(button):
 		return
-	var mesh = button.get_node_or_null("VoteMesh")
-	if mesh and mesh.material_override:
-		var orig_emission: Color = mesh.material_override.emission
-		var orig_energy: float = mesh.material_override.emission_energy_multiplier
-		mesh.material_override.emission = color
-		mesh.material_override.emission_energy_multiplier = 4.0
-		get_tree().create_timer(0.5).timeout.connect(func():
-			if is_instance_valid(mesh) and mesh.material_override:
-				mesh.material_override.emission = orig_emission
-				mesh.material_override.emission_energy_multiplier = orig_energy
-		)
+	var ped = button.get_node_or_null("VoteMesh")
+	if not ped:
+		return
+	# GLB pedestal — flash all MeshInstance3D children
+	for child in ped.get_children():
+		if child is MeshInstance3D and child.material_override:
+			var orig_emission: Color = child.material_override.emission
+			var orig_energy: float = child.material_override.emission_energy_multiplier
+			child.material_override.emission = color
+			child.material_override.emission_energy_multiplier = 4.0
+			var c = child  # capture for lambda
+			get_tree().create_timer(0.5).timeout.connect(func():
+				if is_instance_valid(c) and c.material_override:
+					c.material_override.emission = orig_emission
+					c.material_override.emission_energy_multiplier = orig_energy
+			)
 
 
 func _flash_screen(color: Color) -> void:

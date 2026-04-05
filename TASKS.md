@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 12.4 complete
-- **Last task completed:** Task 12.4 — Chapter 4 puzzle visual upgrades. Built 3 museum GLB props (display_case, pedestal, kiosk) in Blender. Replaced BoxMesh/CylinderMesh placeholders across all 4 Ch4 puzzle scripts + model_zoo.gd _create_exhibit_case with GLB museum props.
-- **Next task to do:** Task 12.5 (Chapter 5 puzzle visual upgrades)
+- **Last updated by:** Claude (2026-04-05) — Task 12.5 complete
+- **Last task completed:** Task 12.5 — Chapter 5 puzzle visual upgrades. Built 3 citadel GLB props (policy_terminal, vote_pedestal, option_tablet) in Blender with clinical white + holographic blue materials. Replaced BoxMesh placeholders in constitutional_loophole_puzzle.gd (terminal, door, option tablets) and rlhf_feedback_puzzle.gd (terminal, vote pedestals, door) with GLB models.
+- **Next task to do:** Task 13.1 (Boss health bar UI)
 - **V2.0 MILESTONE SUMMARY (Passes 1–11):**
   - **Pass 1 — Lighting:** 5 Poly Haven HDRIs, 5 WorldEnvironment .tres resources, DirectionalLight3D tuning (4-split shadows, per-chapter color temp). All chapters have FILMIC tonemap, SSAO, SSIL, SDFGI, volumetric fog.
   - **Pass 2 — Globbler Hero:** Custom Blender-built chibi robot GLB (dark metal + neon green), tuned scale (1.4x), collision capsule (r=0.35, h=1.3), third-person camera (distance=6.0, pitch=-0.3, height=1.1m).
@@ -385,7 +385,7 @@ assets/
 - [x] In `fossil_exhibit_puzzle.gd`, `nightmare_gallery_puzzle.gd`, `clippy_help_puzzle.gd`, `reclassification_puzzle.gd`: replace CSG exhibit cases with museum-display-case meshes (glass boxes + pedestals + brass plaques). Re-use Chapter 4 clinical museum palette. Keep logic untouched. **Done: Built 3 new Blender GLB props — museum_display_case.glb (beveled stone pedestal + glass case + brass plaque/trim), museum_pedestal.glb (cylindrical display stand with brass ring), museum_kiosk.glb (standing info terminal with screen bezel). fossil_exhibit: display_case.glb terminals + pedestal.glb collectors with SphereMesh orbs + amber OmniLight3D spotlights + industrial_panel.glb doors. nightmare_gallery: pedestal.glb collection points replacing CylinderMesh + industrial_panel.glb doors + updated pedestal_glb refs in fill/reset. clippy_help: kiosk.glb desk bodies + OmniLight3D hack terminal accents + industrial_panel.glb doors. reclassification: kiosk.glb classifier terminal + pedestal.glb reclassify station + display_case.glb approval chute + industrial_panel.glb door. model_zoo.gd: _create_exhibit_case now uses display_case.glb with dynamic scaling + amber emission instead of 5 CSG boxes. All CollisionShape3D and puzzle logic untouched. Godot MCP smoke test: zero new errors.**
 
 ### 12.5 Chapter 5 puzzles — visual upgrade
-- [ ] In `constitutional_loophole_puzzle.gd`, `rlhf_feedback_puzzle.gd`: replace CSG policy-terminal meshes with clinical white kiosks + holographic blue-screen interface. Re-use Chapter 5 clean palette. Keep logic untouched.
+- [x] In `constitutional_loophole_puzzle.gd`, `rlhf_feedback_puzzle.gd`: replace CSG policy-terminal meshes with clinical white kiosks + holographic blue-screen interface. Re-use Chapter 5 clean palette. Keep logic untouched. **Done: Built 3 citadel GLB props in Blender — citadel_policy_terminal (clinical white kiosk with silver trim, blue glow strips, holographic screen), citadel_vote_pedestal (standing pedestal with blue accent ring), citadel_option_tablet (floating holographic tablet with glowing edges). Replaced all BoxMesh placeholders in both Ch5 puzzle scripts: terminals → GLB kiosk, doors → arch_industrial_panel GLB, option tablets → GLB tablets, vote buttons → GLB pedestals. Updated flash functions for GLB child iteration. All CollisionShape3D kept intact.**
 
 ---
 
