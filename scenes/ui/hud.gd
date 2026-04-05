@@ -34,8 +34,12 @@ var param_counter: Label
 var upgrade_hint: Label
 
 var damage_indicator_scene := preload("res://scenes/ui/damage_indicator.tscn")
+var cooldown_radial_shader := preload("res://assets/shaders/cooldown_radial.gdshader")
 
 var player_ref: CharacterBody3D
+
+# Radial cooldown overlays keyed by ability name
+var ability_radials: Dictionary = {}
 
 const TERMINAL_GREEN := Color(0.224, 1.0, 0.078)
 const TERMINAL_GREEN_DIM := Color(0.15, 0.5, 0.15)
@@ -253,6 +257,13 @@ func _build_bottom_center_abilities() -> void:
 
 	var icon_names := ["glob", "wrench", "hack", "dash", "agent_spawn", "context"]
 	for icon_name in icon_names:
+		# Container so we can layer the radial overlay on top of the icon
+		var icon_container = Control.new()
+		icon_container.name = "IconSlot_" + icon_name
+		icon_container.custom_minimum_size = Vector2(32, 32)
+		icon_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		icon_bar.add_child(icon_container)
+
 		var tex_rect = TextureRect.new()
 		tex_rect.name = "Icon_" + icon_name
 		tex_rect.custom_minimum_size = Vector2(32, 32)
@@ -262,7 +273,23 @@ func _build_bottom_center_abilities() -> void:
 		var icon_path = "res://assets/ui/icons/" + icon_name + ".png"
 		if ResourceLoader.exists(icon_path):
 			tex_rect.texture = load(icon_path)
-		icon_bar.add_child(tex_rect)
+		icon_container.add_child(tex_rect)
+
+		# Radial cooldown overlay on top of icon
+		var radial = ColorRect.new()
+		radial.name = "Radial_" + icon_name
+		radial.set_anchors_preset(Control.PRESET_FULL_RECT)
+		radial.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var mat = ShaderMaterial.new()
+		mat.shader = cooldown_radial_shader
+		mat.set_shader_parameter("cooldown_percent", 1.0)
+		mat.set_shader_parameter("overlay_color", Color(0.0, 0.0, 0.0, 0.65))
+		var gm = get_node_or_null("/root/GameManager")
+		if gm and gm.get("reduce_motion"):
+			mat.set_shader_parameter("animate", false)
+		radial.material = mat
+		icon_container.add_child(radial)
+		ability_radials[icon_name] = radial
 
 	# Cooldown bars row
 	var cooldown_row = HBoxContainer.new()
@@ -411,6 +438,17 @@ func _create_cooldown_bar() -> ProgressBar:
 	bar.add_theme_stylebox_override("background", bg)
 	return bar
 
+func _update_radial(ability_name: String, method_name: String) -> void:
+	if not ability_radials.has(ability_name):
+		return
+	var radial: ColorRect = ability_radials[ability_name]
+	if not radial or not radial.material:
+		return
+	var pct := 1.0
+	if player_ref and player_ref.has_method(method_name):
+		pct = player_ref.call(method_name)
+	radial.material.set_shader_parameter("cooldown_percent", pct)
+
 func _show_level_intro(text: String) -> void:
 	if not level_intro_label:
 		return
@@ -505,3 +543,9 @@ func _process(delta: float) -> void:
 			dash_indicator.value = player_ref.get_dash_cooldown_percent()
 		if glob_indicator and player_ref.has_method("get_glob_cooldown_percent"):
 			glob_indicator.value = player_ref.get_glob_cooldown_percent()
+
+		# Update radial cooldown overlays per ability
+		_update_radial("glob", "get_glob_cooldown_percent")
+		_update_radial("wrench", "get_wrench_cooldown_percent")
+		_update_radial("dash", "get_dash_cooldown_percent")
+		_update_radial("agent_spawn", "get_agent_recharge_percent")

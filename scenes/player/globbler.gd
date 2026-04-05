@@ -1166,6 +1166,21 @@ func get_dash_cooldown_percent() -> float:
 		return 1.0
 	return 1.0 - (dash_cooldown_timer / dash_cooldown)
 
+func get_glob_cooldown_percent() -> float:
+	if glob_command and glob_command.has_method("get_cooldown_percent"):
+		return glob_command.get_cooldown_percent()
+	return 1.0
+
+func get_wrench_cooldown_percent() -> float:
+	if wrench_smash and wrench_smash.has_method("get_cooldown_percent"):
+		return wrench_smash.get_cooldown_percent()
+	return 1.0
+
+func get_agent_recharge_percent() -> float:
+	if agent_spawn and agent_spawn.has_method("get_recharge_percent"):
+		return agent_spawn.get_recharge_percent()
+	return 1.0
+
 func _emit_random_thought() -> void:
 	var thought = sarcastic_thoughts[randi() % sarcastic_thoughts.size()]
 	thought_bubble.emit(thought)

@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 13.5 complete
-- **Last task completed:** Task 13.5 — Damage direction indicator. Created `scenes/ui/damage_indicator.gd` + `.tscn` — red chevron arc drawn at screen edge pointing toward nearest enemy on hit. 0.8s fade, glow effect. Connects to GameManager `damage_taken` signal. Falls back to random direction if no enemy found. Respects reduce_motion. Wired into HUD via `hud.gd`. No new runtime errors.
-- **Next task to do:** Task 13.6 (Ability cooldown radial animation)
+- **Last updated by:** Claude (2026-04-05) — Task 13.6 complete
+- **Last task completed:** Task 13.6 — Ability cooldown radial animation. Created `assets/shaders/cooldown_radial.gdshader` (clockwise radial wipe overlay). Modified `scenes/ui/hud.gd` to layer shader-driven radial overlays on each ability icon (glob, wrench, dash, agent_spawn). Added proxy methods on `globbler.gd`: `get_glob_cooldown_percent()`, `get_wrench_cooldown_percent()`, `get_agent_recharge_percent()`. HUD `_process()` updates all radials each frame. Respects reduce_motion. No new runtime errors.
+- **Next task to do:** Task 13.7 (Tutorial hint visual restyle)
 - **V2.0 MILESTONE SUMMARY (Passes 1–11):**
   - **Pass 1 — Lighting:** 5 Poly Haven HDRIs, 5 WorldEnvironment .tres resources, DirectionalLight3D tuning (4-split shadows, per-chapter color temp). All chapters have FILMIC tonemap, SSAO, SSIL, SDFGI, volumetric fog.
   - **Pass 2 — Globbler Hero:** Custom Blender-built chibi robot GLB (dark metal + neon green), tuned scale (1.4x), collision capsule (r=0.35, h=1.3), third-person camera (distance=6.0, pitch=-0.3, height=1.1m).
@@ -408,7 +408,7 @@ assets/
 - [x] Created `scenes/ui/damage_indicator.gd` + `.tscn` — red chevron arc at screen edge pointing toward nearest enemy on damage. 0.8s fade with glow. Connects to GameManager `damage_taken` signal (player doesn't use health_component). Wired into HUD. Respects reduce_motion.
 
 ### 13.6 Ability cooldown radial animation
-- [ ] Extend `hud.gd` ability-bar: add CircularProgressBar or shader-based radial fill over each ability icon showing cooldown progress. Pulls from player ability `get_cooldown_percent()` methods.
+- [x] Created `assets/shaders/cooldown_radial.gdshader` — clockwise radial wipe from 12 o'clock. Modified `hud.gd` to overlay shader-driven ColorRect on each ability icon (glob, wrench, dash, agent_spawn). Added proxy cooldown methods to `globbler.gd` (`get_glob_cooldown_percent`, `get_wrench_cooldown_percent`, `get_agent_recharge_percent`). HUD `_process()` drives all radials via `_update_radial()` helper. Respects reduce_motion. No new runtime errors.
 
 ### 13.7 Tutorial hint visual restyle
 - [ ] Restyle `scenes/ui/first_time_hint.tscn` with V2.0 theme: terminal-monospace font, scanline shader background, green border frame. Keep slide-in animation. Respect reduce_motion.
