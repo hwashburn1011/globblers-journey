@@ -5,6 +5,7 @@ extends CharacterBody3D
 # Now with a REAL GLB model. The CSG era is dead. Long live the polygon king.
 
 const _HINT_SCENE := preload("res://scenes/ui/first_time_hint.tscn")
+const _DASH_TRAIL_SCENE := preload("res://scenes/vfx/dash_trail.tscn")
 
 const SPEED = 10.0
 const SPRINT_SPEED = 14.0
@@ -76,6 +77,11 @@ var camera_shake_decay := 8.0
 
 # Dash trail particles
 var dash_particles: GPUParticles3D
+
+# Dash trail ghost afterimages — 4 copies spawned evenly across the dash
+const DASH_GHOST_COUNT := 4
+var _dash_ghost_interval := 0.0  # Time between ghost spawns
+var _dash_ghost_timer := 0.0     # Countdown to next ghost
 
 # Animation state machine — because even rogue AIs need choreography
 enum AnimState { IDLE, WALK, RUN, JUMP, FALL, LAND, DASH, WALL_SLIDE }
@@ -542,6 +548,20 @@ func _setup_dash_particles() -> void:
 	dash_particles.position.y = 0.6
 	add_child(dash_particles)
 
+func _spawn_dash_ghost() -> void:
+	# Leave a ghostly afterimage at our current position — spooky and stylish
+	if not model_root:
+		return
+	# Reduce-motion users don't need translucent copies of themselves haunting the level
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		return
+	var ghost = _DASH_TRAIL_SCENE.instantiate()
+	ghost.global_transform = global_transform
+	# Parent to scene root so ghost stays put while we dash away
+	get_tree().current_scene.add_child(ghost)
+	ghost.setup_ghost(model_root)
+
 const STICK_LOOK_SENSITIVITY = 3.0  # Right stick camera speed — not too twitchy, not too sluggish
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -716,6 +736,13 @@ func _handle_dash(delta: float) -> void:
 		dash_timer -= delta
 		velocity = dash_direction * DASH_SPEED
 		velocity.y = 0.0
+
+		# Spawn dash trail ghosts at even intervals — leave your past selves behind
+		_dash_ghost_timer -= delta
+		if _dash_ghost_timer <= 0 and _dash_ghost_interval > 0:
+			_spawn_dash_ghost()
+			_dash_ghost_timer += _dash_ghost_interval
+
 		if dash_timer <= 0:
 			is_dashing = false
 			dash_particles.emitting = false
@@ -740,6 +767,11 @@ func _handle_dash(delta: float) -> void:
 		dash_cooldown_timer = dash_cooldown
 		dash_particles.emitting = true
 		dash_started.emit()
+
+		# Prime the ghost spawner — first ghost drops immediately at dash start
+		_dash_ghost_interval = DASH_DURATION / float(DASH_GHOST_COUNT)
+		_dash_ghost_timer = 0.0
+		_spawn_dash_ghost()
 
 		if not first_dash_done:
 			first_dash_done = true
