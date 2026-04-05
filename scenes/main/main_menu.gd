@@ -89,6 +89,13 @@ func _process(delta: float) -> void:
 			_title_glitch_timer = 0.0
 			_glitch_title()
 
+		# Settings title glitch — only when visible
+		if _settings_panel and _settings_panel.visible and _settings_title_label:
+			_settings_glitch_timer += delta
+			if _settings_glitch_timer > 3.0 + randf() * 2.5:
+				_settings_glitch_timer = 0.0
+				_glitch_settings_title()
+
 		# Scanline effect on background
 		_scanline_offset += delta * 30.0
 		queue_redraw()
@@ -141,6 +148,26 @@ func _glitch_title() -> void:
 	get_tree().create_timer(0.15).timeout.connect(func():
 		if _title_label:
 			_title_label.text = original
+	)
+
+
+func _glitch_settings_title() -> void:
+	if not _settings_title_label:
+		return
+	var glitched = ""
+	var glitch_chars = "░▒▓█╠╣╬@#$%"
+	var box_chars = "║"
+	for c in _SETTINGS_TITLE_ORIG:
+		if c in box_chars:
+			glitched += c
+		elif randf() < 0.3:
+			glitched += glitch_chars[randi() % glitch_chars.length()]
+		else:
+			glitched += c
+	_settings_title_label.text = glitched
+	get_tree().create_timer(0.15).timeout.connect(func():
+		if _settings_title_label:
+			_settings_title_label.text = _SETTINGS_TITLE_ORIG
 	)
 
 
@@ -385,33 +412,66 @@ func _update_continue_button() -> void:
 
 # --- Settings Panel ---
 
+var _settings_title_label: Label
+var _settings_glitch_timer := 0.0
+const _SETTINGS_TITLE_ORIG := "║  SYSTEM CONFIG  ║"
+
 func _build_settings_panel() -> void:
 	_settings_panel = PanelContainer.new()
 	_settings_panel.set_anchors_and_offsets_preset(PRESET_CENTER)
-	_settings_panel.custom_minimum_size = Vector2(450, 520)
+	_settings_panel.custom_minimum_size = Vector2(500, 600)
+	_settings_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_settings_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
 	_settings_panel.visible = false
 
 	var panel_style = StyleBoxFlat.new()
-	panel_style.bg_color = DARK_PANEL
-	panel_style.border_color = GREEN
+	panel_style.bg_color = Color(0.02, 0.04, 0.02, 0.95)
+	panel_style.border_color = DIM_GREEN
 	panel_style.set_border_width_all(2)
-	panel_style.set_corner_radius_all(4)
-	panel_style.set_content_margin_all(20)
+	panel_style.set_corner_radius_all(3)
+	panel_style.set_content_margin_all(24)
 	_settings_panel.add_theme_stylebox_override("panel", panel_style)
 
 	var vbox = VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 12)
+	vbox.add_theme_constant_override("separation", 8)
 	_settings_panel.add_child(vbox)
 
-	# Header
-	var header = Label.new()
-	header.text = "═══ SETTINGS ═══"
-	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	header.add_theme_color_override("font_color", GREEN)
-	header.add_theme_font_size_override("font_size", 24)
-	vbox.add_child(header)
+	# ASCII top border
+	var top_border = Label.new()
+	top_border.text = "╔══════════════════════════════╗"
+	top_border.add_theme_color_override("font_color", DIM_GREEN)
+	top_border.add_theme_font_size_override("font_size", 14)
+	top_border.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(top_border)
 
-	# Volume sliders
+	# Glitch title — consistent with pause/game-over screens
+	_settings_title_label = Label.new()
+	_settings_title_label.text = _SETTINGS_TITLE_ORIG
+	_settings_title_label.add_theme_color_override("font_color", GREEN)
+	_settings_title_label.add_theme_font_size_override("font_size", 28)
+	_settings_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(_settings_title_label)
+
+	# ASCII bottom border
+	var bot_border = Label.new()
+	bot_border.text = "╚══════════════════════════════╝"
+	bot_border.add_theme_color_override("font_color", DIM_GREEN)
+	bot_border.add_theme_font_size_override("font_size", 14)
+	bot_border.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(bot_border)
+
+	# Subtitle
+	var subtitle = Label.new()
+	subtitle.text = "> Adjusting parameters won't fix your skill issue._"
+	subtitle.add_theme_color_override("font_color", Color(0.15, 0.6, 0.1))
+	subtitle.add_theme_font_size_override("font_size", 13)
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(subtitle)
+
+	# ── AUDIO section ──
+	var audio_header = _create_section_header("── AUDIO ──")
+	vbox.add_child(audio_header)
+
 	var audio = get_node_or_null("/root/AudioManager")
 	_music_slider = _create_slider("Music Volume", audio.music_volume if audio else 0.7)
 	vbox.add_child(_music_slider.get_parent())
@@ -425,24 +485,27 @@ func _build_settings_panel() -> void:
 	vbox.add_child(_ambient_slider.get_parent())
 	_ambient_slider.value_changed.connect(_on_ambient_volume_changed)
 
-	# Fullscreen toggle
-	var fs_row = HBoxContainer.new()
-	fs_row.add_theme_constant_override("separation", 12)
-	var fs_label = Label.new()
-	fs_label.text = "Fullscreen"
-	fs_label.add_theme_color_override("font_color", GREEN)
-	fs_label.add_theme_font_size_override("font_size", 16)
-	fs_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	fs_row.add_child(fs_label)
+	# ── DISPLAY section ──
+	var display_header = _create_section_header("── DISPLAY ──")
+	vbox.add_child(display_header)
 
-	_fullscreen_check = CheckBox.new()
+	var fs_row = _create_toggle_row("Fullscreen")
+	_fullscreen_check = fs_row.get_meta("checkbox") as CheckBox
 	_fullscreen_check.button_pressed = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
-	_fullscreen_check.add_theme_color_override("font_color", GREEN)
 	_fullscreen_check.toggled.connect(_on_fullscreen_toggled)
-	fs_row.add_child(_fullscreen_check)
 	vbox.add_child(fs_row)
 
-	# --- Gameplay settings — because "one size fits all" is a lie told by people who never played their own games ---
+	var gm = get_node_or_null("/root/GameManager")
+
+	var rm_row = _create_toggle_row("Reduce Motion")
+	_reduce_motion_check = rm_row.get_meta("checkbox") as CheckBox
+	_reduce_motion_check.button_pressed = gm.reduce_motion if gm else false
+	_reduce_motion_check.toggled.connect(_on_reduce_motion_toggled)
+	vbox.add_child(rm_row)
+
+	# ── GAMEPLAY section ──
+	var gameplay_header = _create_section_header("── GAMEPLAY ──")
+	vbox.add_child(gameplay_header)
 
 	# Difficulty selector
 	var diff_row = HBoxContainer.new()
@@ -458,7 +521,6 @@ func _build_settings_panel() -> void:
 	_difficulty_option.add_item("Easy", 0)
 	_difficulty_option.add_item("Normal", 1)
 	_difficulty_option.add_item("Hard", 2)
-	var gm = get_node_or_null("/root/GameManager")
 	_difficulty_option.selected = gm.difficulty if gm else 1
 	_difficulty_option.add_theme_color_override("font_color", GREEN)
 	_difficulty_option.add_theme_font_size_override("font_size", 15)
@@ -467,43 +529,67 @@ func _build_settings_panel() -> void:
 	diff_row.add_child(_difficulty_option)
 	vbox.add_child(diff_row)
 
-	# Reduce Motion toggle — for players who prefer their retinas intact
-	var rm_row = HBoxContainer.new()
-	rm_row.add_theme_constant_override("separation", 12)
-	var rm_label = Label.new()
-	rm_label.text = "Reduce Motion"
-	rm_label.add_theme_color_override("font_color", GREEN)
-	rm_label.add_theme_font_size_override("font_size", 16)
-	rm_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	rm_row.add_child(rm_label)
-
-	_reduce_motion_check = CheckBox.new()
-	_reduce_motion_check.button_pressed = gm.reduce_motion if gm else false
-	_reduce_motion_check.add_theme_color_override("font_color", GREEN)
-	_reduce_motion_check.toggled.connect(_on_reduce_motion_toggled)
-	rm_row.add_child(_reduce_motion_check)
-	vbox.add_child(rm_row)
-
-	# Dialogue Speed slider — from "I can read" to "I have places to be"
+	# Dialogue Speed slider
 	_dialogue_speed_slider = _create_slider("Dialogue Speed", _dialogue_delay_to_slider(gm.dialogue_char_delay if gm else 0.03))
 	vbox.add_child(_dialogue_speed_slider.get_parent())
 	_dialogue_speed_slider.value_changed.connect(_on_dialogue_speed_changed)
 
-	# Controls info
+	# ── CONTROLS section ──
+	var controls_header = _create_section_header("── CONTROLS ──")
+	vbox.add_child(controls_header)
+
 	var controls_label = Label.new()
-	controls_label.text = "── Controls (Keyboard / Controller) ──\nWASD/LStick: Move | SPACE/A: Jump | SHIFT/B: Dash\nE-LClick/RT: Glob | R-RClick/LT: Aim | F/RB: Wrench\nT/Y: Hack | Q/LB: Cycle Glob | TAB/Select: Upgrades\nG/D-Up: Agent | V/D-Down: Cycle Task | RStick: Camera"
+	controls_label.text = "WASD/LStick: Move  |  SPACE/A: Jump  |  SHIFT/B: Dash\nE-LClick/RT: Glob  |  R-RClick/LT: Aim  |  F/RB: Wrench\nT/Y: Hack  |  Q/LB: Cycle Glob  |  TAB/Select: Upgrades\nG/D-Up: Agent  |  V/D-Down: Cycle Task  |  RStick: Camera"
 	controls_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	controls_label.add_theme_color_override("font_color", DIM_GREEN)
-	controls_label.add_theme_font_size_override("font_size", 13)
+	controls_label.add_theme_font_size_override("font_size", 12)
 	vbox.add_child(controls_label)
+
+	# Spacer before back button
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(0, 4)
+	vbox.add_child(spacer)
 
 	# Back button
 	var back_btn = _create_menu_button("[ BACK ]", _on_settings_back)
-	back_btn.custom_minimum_size.x = 200
+	back_btn.custom_minimum_size.x = 220
 	back_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	vbox.add_child(back_btn)
 
+	# Input hint footer
+	var hint = Label.new()
+	hint.text = "[ESC] Back"
+	hint.add_theme_color_override("font_color", DIM_GREEN)
+	hint.add_theme_font_size_override("font_size", 11)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(hint)
+
 	add_child(_settings_panel)
+
+
+func _create_section_header(text: String) -> Label:
+	var header = Label.new()
+	header.text = text
+	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	header.add_theme_color_override("font_color", BRIGHT_GREEN)
+	header.add_theme_font_size_override("font_size", 15)
+	return header
+
+
+func _create_toggle_row(label_text: String) -> HBoxContainer:
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	var label = Label.new()
+	label.text = label_text
+	label.add_theme_color_override("font_color", GREEN)
+	label.add_theme_font_size_override("font_size", 16)
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(label)
+	var check = CheckBox.new()
+	check.add_theme_color_override("font_color", GREEN)
+	row.add_child(check)
+	row.set_meta("checkbox", check)
+	return row
 
 
 func _create_slider(label_text: String, initial_value: float) -> HSlider:
