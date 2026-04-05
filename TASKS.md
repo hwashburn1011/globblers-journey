@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 2.2 — Download CC0 main menu music
-- **Next task to do:** Task 2.3 — Download CC0 Chapter 1 music
+- **Last task completed:** Task 2.3 — Download CC0 Chapter 1 music
+- **Next task to do:** Task 2.4 — Download CC0 Chapter 2 music
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -77,7 +77,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Downloaded "Menu Music" by wipics from OpenGameArt.org (CC0). Synth/beat loop, ~90s, 901KB OGG. Saved to `assets/audio/music/menu.ogg`. Attribution added to LICENSES.md.
 
 ### 2.3 Download CC0 Chapter 1 music
-- [ ] Same as 2.2 but dark/glitchy electronic for "Terminal Wastes" (~3 min loop). `assets/audio/music/chapter_1.ogg`.
+- [x] **DONE:** Downloaded "A Wonderful Nightmare" by SpiderDave from OpenGameArt.org (CC0). Dark/spooky OGG track, 5.2MB. Saved to `assets/audio/music/chapter_1.ogg`. Attribution added to LICENSES.md.
 
 ### 2.4 Download CC0 Chapter 2 music
 - [ ] Neural/synth/analog lab vibe for "Training Grounds" (~3 min loop). `assets/audio/music/chapter_2.ogg`.
