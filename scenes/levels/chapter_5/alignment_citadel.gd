@@ -187,31 +187,11 @@ func _setup_environment() -> void:
 	fill.light_energy = 0.2
 	add_child(fill)
 
-	# World environment — the brightest, most oppressively clean setting we've had
-	var env = Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color(0.7, 0.72, 0.78)  # Light gray-blue void — no darkness allowed
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color(0.6, 0.62, 0.68)
-	env.ambient_light_energy = 0.5
-	env.glow_enabled = true
-	env.glow_intensity = 0.8
-	env.glow_bloom = 0.5
-	env.fog_enabled = true
-	env.fog_light_color = Color(0.8, 0.82, 0.88)  # White fog — safety-approved visibility reducer
-	env.fog_density = 0.005
-	env.volumetric_fog_enabled = true
-	env.volumetric_fog_density = 0.008
-	env.volumetric_fog_albedo = Color(0.85, 0.87, 0.92)
-	env.volumetric_fog_emission = Color(0.6, 0.62, 0.68)
-
-	env.adjustment_enabled = true
-	env.adjustment_contrast = 0.95  # Slightly washed out — sterile vibes
-	env.adjustment_saturation = 0.7  # Desaturated — color is too exciting for compliance
-
+	# World environment — preloaded .tres because hand-rolling 20 lines of env
+	# config was "too creative" for the Alignment Department's taste
 	var world_env = WorldEnvironment.new()
 	world_env.name = "Environment"
-	world_env.environment = env
+	world_env.environment = preload("res://assets/environments/chapter_5.tres")
 	add_child(world_env)
 
 	_setup_post_processing()
