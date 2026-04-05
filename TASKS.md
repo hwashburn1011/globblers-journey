@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 14.2 complete
-- **Last task completed:** Task 14.2 — README visual update. Created `README.md` with project summary, 8-item feature list, 6 embedded hero screenshots (one per chapter + main menu), build/run instructions for Godot 4.4, project structure overview, credits, and attribution link to `assets/LICENSES.md`.
-- **Next task to do:** Task 14.3 (Graphics changelog)
+- **Last updated by:** Claude (2026-04-05) — Task 14.3 complete
+- **Last task completed:** Task 14.3 — Graphics changelog. Created `assets/docs/GRAPHICS_CHANGELOG.md` with full V2.0 summary: 15 passes, asset counts (61 GLBs, 14 shaders, 5 HDRIs, 31 .blend sources), per-pass breakdown, Blender source file index, performance notes, attribution link.
+- **Next task to do:** Task 15.1 (Globbler character animations)
 - **V2.0 MILESTONE SUMMARY (Passes 1–11):**
   - **Pass 1 — Lighting:** 5 Poly Haven HDRIs, 5 WorldEnvironment .tres resources, DirectionalLight3D tuning (4-split shadows, per-chapter color temp). All chapters have FILMIC tonemap, SSAO, SSIL, SDFGI, volumetric fog.
   - **Pass 2 — Globbler Hero:** Custom Blender-built chibi robot GLB (dark metal + neon green), tuned scale (1.4x), collision capsule (r=0.35, h=1.3), third-person camera (distance=6.0, pitch=-0.3, height=1.1m).
@@ -440,7 +440,7 @@ assets/
 - [x] Update `README.md` (create if missing) with: project summary, feature list, 6 embedded hero screenshots from 14.1, build/run instructions, credits list, attribution link to `assets/LICENSES.md`. **Done: Created `README.md` with project summary, 8 features, 6 screenshots in 2x3 table grid (ch1-5 spawn shots + main menu), Godot 4.4 build steps, project structure tree, credits with attribution link to `assets/LICENSES.md`.**
 
 ### 14.3 Graphics changelog
-- [ ] Create `assets/docs/GRAPHICS_CHANGELOG.md` summarizing V2.0 work: before/after screenshots (use one old build_log capture), list of passes completed, asset counts (#models, #shaders, #HDRIs), links to Blender source files.
+- [x] Create `assets/docs/GRAPHICS_CHANGELOG.md` summarizing V2.0 work: before/after screenshots (use one old build_log capture), list of passes completed, asset counts (#models, #shaders, #HDRIs), links to Blender source files. **Done: Created `assets/docs/GRAPHICS_CHANGELOG.md` with full V2.0 summary — 15 passes documented, asset counts (61 GLBs, 14 shaders, 5 HDRIs, 31 .blend sources, 6 WorldEnvironments, 20 screenshots), per-pass breakdown with specifics, Blender source file table, performance section, attribution link to LICENSES.md.**
 
 ---
 
