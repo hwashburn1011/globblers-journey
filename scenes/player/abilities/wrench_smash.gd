@@ -21,6 +21,9 @@ var has_hit_this_swing := false
 var swing_particles: GPUParticles3D
 var hit_area: Area3D
 
+# Impact sparks — because every good hit deserves a light show
+var _wrench_sparks_scene: PackedScene = preload("res://scenes/vfx/wrench_sparks.tscn")
+
 # References
 var player: CharacterBody3D
 
@@ -160,6 +163,13 @@ func _apply_hit(target: Node) -> void:
 			(target as CharacterBody3D).velocity += dir * knockback_force
 		elif target is RigidBody3D:
 			(target as RigidBody3D).apply_central_impulse(dir * knockback_force)
+
+	# Spawn impact sparks at the hit location — shower of green sparks on contact
+	if target is Node3D:
+		var sparks := _wrench_sparks_scene.instantiate()
+		sparks.global_position = (target as Node3D).global_position
+		# Add to scene root so sparks persist if target gets queue_free'd
+		get_tree().current_scene.add_child(sparks)
 
 	# Screen shake
 	if player and "camera_shake_amount" in player:

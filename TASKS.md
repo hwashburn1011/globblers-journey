@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 8.1 complete
-- **Last task completed:** Task 8.1 — Glob beam shader upgrade (V2 rewrite)
-- **Next task to do:** Task 8.2 (Wrench impact sparks)
+- **Last updated by:** Claude (2026-04-04) — Task 8.2 complete
+- **Last task completed:** Task 8.2 — Wrench impact sparks VFX
+- **Next task to do:** Task 8.3 (Dash trail ghost effect)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 COMPLETE — all 5 boss visual upgrades done (rm -rf, System Prompt, Local Minimum, Foundation Model, Aligner). All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -258,7 +258,7 @@ assets/
 - [x] Rewrite `assets/shaders/glob_beam.gdshader` with better pattern scroll, softer edges, bloom-friendly emissive core. Test in-game. **Done: Complete V2 rewrite — added FBM noise-based energy pattern with two scrolling layers for parallax depth, UV distortion wobble for organic feel, soft cubic edge falloff with smoothstep taper, hot white-green core stripe (core_color + core_width uniforms), cranked emission (1.5x) for bloom pass, dual pulse oscillators, reduce_motion support via `animate` uniform. New uniforms: core_color, core_width, distortion_strength, noise_scale, edge_softness, animate. Tested in-game via Godot MCP — zero new runtime errors.**
 
 ### 8.2 Wrench impact sparks
-- [ ] Create `scenes/vfx/wrench_sparks.tscn` — GPUParticles3D emitter, 30 spark particles, 0.3s lifetime, green-white. Spawn at impact point from `wrench_smash.gd` on hit.
+- [x] Create `scenes/vfx/wrench_sparks.tscn` — GPUParticles3D emitter, 30 spark particles, 0.3s lifetime, green-white. Spawn at impact point from `wrench_smash.gd` on hit. **Done: Created wrench_sparks.tscn + .gd — 30 GPUParticles3D sparks with 0.3s lifetime, full-sphere radial burst, gravity arc, elongated BoxMesh streaks with emissive green glow (emission_energy 3.0 for bloom), white-hot→neon-green color ramp via GradientTexture1D, self-destructs after particles finish. Hooked into wrench_smash.gd `_apply_hit()` — spawns sparks at target's global_position, added to scene root so they persist even if target is freed. Zero new runtime errors.**
 
 ### 8.3 Dash trail ghost effect
 - [ ] Create `scenes/vfx/dash_trail.tscn` — Globbler mesh copies left behind with fading green emissive. Spawn 4 per dash via `globbler.gd` dash logic.
