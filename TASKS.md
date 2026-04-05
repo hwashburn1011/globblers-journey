@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 10.4 complete
-- **Last task completed:** Task 10.4 — Invert Y-axis toggle in settings menu, persisted to settings.cfg, flips vertical camera in globbler.gd (mouse + stick)
-- **Next task to do:** Task 10.5 (Chapter select thumbnails)
+- **Last updated by:** Claude (2026-04-05) — Task 10.5 complete
+- **Last task completed:** Task 10.5 — Chapter select thumbnails rendered in Blender with per-chapter color palettes, wired into chapter select panel as TextureRect images
+- **Next task to do:** Task 10.6 (End-of-chapter stats summary)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 COMPLETE — all 5 boss visual upgrades done (rm -rf, System Prompt, Local Minimum, Foundation Model, Aligner). All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -331,7 +331,7 @@ assets/
 - [x] Add invert_mouse_y bool to GameManager + settings checkbox. When true, flip sign on vertical camera look in `globbler.gd`. Persist. **Done: Added `invert_mouse_y` bool to GameManager (default false), persisted to settings.cfg under controls/invert_mouse_y. Added "Invert Y-Axis" checkbox in settings menu CONTROLS section (below sensitivity slider). In globbler.gd, both mouse look and right-stick look multiply vertical pitch delta by -1 when enabled.**
 
 ### 10.5 Chapter select thumbnails
-- [ ] Screenshot each chapter spawn area (now with real graphics), save to `assets/ui/chapter_thumb_{n}.png`. Wire into `main_menu.gd` chapter select panel buttons.
+- [x] Screenshot each chapter spawn area (now with real graphics), save to `assets/ui/chapter_thumb_{n}.png`. Wire into `main_menu.gd` chapter select panel buttons. **Done: Rendered 5 stylized chapter thumbnails (320x180) in Blender EEVEE using per-chapter color palettes (monoliths, pillars, emissive particles matching fog/accent colors). Saved to assets/ui/chapter_thumb_{1-5}.png. Added TextureRect (80x45, STRETCH_KEEP_ASPECT_COVERED) to each chapter button row in _create_chapter_button(). Locked chapters show dimmed thumbnails (0.3 opacity). Panel widened to 600x480. Also fixed pre-existing bug: _create_check_row() → _create_toggle_row() in invert-Y settings row.**
 
 ### 10.6 End-of-chapter stats summary
 - [ ] Create `scenes/ui/chapter_summary.tscn` — shows deaths, tokens earned, time, kills, combo max. Triggered by GameManager.complete_level() before scene transition. Continue button.

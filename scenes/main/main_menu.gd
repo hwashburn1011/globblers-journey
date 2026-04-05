@@ -600,7 +600,7 @@ func _build_settings_panel() -> void:
 	vbox.add_child(sens_row)
 
 	# Invert Y-Axis checkbox — for the flight-sim weirdos
-	var invert_y_row = _create_check_row("Invert Y-Axis")
+	var invert_y_row = _create_toggle_row("Invert Y-Axis")
 	_invert_y_check = invert_y_row.get_meta("checkbox") as CheckBox
 	_invert_y_check.button_pressed = gm.invert_mouse_y if gm else false
 	_invert_y_check.toggled.connect(_on_invert_y_toggled)
@@ -708,7 +708,7 @@ func _create_slider(label_text: String, initial_value: float) -> HSlider:
 func _build_chapter_select_panel() -> void:
 	_chapter_panel = PanelContainer.new()
 	_chapter_panel.set_anchors_and_offsets_preset(PRESET_CENTER)
-	_chapter_panel.custom_minimum_size = Vector2(500, 400)
+	_chapter_panel.custom_minimum_size = Vector2(600, 480)
 	_chapter_panel.visible = false
 
 	var panel_style = StyleBoxFlat.new()
@@ -764,6 +764,18 @@ func _build_chapter_select_panel() -> void:
 func _create_chapter_button(chapter_num: int, title: String, desc: String, unlocked: bool) -> HBoxContainer:
 	var row = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
+
+	# Chapter thumbnail
+	var thumb_path := "res://assets/ui/chapter_thumb_%d.png" % chapter_num
+	var thumb_rect = TextureRect.new()
+	thumb_rect.custom_minimum_size = Vector2(80, 45)
+	thumb_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	thumb_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	if ResourceLoader.exists(thumb_path):
+		thumb_rect.texture = load(thumb_path)
+	if not unlocked:
+		thumb_rect.modulate = Color(0.3, 0.3, 0.3, 0.4)
+	row.add_child(thumb_rect)
 
 	# Chapter number indicator
 	var num_label = Label.new()
