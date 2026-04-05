@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 2.14 — Wire music tracks into AudioManager
-- **Next task to do:** Task 2.15 — Wire SFX into AudioManager
+- **Last task completed:** Task 2.15 — Wire SFX into AudioManager
+- **Next task to do:** Task 2.16 — Audio mix balance pass
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -113,7 +113,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Added `_loaded_music: Dictionary` cache and `_try_load_music(track_name)` helper to `audio_manager.gd`. Uses `ResourceLoader.exists()` + `load()` with caching to avoid reloading. Modified `start_music()` (chapters 1-5 + credits), `_start_boss_music()`, and `start_menu_music()` to try loading real .ogg from `res://assets/audio/music/` first, falling back to procedural synth if no file found. All 8 tracks (menu, chapter_1-5, boss, credits) wired. Procedural generation code preserved as safety net.
 
 ### 2.15 Wire SFX into AudioManager
-- [ ] Add `_loaded_sfx: Dictionary` map. In the existing `play_sfx(sfx_name)` path, attempt to load `res://assets/audio/sfx/<name>.ogg` first, fall back to procedural synth. Covers player, ability, UI, and enemy SFX from Tasks 2.10–2.13.
+- [x] **DONE:** Added `_loaded_sfx: Dictionary` cache, `_sfx_file_map` dictionary mapping 22 SFX names to their .ogg file basenames (with random variant support for footsteps and enemy sounds), and `_try_load_sfx()` helper that loads from `res://assets/audio/sfx/` with caching. Modified `play_sfx()` to try real .ogg first via `_try_load_sfx()`, falling back to procedural synth cache. Covers all 27 .ogg files from Tasks 2.10–2.13: player (footstep×2, jump, land, dash, hurt, death), ability (glob_cast, wrench, hack, agent_spawn), UI (hover, click, dialogue_advance, dialogue_blip, pause_open, pause_close, token_pickup), and enemy (alert×3, attack×3, death×3). SFX without .ogg files (glob_match/lock/fail, puzzle_*, boss_*, combo_hit, checkpoint, etc.) gracefully fall back to procedural synth.
 
 ### 2.16 Audio mix balance pass
 - [ ] Playtest via Godot MCP: launch game, walk through menu → chapter 1 → combat → dialogue. Adjust `BASE_VOLUME_DB` offsets in audio_manager.gd so music sits below dialogue and SFX pop above music. Set sensible defaults in settings.cfg (music=0.6, sfx=0.8, dialogue=1.0). Document the chosen levels.

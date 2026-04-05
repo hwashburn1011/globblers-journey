@@ -126,6 +126,40 @@ var _sfx_cache: Dictionary = {}
 # "Turns out real music sounds better than procedural bleeps. Who knew."
 var _loaded_music: Dictionary = {}
 
+# Loaded SFX streams — real .ogg files from assets/audio/sfx/
+# "The procedural bleeps had a good run. Time for the real deal."
+var _loaded_sfx: Dictionary = {}
+
+# Map from play_sfx() names → .ogg file basenames in assets/audio/sfx/
+# Arrays = random variant picked each call (footsteps, enemy sounds)
+var _sfx_file_map := {
+	# --- Player ---
+	"footstep": ["player_footstep_1", "player_footstep_2"],
+	"jump": ["player_jump"],
+	"land": ["player_land"],
+	"dash": ["player_dash"],
+	"player_damage": ["player_hurt"],
+	"player_death": ["player_death"],
+	# --- Abilities ---
+	"glob_fire": ["ability_glob_cast"],
+	"wrench_swing": ["ability_wrench"],
+	"wrench_hit": ["ability_wrench"],
+	"agent_spawn": ["ability_agent_spawn"],
+	"hack_start": ["ability_hack"],
+	# --- Enemies (3 variants each) ---
+	"enemy_alert": ["enemy_alert_1", "enemy_alert_2", "enemy_alert_3"],
+	"enemy_attack": ["enemy_attack_1", "enemy_attack_2", "enemy_attack_3"],
+	"enemy_death": ["enemy_death_1", "enemy_death_2", "enemy_death_3"],
+	# --- UI ---
+	"menu_hover": ["ui_hover"],
+	"menu_select": ["ui_click"],
+	"menu_open": ["ui_pause_open"],
+	"menu_back": ["ui_pause_close"],
+	"dialogue_advance": ["ui_dialogue_advance"],
+	"dialogue_type": ["ui_dialogue_blip"],
+	"token_pickup": ["ui_token_pickup"],
+}
+
 
 func _ready() -> void:
 	print("[AUDIO] Initializing The Globbler's sound system. Brace your speakers.")
@@ -195,6 +229,25 @@ func _try_load_music(track_name: String) -> AudioStream:
 			_loaded_music[track_name] = stream
 			return stream
 	print("[AUDIO] No .ogg found for '%s' — procedural synth rides again." % track_name)
+	return null
+
+
+## Try to load a real .ogg SFX from disk, with caching.
+## Picks a random variant if multiple files are mapped.
+## Returns the AudioStream on success, null on failure (triggering procedural fallback).
+func _try_load_sfx(sfx_name: String) -> AudioStream:
+	if not _sfx_file_map.has(sfx_name):
+		return null
+	var variants: Array = _sfx_file_map[sfx_name]
+	var chosen: String = variants[randi() % variants.size()]
+	if _loaded_sfx.has(chosen):
+		return _loaded_sfx[chosen]
+	var path := "res://assets/audio/sfx/" + chosen + ".ogg"
+	if ResourceLoader.exists(path):
+		var stream = load(path)
+		if stream:
+			_loaded_sfx[chosen] = stream
+			return stream
 	return null
 
 
@@ -533,21 +586,29 @@ func _generate_area_ambient(area_name: String) -> AudioStreamWAV:
 # --- Playback ---
 
 func play_sfx(sfx_name: String) -> void:
-	if not _sfx_cache.has(sfx_name):
+	if not _sfx_cache.has(sfx_name) and not _sfx_file_map.has(sfx_name):
 		push_warning("[AUDIO] Unknown SFX: %s — did someone typo a sound name?" % sfx_name)
 		return
 
 	# Route UI sounds through ui_volume, everything else through sfx_volume
 	# "Separation of concerns: even our bleeps have a proper bus architecture."
 	var category_vol: float = ui_volume if sfx_name in _ui_sfx_names else sfx_volume
-	var def: Dictionary = _sfx_defs[sfx_name]
+	var def: Dictionary = _sfx_defs.get(sfx_name, {})
 	var target_db: float = def.get("volume_db", BASE_VOLUME_DB) + linear_to_db(category_vol)
+
+	# Try real .ogg first, fall back to procedural synth
+	var stream: AudioStream = _try_load_sfx(sfx_name)
+	if not stream:
+		stream = _sfx_cache.get(sfx_name)
+	if not stream:
+		push_warning("[AUDIO] No audio for SFX: %s" % sfx_name)
+		return
 
 	# Find a free player from the pool
 	for p in _sfx_players:
 		if not p.playing:
 			p.volume_db = target_db
-			p.stream = _sfx_cache[sfx_name]
+			p.stream = stream
 			p.play()
 			return
 
@@ -556,7 +617,7 @@ func play_sfx(sfx_name: String) -> void:
 	_sfx_steal_index = (_sfx_steal_index + 1) % SFX_POOL_SIZE
 	victim.stop()
 	victim.volume_db = target_db
-	victim.stream = _sfx_cache[sfx_name]
+	victim.stream = stream
 	victim.play()
 
 
