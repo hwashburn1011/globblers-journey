@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 2.1 — Create audio asset folders
-- **Next task to do:** Task 2.2 — Download CC0 main menu music
+- **Last task completed:** Task 2.2 — Download CC0 main menu music
+- **Next task to do:** Task 2.3 — Download CC0 Chapter 1 music
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -74,7 +74,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Created `assets/audio/music/`, `assets/audio/sfx/`, `assets/audio/ambient/` with `.gdkeep` files so git tracks them. Added 3 placeholder rows to `assets/LICENSES.md` for upcoming music, SFX, and ambient audio assets.
 
 ### 2.2 Download CC0 main menu music
-- [ ] Find a CC0 / royalty-free ambient electronic track (~2 min loop) suitable for a sarcastic AI-themed terminal game. Sources: Pixabay Music CC0, FreeMusicArchive, OpenGameArt.org. Download to `assets/audio/music/menu.ogg`. Record attribution in LICENSES.md.
+- [x] **DONE:** Downloaded "Menu Music" by wipics from OpenGameArt.org (CC0). Synth/beat loop, ~90s, 901KB OGG. Saved to `assets/audio/music/menu.ogg`. Attribution added to LICENSES.md.
 
 ### 2.3 Download CC0 Chapter 1 music
 - [ ] Same as 2.2 but dark/glitchy electronic for "Terminal Wastes" (~3 min loop). `assets/audio/music/chapter_1.ogg`.
