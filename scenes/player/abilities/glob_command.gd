@@ -8,6 +8,7 @@ enum GlobAction { GRAB, PUSH, ABSORB }
 
 const BEAM_DURATION := 0.4
 const _HINT_SCENE := preload("res://scenes/ui/first_time_hint.tscn")
+const _CAST_VFX_SCENE := preload("res://scenes/vfx/ability_cast.tscn")
 const GRAB_FORCE := 15.0
 const PUSH_FORCE := 25.0
 
@@ -181,6 +182,7 @@ func fire_glob(pattern: String = "*") -> void:
 		return
 
 	cooldown_timer = glob_cooldown
+	_spawn_cast_vfx()
 
 	# Raycast to find aim point
 	var aim_origin := Vector3.ZERO
@@ -370,3 +372,14 @@ func _show_hint_once(id: String, title: String, body: String) -> void:
 		var hint = _HINT_SCENE.instantiate()
 		get_tree().root.add_child(hint)
 		hint.show_hint(title, body)
+
+func _spawn_cast_vfx() -> void:
+	if not player:
+		return
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		return
+	var vfx := _CAST_VFX_SCENE.instantiate()
+	vfx.ability_type = "glob"
+	vfx.global_position = player.global_position + Vector3(0, 1.0, 0)
+	get_tree().current_scene.add_child(vfx)

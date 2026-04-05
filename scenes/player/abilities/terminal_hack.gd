@@ -10,6 +10,7 @@ extends Node3D
 const INTERACT_RANGE := 3.5
 const _HINT_SCENE := preload("res://scenes/ui/first_time_hint.tscn")
 const _PROMPT_SCENE := preload("res://scenes/ui/interaction_prompt.tscn")
+const _CAST_VFX_SCENE := preload("res://scenes/vfx/ability_cast.tscn")
 
 var player: CharacterBody3D
 var _nearby_hackable: Node = null
@@ -121,6 +122,7 @@ func try_interact() -> void:
 		_hack_difficulty = hackable_comp.hack_difficulty
 
 	hackable_comp.start_hack()
+	_spawn_cast_vfx()
 	_start_minigame()
 	hack_started.emit(_nearby_hackable)
 	if _interaction_prompt and _interaction_prompt.has_method("hide_prompt"):
@@ -318,3 +320,14 @@ func _show_hint_once(id: String, title: String, body: String) -> void:
 	var hint_inst = _HINT_SCENE.instantiate()
 	get_tree().root.add_child(hint_inst)
 	hint_inst.show_hint(title, body)
+
+func _spawn_cast_vfx() -> void:
+	if not player:
+		return
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		return
+	var vfx := _CAST_VFX_SCENE.instantiate()
+	vfx.ability_type = "hack"
+	vfx.global_position = player.global_position + Vector3(0, 0.8, 0) + (-player.global_transform.basis.z.normalized() * 0.4)
+	get_tree().current_scene.add_child(vfx)

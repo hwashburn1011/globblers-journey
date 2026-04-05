@@ -6,6 +6,7 @@ extends CharacterBody3D
 
 const _HINT_SCENE := preload("res://scenes/ui/first_time_hint.tscn")
 const _DASH_TRAIL_SCENE := preload("res://scenes/vfx/dash_trail.tscn")
+const _CAST_VFX_SCENE := preload("res://scenes/vfx/ability_cast.tscn")
 
 const SPEED = 10.0
 const SPRINT_SPEED = 14.0
@@ -585,6 +586,15 @@ func _spawn_dash_ghost() -> void:
 	get_tree().current_scene.add_child(ghost)
 	ghost.setup_ghost(model_root)
 
+func _spawn_dash_cast_vfx() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		return
+	var vfx := _CAST_VFX_SCENE.instantiate()
+	vfx.ability_type = "dash"
+	vfx.global_position = global_position + Vector3(0, 0.6, 0)
+	get_tree().current_scene.add_child(vfx)
+
 const STICK_LOOK_SENSITIVITY = 3.0  # Right stick camera speed — not too twitchy, not too sluggish
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -798,6 +808,7 @@ func _handle_dash(delta: float) -> void:
 		dash_timer = DASH_DURATION
 		dash_cooldown_timer = dash_cooldown
 		dash_particles.emitting = true
+		_spawn_dash_cast_vfx()
 		dash_started.emit()
 
 		# Prime the ghost spawner — first ghost drops immediately at dash start

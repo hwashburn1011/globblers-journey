@@ -7,6 +7,7 @@ extends Node3D
 const MAX_ACTIVE_AGENTS := 3  # Can't have too many idiots running around
 const SPAWN_OFFSET := 2.0  # How far in front of the player they pop in
 const AGENT_LIFETIME := 15.0  # They expire like milk left in a hot server room
+const _CAST_VFX_SCENE := preload("res://scenes/vfx/ability_cast.tscn")
 
 # Upgradeable stats — ProgressionManager decides how many tiny idiots you get
 var max_charges := 3
@@ -123,6 +124,9 @@ func try_spawn() -> void:
 	charges -= 1
 	charges_changed.emit(charges, max_charges)
 
+	# Ability cast VFX
+	_spawn_cast_vfx()
+
 	# Calculate spawn position — in front of the player
 	var spawn_pos = player.global_position
 	var forward = -player.global_transform.basis.z.normalized()
@@ -232,3 +236,14 @@ func get_task_name() -> String:
 		AgentTask.DISTRACT: return "DISTRACT"
 		AgentTask.PRESS_BUTTON: return "PRESS"
 	return "???"
+
+func _spawn_cast_vfx() -> void:
+	if not player:
+		return
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		return
+	var vfx := _CAST_VFX_SCENE.instantiate()
+	vfx.ability_type = "agent"
+	vfx.global_position = player.global_position + Vector3(0, 0.9, 0)
+	get_tree().current_scene.add_child(vfx)

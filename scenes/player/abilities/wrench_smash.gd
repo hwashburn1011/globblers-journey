@@ -8,6 +8,7 @@ const SWING_DURATION := 0.3
 const HIT_RANGE := 2.0
 const SMASH_PROMPT_RANGE := 3.0
 const _PROMPT_SCENE := preload("res://scenes/ui/interaction_prompt.tscn")
+const _CAST_VFX_SCENE := preload("res://scenes/vfx/ability_cast.tscn")
 
 # Upgradeable stats — ProgressionManager says I can hit harder
 var damage := 2
@@ -154,6 +155,9 @@ func swing() -> void:
 	has_hit_this_swing = false
 	hit_area.monitoring = true
 
+	# Ability cast VFX at hand position
+	_spawn_cast_vfx()
+
 	# Spark particles
 	swing_particles.emitting = true
 
@@ -248,3 +252,14 @@ func _scan_for_smashables() -> void:
 		_interaction_prompt.show_prompt("[F] SMASH")
 	else:
 		_interaction_prompt.hide_prompt()
+
+func _spawn_cast_vfx() -> void:
+	if not player:
+		return
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		return
+	var vfx := _CAST_VFX_SCENE.instantiate()
+	vfx.ability_type = "wrench"
+	vfx.global_position = player.global_position + Vector3(0, 0.8, 0) + (-player.global_transform.basis.z.normalized() * 0.6)
+	get_tree().current_scene.add_child(vfx)
