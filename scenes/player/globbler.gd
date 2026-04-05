@@ -30,8 +30,8 @@ const JUMP_BUFFER_TIME = 0.1
 # Camera
 const MOUSE_SENSITIVITY = 0.002
 const CAMERA_ZOOM_SPEED = 0.5
-const CAMERA_MIN_DIST = 3.0
-const CAMERA_MAX_DIST = 14.0
+const CAMERA_MIN_DIST = 2.5
+const CAMERA_MAX_DIST = 12.0
 const CAMERA_SMOOTHING = 8.0
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -53,8 +53,8 @@ var wall_normal := Vector3.ZERO
 var camera_arm: Node3D
 var camera: Camera3D
 var camera_yaw := 0.0
-var camera_pitch := -0.25
-var camera_distance := 7.0
+var camera_pitch := -0.3
+var camera_distance := 6.0
 var mouse_captured := true
 
 # Glob attack — legacy quick-fire removed, glob_command handles everything now
@@ -172,10 +172,10 @@ func _ready() -> void:
 	# Collision shape
 	var col_shape = CollisionShape3D.new()
 	var capsule_shape = CapsuleShape3D.new()
-	capsule_shape.radius = 0.4
-	capsule_shape.height = 1.4
+	capsule_shape.radius = 0.35
+	capsule_shape.height = 1.3
 	col_shape.shape = capsule_shape
-	col_shape.position.y = 0.7
+	col_shape.position.y = 0.65
 	add_child(col_shape)
 
 	# Camera rig
@@ -286,10 +286,10 @@ func _build_glb_model() -> void:
 		glb_instance.name = "GlobblerMesh"
 		# GLB exports Y-up, Godot is Y-up — but Blender Z-up means we need rotation
 		# The export used export_yup=True so coordinates should be correct
-		# Scale to match gameplay: model was built at ~0.9m, collision capsule expects ~1.4m height
-		glb_instance.scale = Vector3(1.5, 1.5, 1.5)
-		# Shift down so feet sit at y=0 (boots bottom was at ~0.07m in Blender, scaled = 0.105)
-		glb_instance.position.y = -0.105
+		# Scale to match gameplay: model was built at ~0.9m, capsule is 1.3m — chibi proportions ftw
+		glb_instance.scale = Vector3(1.4, 1.4, 1.4)
+		# Shift down so feet sit at y=0 (boots bottom was at ~0.07m in Blender, scaled = 0.098)
+		glb_instance.position.y = -0.098
 		model_root.add_child(glb_instance)
 	else:
 		push_warning("[GLOBBLER] Failed to load GLB model — falling back to existential crisis")
@@ -301,7 +301,7 @@ func _build_glb_model() -> void:
 	eye_light.light_energy = 1.5
 	eye_light.omni_range = 2.0
 	eye_light.omni_attenuation = 2.0
-	eye_light.position = Vector3(0, 1.0, 0.35)
+	eye_light.position = Vector3(0, 0.93, 0.33)
 	model_root.add_child(eye_light)
 
 	# Ambient green glow from body — we radiate competence (and radiation)
@@ -311,7 +311,7 @@ func _build_glb_model() -> void:
 	body_glow.light_energy = 0.8
 	body_glow.omni_range = 3.0
 	body_glow.omni_attenuation = 2.0
-	body_glow.position = Vector3(0, 0.75, 0)
+	body_glow.position = Vector3(0, 0.65, 0)
 	model_root.add_child(body_glow)
 
 	# Individual limb refs stay null — GLB is one joined mesh, so per-limb CSG
@@ -603,7 +603,8 @@ func _update_camera(delta: float) -> void:
 		camera_pitch -= stick_y * STICK_LOOK_SENSITIVITY * delta
 		camera_pitch = clamp(camera_pitch, -1.2, 0.3)
 
-	var target_pos = global_position + Vector3(0, 1.5, 0)
+	# Camera focuses on chest height — close enough to see our angry eyes, far enough to see the boots
+	var target_pos = global_position + Vector3(0, 1.1, 0)
 	camera_arm.global_position = camera_arm.global_position.lerp(target_pos, CAMERA_SMOOTHING * delta)
 	camera_arm.rotation = Vector3.ZERO
 	camera_arm.rotate_y(camera_yaw)

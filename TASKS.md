@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.11 complete
-- **Last task completed:** Task 2.11 — Import GLB into Godot player scene
-- **Next task to do:** Task 2.12
-- **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is in progress — real GLB model now loads in-game replacing all CSG placeholder geometry. Per-limb procedural animations gracefully degrade (null-guarded) since GLB is a single joined mesh; whole-model animations (bob, lean, tilt) still work. Next: tune scale, pivot, and camera offset.
+- **Last updated by:** Claude (2026-04-04) — Task 2.12 complete
+- **Last task completed:** Task 2.12 — Tune scale, pivot, camera offset
+- **Next task to do:** Task 3.1 (Pass 3: Globbler Shaders & VFX — character rim-light shader)
+- **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
 Upgrade visual quality from CSG placeholders to stylized indie-game-ship quality (~Death's Door / Tunic / Hi-Fi Rush tier). Hero assets (Globbler, bosses) built in Blender via blender-mcp. Environment via CC0 assets from Poly Haven / Sketchfab. Lighting + post-processing + VFX upgraded in Godot.
@@ -114,7 +114,7 @@ assets/
 - [x] In `scenes/player/globbler.tscn`, replace the CSG torso/head placeholders with the new `res://assets/models/globbler.glb` instance. Keep CollisionShape3D as-is. Adjust transform so feet are at y=0. Test run via Godot MCP — player should appear in-world. **Done: Replaced entire `_build_csg_model()` (250+ lines of CSG primitives) with `_build_glb_model()` that loads the 3.5MB GLB (13502 verts, 3 material slots). GLB instantiated under model_root at scale 1.5x with y-offset -0.105 so boots sit at y=0. Kept OmniLight3D eye glow + body glow for in-game lighting. Per-limb animation refs stay null (all null-guarded), whole-model animations (idle bob, walk lean, run tilt) still work. Copied GLB to `assets/models/globbler.glb` (Godot's imported path). Tested in Chapter 1 via Godot MCP — zero new runtime errors.**
 
 ### 2.12 Tune scale, pivot, camera offset
-- [ ] With the new mesh in place, verify: player fits corridors, camera framing looks right, third-person offset still reads well. Adjust mesh scale or character_body collision if needed. Run project via MCP, walk around in chapter 1, confirm no clipping issues.
+- [x] With the new mesh in place, verify: player fits corridors, camera framing looks right, third-person offset still reads well. Adjust mesh scale or character_body collision if needed. Run project via MCP, walk around in chapter 1, confirm no clipping issues. **Done: Tuned GLB scale 1.5→1.4x (1.26m model, stubbier chibi proportions). Tightened collision capsule (radius 0.4→0.35, height 1.4→1.3, y-offset 0.7→0.65). Refined camera: distance 7→6 (tighter framing for 6m corridors), pitch -0.25→-0.3 (better downward angle), target height 1.5→1.1 (chest-level focus). Updated min/max zoom (2.5–12.0). Repositioned eye glow light (y 1.0→0.93) and body glow (y 0.75→0.65) to match new scale. Tested in Chapter 1 via Godot MCP — zero new runtime errors, player fits all corridors and rooms comfortably. PASS 2 COMPLETE.**
 
 ---
 
