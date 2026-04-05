@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.9 complete
-- **Last task completed:** Task 2.9 — Apply emission CRT material to chest screen
-- **Next task to do:** Task 2.10
-- **Known issues:** All gameplay is CSG placeholder geometry. No real character model in Godot yet. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is in progress — mesh built, all materials applied (body dark metal, eyes neon green emission, screen green CRT emission). Next: bake AO and export to GLB.
+- **Last updated by:** Claude (2026-04-04) — Task 2.10 complete
+- **Last task completed:** Task 2.10 — Bake AO and export to GLB
+- **Next task to do:** Task 2.11
+- **Known issues:** All gameplay is CSG placeholder geometry. No real character model in Godot yet. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is in progress — mesh built, all materials applied, AO baked, GLB exported. Next: import GLB into Godot player scene.
 
 ### GOAL OF THIS PASS
 Upgrade visual quality from CSG placeholders to stylized indie-game-ship quality (~Death's Door / Tunic / Hi-Fi Rush tier). Hero assets (Globbler, bosses) built in Blender via blender-mcp. Environment via CC0 assets from Poly Haven / Sketchfab. Lighting + post-processing + VFX upgraded in Godot.
@@ -108,7 +108,7 @@ assets/
 - [x] Via `execute_blender_code`: create `globbler_screen` material — emission_color=(0.2,0.9,0.2), emission_strength=3.0. Later we'll override with a scanline shader in Godot, but this gives the base glow on export. Screenshot. **Done: Created `globbler_screen` Principled BSDF material (base_color=(0.2,0.9,0.2), emission_color=(0.2,0.9,0.2), emission_strength=3.0, roughness=0.08 for glossy screen surface). Assigned to ChestTerminal_Screen object. Fixed bezel slot 0 (was None, now globbler_body). Cleaned up orphan material duplicates. Green CRT glow visible in viewport. Saved to globbler.blend.**
 
 ### 2.10 Bake AO and export to GLB
-- [ ] Via `execute_blender_code`: bake ambient occlusion to a 1024 texture on the combined mesh. Join all Globbler parts (except wrench, keep separate for animation). Select all, export as GLB to `assets/models/player/globbler.glb` with `export_apply=True`, `export_materials='EXPORT'`, `export_yup=True`. Save .blend.
+- [x] Via `execute_blender_code`: bake ambient occlusion to a 1024 texture on the combined mesh. Join all Globbler parts (except wrench, keep separate for animation). Select all, export as GLB to `assets/models/player/globbler.glb` with `export_apply=True`, `export_materials='EXPORT'`, `export_yup=True`. Save .blend. **Done: Converted 4 cable curves to mesh, joined 11 body parts into single Globbler_Body mesh (13502 verts, 3 material slots: globbler_body, globbler_eyes_emissive, globbler_screen). Created AO_UV layer with Smart UV Project, baked 1024x1024 AO texture via Cycles (64 samples), saved to assets/textures/pbr/globbler_ao/globbler_ao.png. Wired AO into body material via Multiply mix (strength=0.7). Exported GLB (3.5MB) with body + wrench as separate objects. Saved globbler.blend.**
 
 ### 2.11 Import GLB into Godot player scene
 - [ ] In `scenes/player/globbler.tscn`, replace the CSG torso/head placeholders with the new `res://assets/models/player/globbler.glb` instance. Keep CollisionShape3D as-is. Adjust transform so feet are at y=0. Test run via Godot MCP — player should appear in-world.
