@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 9.3 complete
-- **Last task completed:** Task 9.3 — HUD ability icons
-- **Next task to do:** Task 9.4 (HUD layout redesign)
+- **Last updated by:** Claude (2026-04-05) — Task 9.4 complete
+- **Last task completed:** Task 9.4 — HUD layout redesign
+- **Next task to do:** Task 9.5 (Main menu 3D background)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 COMPLETE — all enemy visual upgrades done. Pass 7 COMPLETE — all 5 boss visual upgrades done (rm -rf, System Prompt, Local Minimum, Foundation Model, Aligner). All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -293,7 +293,7 @@ assets/
 - [x] Via blender-mcp or Godot: design 6 flat-shaded icon meshes (or 2D textures) for: glob, wrench, hack, dash, agent_spawn, context. Export to `assets/ui/icons/*.png` 64x64. Wire into `hud.gd` ability bar. **Done: Created 6 neon-green emission-rendered 64x64 PNG icons via Blender MCP (glob=asterisk star, wrench=wrench+torus head, hack=">_" terminal prompt, dash=arrow+speed lines, agent_spawn=mini robot silhouette, context=circuit chip). Added HBoxContainer ability icon bar to both `scenes/ui/hud.gd` and `scripts/hud.gd` below cooldown bars. Icons load via TextureRect with green-tinted modulate. Zero new runtime errors.**
 
 ### 9.4 HUD layout redesign
-- [ ] Revise `hud.tscn` layout: top-left context bar + health, top-right minimap slot (leave empty for now), bottom-center ability icons, bottom-left pattern input. Match terminal-green aesthetic with borders.
+- [x] Revise `hud.tscn` layout: top-left context bar + health, top-right minimap slot (leave empty for now), bottom-center ability icons, bottom-left pattern input. Match terminal-green aesthetic with borders. **Done: Fully redesigned both `scenes/ui/hud.gd` and `scripts/hud.gd`. New layout: top-left PanelContainer with context bar + health stats (tokens, kills, params) + separator + upgrade hint; top-right 160x160 minimap placeholder panel; top-center timer with anchors; bottom-center ability panel with 6 icons (32x32) + dash/glob cooldown bars; bottom-left glob pattern input (repositioned via anchor overrides). All panels use consistent terminal-green bordered StyleBoxFlat (dark bg #020402, green border #158015). Anchors used throughout for responsive scaling. Zero new runtime errors.**
 
 ### 9.5 Main menu 3D background
 - [ ] In `main_menu.tscn`, add a Viewport rendering a 3D scene with Globbler idle-posed + floating tech debris. Scrolling camera. Replace any flat background.
