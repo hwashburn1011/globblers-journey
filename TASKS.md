@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 2.5 — Download CC0 Chapter 3 music
-- **Next task to do:** Task 2.6 — Download CC0 Chapter 4 music
+- **Last task completed:** Task 2.6 — Download CC0 Chapter 4 music
+- **Next task to do:** Task 2.7 — Download CC0 Chapter 5 music
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -86,7 +86,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Downloaded "Town4 - Bazaar" by SubspaceAudio (Juhani Junkala) from OpenGameArt.org (CC0). Warm bazaar/market loop, 3.8MB OGG, from JRPG Music Pack #2 [Towns]. Saved to `assets/audio/music/chapter_3.ogg`. Attribution added to LICENSES.md.
 
 ### 2.6 Download CC0 Chapter 4 music
-- [ ] Eerie museum ambient with digital echoes for "Model Zoo" (~3 min loop). `assets/audio/music/chapter_4.ogg`.
+- [x] **DONE:** Downloaded "EmptyCity" by yd from OpenGameArt.org (CC0). Dark atmospheric soundtrack evoking a devastated/desolate space — perfect for the eerie "Model Zoo" museum chapter. 2.0MB OGG, loopable. Saved to `assets/audio/music/chapter_4.ogg`. Attribution added to LICENSES.md.
 
 ### 2.7 Download CC0 Chapter 5 music
 - [ ] Clean corporate muzak that becomes distorted, for "Alignment Citadel" (~3 min loop). `assets/audio/music/chapter_5.ogg`.
