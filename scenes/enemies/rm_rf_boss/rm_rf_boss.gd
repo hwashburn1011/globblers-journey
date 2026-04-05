@@ -387,6 +387,7 @@ func _transition_to_phase(new_phase: BossPhase) -> void:
 		var flash_inst := flash_scene.instantiate()
 		flash_inst.global_position = global_position
 		get_tree().current_scene.add_child.call_deferred(flash_inst)
+		CameraShake.trigger(player_ref, "boss_phase")
 
 	match new_phase:
 		BossPhase.PHASE_1:

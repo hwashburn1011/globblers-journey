@@ -221,6 +221,9 @@ func fire_glob(pattern: String = "*") -> void:
 		if _matched_targets.size() > 0:
 			perform_action(current_action)
 
+	# Screen shake on glob fire
+	CameraShake.trigger(player, "glob_cast")
+
 	# Impact particles
 	impact_particles.global_position = _aim_point
 	impact_particles.emitting = true

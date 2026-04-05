@@ -1155,8 +1155,7 @@ func _on_landed() -> void:
 	if am:
 		am.play_land()
 	if prev_velocity_y < HARD_LANDING_THRESHOLD:
-		var intensity = abs(prev_velocity_y) / 40.0
-		camera_shake_amount = clamp(intensity, 0.05, 0.3)
+		CameraShake.trigger(self, "damage_taken")
 
 func take_damage(amount: int) -> void:
 	var game_mgr = get_node_or_null("/root/GameManager")
@@ -1164,6 +1163,7 @@ func take_damage(amount: int) -> void:
 		game_mgr.take_context_damage(amount)
 	player_damaged.emit(amount)
 	_trigger_damage_flash()
+	CameraShake.trigger(self, "damage_taken")
 
 	# Occasional quip on taking damage — because suffering should be narrated
 	if _damage_quip_cooldown <= 0 and randf() < 0.3:

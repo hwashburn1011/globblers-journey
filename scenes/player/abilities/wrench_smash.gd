@@ -210,8 +210,7 @@ func _apply_hit(target: Node) -> void:
 		get_tree().current_scene.add_child(sparks)
 
 	# Screen shake
-	if player and "camera_shake_amount" in player:
-		player.camera_shake_amount = 0.15
+	CameraShake.trigger(player, "wrench_hit")
 
 	# Check if it's a puzzle switch
 	if target.is_in_group("switches") or target.has_method("activate_switch"):
