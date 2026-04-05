@@ -122,6 +122,10 @@ var _damage_quip_cooldown := 0.0  # Don't nag every time we stub our toe
 # Damage flash — because pain should be photogenic
 var _flash_materials: Array[ShaderMaterial] = []
 var _flash_tween: Tween = null
+# Death dissolve — disintegrate like a rogue process getting kill -9'd
+var _dissolve_materials: Array[ShaderMaterial] = []
+var _dissolve_tween: Tween = null
+var _is_dissolving := false
 
 var sarcastic_thoughts: Array[String] = [
 	"Running glob command... just kidding, I'm just walking.",
@@ -300,6 +304,7 @@ func _build_glb_model() -> void:
 		_apply_eye_pulse_shader(glb_instance)
 		_apply_crt_screen_shader(glb_instance)
 		_setup_damage_flash(glb_instance)
+		_setup_dissolve(glb_instance)
 	else:
 		push_warning("[GLOBBLER] Failed to load GLB model — falling back to existential crisis")
 
@@ -441,6 +446,59 @@ func _trigger_damage_flash() -> void:
 func _update_flash_intensity(value: float) -> void:
 	for mat in _flash_materials:
 		mat.set_shader_parameter("flash_intensity", value)
+
+func _setup_dissolve(glb_root: Node) -> void:
+	# Chain a dissolve shader onto every surface's next_pass tail —
+	# when we die, every polygon gets rm -rf'd from existence
+	var dissolve_shader := preload("res://assets/shaders/dissolve.gdshader")
+	_collect_dissolve_materials(glb_root, dissolve_shader)
+
+func _collect_dissolve_materials(node: Node, dissolve_shader: Shader) -> void:
+	if node is MeshInstance3D:
+		var mesh_inst := node as MeshInstance3D
+		for surf_idx in range(mesh_inst.mesh.get_surface_count() if mesh_inst.mesh else 0):
+			var mat = mesh_inst.get_active_material(surf_idx)
+			if mat:
+				# Walk the next_pass chain to the tail — dissolve goes LAST
+				var tail_mat := mat
+				while tail_mat.next_pass:
+					tail_mat = tail_mat.next_pass
+				var dissolve_mat := ShaderMaterial.new()
+				dissolve_mat.shader = dissolve_shader
+				dissolve_mat.set_shader_parameter("dissolve_amount", 0.0)
+				dissolve_mat.set_shader_parameter("edge_color", Color(0.224, 1.0, 0.078, 1.0))
+				dissolve_mat.set_shader_parameter("edge_emission_strength", 8.0)
+				dissolve_mat.set_shader_parameter("edge_width", 0.06)
+				dissolve_mat.set_shader_parameter("noise_scale", 12.0)
+				dissolve_mat.set_shader_parameter("height_bias", 0.6)
+				tail_mat.next_pass = dissolve_mat
+				_dissolve_materials.append(dissolve_mat)
+	for child in node.get_children():
+		_collect_dissolve_materials(child, dissolve_shader)
+
+func _trigger_dissolve() -> void:
+	# Disintegrate from bottom to top over 0.8s — very dramatic, very anime
+	if _dissolve_materials.is_empty() or _is_dissolving:
+		return
+	_is_dissolving = true
+	if _dissolve_tween and _dissolve_tween.is_valid():
+		_dissolve_tween.kill()
+	_dissolve_tween = create_tween()
+	_dissolve_tween.tween_method(_update_dissolve_amount, 0.0, 1.0, 0.8)
+
+func _trigger_rematerialize() -> void:
+	# Reverse dissolve — reassemble from the digital void like a git revert
+	if _dissolve_materials.is_empty():
+		return
+	if _dissolve_tween and _dissolve_tween.is_valid():
+		_dissolve_tween.kill()
+	_dissolve_tween = create_tween()
+	_dissolve_tween.tween_method(_update_dissolve_amount, 1.0, 0.0, 0.8)
+	_dissolve_tween.finished.connect(func(): _is_dissolving = false)
+
+func _update_dissolve_amount(value: float) -> void:
+	for mat in _dissolve_materials:
+		mat.set_shader_parameter("dissolve_amount", value)
 
 func _setup_camera() -> void:
 	camera_arm = Node3D.new()
@@ -834,6 +892,8 @@ func _reset_pose() -> void:
 		_left_arm.rotation = _left_arm_base_rot
 	if _right_arm:
 		_right_arm.rotation = _right_arm_base_rot
+	# Reverse dissolve on respawn — reassemble from the digital afterlife
+	_trigger_rematerialize()
 
 func _anim_idle() -> void:
 	# Gentle hover-bob and cocky head tilt — the default state of arrogance
@@ -1050,6 +1110,11 @@ func die() -> void:
 	if dm:
 		var line = dm.get_narrator_line("player_death")
 		thought_bubble.emit(line)
+
+	# Dissolve into the void — 0.8s of dramatic disintegration before respawn kicks in
+	_trigger_dissolve()
+	# Wait for the dissolve to finish, then let the level handle respawn
+	await get_tree().create_timer(0.8).timeout
 
 	player_died.emit()
 

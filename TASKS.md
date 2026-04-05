@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 3.4 complete
-- **Last task completed:** Task 3.4 — Damage flash shader
-- **Next task to do:** Task 3.5 (Death dissolve effect)
-- **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 in progress — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes. All pre-existing warnings unchanged, zero new runtime errors.
+- **Last updated by:** Claude (2026-04-04) — Task 3.5 complete
+- **Last task completed:** Task 3.5 — Death dissolve effect
+- **Next task to do:** Task 4.1 (Create MultiMesh scatter utility — PASS 3 COMPLETE)
+- **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 in progress — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
 Upgrade visual quality from CSG placeholders to stylized indie-game-ship quality (~Death's Door / Tunic / Hi-Fi Rush tier). Hero assets (Globbler, bosses) built in Blender via blender-mcp. Environment via CC0 assets from Poly Haven / Sketchfab. Lighting + post-processing + VFX upgraded in Godot.
@@ -134,7 +134,7 @@ assets/
 - [x] Create `assets/shaders/damage_flash.gdshader` — white/red additive overlay triggered via shader parameter `flash_intensity`. In `health_component.gd`, on damage, tween `flash_intensity` from 1.0 to 0.0 over 0.15s on owner's mesh material. **Done: Created damage_flash.gdshader (spatial, blend_add, unshaded) — white-to-red lerp driven by flash_intensity uniform, 3x emission, 0.7 alpha. Wired into health_component.gd via _setup_damage_flash() (deferred, walks owner's MeshInstance3D tree, appends flash ShaderMaterial to each surface's next_pass tail) and _trigger_damage_flash() (tweens flash_intensity 1.0→0.0 over 0.15s). Also wired into globbler.gd take_damage() with same approach via _setup_damage_flash()/_collect_flash_materials()/_trigger_damage_flash(). Zero new runtime errors.**
 
 ### 3.5 Death dissolve effect
-- [ ] Create `assets/shaders/dissolve.gdshader` — vertical noise-based dissolve from bottom to top with glowing edge. In `globbler.gd` `die()`, tween dissolve threshold 0.0→1.0 over 0.8s before respawn. Reverse on respawn (1.0→0.0).
+- [x] Create `assets/shaders/dissolve.gdshader` — vertical noise-based dissolve from bottom to top with glowing edge. In `globbler.gd` `die()`, tween dissolve threshold 0.0→1.0 over 0.8s before respawn. Reverse on respawn (1.0→0.0). **Done: Created dissolve.gdshader (spatial, blend_mix) with 4-octave FBM noise blended with vertical height (height_bias=0.6) for organic bottom-to-top dissolve pattern. Glowing neon-green edge (edge_color=#39FF14, emission_strength=8.0, edge_width=0.06) with smoothstep falloff. Wired into globbler.gd via _setup_dissolve()/_collect_dissolve_materials() (appends to next_pass chain tail on all surfaces), _trigger_dissolve() (tweens dissolve_amount 0→1 over 0.8s), _trigger_rematerialize() (tweens 1→0 over 0.8s). die() now awaits 0.8s dissolve before emitting player_died. _reset_pose() calls _trigger_rematerialize() for respawn reverse effect. Zero new runtime errors.**
 
 ---
 
