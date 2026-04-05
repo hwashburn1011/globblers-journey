@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 5.3 — Lore doc collectibles data structure
-- **Next task to do:** Task 5.4 — Lore doc pickup scene
+- **Last task completed:** Task 5.4 — Lore doc pickup scene
+- **Next task to do:** Task 5.5 — Place 15 lore docs across chapters
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -188,7 +188,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Added `lore_docs_found: Dictionary` to GameManager (keys = string IDs, values = `{ "title": String, "body": String }`). Added `add_lore_doc(id, title, body)` (ignores duplicates, prints collection count out of 15), `has_found_lore_doc(id)` query, and `lore_doc_collected(id)` signal. Wired into SaveSystem: `save_data["lore_docs"]` added to default schema, `_collect_current_state()` deep-copies from GameManager, `apply_loaded_data()` restores on load. Save format is additive — no existing keys removed. Verified via Godot MCP — zero runtime errors.
 
 ### 5.4 Lore doc pickup scene
-- [ ] Create `scenes/pickups/lore_doc.tscn` + `.gd` — floating terminal-tablet mesh that pulses. On player overlap + E press, calls `add_lore_doc` with the pickup's exported id/title/body, plays pickup VFX, queue_frees.
+- [x] **DONE:** Created `scenes/pickups/lore_doc.tscn` + `lore_doc.gd` (Area3D). Features: flat box "tablet" mesh (dark body + green emissive screen overlay) that floats and spins. Emission pulses sinusoidally for pickup appeal. Player detection via body_entered/exited on sphere collision (radius 1.2). "[T] Read" Label3D prompt appears when player is in range (uses existing `interact` input action mapped to T key). On interact: calls `GameManager.add_lore_doc()` with exported `doc_id`/`doc_title`/`doc_body`, plays `token_pickup` SFX via AudioManager, spawns `token_sparkle.tscn` VFX, then queue_frees. Verified via Godot MCP — zero runtime errors.
 
 ### 5.5 Place 15 lore docs across chapters
 - [ ] Place 3 lore doc pickups per chapter in each level's `_ready()`. Write flavor text for each (Globbler voice). Use existing narrative (AGI, alignment, the Citadel, etc.). 15 total docs.
