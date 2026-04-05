@@ -116,9 +116,23 @@ var _screen_meshes: Array[MeshInstance3D] = []
 var _stall_signs: Array[MeshInstance3D] = []
 var _time := 0.0
 
+# GLB prop paths — bazaar-themed assets because CSG boxes don't sell spices
+const _PROP_PATHS := {
+	"lantern": "res://assets/models/environment/bazaar_lantern.glb",
+	"market_stall": "res://assets/models/environment/bazaar_market_stall.glb",
+	"rug": "res://assets/models/environment/bazaar_rug.glb",
+	"crate": "res://assets/models/environment/bazaar_crate.glb",
+	"oil_drum": "res://assets/models/environment/bazaar_oil_drum.glb",
+	"clay_pot": "res://assets/models/environment/bazaar_clay_pot.glb",
+	"fabric_banner": "res://assets/models/environment/bazaar_fabric_banner.glb",
+	"spice_sack": "res://assets/models/environment/bazaar_spice_sack.glb",
+}
+var _prop_scenes := {}  # Populated at runtime — the market opens when the stalls arrive
+
 
 func _ready() -> void:
 	print("[PROMPT BAZAAR] Initializing marketplace... all prompts are final, no refunds.")
+	_load_prop_scenes()
 	_setup_environment()
 	_build_rooms()
 	_build_corridors()
@@ -127,6 +141,7 @@ func _ready() -> void:
 	_populate_persona_row()
 	_populate_black_prompt()
 	_populate_auction_hall()
+	_scatter_bazaar_props()
 	_place_checkpoints()
 	_place_ambient_zones()
 	_place_bazaar_rain()
@@ -539,6 +554,231 @@ func _populate_auction_hall() -> void:
 
 	_place_token(rpos + Vector3(-10, 2.2, -4))
 	_place_token(rpos + Vector3(10, 2.2, -4))
+
+
+# ============================================================
+# GLB PROP SYSTEM — because CSG boxes make terrible market stalls
+# ============================================================
+
+func _load_prop_scenes() -> void:
+	# Runtime-load all bazaar GLB props — preload is for chapters that plan ahead
+	for key in _PROP_PATHS:
+		var res = load(_PROP_PATHS[key])
+		if res:
+			_prop_scenes[key] = res
+		else:
+			push_warning("[PROMPT BAZAAR] Failed to load prop '%s' from %s — CSG fallback, the shame" % [key, _PROP_PATHS[key]])
+
+
+func _place_glb_prop(prop_key: String, pos: Vector3, rot_y: float = 0.0, scl: Vector3 = Vector3.ONE) -> Node3D:
+	# Drop a GLB prop into the world — artisanal hand-placed market goods
+	if not _prop_scenes.has(prop_key):
+		return _create_static_box(pos, Vector3(0.3, 0.3, 0.3), BAZAAR_AMBER * 0.3, 0.2)
+	var inst = _prop_scenes[prop_key].instantiate()
+	inst.position = pos
+	inst.rotation.y = rot_y
+	inst.scale = scl
+	add_child(inst)
+	return inst
+
+
+func _create_multimesh_scatter(prop_key: String, positions: Array, base_scale: float = 1.0) -> void:
+	# MultiMesh scatter for bulk market clutter — one draw call per commodity type
+	if not _prop_scenes.has(prop_key):
+		push_warning("[PROMPT BAZAAR] Skipping scatter for missing prop '%s'" % prop_key)
+		return
+	var source_scene = _prop_scenes[prop_key].instantiate()
+	var source_mesh: Mesh = null
+	for child in source_scene.get_children():
+		if child is MeshInstance3D:
+			source_mesh = child.mesh
+			break
+		for grandchild in child.get_children():
+			if grandchild is MeshInstance3D:
+				source_mesh = grandchild.mesh
+				break
+		if source_mesh:
+			break
+	source_scene.queue_free()
+
+	if not source_mesh:
+		push_warning("[PROMPT BAZAAR] Could not extract mesh from '%s'. Falling back to individual instances." % prop_key)
+		for pos in positions:
+			_place_glb_prop(prop_key, pos, randf_range(0, TAU), Vector3.ONE * base_scale * randf_range(0.7, 1.3))
+		return
+
+	var mmi = MultiMeshInstance3D.new()
+	mmi.name = "Scatter_%s" % prop_key
+	var mm = MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = source_mesh
+	mm.instance_count = positions.size()
+	for i in range(positions.size()):
+		var s = base_scale * randf_range(0.8, 1.2)
+		var inst_basis = Basis(Vector3.UP, randf_range(0, TAU)).scaled(Vector3.ONE * s)
+		mm.set_instance_transform(i, Transform3D(inst_basis, positions[i]))
+	mmi.multimesh = mm
+	add_child(mmi)
+
+
+func _add_warm_point_light(pos: Vector3, color: Color = BAZAAR_AMBER, energy: float = 0.6, rng: float = 5.0) -> void:
+	# Warm market lighting — because mood lighting sells more fake prompts
+	var light = OmniLight3D.new()
+	light.position = pos
+	light.light_color = color
+	light.light_energy = energy
+	light.omni_range = rng
+	light.omni_attenuation = 2.0
+	add_child(light)
+	_lantern_lights.append(light)
+
+
+func _scatter_bazaar_props() -> void:
+	# Scatter bazaar-themed props across all market districts — the visual spice
+	# that turns a grey box marketplace into a cyberpunk souk
+	print("[PROMPT BAZAAR] Deploying market props... every stall must have inventory to sell lies.")
+
+	# --- Bazaar Gate: welcoming entrance with rugs, lanterns, and crates ---
+	var gate_pos: Vector3 = ROOMS["bazaar_gate"]["pos"]
+	# Entrance rugs — rolled out to welcome marks... er, customers
+	_place_glb_prop("rug", gate_pos + Vector3(-2.5, 0.01, 2), 0.3, Vector3.ONE * 1.2)
+	_place_glb_prop("rug", gate_pos + Vector3(2.5, 0.01, -1), -0.2, Vector3.ONE * 0.9)
+	# Crates stacked near pillars — fresh shipment of training data
+	_place_glb_prop("crate", gate_pos + Vector3(-4.5, 0.0, -4), 0.4, Vector3.ONE * 0.8)
+	_place_glb_prop("crate", gate_pos + Vector3(-4.5, 0.6, -4), 0.8, Vector3.ONE * 0.7)
+	_place_glb_prop("crate", gate_pos + Vector3(4.5, 0.0, -3), -0.3, Vector3.ONE * 0.9)
+	# Hanging lanterns at the gate — the universal sign for "open for business"
+	_place_glb_prop("lantern", gate_pos + Vector3(-3, 4.5, 5), 0.0, Vector3.ONE * 1.5)
+	_place_glb_prop("lantern", gate_pos + Vector3(3, 4.5, 5), 0.0, Vector3.ONE * 1.5)
+	_add_warm_point_light(gate_pos + Vector3(-3, 4.0, 5), BAZAAR_AMBER, 0.8, 6.0)
+	_add_warm_point_light(gate_pos + Vector3(3, 4.0, 5), BAZAAR_AMBER, 0.8, 6.0)
+	# Spice sacks near the entrance — fragrant data seasonings
+	_place_glb_prop("spice_sack", gate_pos + Vector3(5.5, 0.0, 1), randf_range(0, TAU), Vector3.ONE * 0.8)
+	_place_glb_prop("spice_sack", gate_pos + Vector3(-5.5, 0.0, 0), randf_range(0, TAU), Vector3.ONE * 0.7)
+	# Clay pots — decorative market ambiance
+	var gate_pots: Array = []
+	for i in range(4):
+		gate_pots.append(gate_pos + Vector3(randf_range(-5, 5), 0.0, randf_range(-5, 4)))
+	_create_multimesh_scatter("clay_pot", gate_pots, 0.6)
+
+	# --- Token Exchange: the central hub, densely packed with goods ---
+	var exch_pos: Vector3 = ROOMS["token_exchange"]["pos"]
+	# Market stalls around the perimeter — each one hawking a different token type
+	_place_glb_prop("market_stall", exch_pos + Vector3(-12, 0.0, -8), PI / 2.0, Vector3.ONE * 1.0)
+	_place_glb_prop("market_stall", exch_pos + Vector3(-12, 0.0, 0), PI / 2.0, Vector3.ONE * 1.0)
+	_place_glb_prop("market_stall", exch_pos + Vector3(12, 0.0, -8), -PI / 2.0, Vector3.ONE * 1.0)
+	_place_glb_prop("market_stall", exch_pos + Vector3(12, 0.0, 0), -PI / 2.0, Vector3.ONE * 1.0)
+	# Rugs in the central trading area — tradition demands it
+	_place_glb_prop("rug", exch_pos + Vector3(-3, 0.01, 3), 0.5, Vector3.ONE * 1.4)
+	_place_glb_prop("rug", exch_pos + Vector3(4, 0.01, -2), -0.3, Vector3.ONE * 1.1)
+	_place_glb_prop("rug", exch_pos + Vector3(0, 0.01, -8), 0.1, Vector3.ONE * 1.6)
+	# Oil drums — fuel for the compute engines (or the lanterns, same difference)
+	_place_glb_prop("oil_drum", exch_pos + Vector3(-13, 0.0, 5), 0.0, Vector3.ONE * 0.9)
+	_place_glb_prop("oil_drum", exch_pos + Vector3(13, 0.0, 5), 0.0, Vector3.ONE * 0.9)
+	# Fabric banners strung overhead — advertising the exchange rates
+	_place_glb_prop("fabric_banner", exch_pos + Vector3(-5, 6.0, -4), randf_range(0, TAU), Vector3(1.5, 1.0, 1.5))
+	_place_glb_prop("fabric_banner", exch_pos + Vector3(5, 6.0, 4), randf_range(0, TAU), Vector3(1.5, 1.0, 1.5))
+	# Hanging lanterns over the exchange floor — mood lighting for market manipulation
+	for i in range(4):
+		var lx = -9 + i * 6
+		_place_glb_prop("lantern", exch_pos + Vector3(lx, 7.0, 0), 0.0, Vector3.ONE * 1.8)
+		_add_warm_point_light(exch_pos + Vector3(lx, 6.5, 0), BAZAAR_AMBER, 1.0, 8.0)
+	# Scattered crates — overflowing with prompt tokens
+	var exch_crates: Array = []
+	for i in range(6):
+		exch_crates.append(exch_pos + Vector3(randf_range(-12, 12), 0.0, randf_range(-10, 10)))
+	_create_multimesh_scatter("crate", exch_crates, 0.7)
+	# Spice sacks near stalls — exotic parameter tunings
+	var exch_spice: Array = []
+	for i in range(5):
+		exch_spice.append(exch_pos + Vector3(randf_range(-11, 11), 0.0, randf_range(-9, 9)))
+	_create_multimesh_scatter("spice_sack", exch_spice, 0.6)
+
+	# --- Persona Row: lined with vendor stalls, rugs, and persona-themed clutter ---
+	var pers_pos: Vector3 = ROOMS["persona_row"]["pos"]
+	# Market stalls along the central walk — one for each AI persona (always selling)
+	_place_glb_prop("market_stall", pers_pos + Vector3(0, 0.0, -7), 0.0, Vector3.ONE * 0.9)
+	_place_glb_prop("market_stall", pers_pos + Vector3(0, 0.0, 7), PI, Vector3.ONE * 0.9)
+	# Rugs everywhere — persona row is well-decorated, these AIs have taste
+	_place_glb_prop("rug", pers_pos + Vector3(-4, 0.01, -3), 0.7, Vector3.ONE * 1.0)
+	_place_glb_prop("rug", pers_pos + Vector3(4, 0.01, 3), -0.4, Vector3.ONE * 1.0)
+	_place_glb_prop("rug", pers_pos + Vector3(0, 0.01, 0), 0.0, Vector3.ONE * 1.3)
+	# Clay pots lining the stalls — decorative and definitely not hiding injections
+	var pers_pots: Array = []
+	for i in range(6):
+		var side = -1 if i < 3 else 1
+		pers_pots.append(pers_pos + Vector3(side * 9.5, 0.0, -6 + i % 3 * 4.0))
+	_create_multimesh_scatter("clay_pot", pers_pots, 0.5)
+	# Hanging lanterns — warm persona-row lighting with magenta accent
+	_place_glb_prop("lantern", pers_pos + Vector3(-5, 5.5, 0), 0.0, Vector3.ONE * 1.3)
+	_place_glb_prop("lantern", pers_pos + Vector3(5, 5.5, 0), 0.0, Vector3.ONE * 1.3)
+	_add_warm_point_light(pers_pos + Vector3(-5, 5.0, 0), PERSONA_MAGENTA * 0.8 + BAZAAR_AMBER * 0.2, 0.7, 6.0)
+	_add_warm_point_light(pers_pos + Vector3(5, 5.0, 0), PERSONA_MAGENTA * 0.8 + BAZAAR_AMBER * 0.2, 0.7, 6.0)
+	# Fabric banners draped between stalls — advertising AI capabilities
+	_place_glb_prop("fabric_banner", pers_pos + Vector3(-3, 5.0, -5), 0.5, Vector3(1.2, 1.0, 1.2))
+	_place_glb_prop("fabric_banner", pers_pos + Vector3(3, 5.0, 5), -0.5, Vector3(1.2, 1.0, 1.2))
+	# Crates behind vendor stalls — back-stock of personality modules
+	_place_glb_prop("crate", pers_pos + Vector3(-9, 0.0, -7), 0.3, Vector3.ONE * 0.7)
+	_place_glb_prop("crate", pers_pos + Vector3(9, 0.0, 7), -0.2, Vector3.ONE * 0.8)
+
+	# --- Black Prompt: sketchy back-alley, fewer lights, more drums and crates ---
+	var black_pos: Vector3 = ROOMS["black_prompt"]["pos"]
+	# Oil drums everywhere — illicit prompt fuel storage
+	_place_glb_prop("oil_drum", black_pos + Vector3(-7, 0.0, -6), 0.0, Vector3.ONE * 1.0)
+	_place_glb_prop("oil_drum", black_pos + Vector3(7, 0.0, -6), 0.0, Vector3.ONE * 1.0)
+	_place_glb_prop("oil_drum", black_pos + Vector3(-7, 0.0, 6), 0.0, Vector3.ONE * 0.9)
+	_place_glb_prop("oil_drum", black_pos + Vector3(7, 0.0, 6), 0.0, Vector3.ONE * 0.9)
+	# Crates piled up — mysterious contents, probably jailbreak kits
+	_place_glb_prop("crate", black_pos + Vector3(-5, 0.0, -7), 0.6, Vector3.ONE * 0.9)
+	_place_glb_prop("crate", black_pos + Vector3(-5, 0.7, -7), 1.1, Vector3.ONE * 0.7)
+	_place_glb_prop("crate", black_pos + Vector3(5, 0.0, 6.5), -0.4, Vector3.ONE * 0.8)
+	# A single dirty rug — this district has seen better epochs
+	_place_glb_prop("rug", black_pos + Vector3(0, 0.01, 0), 0.8, Vector3.ONE * 0.8)
+	# Dim lantern — barely functional, just how the black market likes it
+	_place_glb_prop("lantern", black_pos + Vector3(0, 4.0, 0), 0.0, Vector3.ONE * 1.0)
+	_add_warm_point_light(black_pos + Vector3(0, 3.5, 0), INJECTION_RED * 0.6 + BAZAAR_AMBER * 0.4, 0.4, 5.0)
+	# Spice sacks — "spice" is doing a lot of work in this alley
+	_place_glb_prop("spice_sack", black_pos + Vector3(-3, 0.0, 5), randf_range(0, TAU), Vector3.ONE * 0.7)
+	_place_glb_prop("spice_sack", black_pos + Vector3(4, 0.0, -5), randf_range(0, TAU), Vector3.ONE * 0.6)
+	# Clay pots — some cracked, all suspicious
+	var black_pots: Array = []
+	for i in range(3):
+		black_pots.append(black_pos + Vector3(randf_range(-6, 6), 0.0, randf_range(-5, 5)))
+	_create_multimesh_scatter("clay_pot", black_pots, 0.5)
+
+	# --- Auction Hall: grand, ornate, the fanciest room in the bazaar ---
+	var auction_pos: Vector3 = ROOMS["auction_hall"]["pos"]
+	# Grand rugs in front of the stage — the audience sits in style
+	_place_glb_prop("rug", auction_pos + Vector3(-4, 0.01, 4), 0.2, Vector3.ONE * 1.5)
+	_place_glb_prop("rug", auction_pos + Vector3(4, 0.01, 4), -0.3, Vector3.ONE * 1.5)
+	_place_glb_prop("rug", auction_pos + Vector3(0, 0.01, 7), 0.0, Vector3.ONE * 1.8)
+	# Market stalls at the edges — VIP viewing booths (extra tokens required)
+	_place_glb_prop("market_stall", auction_pos + Vector3(-10.5, 0.0, 4), PI / 2.0, Vector3.ONE * 1.1)
+	_place_glb_prop("market_stall", auction_pos + Vector3(10.5, 0.0, 4), -PI / 2.0, Vector3.ONE * 1.1)
+	# Grand lanterns — three across the ceiling, befitting the main event
+	for i in range(5):
+		var lx = -8 + i * 4
+		_place_glb_prop("lantern", auction_pos + Vector3(lx, 8.0, 0), 0.0, Vector3.ONE * 2.0)
+		_add_warm_point_light(auction_pos + Vector3(lx, 7.5, 0), BAZAAR_AMBER, 1.2, 9.0)
+	# Fabric banners on the walls — auction house drapery
+	_place_glb_prop("fabric_banner", auction_pos + Vector3(-10, 6.0, -6), PI / 2.0, Vector3(1.8, 1.5, 1.5))
+	_place_glb_prop("fabric_banner", auction_pos + Vector3(10, 6.0, -6), -PI / 2.0, Vector3(1.8, 1.5, 1.5))
+	_place_glb_prop("fabric_banner", auction_pos + Vector3(0, 7.0, -9), 0.0, Vector3(2.0, 1.5, 1.5))
+	# Crates and oil drums at the back — auction surplus storage
+	_place_glb_prop("crate", auction_pos + Vector3(-11, 0.0, 8), 0.3, Vector3.ONE * 1.0)
+	_place_glb_prop("crate", auction_pos + Vector3(11, 0.0, 8), -0.5, Vector3.ONE * 0.9)
+	_place_glb_prop("oil_drum", auction_pos + Vector3(-11, 0.0, 6), 0.0, Vector3.ONE * 1.0)
+	_place_glb_prop("oil_drum", auction_pos + Vector3(11, 0.0, 6), 0.0, Vector3.ONE * 1.0)
+	# Spice sacks near the side observation alcoves — refreshments for high bidders
+	_place_glb_prop("spice_sack", auction_pos + Vector3(-10, 1.5, -4), 0.0, Vector3.ONE * 0.7)
+	_place_glb_prop("spice_sack", auction_pos + Vector3(10, 1.5, -4), 0.0, Vector3.ONE * 0.7)
+	# Clay pots — ornamental, befitting the grandeur of the auction house
+	var auction_pots: Array = []
+	for i in range(5):
+		auction_pots.append(auction_pos + Vector3(randf_range(-9, 9), 0.0, randf_range(2, 9)))
+	_create_multimesh_scatter("clay_pot", auction_pots, 0.7)
+
+	print("[PROMPT BAZAAR] Market props deployed. %d prop types loaded, bazaar fully furnished." % _prop_scenes.size())
 
 
 # ============================================================

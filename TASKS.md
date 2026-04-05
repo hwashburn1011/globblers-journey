@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 5.2 complete
-- **Last task completed:** Task 5.2 — Chapter 2 Training Grounds prop pass
-- **Next task to do:** Task 5.3 (Chapter 3 Prompt Bazaar — prop pass)
+- **Last updated by:** Claude (2026-04-04) — Task 5.3 complete
+- **Last task completed:** Task 5.3 — Chapter 3 Prompt Bazaar prop pass
+- **Next task to do:** Task 5.4 (Chapter 4 Model Zoo — prop pass)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 in progress — Ch1 and Ch2 prop passes done. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -171,7 +171,7 @@ assets/
 - [x] Same as 5.1 for `training_grounds.gd`. Use neural-network-themed scatter (nodes, wires). Cleaner than Chapter 1. **Done: Added GLB prop loading system to training_grounds.gd with 10 neural-network-themed props (server_rack, cable_bundle, floor_grate, industrial_panel, wall_terminal, motherboard, cpu_chip, ram_stick, keyboard, crt_monitor). Added _load_prop_scenes(), _place_glb_prop(), _create_multimesh_scatter(), and _scatter_neural_props() functions. Scattered props across all 5 rooms with neural-network theming: Input Layer (CPU chips as input features, keyboard at terminal, floor grates), Activation Chamber (RAM sticks as weight memory, motherboards as neural substrates, wall terminals + industrial panel for monitoring), Gradient Falls (cable bundles along descent steps, CPUs rolling downhill, server rack + CRT for loss tracking), Dropout Void (sparse RAM on surviving platforms, lone wall terminal, floor grate into the void), Loss Plaza (CRT monitors flanking loss display, server racks along back wall, keyboards at operator workstation, floor grates in ring, motherboards near convergence rings). Intentionally cleaner and more organized than Chapter 1's e-waste aesthetic. All 10 prop types loaded successfully. Zero new runtime errors.**
 
 ### 5.3 Chapter 3 Prompt Bazaar — prop pass
-- [ ] Same for `prompt_bazaar.gd`. Use bazaar/market props + lanterns + rugs. Add warm point lights.
+- [x] Same for `prompt_bazaar.gd`. Use bazaar/market props + lanterns + rugs. Add warm point lights. **Done: Added GLB prop loading system to prompt_bazaar.gd with all 8 bazaar-themed props (lantern, market_stall, rug, crate, oil_drum, clay_pot, fabric_banner, spice_sack). Added _load_prop_scenes(), _place_glb_prop(), _create_multimesh_scatter(), _add_warm_point_light(), and _scatter_bazaar_props() functions. Scattered props across all 5 market districts: Bazaar Gate (rugs, crates, lanterns with warm point lights, spice sacks, clay pots), Token Exchange (market stalls on perimeter, rugs in trading area, oil drums, fabric banners overhead, 4 hanging lanterns with amber point lights, scattered crates and spice sacks), Persona Row (market stalls, rugs lining walkways, clay pots along stalls, lanterns with magenta-amber blend lighting, fabric banners, crates behind vendors), Black Prompt (oil drums in corners for illicit storage, stacked crates, single dirty rug, dim red-amber lantern, spice sacks, cracked clay pots — intentionally sparse and sketchy), Auction Hall (grand rugs before the stage, VIP market stalls, 5 grand lanterns with bright amber point lights across ceiling, fabric banner drapery on walls, crates and oil drums in back, spice sacks on observation alcoves, ornamental clay pots). All 8 prop types loaded successfully. Zero new runtime errors.**
 
 ### 5.4 Chapter 4 Model Zoo — prop pass
 - [ ] Same for `model_zoo.gd`. Use museum props — plaques, velvet ropes, pedestals, dust sheets. Each exhibit alcove dressed.
