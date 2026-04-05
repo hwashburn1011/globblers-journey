@@ -25,15 +25,57 @@ func _ready() -> void:
 	respawn_position = position
 
 func _create_visual() -> void:
+	# Load the real GLB model — this zombie refuses to stay in CSG form
+	var glb_scene = load("res://assets/models/enemies/zombie_process.glb")
+	if glb_scene:
+		var model = glb_scene.instantiate()
+		model.name = "ZombieModel"
+		model.position.y = 0.0
+		model.scale = Vector3(1.5, 1.5, 1.5)  # Tanky boi needs presence
+		add_child(model)
+		# Find the first MeshInstance3D for base_enemy compatibility
+		mesh_node = _find_mesh_instance(model)
+		if mesh_node:
+			base_material = mesh_node.get_active_material(0) as StandardMaterial3D
+	else:
+		# CSG fallback — the zombie degrades to its most primitive form
+		_create_csg_fallback()
+
+	# Glowing "PID" label — even in death, it reports its process ID
+	var pid_label = Label3D.new()
+	pid_label.text = "PID:%d" % (randi() % 9999)
+	pid_label.font_size = 12
+	pid_label.modulate = Color(0.224, 1.0, 0.078, 0.7)
+	pid_label.position = Vector3(0, 1.3, 0.42)
+	pid_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(pid_label)
+
+	# Dim green glow — still consuming resources from beyond the grave
+	var light = OmniLight3D.new()
+	light.light_color = Color(0.3, 0.5, 0.2)
+	light.light_energy = 0.8
+	light.omni_range = 2.5
+	light.position.y = 0.7
+	add_child(light)
+
+func _find_mesh_instance(node: Node) -> MeshInstance3D:
+	# Recursively find first MeshInstance3D — like hunting for a zombie's last braincell
+	if node is MeshInstance3D:
+		return node
+	for child in node.get_children():
+		var found = _find_mesh_instance(child)
+		if found:
+			return found
+	return null
+
+func _create_csg_fallback() -> void:
+	# Original CSG box for when the GLB goes AWOL
 	mesh_node = MeshInstance3D.new()
 	mesh_node.name = "EnemyMesh"
 	mesh_node.position.y = 0.7
-
-	# Bulky box shape — tanky and square
 	var box = BoxMesh.new()
 	box.size = Vector3(1.0, 1.2, 0.8)
 	mesh_node.mesh = box
-
 	base_material = StandardMaterial3D.new()
 	base_material.albedo_color = Color(0.3, 0.5, 0.2)
 	base_material.emission_enabled = true
@@ -43,34 +85,6 @@ func _create_visual() -> void:
 	base_material.roughness = 0.7
 	mesh_node.material_override = base_material
 	add_child(mesh_node)
-
-	# "Zombie" decay marks — darker patches
-	var decay1 = MeshInstance3D.new()
-	var dec_box = BoxMesh.new()
-	dec_box.size = Vector3(0.3, 0.3, 0.01)
-	decay1.mesh = dec_box
-	decay1.position = Vector3(0.2, 0.3, 0.41)
-	var decay_mat = StandardMaterial3D.new()
-	decay_mat.albedo_color = Color(0.15, 0.25, 0.1)
-	decay1.material_override = decay_mat
-	mesh_node.add_child(decay1)
-
-	# Glowing "PID" label
-	var pid_label = Label3D.new()
-	pid_label.text = "PID:%d" % (randi() % 9999)
-	pid_label.font_size = 12
-	pid_label.modulate = Color(0.224, 1.0, 0.078, 0.7)
-	pid_label.position = Vector3(0, 0.7, 0.42)
-	pid_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	mesh_node.add_child(pid_label)
-
-	# Dim green glow
-	var light = OmniLight3D.new()
-	light.light_color = Color(0.3, 0.5, 0.2)
-	light.light_energy = 0.8
-	light.omni_range = 2.5
-	light.position.y = 0.7
-	add_child(light)
 
 func _on_died(killer: Node) -> void:
 	# Check if parent process exists — if so, schedule respawn
