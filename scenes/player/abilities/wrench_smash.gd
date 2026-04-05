@@ -22,6 +22,7 @@ var has_hit_this_swing := false
 # Visual
 var swing_particles: GPUParticles3D
 var hit_area: Area3D
+var _wrench_trail: MeshInstance3D
 
 # Impact sparks — because every good hit deserves a light show
 var _wrench_sparks_scene: PackedScene = preload("res://scenes/vfx/wrench_sparks.tscn")
@@ -41,6 +42,7 @@ signal switch_activated(switch_node: Node)
 func _ready() -> void:
 	_create_hit_area()
 	_create_swing_particles()
+	_create_wrench_trail()
 
 func setup(p: CharacterBody3D) -> void:
 	player = p
@@ -91,6 +93,13 @@ func _create_swing_particles() -> void:
 	swing_particles.position = Vector3(0, 0.8, -1.0)
 	add_child(swing_particles)
 
+func _create_wrench_trail() -> void:
+	var trail_script := preload("res://scenes/vfx/wrench_trail.gd")
+	_wrench_trail = MeshInstance3D.new()
+	_wrench_trail.set_script(trail_script)
+	_wrench_trail.name = "WrenchTrail"
+	add_child(_wrench_trail)
+
 func _process(delta: float) -> void:
 	if cooldown_timer > 0:
 		cooldown_timer -= delta
@@ -114,9 +123,18 @@ func _process(delta: float) -> void:
 			if wrench_head:
 				wrench_head.rotation.z = -swing_angle
 
+			# Feed trail points from wrench tip during swing
+			if _wrench_trail and wrench_head:
+				var base_pos: Vector3 = wrench_head.global_position
+				# Tip extends ~0.4m above the wrench head in local Y
+				var tip_pos: Vector3 = wrench_head.global_transform * Vector3(0, 0.4, 0)
+				_wrench_trail.add_point(base_pos, tip_pos)
+
 		if swing_timer <= 0:
 			is_swinging = false
 			hit_area.monitoring = false
+			if _wrench_trail:
+				_wrench_trail.stop_trail()
 			# Reset wrench position
 			if player:
 				var wrench_handle = player.get_node_or_null("GlobblerModel/WrenchHandle")
@@ -138,6 +156,11 @@ func swing() -> void:
 
 	# Spark particles
 	swing_particles.emitting = true
+
+	# Weapon trail ribbon (skip if reduce_motion)
+	var gm = get_node_or_null("/root/GameManager")
+	if _wrench_trail and not (gm and gm.get("reduce_motion")):
+		_wrench_trail.start_trail()
 
 	wrench_swung.emit()
 

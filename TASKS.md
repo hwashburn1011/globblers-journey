@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 13.3 complete
-- **Last task completed:** Task 13.3 — Interaction prompt UI. Created `scenes/ui/interaction_prompt.gd` + `.tscn` — CanvasLayer-based pulsing terminal-green "[KEY] ACTION" label (bottom-center screen). Wired into `terminal_hack.gd` (shows "[T] HACK" when nearby hackable detected via existing proximity scan) and `wrench_smash.gd` (shows "[F] SMASH" near switches via new throttled proximity scan at 3.0m range). Pulsing alpha animation respects reduce_motion. Terminal mono font, dark panel with green border. No new runtime errors.
-- **Next task to do:** Task 13.4 (Wrench weapon trail)
+- **Last updated by:** Claude (2026-04-05) — Task 13.4 complete
+- **Last task completed:** Task 13.4 — Wrench weapon trail. Created `scenes/vfx/wrench_trail.gd` (ImmediateMesh ribbon builder) + `assets/shaders/wrench_trail.gdshader` (emissive green additive blend, UV-based fade). Wired into `wrench_smash.gd`: trail starts on swing(), feeds base/tip positions from WrenchHead each frame, stops on swing end. 12-point ribbon, 0.15s lifetime. Respects reduce_motion. No new runtime errors.
+- **Next task to do:** Task 13.5 (Damage direction indicator)
 - **V2.0 MILESTONE SUMMARY (Passes 1–11):**
   - **Pass 1 — Lighting:** 5 Poly Haven HDRIs, 5 WorldEnvironment .tres resources, DirectionalLight3D tuning (4-split shadows, per-chapter color temp). All chapters have FILMIC tonemap, SSAO, SSIL, SDFGI, volumetric fog.
   - **Pass 2 — Globbler Hero:** Custom Blender-built chibi robot GLB (dark metal + neon green), tuned scale (1.4x), collision capsule (r=0.35, h=1.3), third-person camera (distance=6.0, pitch=-0.3, height=1.1m).
@@ -402,7 +402,7 @@ assets/
 - [x] Create `scenes/ui/interaction_prompt.gd` + `.tscn` — small label like "[T] HACK" or "[F] SMASH" that appears near interactable targets. Pulsing terminal-green, positioned above player. Wire into `terminal_hack.gd` and `wrench_smash.gd` proximity scans. **Done: Created interaction_prompt.gd + .tscn (CanvasLayer, bottom-center screen). Pulsing green label with dark panel + green border, terminal mono font. terminal_hack.gd shows "[T] HACK" on nearby hackable detection, hides when out of range or hacking. wrench_smash.gd adds throttled proximity scan (SCAN_INTERVAL=0.25s, SMASH_PROMPT_RANGE=3.0) for "switches" group, shows "[F] SMASH". Both use separate prompt instances. Respects reduce_motion. No new runtime errors.**
 
 ### 13.4 Wrench weapon trail
-- [ ] Add MeshInstance3D trail ribbon (or GPUTrail3D if available, else simple plane mesh with UV scroll) to wrench swing animation in `wrench_smash.gd`. Emissive green, 0.15s lifetime. Triggered on swing, removed on end.
+- [x] Add MeshInstance3D trail ribbon (or GPUTrail3D if available, else simple plane mesh with UV scroll) to wrench swing animation in `wrench_smash.gd`. Emissive green, 0.15s lifetime. Triggered on swing, removed on end. **Done: Created `scenes/vfx/wrench_trail.gd` (ImmediateMesh-based ribbon, 12 max points, 0.15s lifetime, triangle-strip quad mesh from base/tip position pairs) + `assets/shaders/wrench_trail.gdshader` (unshaded additive blend, emissive neon green #39FF14, UV-based length fade + width sine fade). Integrated into `wrench_smash.gd`: trail created in _ready(), started on swing(), fed wrench head base+tip positions each frame during swing, stopped on swing end. Respects reduce_motion via GameManager check. No new runtime errors.**
 
 ### 13.5 Damage direction indicator
 - [ ] Create `scenes/ui/damage_indicator.gd` + `.tscn` — red arrow/arc fades in at screen edge pointing toward the damage source. 0.8s fade. Wire into `health_component.gd` when owner is player group — pass damage source position.
