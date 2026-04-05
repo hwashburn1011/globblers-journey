@@ -9,17 +9,19 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 6.2 — Build final Windows export
-- **Next task to do:** Task 6.3 — Tag V2.1 release
-- **Known issues:**
-  - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
-  - **Title screen has obsolete ASCII Globbler that should be removed**
-  - ~~Text contrast problems across menus/HUD~~ **FIXED in Task 0.3**
-  - Duplicate `globbler.glb` at project root (3.4MB waste)
-  - `build_log_*.txt` files committed to repo
-  - AudioManager uses AudioStreamGenerator procedural synth — no real music/SFX
-  - Windows export build has never been verified to run standalone
-  - No end-to-end playtest since V2.0 graphics pass landed
+- **Last task completed:** Task 6.3 — Tag V2.1 release
+- **Next task to do:** ✅ ALL TASKS COMPLETE — V2.1 is shipped!
+- **Release summary:** V2.1 is release-ready. All 6 passes complete (32 tasks). Real CC0 audio (8 music tracks, 27 SFX), verified Windows export (200MB standalone), full chapter-by-chapter playtest (zero runtime errors), shipping extras (photo mode, speedrun timer, 15 lore docs, 10 achievements).
+- **All known issues resolved:**
+  - ~~CRITICAL: New Game → dark green blank screen~~ **FIXED in Task 0.1**
+  - ~~Title screen ASCII Globbler~~ **REMOVED in Task 0.2**
+  - ~~Text contrast problems~~ **FIXED in Tasks 0.3–0.4**
+  - ~~Duplicate globbler.glb~~ **CLEANED in Task 1.1**
+  - ~~build_log files committed~~ **FIXED in Task 1.2**
+  - ~~No real music/SFX~~ **DONE in Pass 2 (Tasks 2.1–2.16)**
+  - ~~Windows export never verified~~ **VERIFIED in Tasks 3.3–3.4, 6.2**
+  - ~~No end-to-end playtest~~ **DONE in Pass 4 (Tasks 4.1–4.8)**
+- **Remaining non-blocking noise:** ~35 pre-existing GDScript parse-time warnings (unused variables/parameters) across legacy scripts — not regressions, not runtime errors.
 
 ### GOAL OF THIS PASS
 Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, cleanup of known issues, and a full chapter-by-chapter playtest to catch regressions from the graphics overhaul. Optional: shipping extras (photo mode, speedrun timer, collectibles).
@@ -217,4 +219,4 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Ran `export_game.sh windows` with Godot 4.4.1 mono. First committed 35 untracked `.ogg.import` files (Godot's audio import cache needed for export). Export completed successfully — rcedit warnings only (not installed, cosmetic icon/metadata only, non-blocking). Output: `build/windows/GlobblersJourney.exe` (200MB, debug mode, embed_pck=true) + `GlobblersJourney.console.exe` (188KB console companion). Verified standalone launch from `/tmp`: Vulkan 1.4.312 Forward+ on NVIDIA RTX 3070, all 7 autoloads initialized, real `menu.ogg` music loaded and playing, save system loaded existing data, zero game-level errors. Only noise: standard Godot 4.4.x engine shutdown artifacts (Unreferenced static strings, RID leaks at exit — forced-quit cleanup, not game bugs). Build is verified runnable standalone with all V2.1 content (real audio, GLB models, shaders, achievements, lore docs).
 
 ### 6.3 Tag V2.1 release
-- [ ] Write summary at top of TASKS.md CURRENT STATUS. Commit any final changes. Note tag message "V2.1 — release-ready with real audio".
+- [x] **DONE:** Updated TASKS.md CURRENT STATUS with full release summary — all 32 tasks across 6 passes complete. Committed untracked .uid files (lore_doc, achievement_popup, lore_viewer). Tagged `v2.1.0` with message "V2.1 — release-ready with real audio, verified Windows export, full playtest, shipping extras".
