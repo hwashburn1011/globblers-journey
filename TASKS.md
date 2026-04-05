@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 1.2 complete
-- **Last task completed:** Task 1.2 — downloaded 5 Poly Haven HDRIs (1K .hdr) for all chapters
-- **Next task to do:** Task 1.3
-- **Known issues:** All gameplay is CSG placeholder geometry. No HDRIs. No PBR. No real character model. Lighting is default Godot. No post-processing tuning.
+- **Last updated by:** Claude (2026-04-04) — Task 1.3 complete
+- **Last task completed:** Task 1.3 — created base WorldEnvironment template resource
+- **Next task to do:** Task 1.4
+- **Known issues:** All gameplay is CSG placeholder geometry. No HDRIs applied yet. No PBR. No real character model. Lighting is default Godot. Post-processing template created but not yet applied to chapters.
 
 ### GOAL OF THIS PASS
 Upgrade visual quality from CSG placeholders to stylized indie-game-ship quality (~Death's Door / Tunic / Hi-Fi Rush tier). Hero assets (Globbler, bosses) built in Blender via blender-mcp. Environment via CC0 assets from Poly Haven / Sketchfab. Lighting + post-processing + VFX upgraded in Godot.
@@ -52,7 +52,7 @@ assets/
 - [x] Use `mcp__blender__search_polyhaven_assets` (asset_type="hdris") to find 5 suitable HDRIs: dark industrial/server room (Ch1), neutral studio (Ch2), warm market/bazaar (Ch3), abandoned museum (Ch4), clinical/office (Ch5). Download each 1K via `mcp__blender__download_polyhaven_asset`. Export .hdr from Blender to `assets/hdri/ch{n}_sky.hdr`. Record names+URLs in `assets/LICENSES.md`. **Done: Downloaded via Poly Haven API — empty_warehouse_01 (Ch1), blue_photo_studio (Ch2), carpentry_shop_02 (Ch3), abandoned_hall_01 (Ch4), blocky_photo_studio (Ch5). All 1K HDR, ~1.6MB each. LICENSES.md updated.**
 
 ### 1.3 Create base WorldEnvironment template resource
-- [ ] Create `assets/environments/base_env.tres` — Environment resource with: tonemap_mode=FILMIC, exposure=1.0, glow_enabled=true, glow_bloom=0.2, glow_hdr_threshold=1.0, ssao_enabled=true, ssao_radius=1.5, ssil_enabled=true, sdfgi_enabled=true, fog_enabled=true, fog_density=0.01, volumetric_fog_enabled=true. This is the template all chapters will extend.
+- [x] Create `assets/environments/base_env.tres` — Environment resource with: tonemap_mode=FILMIC, exposure=1.0, glow_enabled=true, glow_bloom=0.2, glow_hdr_threshold=1.0, ssao_enabled=true, ssao_radius=1.5, ssil_enabled=true, sdfgi_enabled=true, fog_enabled=true, fog_density=0.01, volumetric_fog_enabled=true. This is the template all chapters will extend. **Done: base_env.tres created with FILMIC tonemap, glow (bloom=0.2, HDR threshold=1.0), SSAO (radius=1.5), SSIL, SDFGI with occlusion, fog (density=0.01), and volumetric fog (density=0.02). Chapter-specific overrides will adjust sky, fog color, and density.**
 
 ### 1.4 Chapter 1 WorldEnvironment
 - [ ] Create `assets/environments/chapter_1.tres` from base. Load `ch1_sky.hdr` as sky texture, sky_energy=0.3 (dark), fog_light_color=Color(0.1,0.4,0.15), volumetric_fog_density=0.03, tint glow toward green. In `terminal_wastes.gd`, in `_ready()`, instantiate a WorldEnvironment node with environment=`preload("res://assets/environments/chapter_1.tres")` before CSG geometry builds. Remove any existing ad-hoc Environment setup. MCP screenshot via `get_viewport_screenshot` and compare.

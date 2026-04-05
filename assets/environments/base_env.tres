@@ -1,0 +1,49 @@
+[gd_resource type="Environment" format=3 uid="uid://base_env_template"]
+
+[resource]
+; ============================================================
+; Base WorldEnvironment template — all chapters inherit from this.
+; Because apparently Godot's default lighting is "programmer art"
+; and we're trying to be slightly less embarrassing than that.
+; ============================================================
+
+; --- Background (sky will be overridden per-chapter) ---
+background_mode = 2
+background_energy_multiplier = 1.0
+
+; --- Tonemap ---
+tonemap_mode = 3
+tonemap_exposure = 1.0
+
+; --- Glow (bloom) ---
+glow_enabled = true
+glow_intensity = 0.8
+glow_strength = 1.0
+glow_bloom = 0.2
+glow_hdr_threshold = 1.0
+glow_blend_mode = 0
+
+; --- SSAO (screen-space ambient occlusion, because corners deserve shadows too) ---
+ssao_enabled = true
+ssao_radius = 1.5
+ssao_intensity = 2.0
+
+; --- SSIL (screen-space indirect lighting) ---
+ssil_enabled = true
+ssil_radius = 5.0
+ssil_intensity = 1.0
+
+; --- SDFGI (signed distance field global illumination — the fancy one) ---
+sdfgi_enabled = true
+sdfgi_use_occlusion = true
+
+; --- Fog (base values, chapters will override density and color) ---
+fog_enabled = true
+fog_light_color = Color(0.5, 0.5, 0.5, 1)
+fog_density = 0.01
+
+; --- Volumetric Fog (the cinematic mist that makes everything look 10x better) ---
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.02
+volumetric_fog_albedo = Color(1, 1, 1, 1)
+volumetric_fog_emission = Color(0, 0, 0, 1)
