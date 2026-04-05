@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 4.3 complete
-- **Last task completed:** Task 4.3 — Build procedural electronic prop pack (8 models)
-- **Next task to do:** Task 4.4 (Download CC0 cyberpunk architecture props)
+- **Last updated by:** Claude (2026-04-04) — Task 4.4 complete
+- **Last task completed:** Task 4.4 — Build procedural cyberpunk architecture prop pack (8 models)
+- **Next task to do:** Task 4.5 (Download CC0 bazaar/market props)
 - **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 in progress — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
@@ -151,7 +151,7 @@ assets/
 - [x] Via Sketchfab MCP, search for CC0 "electronics", "motherboard", "CPU chip", "floppy disk", "keyboard". Download 5–8 models. Import to Blender, export individually as .glb to `assets/models/environment/prop_{name}.glb`. Record sources. **Done: Sketchfab integration disabled — built 8 procedural electronic props in Blender instead: prop_motherboard (280v, PCB with CPU socket/RAM slots/capacitors/ICs/copper traces/connectors), prop_cpu_chip (552v, ceramic package with heatspreader and gold pin grid), prop_floppy_disk (144v, 3.5" disk with metal slide/label/hub), prop_keyboard (624v, retro keyboard with 70+ keys and green accent keys), prop_ram_stick (464v, DDR DIMM with 16 memory chips and 40 gold contacts), prop_crt_monitor (208v, chunky CRT with emissive green screen/LED/vents), prop_hard_drive (104v, 3.5" HDD with SATA connectors and label), prop_power_supply (168v, PSU with fan grill/cables/warning label). All exported as GLB to assets/models/environment/. Source blend saved to assets/blender_source/electronic_props.blend. All attributions in LICENSES.md.**
 
 ### 4.4 Download CC0 cyberpunk architecture props
-- [ ] Same as 4.3 but "pipe", "cable", "industrial panel", "server rack", "neon sign". 5–8 models to `assets/models/environment/arch_{name}.glb`.
+- [x] Same as 4.3 but "pipe", "cable", "industrial panel", "server rack", "neon sign". 5–8 models to `assets/models/environment/arch_{name}.glb`. **Done: Sketchfab integration disabled — built 8 procedural cyberpunk architecture props in Blender instead: arch_industrial_pipe (432v, flanged pipe with bolts and rust band), arch_cable_bundle (296v, 5-cable cluster with zip-tie clamps), arch_industrial_panel (428v, wall panel with gauge/switches/LEDs/button/screen), arch_server_rack (592v, 2m tall rack with 6 server units/LEDs/vents), arch_neon_sign (168v, wall sign with green neon tubes and mounting brackets), arch_vent_duct (264v, rectangular duct with louver slats and rivets), arch_wall_terminal (364v, wall-mounted terminal with screen/keyboard/status lights), arch_floor_grate (232v, 1m² grid with cross-braces and corner bolts). All use 7 shared PBR materials (dark metal, panel metal, neon green emissive, cable rubber, rust accent, red LED, grate). Exported as GLB to assets/models/environment/. Source blend saved to assets/blender_source/architecture_props.blend. All attributions in LICENSES.md.**
 
 ### 4.5 Download CC0 bazaar/market props
 - [ ] Same but "lantern", "market stall", "rug", "crate", "oil drum" for Chapter 3 warm theme. 5–8 models.

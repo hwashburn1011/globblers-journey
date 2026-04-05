@@ -23,3 +23,11 @@ Only CC0 / CC-BY / royalty-free assets are permitted.
 | prop_crt_monitor (Model) | Procedural (Blender) | N/A | N/A | Environment prop — retro CRT monitor with green emissive screen |
 | prop_hard_drive (Model) | Procedural (Blender) | N/A | N/A | Environment prop — 3.5" HDD with SATA connectors and label |
 | prop_power_supply (Model) | Procedural (Blender) | N/A | N/A | Environment prop — PSU with fan grill, cables, and warning label |
+| arch_industrial_pipe (Model) | Procedural (Blender) | N/A | N/A | Architecture prop — industrial pipe with flanges, bolts, rust band |
+| arch_cable_bundle (Model) | Procedural (Blender) | N/A | N/A | Architecture prop — 5-cable bundle with zip-tie clamps |
+| arch_industrial_panel (Model) | Procedural (Blender) | N/A | N/A | Architecture prop — wall control panel with gauge, switches, LEDs, button |
+| arch_server_rack (Model) | Procedural (Blender) | N/A | N/A | Architecture prop — 19" server rack with 6 units, LEDs, ventilation |
+| arch_neon_sign (Model) | Procedural (Blender) | N/A | N/A | Architecture prop — wall neon sign with green glowing tubes and mounting brackets |
+| arch_vent_duct (Model) | Procedural (Blender) | N/A | N/A | Architecture prop — rectangular vent duct with louver slats and rivets |
+| arch_wall_terminal (Model) | Procedural (Blender) | N/A | N/A | Architecture prop — wall-mounted terminal with screen, keyboard, status lights |
+| arch_floor_grate (Model) | Procedural (Blender) | N/A | N/A | Architecture prop — 1m² floor grate with grid bars, cross-braces, corner bolts |
