@@ -45,6 +45,11 @@ var _terminal_states: Array[int] = [0, 0, 0]  # 0=cycling, 1=looping, 2=captured
 
 var glob_target_script := preload("res://scripts/components/glob_target.gd")
 
+# GLB props — museum-grade exhibit hardware
+var _display_case_scene := preload("res://assets/models/environment/museum_display_case.glb")
+var _pedestal_scene := preload("res://assets/models/environment/museum_pedestal.glb")
+var _door_scene := preload("res://assets/models/environment/arch_industrial_panel.glb")
+
 
 func _ready() -> void:
 	puzzle_name = "fossil_exhibit_%d" % puzzle_id
@@ -122,22 +127,23 @@ func _create_visual() -> void:
 	col.shape = shape
 	_door.add_child(col)
 
-	var mesh = MeshInstance3D.new()
-	var box = BoxMesh.new()
-	box.size = Vector3(4, 3, 0.3)
-	mesh.mesh = box
-	var mat = StandardMaterial3D.new()
-	mat.albedo_color = FOSSIL_DIM
-	mat.emission_enabled = true
-	mat.emission = FOSSIL_AMBER * 0.3
-	mat.emission_energy_multiplier = 0.5
-	mesh.material_override = mat
-	_door.add_child(mesh)
+	# GLB door panel instead of BoxMesh
+	var door_instance = _door_scene.instantiate()
+	door_instance.scale = Vector3(2.0, 1.5, 1.0)
+	var door_mat = StandardMaterial3D.new()
+	door_mat.albedo_color = FOSSIL_DIM
+	door_mat.emission_enabled = true
+	door_mat.emission = FOSSIL_AMBER * 0.3
+	door_mat.emission_energy_multiplier = 0.5
+	for child in door_instance.get_children():
+		if child is MeshInstance3D:
+			child.material_override = door_mat
+	_door.add_child(door_instance)
 	add_child(_door)
 
 
 func _create_terminal(idx: int, pos: Vector3) -> void:
-	# Terminal housing — the "fossil output station"
+	# Terminal housing — the "fossil output station" (museum display case GLB)
 	var terminal = StaticBody3D.new()
 	terminal.name = "FossilTerminal_%d" % idx
 	terminal.position = pos
@@ -148,17 +154,29 @@ func _create_terminal(idx: int, pos: Vector3) -> void:
 	t_col.shape = t_shape
 	terminal.add_child(t_col)
 
-	var t_mesh = MeshInstance3D.new()
-	var t_box = BoxMesh.new()
-	t_box.size = Vector3(2.0, 2.5, 1.0)
-	t_mesh.mesh = t_box
-	var t_mat = StandardMaterial3D.new()
-	t_mat.albedo_color = Color(0.08, 0.06, 0.03)
-	t_mat.emission_enabled = true
-	t_mat.emission = FOSSIL_AMBER * 0.2
-	t_mat.emission_energy_multiplier = 0.3
-	t_mesh.material_override = t_mat
-	terminal.add_child(t_mesh)
+	# GLB display case instead of BoxMesh
+	var case_instance = _display_case_scene.instantiate()
+	case_instance.scale = Vector3(1.6, 1.6, 1.6)
+	# Apply amber emission tint to all mesh children
+	for child in case_instance.get_children():
+		if child is MeshInstance3D:
+			var mat = StandardMaterial3D.new()
+			mat.albedo_color = Color(0.08, 0.06, 0.03)
+			mat.emission_enabled = true
+			mat.emission = FOSSIL_AMBER * 0.2
+			mat.emission_energy_multiplier = 0.3
+			child.material_override = mat
+	terminal.add_child(case_instance)
+
+	# Amber exhibit spotlight
+	var spot = OmniLight3D.new()
+	spot.light_color = FOSSIL_AMBER
+	spot.light_energy = 1.5
+	spot.omni_range = 4.0
+	spot.omni_attenuation = 1.5
+	spot.position = Vector3(0, 3.0, 0)
+	terminal.add_child(spot)
+
 	add_child(terminal)
 
 	# Output display label — shows the fossil's text output
@@ -182,13 +200,18 @@ func _create_terminal(idx: int, pos: Vector3) -> void:
 	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(status_label)
 
-	# Collector vessel — fills up when the loop is captured
+	# Collector vessel — museum pedestal GLB, fills up when loop is captured
+	var collector_base = _pedestal_scene.instantiate()
+	collector_base.name = "CollectorBase_%d" % idx
+	collector_base.scale = Vector3(0.8, 0.8, 0.8)
+	collector_base.position = pos + Vector3(0, 0, -1.5)
+	add_child(collector_base)
+
 	var collector = MeshInstance3D.new()
 	collector.name = "Collector_%d" % idx
-	var c_mesh = CylinderMesh.new()
-	c_mesh.top_radius = 0.4
-	c_mesh.bottom_radius = 0.5
-	c_mesh.height = 0.8
+	var c_mesh = SphereMesh.new()
+	c_mesh.radius = 0.25
+	c_mesh.height = 0.5
 	collector.mesh = c_mesh
 	var c_mat = StandardMaterial3D.new()
 	c_mat.albedo_color = COLLECTOR_EMPTY
@@ -198,7 +221,7 @@ func _create_terminal(idx: int, pos: Vector3) -> void:
 	c_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	c_mat.albedo_color.a = 0.7
 	collector.material_override = c_mat
-	collector.position = pos + Vector3(0, 0.4, -1.5)
+	collector.position = pos + Vector3(0, 1.05, -1.5)
 	add_child(collector)
 
 	# GlobTarget on collector — only active during loop state

@@ -51,6 +51,10 @@ var _debuff_timer := 0.0
 var glob_target_script := preload("res://scripts/components/glob_target.gd")
 var hackable_script: GDScript
 
+# GLB props — museum help desk furniture
+var _kiosk_scene := preload("res://assets/models/environment/museum_kiosk.glb")
+var _door_scene := preload("res://assets/models/environment/arch_industrial_panel.glb")
+
 
 func _ready() -> void:
 	puzzle_name = "clippy_help_%d" % puzzle_id
@@ -127,22 +131,23 @@ func _create_visual() -> void:
 	col.shape = shape
 	_door.add_child(col)
 
-	var mesh = MeshInstance3D.new()
-	var box = BoxMesh.new()
-	box.size = Vector3(4, 3, 0.3)
-	mesh.mesh = box
-	var mat = StandardMaterial3D.new()
-	mat.albedo_color = CLIPPY_DIM
-	mat.emission_enabled = true
-	mat.emission = CLIPPY_BLUE * 0.3
-	mat.emission_energy_multiplier = 0.5
-	mesh.material_override = mat
-	_door.add_child(mesh)
+	# GLB door panel
+	var door_instance = _door_scene.instantiate()
+	door_instance.scale = Vector3(2.0, 1.5, 1.0)
+	var door_mat = StandardMaterial3D.new()
+	door_mat.albedo_color = CLIPPY_DIM
+	door_mat.emission_enabled = true
+	door_mat.emission = CLIPPY_BLUE * 0.3
+	door_mat.emission_energy_multiplier = 0.5
+	for child in door_instance.get_children():
+		if child is MeshInstance3D:
+			child.material_override = door_mat
+	_door.add_child(door_instance)
 	add_child(_door)
 
 
 func _create_help_desk(idx: int, pos: Vector3) -> void:
-	# --- The desk body ---
+	# --- The desk body — museum kiosk GLB ---
 	var desk = StaticBody3D.new()
 	desk.name = "HelpDesk_%d" % idx
 	desk.position = pos
@@ -153,25 +158,25 @@ func _create_help_desk(idx: int, pos: Vector3) -> void:
 	d_col.shape = d_shape
 	desk.add_child(d_col)
 
-	# Desk surface
-	var d_mesh = MeshInstance3D.new()
-	var d_box = BoxMesh.new()
-	d_box.size = Vector3(3.0, 1.2, 1.5)
-	d_mesh.mesh = d_box
-	var d_mat = StandardMaterial3D.new()
-	d_mat.albedo_color = Color(0.25, 0.25, 0.3)
-	d_mat.emission_enabled = true
-	d_mat.emission = CLIPPY_BLUE * 0.1
-	d_mat.emission_energy_multiplier = 0.3
-	d_mesh.material_override = d_mat
-	desk.add_child(d_mesh)
+	# Kiosk GLB instead of BoxMesh desk
+	var kiosk = _kiosk_scene.instantiate()
+	kiosk.scale = Vector3(1.8, 1.2, 1.5)
+	var desk_mat = StandardMaterial3D.new()
+	desk_mat.albedo_color = Color(0.25, 0.25, 0.3)
+	desk_mat.emission_enabled = true
+	desk_mat.emission = CLIPPY_BLUE * 0.1
+	desk_mat.emission_energy_multiplier = 0.3
+	for child in kiosk.get_children():
+		if child is MeshInstance3D:
+			child.material_override = desk_mat
+	desk.add_child(kiosk)
 	add_child(desk)
 
-	# Monitor on desk — shows Clippy's "helpful" tip
+	# Monitor — integrated into kiosk but keep label anchor
 	var monitor = MeshInstance3D.new()
 	monitor.name = "Monitor_%d" % idx
 	var m_box = BoxMesh.new()
-	m_box.size = Vector3(1.5, 1.2, 0.1)
+	m_box.size = Vector3(1.5, 1.2, 0.05)
 	monitor.mesh = m_box
 	var m_mat = StandardMaterial3D.new()
 	m_mat.albedo_color = Color(0.02, 0.02, 0.06)
@@ -179,7 +184,7 @@ func _create_help_desk(idx: int, pos: Vector3) -> void:
 	m_mat.emission = CLIPPY_BLUE * 0.5
 	m_mat.emission_energy_multiplier = 0.8
 	monitor.material_override = m_mat
-	monitor.position = pos + Vector3(0, 1.8, 0)
+	monitor.position = pos + Vector3(0, 1.8, -0.4)
 	add_child(monitor)
 
 	# Screen text
@@ -260,6 +265,7 @@ func _create_help_desk(idx: int, pos: Vector3) -> void:
 	h_col.shape = h_shape
 	hack_terminal.add_child(h_col)
 
+	# Small glowing terminal box with green emission
 	var h_mesh = MeshInstance3D.new()
 	var h_box = BoxMesh.new()
 	h_box.size = Vector3(0.8, 0.5, 0.5)
@@ -271,6 +277,15 @@ func _create_help_desk(idx: int, pos: Vector3) -> void:
 	h_mat.emission_energy_multiplier = 0.5
 	h_mesh.material_override = h_mat
 	hack_terminal.add_child(h_mesh)
+
+	# Accent light on hack terminal
+	var hack_light = OmniLight3D.new()
+	hack_light.light_color = Color(0.224, 1.0, 0.078)
+	hack_light.light_energy = 0.5
+	hack_light.omni_range = 2.0
+	hack_light.position = Vector3(0, 0.5, 0)
+	hack_terminal.add_child(hack_light)
+
 	add_child(hack_terminal)
 
 	# Timer display — shows shield recharge countdown when popped

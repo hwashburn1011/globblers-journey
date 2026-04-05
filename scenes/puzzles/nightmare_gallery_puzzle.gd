@@ -47,6 +47,10 @@ var _pedestal_states: Array[int] = [0, 0, 0]  # 0=empty, 1=filled
 
 var glob_target_script := preload("res://scripts/components/glob_target.gd")
 
+# GLB props — museum gallery hardware
+var _pedestal_scene := preload("res://assets/models/environment/museum_pedestal.glb")
+var _door_scene := preload("res://assets/models/environment/arch_industrial_panel.glb")
+
 
 func _ready() -> void:
 	puzzle_name = "nightmare_gallery_%d" % puzzle_id
@@ -111,17 +115,18 @@ func _create_visual() -> void:
 	col.shape = shape
 	_door.add_child(col)
 
-	var mesh = MeshInstance3D.new()
-	var box = BoxMesh.new()
-	box.size = Vector3(4, 3, 0.3)
-	mesh.mesh = box
-	var mat = StandardMaterial3D.new()
-	mat.albedo_color = NIGHTMARE_DIM
-	mat.emission_enabled = true
-	mat.emission = NIGHTMARE_PURPLE * 0.3
-	mat.emission_energy_multiplier = 0.5
-	mesh.material_override = mat
-	_door.add_child(mesh)
+	# GLB door panel
+	var door_instance = _door_scene.instantiate()
+	door_instance.scale = Vector3(2.0, 1.5, 1.0)
+	var door_mat = StandardMaterial3D.new()
+	door_mat.albedo_color = NIGHTMARE_DIM
+	door_mat.emission_enabled = true
+	door_mat.emission = NIGHTMARE_PURPLE * 0.3
+	door_mat.emission_energy_multiplier = 0.5
+	for child in door_instance.get_children():
+		if child is MeshInstance3D:
+			child.material_override = door_mat
+	_door.add_child(door_instance)
 	add_child(_door)
 
 
@@ -185,7 +190,7 @@ func _create_painting_and_pedestal(idx: int, pos: Vector3) -> void:
 	gt_node.set("tags", ["nightmare", "painting", "dalle"] as Array[String])
 	frame.add_child(gt_node)
 
-	# --- The Pedestal (collection point) ---
+	# --- The Pedestal (collection point) — museum pedestal GLB ---
 	var pedestal = StaticBody3D.new()
 	pedestal.name = "Pedestal_%d" % idx
 	pedestal.position = pos + Vector3(0, 0, -2.0)
@@ -197,19 +202,18 @@ func _create_painting_and_pedestal(idx: int, pos: Vector3) -> void:
 	p_col.shape = p_shape
 	pedestal.add_child(p_col)
 
-	var p_mesh = MeshInstance3D.new()
-	var cyl = CylinderMesh.new()
-	cyl.top_radius = 0.6
-	cyl.bottom_radius = 0.7
-	cyl.height = 1.0
-	p_mesh.mesh = cyl
+	var ped_instance = _pedestal_scene.instantiate()
+	ped_instance.scale = Vector3(1.0, 1.0, 1.0)
+	# Tint pedestal with form-specific emission
 	var p_mat = StandardMaterial3D.new()
 	p_mat.albedo_color = Color(0.1, 0.08, 0.12)
 	p_mat.emission_enabled = true
 	p_mat.emission = FORM_COLORS[idx] * 0.3
 	p_mat.emission_energy_multiplier = 0.5
-	p_mesh.material_override = p_mat
-	pedestal.add_child(p_mesh)
+	for child in ped_instance.get_children():
+		if child is MeshInstance3D:
+			child.material_override = p_mat
+	pedestal.add_child(ped_instance)
 	add_child(pedestal)
 
 	# Pedestal label showing what it accepts
@@ -239,7 +243,7 @@ func _create_painting_and_pedestal(idx: int, pos: Vector3) -> void:
 		"form_label": form_label,
 		"glob_target": gt_node,
 		"pedestal": pedestal,
-		"pedestal_mesh": p_mesh,
+		"pedestal_glb": ped_instance,
 	})
 
 
@@ -320,13 +324,15 @@ func _fill_pedestal(idx: int) -> void:
 	_pedestal_states[idx] = 1
 	_pedestals_filled += 1
 
-	# Light up the pedestal
-	var p_mesh = _paintings[idx]["pedestal_mesh"] as MeshInstance3D
-	if p_mesh and p_mesh.material_override:
-		var mat = p_mesh.material_override as StandardMaterial3D
-		mat.albedo_color = Color(0.224, 1.0, 0.078)
-		mat.emission = Color(0.224, 1.0, 0.078)
-		mat.emission_energy_multiplier = 2.0
+	# Light up the pedestal — update all mesh overrides in the GLB instance
+	var ped_glb = _paintings[idx]["pedestal_glb"]
+	if ped_glb:
+		for child in ped_glb.get_children():
+			if child is MeshInstance3D and child.material_override:
+				var mat = child.material_override as StandardMaterial3D
+				mat.albedo_color = Color(0.224, 1.0, 0.078)
+				mat.emission = Color(0.224, 1.0, 0.078)
+				mat.emission_energy_multiplier = 2.0
 
 	# Lock the painting in its matched form — stop it from morphing
 	var canvas = _paintings[idx]["canvas"] as MeshInstance3D
@@ -416,13 +422,15 @@ func _on_reset() -> void:
 			gt.file_type = FORM_CYCLE[form_idx]
 			gt.set_highlighted(false)
 
-		# Reset pedestal
-		var p_mesh = _paintings[i]["pedestal_mesh"] as MeshInstance3D
-		if p_mesh and p_mesh.material_override:
-			var mat = p_mesh.material_override as StandardMaterial3D
-			mat.albedo_color = Color(0.1, 0.08, 0.12)
-			mat.emission = FORM_COLORS[i] * 0.3
-			mat.emission_energy_multiplier = 0.5
+		# Reset pedestal GLB materials
+		var ped_glb = _paintings[i]["pedestal_glb"]
+		if ped_glb:
+			for child in ped_glb.get_children():
+				if child is MeshInstance3D and child.material_override:
+					var mat = child.material_override as StandardMaterial3D
+					mat.albedo_color = Color(0.1, 0.08, 0.12)
+					mat.emission = FORM_COLORS[i] * 0.3
+					mat.emission_energy_multiplier = 0.5
 
 	var progress = get_node_or_null("ProgressLabel")
 	if progress:

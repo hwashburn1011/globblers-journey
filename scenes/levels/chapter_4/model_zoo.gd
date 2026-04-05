@@ -135,6 +135,9 @@ const _PROP_PATHS := {
 	"office_chair": "res://assets/models/environment/clinical_office_chair.glb",
 	"office_monitor": "res://assets/models/environment/clinical_office_monitor.glb",
 	"office_desk": "res://assets/models/environment/clinical_office_desk.glb",
+	"display_case": "res://assets/models/environment/museum_display_case.glb",
+	"pedestal": "res://assets/models/environment/museum_pedestal.glb",
+	"kiosk": "res://assets/models/environment/museum_kiosk.glb",
 }
 var _prop_scenes := {}  # Runtime-loaded GLB PackedScenes
 
@@ -696,22 +699,25 @@ func _create_exhibit_spotlight(pos: Vector3) -> void:
 
 
 func _create_exhibit_case(pos: Vector3, size: Vector3, title: String) -> void:
-	# Glass-like display case — semi-transparent walls around an exhibit
-	# Base platform
-	_create_static_box(pos + Vector3(0, 0.15, 0), Vector3(size.x + 0.5, 0.3, size.z + 0.5), PLAQUE_BROWN, 0.4)
+	# Museum display case GLB — glass box on pedestal with brass plaque
+	var scale_x = size.x / 1.2  # base case is ~1.2m wide
+	var scale_y = size.y / 1.9  # base case is ~1.9m tall
+	var scale_z = size.z / 0.8  # base case is ~0.8m deep
+	var case_inst = _place_glb_prop("display_case", pos, 0.0, Vector3(scale_x, scale_y, scale_z))
 
-	# Glass walls — thin, slightly emissive to suggest transparency
-	var glass_color = Color(0.15, 0.2, 0.25, 0.3)
-	var glass_h = size.y
-	var hx = size.x / 2.0
-	var hz = size.z / 2.0
-	# Use mesh-only (no collision) so player can see through but not walk through
-	_create_static_box(pos + Vector3(0, glass_h / 2.0 + 0.3, -hz), Vector3(size.x, glass_h, 0.08), glass_color, 0.6)
-	_create_static_box(pos + Vector3(0, glass_h / 2.0 + 0.3, hz), Vector3(size.x, glass_h, 0.08), glass_color, 0.6)
-	_create_static_box(pos + Vector3(-hx, glass_h / 2.0 + 0.3, 0), Vector3(0.08, glass_h, size.z), glass_color, 0.6)
-	_create_static_box(pos + Vector3(hx, glass_h / 2.0 + 0.3, 0), Vector3(0.08, glass_h, size.z), glass_color, 0.6)
+	# Amber emission tint
+	if case_inst:
+		for child in case_inst.get_children():
+			if child is MeshInstance3D:
+				var mat = StandardMaterial3D.new()
+				mat.albedo_color = PLAQUE_BROWN * 0.5
+				mat.emission_enabled = true
+				mat.emission = FOSSIL_AMBER * 0.2
+				mat.emission_energy_multiplier = 0.4
+				child.material_override = mat
 
 	# Title plaque
+	var hz = size.z / 2.0
 	var label = Label3D.new()
 	label.text = title
 	label.font_size = 14
