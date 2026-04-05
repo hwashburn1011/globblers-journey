@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 0.1 — Fixed New Game dark green blank screen
-- **Next task to do:** Task 0.2 — Remove ASCII Globbler from title screen
+- **Last task completed:** Task 0.2 — Removed ASCII Globbler from title screen
+- **Next task to do:** Task 0.3 — Text contrast audit — global pass
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -40,7 +40,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **FIXED:** Two root causes: (1) `ReflectionProbe3D` is not a valid Godot 4.4.1 class (correct name: `ReflectionProbe`) — caused parser error in main_level.gd and all 5 chapter scripts, preventing scene load entirely. (2) CRT curvature shader used deprecated `SCREEN_TEXTURE` builtin — added `uniform sampler2D SCREEN_TEXTURE : hint_screen_texture, filter_linear_mipmap;` declaration. Fixed in: scripts/main_level.gd, all 5 chapter level .gd files, assets/shaders/crt_curvature.gdshader. Verified: level now loads with player, camera, and HUD active, zero new runtime errors. Investigate in this order: (a) Godot MCP run_project, launch game, click New Game, capture debug output. (b) Check whether `scenes/ui/chapter_transition.tscn` (Task 15.6) fade-out is getting stuck — its ColorRect may never queue_free / tween back to alpha 0. (c) Check whether `crt_curvature` whole-screen post shader (Task 15.5) is rendering full-green when no main camera is active. (d) Check whether Chapter 1 scene actually loads — `scenes/levels/chapter_1/terminal_wastes.tscn` root node + camera/player spawn. (e) Check main_menu.gd new-game handler uses correct `change_scene_to_file` path. Fix whichever is broken. Re-test end to end — new game must land on playable Chapter 1 spawn with player visible and camera active.
 
 ### 0.2 Remove ASCII Globbler from title screen
-- [ ] In `scenes/main/main_menu.gd` / `main_menu.tscn`, find the ASCII-art Globbler character block and delete it (now that we have a real GLB model, the ASCII art is obsolete). KEEP the glitchy "GLOBBLER'S JOURNEY" title text and its glitch shader — that works well. The 3D main menu background from Task 9.5 may replace the ASCII visual.
+- [x] **DONE:** Removed `GLOBBLER_ASCII` constant (14-line art block) and its Label creation from `_build_ui()` in `scenes/main/main_menu.gd`. Glitchy title text, 3D background, and all other menu elements preserved. Verified via Godot MCP — menu loads with zero errors.
 
 ### 0.3 Text contrast audit — global pass
 - [ ] Audit all visible text against its background for clashing tones (most common problem: green text on green, dark text on dark). Check: main menu, pause menu, game over, settings, HUD labels, dialogue box, dialogue history, chapter summary, tutorial hints, achievement popups, credits, loading screen. For each instance found, adjust either the text color OR add a dark drop-shadow/outline to force ≥4.5:1 contrast ratio. Prefer outlines over color changes to preserve the terminal-green aesthetic. Document which screens were touched in the checkbox note.

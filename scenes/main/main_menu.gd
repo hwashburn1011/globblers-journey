@@ -42,21 +42,6 @@ var _dialogue_speed_slider: HSlider
 var _mouse_sens_slider: HSlider
 var _invert_y_check: CheckBox
 
-# ASCII Globbler — because 3D models in menus are for people with budgets
-const GLOBBLER_ASCII := """
-        ╔══════════╗
-       ║  ◉    ◉  ║
-       ║  GLOBBLER ║
-       ╠══════════╣
-       ║ ┌──────┐ ║
-       ║ │glob *│ ║
-       ║ └──────┘ ║
-       ╚═╦══════╦═╝
-         ║ ▓▓▓▓ ║
-        ╔╩══════╩╗
-        ║ [WRENCH]║
-        ╚════════╝
-"""
 
 func _ready() -> void:
 	# Don't let AudioManager auto-play level music — we're in menu land
@@ -297,14 +282,6 @@ func _build_ui() -> void:
 	_main_panel.alignment = BoxContainer.ALIGNMENT_CENTER
 	_main_panel.add_theme_constant_override("separation", 8)
 	add_child(_main_panel)
-
-	# ASCII art Globbler
-	var ascii_label = Label.new()
-	ascii_label.text = GLOBBLER_ASCII
-	ascii_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	ascii_label.add_theme_color_override("font_color", GREEN)
-	ascii_label.add_theme_font_size_override("font_size", 14)
-	_main_panel.add_child(ascii_label)
 
 	# Title
 	_title_label = Label.new()
