@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.1 complete
-- **Last task completed:** Task 2.1 — Set up Globbler Blender scene
-- **Next task to do:** Task 2.2
+- **Last updated by:** Claude (2026-04-04) — Task 2.2 complete
+- **Last task completed:** Task 2.2 — Sculpt Globbler body (stubby torso + head)
+- **Next task to do:** Task 2.3
 - **Known issues:** All gameplay is CSG placeholder geometry. No PBR. No real character model. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is in progress.
 
 ### GOAL OF THIS PASS
@@ -84,7 +84,7 @@ assets/
 - [x] Via `mcp__blender__execute_blender_code`: clear default scene, set units to meters, add a 1.2m reference cube at origin for scale, set viewport shading to Material Preview. Save file as `assets/blender_source/globbler.blend`. Take viewport screenshot. **Done: Cleared defaults, set metric units (meters), added 1.2m wireframe reference cube at origin + dark ground plane, set viewport to Material Preview. Saved globbler.blend to assets/blender_source/.**
 
 ### 2.2 Sculpt Globbler body (stubby torso + head)
-- [ ] Via `execute_blender_code`: create rounded torso with subdivided UV sphere scaled (1.0, 1.0, 0.85), add slight downward taper. Add integrated head-hood (another squashed sphere blended at top). Target dimensions: ~0.9m tall total, stubby proportions matching reference. Apply Subdivision Surface (level 2). Screenshot and compare to `C:/Users/hwash/Desktop/globbler.jpg`.
+- [x] Via `execute_blender_code`: create rounded torso with subdivided UV sphere scaled (1.0, 1.0, 0.85), add slight downward taper. Add integrated head-hood (another squashed sphere blended at top). Target dimensions: ~0.9m tall total, stubby proportions matching reference. Apply Subdivision Surface (level 2). Screenshot and compare to `C:/Users/hwash/Desktop/globbler.jpg`. **Done: Built single UV sphere (32 seg, 24 rings) with vertex-level sculpting — top half expanded 1.3x for large chibi hood-dome, subtle waist pinch at mid-section, stocky torso below, tapered bottom for boot attachment. Front visor overhang pushed forward. Wider side-to-side than front-to-back. SubSurf level 2 + smooth shading. Final body height: 0.645m (bottom at 0.15m, top at 0.84m), with boots will reach ~0.9m target. Saved to assets/blender_source/globbler.blend.**
 
 ### 2.3 Carve face cavity + glowing eye sockets
 - [ ] Via `execute_blender_code`: boolean-subtract a flat rectangular recess for the face area. Add two large oval eye sockets (triangular-angry shape). These sockets will get emissive material in 2.9. Screenshot.
