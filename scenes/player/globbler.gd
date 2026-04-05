@@ -295,6 +295,7 @@ func _build_glb_model() -> void:
 		# get their own shaders later, they don't need extra protagonist energy
 		_apply_rim_shader(glb_instance)
 		_apply_eye_pulse_shader(glb_instance)
+		_apply_crt_screen_shader(glb_instance)
 	else:
 		push_warning("[GLOBBLER] Failed to load GLB model — falling back to existential crisis")
 
@@ -370,6 +371,33 @@ func _apply_eye_pulse_shader(glb_root: Node) -> void:
 				child.set_surface_override_material(1, eye_mat)
 		if child.get_child_count() > 0:
 			_apply_eye_pulse_shader(child)
+
+func _apply_crt_screen_shader(glb_root: Node) -> void:
+	# Override chest terminal material (surface 2) with a CRT scanline shader —
+	# because our torso display deserves the full retro treatment, scanlines and all
+	var crt_shader := preload("res://assets/shaders/crt_screen.gdshader")
+	var crt_mat := ShaderMaterial.new()
+	crt_mat.shader = crt_shader
+	crt_mat.set_shader_parameter("screen_color", Color(0.2, 0.9, 0.2, 1.0))
+	crt_mat.set_shader_parameter("emission_strength", 3.0)
+	crt_mat.set_shader_parameter("scanline_count", 80.0)
+	crt_mat.set_shader_parameter("scanline_intensity", 0.3)
+	crt_mat.set_shader_parameter("scanline_speed", 0.5)
+	crt_mat.set_shader_parameter("chromatic_offset", 0.005)
+	crt_mat.set_shader_parameter("static_amount", 0.05)
+	crt_mat.set_shader_parameter("static_speed", 30.0)
+	# Reduce-motion: kill the animation, keep the glow steady — accessibility matters
+	# even for fictional chest-mounted CRTs from the future
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		crt_mat.set_shader_parameter("animate", false)
+	for child in glb_root.get_children():
+		if child is MeshInstance3D:
+			# Surface 2 is the chest screen material — replace with CRT scanline goodness
+			if child.mesh and child.mesh.get_surface_count() > 2:
+				child.set_surface_override_material(2, crt_mat)
+		if child.get_child_count() > 0:
+			_apply_crt_screen_shader(child)
 
 func _setup_camera() -> void:
 	camera_arm = Node3D.new()
