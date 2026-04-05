@@ -113,20 +113,31 @@ func _ready() -> void:
 # ============================================================
 
 func _setup_environment() -> void:
-	# Dim directional light — the sun died here long ago
+	# Main light — low warm-green rim, because post-apocalyptic CRT wastelands
+	# don't deserve proper sunlight
 	var dir_light = DirectionalLight3D.new()
 	dir_light.name = "MainLight"
-	dir_light.rotation = Vector3(deg_to_rad(-40), deg_to_rad(20), 0)
-	dir_light.light_color = Color(0.35, 0.6, 0.4)
-	dir_light.light_energy = 0.35
+	dir_light.rotation = Vector3(deg_to_rad(-25), deg_to_rad(30), 0)
+	dir_light.light_color = Color(0.3, 0.55, 0.35)  # Sickly green — matches the vibe
+	dir_light.light_energy = 0.4
+	dir_light.light_temperature = 4500  # Warm-ish, like a dying CRT
 	dir_light.shadow_enabled = true
+	dir_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	dir_light.shadow_bias = 0.1
+	dir_light.shadow_normal_bias = 2.0
+	dir_light.light_angular_size = 0.5  # Soft shadow edges for that hazy wasteland look
 	add_child(dir_light)
 
+	# Fill — dim teal from the opposite side, like leaking coolant glow
 	var fill = DirectionalLight3D.new()
 	fill.name = "FillLight"
-	fill.rotation = Vector3(deg_to_rad(-25), deg_to_rad(-50), 0)
-	fill.light_color = Color(0.2, 0.4, 0.5)
-	fill.light_energy = 0.15
+	fill.rotation = Vector3(deg_to_rad(-15), deg_to_rad(-60), 0)
+	fill.light_color = Color(0.15, 0.35, 0.4)
+	fill.light_energy = 0.12
+	fill.shadow_enabled = true
+	fill.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	fill.shadow_bias = 0.1
+	fill.shadow_normal_bias = 2.0
 	add_child(fill)
 
 	# World environment — now powered by a proper .tres resource with HDRI sky,

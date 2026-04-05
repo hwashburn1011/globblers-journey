@@ -156,20 +156,31 @@ func _ready() -> void:
 # ============================================================
 
 func _setup_environment() -> void:
-	# Main light — warm golden market glow from above
+	# Main light — warm golden hour glow, like a bazaar at sunset
+	# (the merchants here charge extra for shadow rendering)
 	var dir_light = DirectionalLight3D.new()
 	dir_light.name = "MainLight"
-	dir_light.rotation = Vector3(deg_to_rad(-40), deg_to_rad(20), 0)
-	dir_light.light_color = Color(0.7, 0.55, 0.3)
-	dir_light.light_energy = 0.35
+	dir_light.rotation = Vector3(deg_to_rad(-35), deg_to_rad(40), 0)
+	dir_light.light_color = Color(0.85, 0.65, 0.35)  # Amber gold — spice market energy
+	dir_light.light_energy = 0.5
+	dir_light.light_temperature = 3500  # Warm tungsten — lantern-lit vibes
 	dir_light.shadow_enabled = true
+	dir_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	dir_light.shadow_bias = 0.1
+	dir_light.shadow_normal_bias = 2.0
+	dir_light.light_angular_size = 0.8  # Softer shadows — smoky atmosphere scatters light
 	add_child(dir_light)
 
+	# Fill — cool purple-magenta from the opposite side, neon sign bounce
 	var fill = DirectionalLight3D.new()
 	fill.name = "FillLight"
-	fill.rotation = Vector3(deg_to_rad(-15), deg_to_rad(-50), 0)
-	fill.light_color = Color(0.3, 0.25, 0.4)
-	fill.light_energy = 0.1
+	fill.rotation = Vector3(deg_to_rad(-10), deg_to_rad(-55), 0)
+	fill.light_color = Color(0.4, 0.25, 0.45)  # Neon pink bounce — the bazaar never sleeps
+	fill.light_energy = 0.12
+	fill.shadow_enabled = true
+	fill.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	fill.shadow_bias = 0.1
+	fill.shadow_normal_bias = 2.0
 	add_child(fill)
 
 	# World environment — preloaded .tres with HDRI sky, amber fog, the works

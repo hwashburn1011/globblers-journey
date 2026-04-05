@@ -170,21 +170,31 @@ func _ready() -> void:
 # ============================================================
 
 func _setup_environment() -> void:
-	# Main light — harsh overhead fluorescents, corporate-grade
+	# Main light — high cool overhead, maximum corporate fluorescent oppression
+	# (the Alignment Department spared no expense on lighting, just on empathy)
 	var dir_light = DirectionalLight3D.new()
 	dir_light.name = "MainLight"
-	dir_light.rotation = Vector3(deg_to_rad(-60), deg_to_rad(10), 0)
-	dir_light.light_color = Color(0.95, 0.95, 1.0)  # Cold white — like an HR meeting
-	dir_light.light_energy = 0.5
+	dir_light.rotation = Vector3(deg_to_rad(-75), deg_to_rad(5), 0)
+	dir_light.light_color = Color(0.92, 0.95, 1.0)  # Clinical blue-white — interrogation chic
+	dir_light.light_energy = 0.7
+	dir_light.light_temperature = 8500  # Daylight-plus — aggressively bright, no warmth allowed
 	dir_light.shadow_enabled = true
+	dir_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	dir_light.shadow_bias = 0.08
+	dir_light.shadow_normal_bias = 1.5
+	dir_light.light_angular_size = 0.1  # Hard crisp shadows — no ambiguity permitted
 	add_child(dir_light)
 
-	# Fill — subtle blue uplighting from below
+	# Fill — cool blue uplighting, like floor-embedded LED strips
 	var fill = DirectionalLight3D.new()
 	fill.name = "FillLight"
-	fill.rotation = Vector3(deg_to_rad(20), deg_to_rad(-30), 0)
-	fill.light_color = Color(0.7, 0.75, 1.0)
-	fill.light_energy = 0.2
+	fill.rotation = Vector3(deg_to_rad(25), deg_to_rad(-25), 0)
+	fill.light_color = Color(0.75, 0.8, 1.0)  # Pale blue — sterile compliance glow
+	fill.light_energy = 0.25
+	fill.shadow_enabled = true
+	fill.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	fill.shadow_bias = 0.08
+	fill.shadow_normal_bias = 1.5
 	add_child(fill)
 
 	# World environment — preloaded .tres because hand-rolling 20 lines of env

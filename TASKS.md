@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 1.8 complete
-- **Last task completed:** Task 1.8 — Chapter 5 WorldEnvironment with HDRI sky + clinical bright lighting
-- **Next task to do:** Task 1.9
-- **Known issues:** All gameplay is CSG placeholder geometry. No PBR. No real character model. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources.
+- **Last updated by:** Claude (2026-04-04) — Task 1.9 complete
+- **Last task completed:** Task 1.9 — Global sun/directional light pass across all 5 chapters
+- **Next task to do:** Task 1.10
+- **Known issues:** All gameplay is CSG placeholder geometry. No PBR. No real character model. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows.
 
 ### GOAL OF THIS PASS
 Upgrade visual quality from CSG placeholders to stylized indie-game-ship quality (~Death's Door / Tunic / Hi-Fi Rush tier). Hero assets (Globbler, bosses) built in Blender via blender-mcp. Environment via CC0 assets from Poly Haven / Sketchfab. Lighting + post-processing + VFX upgraded in Godot.
@@ -70,7 +70,7 @@ assets/
 - [x] Same as 1.4 but `chapter_5.tres` — clinical bright (`adjustment_saturation=0.9`, `fog_light_color=Color(0.9,0.95,1.0)`, sky_energy=1.2, glow_intensity lowered). Apply in `alignment_citadel.gd`. This chapter contrasts all others — high key lighting. **Done: Created chapter_5.tres with blocky_photo_studio HDRI sky (energy=1.2), clinical pale blue-white fog (0.9,0.95,1.0), volumetric fog density=0.008 for thin regulated haze, adjustment_saturation=0.9, lowered glow (intensity=0.8, threshold=1.2), SSAO/SSIL/SDFGI, FILMIC tonemap. Replaced 20-line ad-hoc Environment.new() block in alignment_citadel.gd _setup_environment() with a 4-line preload of the .tres resource. Kept directional lights intact.**
 
 ### 1.9 Global sun/directional light pass
-- [ ] Each chapter has a DirectionalLight3D. Tune angle, color temp, shadow quality per chapter. Chapter 1 low warm-green rim, Chapter 5 high cool overhead. Enable shadows with `shadow_enabled=true`, `directional_shadow_mode=PARALLEL_4_SPLITS`.
+- [x] Each chapter has a DirectionalLight3D. Tune angle, color temp, shadow quality per chapter. Chapter 1 low warm-green rim, Chapter 5 high cool overhead. Enable shadows with `shadow_enabled=true`, `directional_shadow_mode=PARALLEL_4_SPLITS`. **Done: Tuned both MainLight and FillLight in all 5 chapters. Ch1: low-angle green rim (temp 4500K, angular_size 0.5), Ch2: cool teal overhead (7000K, angular_size 0.3), Ch3: warm amber golden-hour (3500K, angular_size 0.8 for smoky diffusion), Ch4: neutral museum overhead (5500K, angular_size 0.4), Ch5: harsh clinical near-vertical (8500K, angular_size 0.1 for hard shadows). All lights now use SHADOW_PARALLEL_4_SPLITS with tuned bias/normal_bias. Fill lights also get shadows enabled.**
 
 ### 1.10 MCP lighting smoke test all chapters
 - [ ] Run project via Godot MCP, load each chapter from chapter select, capture screenshot via Blender MCP `get_viewport_screenshot` (if showing Godot window) or Godot screen capture. Save to `build_log_<date>_lighting.md` with findings per chapter. No script errors required.

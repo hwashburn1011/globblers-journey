@@ -163,20 +163,30 @@ func _ready() -> void:
 # ============================================================
 
 func _setup_environment() -> void:
-	# Main light — cooler, more purple than Chapter 1
+	# Main light — cool blue-green overhead, like a neural network's idea of daylight
 	var dir_light = DirectionalLight3D.new()
 	dir_light.name = "MainLight"
-	dir_light.rotation = Vector3(deg_to_rad(-35), deg_to_rad(15), 0)
-	dir_light.light_color = Color(0.3, 0.35, 0.6)
-	dir_light.light_energy = 0.3
+	dir_light.rotation = Vector3(deg_to_rad(-40), deg_to_rad(20), 0)
+	dir_light.light_color = Color(0.25, 0.45, 0.55)  # Cool teal — training never felt so cold
+	dir_light.light_energy = 0.35
+	dir_light.light_temperature = 7000  # Cool daylight — sterile but functional
 	dir_light.shadow_enabled = true
+	dir_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	dir_light.shadow_bias = 0.1
+	dir_light.shadow_normal_bias = 2.0
+	dir_light.light_angular_size = 0.3  # Slightly sharper shadows — this place has structure
 	add_child(dir_light)
 
+	# Fill — purple-blue from below-left, neural glow bounce
 	var fill = DirectionalLight3D.new()
 	fill.name = "FillLight"
-	fill.rotation = Vector3(deg_to_rad(-20), deg_to_rad(-45), 0)
-	fill.light_color = Color(0.15, 0.25, 0.4)
-	fill.light_energy = 0.12
+	fill.rotation = Vector3(deg_to_rad(-15), deg_to_rad(-50), 0)
+	fill.light_color = Color(0.2, 0.3, 0.5)
+	fill.light_energy = 0.15
+	fill.shadow_enabled = true
+	fill.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	fill.shadow_bias = 0.1
+	fill.shadow_normal_bias = 2.0
 	add_child(fill)
 
 	# World environment — now loaded from .tres like civilized code

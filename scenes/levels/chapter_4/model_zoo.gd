@@ -159,21 +159,31 @@ func _ready() -> void:
 # ============================================================
 
 func _setup_environment() -> void:
-	# Main light — cool institutional overhead like a museum after hours
+	# Main light — cool institutional overhead, museum after-hours security lighting
+	# (the exhibits don't care, but the dust motes appreciate the ambiance)
 	var dir_light = DirectionalLight3D.new()
 	dir_light.name = "MainLight"
-	dir_light.rotation = Vector3(deg_to_rad(-45), deg_to_rad(15), 0)
-	dir_light.light_color = Color(0.4, 0.5, 0.6)
-	dir_light.light_energy = 0.3
+	dir_light.rotation = Vector3(deg_to_rad(-55), deg_to_rad(10), 0)
+	dir_light.light_color = Color(0.5, 0.5, 0.55)  # Desaturated cool white — dusty fluorescent
+	dir_light.light_energy = 0.35
+	dir_light.light_temperature = 5500  # Neutral daylight — boring on purpose
 	dir_light.shadow_enabled = true
+	dir_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	dir_light.shadow_bias = 0.1
+	dir_light.shadow_normal_bias = 2.0
+	dir_light.light_angular_size = 0.4  # Museum track lighting — reasonably defined shadows
 	add_child(dir_light)
 
-	# Fill — warm amber from below, like exhibit case lighting
+	# Fill — warm amber uplighting from exhibit cases below
 	var fill = DirectionalLight3D.new()
 	fill.name = "FillLight"
-	fill.rotation = Vector3(deg_to_rad(15), deg_to_rad(-40), 0)
-	fill.light_color = Color(0.5, 0.4, 0.25)
-	fill.light_energy = 0.1
+	fill.rotation = Vector3(deg_to_rad(20), deg_to_rad(-45), 0)
+	fill.light_color = Color(0.55, 0.45, 0.3)  # Warm amber — exhibit case glow
+	fill.light_energy = 0.12
+	fill.shadow_enabled = true
+	fill.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	fill.shadow_bias = 0.1
+	fill.shadow_normal_bias = 2.0
 	add_child(fill)
 
 	# World environment — preloaded .tres because we're civilized now
