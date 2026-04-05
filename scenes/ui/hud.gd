@@ -48,6 +48,14 @@ const TERMINAL_GREEN_DIM := Color(0.15, 0.5, 0.15)
 const TERMINAL_GREEN_TEXT := Color(0.3, 1.0, 0.4)
 const TERMINAL_BG := Color(0.02, 0.04, 0.02, 0.85)
 const TERMINAL_BORDER := Color(0.15, 0.5, 0.15, 0.8)
+const TEXT_SHADOW_COLOR := Color(0.0, 0.0, 0.0, 0.9)
+
+## Apply a dark drop-shadow to a label for contrast against any background.
+static func apply_text_shadow(lbl: Label, offset := Vector2(1, 1), outline := 2) -> void:
+	lbl.add_theme_color_override("font_shadow_color", TEXT_SHADOW_COLOR)
+	lbl.add_theme_constant_override("shadow_offset_x", int(offset.x))
+	lbl.add_theme_constant_override("shadow_offset_y", int(offset.y))
+	lbl.add_theme_constant_override("shadow_outline_size", outline)
 
 func _ready() -> void:
 	add_to_group("hud")
@@ -182,9 +190,10 @@ func _build_top_left() -> void:
 	upgrade_hint = Label.new()
 	upgrade_hint.name = "UpgradeHint"
 	upgrade_hint.text = "[TAB/Select] Upgrades"
-	upgrade_hint.add_theme_color_override("font_color", Color(0.2, 0.7, 0.3, 0.5))
+	upgrade_hint.add_theme_color_override("font_color", Color(0.25, 0.75, 0.35, 0.7))
 	upgrade_hint.add_theme_font_size_override("font_size", 11)
 	upgrade_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	apply_text_shadow(upgrade_hint)
 	vbox.add_child(upgrade_hint)
 
 func _build_top_right_minimap() -> void:
@@ -206,8 +215,9 @@ func _build_top_right_minimap() -> void:
 	# Placeholder label
 	var lbl = Label.new()
 	lbl.text = "[MINIMAP]"
-	lbl.add_theme_color_override("font_color", Color(0.2, 0.5, 0.25, 0.4))
+	lbl.add_theme_color_override("font_color", Color(0.25, 0.55, 0.3, 0.6))
 	lbl.add_theme_font_size_override("font_size", 12)
+	apply_text_shadow(lbl)
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -220,8 +230,9 @@ func _build_top_center_timer() -> void:
 	timer_label = Label.new()
 	timer_label.name = "TimerLabel"
 	timer_label.text = "00:00"
-	timer_label.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4, 0.7))
+	timer_label.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4, 0.85))
 	timer_label.add_theme_font_size_override("font_size", 18)
+	apply_text_shadow(timer_label)
 	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	timer_label.anchor_left = 0.5
 	timer_label.anchor_top = 0.0
@@ -320,6 +331,7 @@ func _build_bottom_center_abilities() -> void:
 	dash_label.add_theme_font_size_override("font_size", 11)
 	dash_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	dash_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	apply_text_shadow(dash_label)
 	dash_box.add_child(dash_label)
 
 	dash_indicator = _create_cooldown_bar()
@@ -338,6 +350,7 @@ func _build_bottom_center_abilities() -> void:
 	glob_label.add_theme_font_size_override("font_size", 11)
 	glob_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	glob_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	apply_text_shadow(glob_label)
 	glob_box.add_child(glob_label)
 
 	glob_indicator = _create_cooldown_bar()
@@ -352,6 +365,7 @@ func _build_center_combo() -> void:
 	combo_label.text = ""
 	combo_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.2))
 	combo_label.add_theme_font_size_override("font_size", 36)
+	apply_text_shadow(combo_label, Vector2(2, 2), 3)
 	combo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	combo_label.anchor_left = 0.5
 	combo_label.anchor_top = 0.0
@@ -391,6 +405,7 @@ func _build_bottom_thought() -> void:
 	thought_label.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4))
 	thought_label.add_theme_font_size_override("font_size", 16)
 	thought_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	apply_text_shadow(thought_label)
 	thought_container.add_child(thought_label)
 
 func _build_level_intro() -> void:
@@ -400,6 +415,7 @@ func _build_level_intro() -> void:
 	level_intro_label.text = ""
 	level_intro_label.add_theme_color_override("font_color", TERMINAL_GREEN_TEXT)
 	level_intro_label.add_theme_font_size_override("font_size", 28)
+	apply_text_shadow(level_intro_label, Vector2(2, 2), 3)
 	level_intro_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	level_intro_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	level_intro_label.anchor_left = 0.15
@@ -446,6 +462,7 @@ func _create_hud_label(text: String, font_size: int) -> Label:
 	lbl.add_theme_color_override("font_color", TERMINAL_GREEN_TEXT)
 	lbl.add_theme_font_size_override("font_size", font_size)
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	apply_text_shadow(lbl)
 	return lbl
 
 func _create_cooldown_bar() -> ProgressBar:

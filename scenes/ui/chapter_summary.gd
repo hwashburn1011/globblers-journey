@@ -14,7 +14,8 @@ const SOFT_GREEN := Color(0.3, 0.9, 0.3)
 const TEAL := Color("#4AE0A5")
 const DARK_BG := Color(0.04, 0.04, 0.04, 0.95)
 const BORDER_GREEN := Color(0.224, 1.0, 0.078, 0.7)
-const TIMESTAMP_DIM := Color(0.2, 0.4, 0.2, 0.5)
+const TIMESTAMP_DIM := Color(0.25, 0.5, 0.25, 0.7)
+const TEXT_SHADOW := Color(0.0, 0.0, 0.0, 0.9)
 
 var stats := {}
 var chapter_name := ""
@@ -145,6 +146,7 @@ func _build_ui() -> void:
 	comment_label.add_theme_font_override("font", _terminal_font)
 	comment_label.add_theme_font_size_override("font_size", 13)
 	comment_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_apply_shadow(comment_label)
 	if deaths == 0:
 		comment_label.text = "\"Flawless. Suspiciously flawless.\""
 	elif deaths <= 2:
@@ -196,18 +198,20 @@ func _add_stat_row(parent: VBoxContainer, icon: String, label_text: String, valu
 	# Stat name
 	var label = Label.new()
 	label.text = label_text
-	label.add_theme_color_override("font_color", DIM_GREEN)
+	label.add_theme_color_override("font_color", Color(0.2, 0.45, 0.2))
 	label.add_theme_font_override("font", _terminal_font)
 	label.add_theme_font_size_override("font_size", 15)
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_apply_shadow(label)
 	hbox.add_child(label)
 
 	# Dot leader
 	var dots = Label.new()
 	dots.text = "···"
-	dots.add_theme_color_override("font_color", DIM_GREEN)
+	dots.add_theme_color_override("font_color", Color(0.2, 0.45, 0.2))
 	dots.add_theme_font_override("font", _terminal_font)
 	dots.add_theme_font_size_override("font_size", 15)
+	_apply_shadow(dots)
 	hbox.add_child(dots)
 
 	# Value (bright green)
@@ -219,6 +223,13 @@ func _add_stat_row(parent: VBoxContainer, icon: String, label_text: String, valu
 	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	value.custom_minimum_size.x = 64
 	hbox.add_child(value)
+
+
+func _apply_shadow(lbl: Label) -> void:
+	lbl.add_theme_color_override("font_shadow_color", TEXT_SHADOW)
+	lbl.add_theme_constant_override("shadow_offset_x", 1)
+	lbl.add_theme_constant_override("shadow_offset_y", 1)
+	lbl.add_theme_constant_override("shadow_outline_size", 2)
 
 
 func _create_panel_style() -> StyleBoxFlat:

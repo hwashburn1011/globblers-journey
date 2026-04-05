@@ -9,6 +9,7 @@ const GREEN := Color("#39FF14")
 const DIM_GREEN := Color(0.15, 0.3, 0.15, 1.0)
 const DARK_BG := Color(0.04, 0.04, 0.04, 0.95)
 const BORDER_GREEN := Color(0.224, 1.0, 0.078, 0.7)
+const TEXT_SHADOW := Color(0.0, 0.0, 0.0, 0.9)
 
 const SLIDE_DURATION := 0.4
 const DISPLAY_DURATION := 4.0
@@ -86,10 +87,11 @@ func _build_ui(title: String, body: String) -> void:
 	# Top decorative border — terminal frame
 	var border_top = Label.new()
 	border_top.text = "╔══════════ HINT ══════════╗"
-	border_top.add_theme_color_override("font_color", DIM_GREEN)
+	border_top.add_theme_color_override("font_color", Color(0.2, 0.45, 0.2))
 	border_top.add_theme_font_override("font", _terminal_font)
 	border_top.add_theme_font_size_override("font_size", 12)
 	border_top.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_apply_shadow(border_top)
 	vbox.add_child(border_top)
 
 	# Title — terminal prompt style
@@ -114,22 +116,31 @@ func _build_ui(title: String, body: String) -> void:
 	# Footer
 	var footer = Label.new()
 	footer.text = "[ press any key to dismiss ]"
-	footer.add_theme_color_override("font_color", Color(0.2, 0.6, 0.2, 0.5))
+	footer.add_theme_color_override("font_color", Color(0.25, 0.65, 0.25, 0.7))
 	footer.add_theme_font_override("font", _terminal_font)
 	footer.add_theme_font_size_override("font_size", 12)
 	footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_apply_shadow(footer)
 	vbox.add_child(footer)
 
 	# Bottom decorative border — terminal frame
 	var border_bottom = Label.new()
 	border_bottom.text = "╚══════════════════════════╝"
-	border_bottom.add_theme_color_override("font_color", DIM_GREEN)
+	border_bottom.add_theme_color_override("font_color", Color(0.2, 0.45, 0.2))
 	border_bottom.add_theme_font_override("font", _terminal_font)
 	border_bottom.add_theme_font_size_override("font_size", 12)
 	border_bottom.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_apply_shadow(border_bottom)
 	vbox.add_child(border_bottom)
 
 	add_child(_panel)
+
+
+func _apply_shadow(lbl: Label) -> void:
+	lbl.add_theme_color_override("font_shadow_color", TEXT_SHADOW)
+	lbl.add_theme_constant_override("shadow_offset_x", 1)
+	lbl.add_theme_constant_override("shadow_offset_y", 1)
+	lbl.add_theme_constant_override("shadow_outline_size", 2)
 
 
 func _slide_in() -> void:

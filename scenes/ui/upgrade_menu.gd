@@ -32,8 +32,9 @@ var _category_buttons: Array[Label] = []
 var _upgrade_labels: Array[Label] = []
 
 const GREEN = Color(0.224, 1.0, 0.078)
-const DIM_GREEN = Color(0.15, 0.6, 0.1)
+const DIM_GREEN = Color(0.2, 0.65, 0.15)
 const DARK_BG = Color(0.02, 0.04, 0.02, 0.95)
+const TEXT_SHADOW = Color(0.0, 0.0, 0.0, 0.9)
 const PANEL_BG = Color(0.03, 0.06, 0.03, 0.9)
 const MAXED_COLOR = Color(0.6, 0.85, 0.3)
 const CANT_AFFORD = Color(0.6, 0.2, 0.15)
@@ -244,6 +245,7 @@ func _build_ui() -> void:
 	vbox.add_child(hint_row)
 
 	_close_hint = _make_label("[TAB/ESC/Select] Close  |  [A-D/LStick] Category  |  [W-S/LStick] Select  |  [ENTER/A] Buy", 13, DIM_GREEN)
+	_add_shadow(_close_hint)
 	hint_row.add_child(_close_hint)
 
 func _make_panel() -> PanelContainer:
@@ -267,7 +269,14 @@ func _make_label(text: String, size: int, color: Color) -> Label:
 	label.text = text
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_font_size_override("font_size", size)
+	_add_shadow(label)
 	return label
+
+func _add_shadow(lbl: Label) -> void:
+	lbl.add_theme_color_override("font_shadow_color", TEXT_SHADOW)
+	lbl.add_theme_constant_override("shadow_offset_x", 1)
+	lbl.add_theme_constant_override("shadow_offset_y", 1)
+	lbl.add_theme_constant_override("shadow_outline_size", 2)
 
 func _refresh_all() -> void:
 	_refresh_currency()

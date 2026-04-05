@@ -90,9 +90,13 @@ func _build_ui() -> void:
 	advance_hint = Label.new()
 	advance_hint.name = "AdvanceHint"
 	advance_hint.text = "> click / SPACE / A button to continue..."
-	advance_hint.add_theme_color_override("font_color", Color(0.2, 0.6, 0.2, 0.6))
+	advance_hint.add_theme_color_override("font_color", Color(0.25, 0.65, 0.25, 0.8))
 	advance_hint.add_theme_font_size_override("font_size", 12)
 	advance_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	advance_hint.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
+	advance_hint.add_theme_constant_override("shadow_offset_x", 1)
+	advance_hint.add_theme_constant_override("shadow_offset_y", 1)
+	advance_hint.add_theme_constant_override("shadow_outline_size", 2)
 	advance_hint.visible = false
 	vbox.add_child(advance_hint)
 

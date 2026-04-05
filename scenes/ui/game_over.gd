@@ -10,6 +10,7 @@ const DIM_GREEN := Color(0.15, 0.3, 0.15, 1.0)
 const RED := Color(1.0, 0.15, 0.1, 1.0)
 const DIM_RED := Color(0.5, 0.1, 0.08, 1.0)
 const DARK_BG := Color(0.02, 0.02, 0.02, 0.95)
+const TEXT_SHADOW := Color(0.0, 0.0, 0.0, 0.9)
 
 var _reason_label: Label
 var _scanline_offset := 0.0
@@ -111,17 +112,19 @@ func _build_ui() -> void:
 	# Error message subtitle
 	var error_line = Label.new()
 	error_line.text = "> ERR_FATAL: Process terminated with exit code 1_"
-	error_line.add_theme_color_override("font_color", Color(0.6, 0.15, 0.1))
+	error_line.add_theme_color_override("font_color", Color(0.7, 0.2, 0.15))
 	error_line.add_theme_font_size_override("font_size", 13)
 	error_line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_apply_shadow(error_line)
 	center.add_child(error_line)
 
 	# ASCII tombstone — because subtlety is overrated
 	var skull_label = Label.new()
 	skull_label.text = "     ┌─────────┐\n     │  ╔═══╗  │\n     │  ║ X X ║  │\n     │  ║  ▽  ║  │\n     │  ╚═══╝  │\n     │  R.I.P  │\n     └────┬────┘\n        ▓▓▓▓▓"
-	skull_label.add_theme_color_override("font_color", DIM_GREEN)
+	skull_label.add_theme_color_override("font_color", Color(0.2, 0.45, 0.2))
 	skull_label.add_theme_font_size_override("font_size", 12)
 	skull_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_apply_shadow(skull_label)
 	center.add_child(skull_label)
 
 	# Reason label — the sarcastic explanation for your demise
@@ -140,9 +143,10 @@ func _build_ui() -> void:
 	if gm and "deaths_this_level" in gm:
 		deaths = gm.deaths_this_level
 	_death_count_label.text = "> Deaths this level: %d" % deaths
-	_death_count_label.add_theme_color_override("font_color", DIM_GREEN)
+	_death_count_label.add_theme_color_override("font_color", Color(0.2, 0.45, 0.2))
 	_death_count_label.add_theme_font_size_override("font_size", 13)
 	_death_count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_apply_shadow(_death_count_label)
 	center.add_child(_death_count_label)
 
 	# Spacer before buttons
@@ -175,10 +179,18 @@ func _build_ui() -> void:
 	# Input hint
 	var hint = Label.new()
 	hint.text = "[R] Retry  ·  [ESC] Menu"
-	hint.add_theme_color_override("font_color", DIM_GREEN)
+	hint.add_theme_color_override("font_color", Color(0.2, 0.45, 0.2))
 	hint.add_theme_font_size_override("font_size", 11)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_apply_shadow(hint)
 	center.add_child(hint)
+
+
+func _apply_shadow(lbl: Label) -> void:
+	lbl.add_theme_color_override("font_shadow_color", TEXT_SHADOW)
+	lbl.add_theme_constant_override("shadow_offset_x", 1)
+	lbl.add_theme_constant_override("shadow_offset_y", 1)
+	lbl.add_theme_constant_override("shadow_outline_size", 2)
 
 
 func _create_button(text: String, callback: Callable) -> Button:

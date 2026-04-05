@@ -14,7 +14,8 @@ const SPEAKER_COLORS := {
 	"Globbler": Color("#39FF14"),
 	"default": Color("#4AE0A5"),
 }
-const TIMESTAMP_COLOR := Color(0.2, 0.4, 0.2, 0.4)
+const TIMESTAMP_COLOR := Color(0.25, 0.5, 0.25, 0.65)
+const TEXT_SHADOW := Color(0.0, 0.0, 0.0, 0.9)
 const MAX_DISPLAY_ENTRIES := 30
 
 var _panel: PanelContainer
@@ -110,6 +111,7 @@ func _build_ui() -> void:
 	subtitle.add_theme_font_override("font", _terminal_font)
 	subtitle.add_theme_font_size_override("font_size", 11)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_apply_shadow(subtitle)
 	outer_vbox.add_child(subtitle)
 
 	# Scrollable container for entries
@@ -135,10 +137,11 @@ func _build_ui() -> void:
 	# Footer with controls
 	var footer = Label.new()
 	footer.text = "[ H or ESC to close | Scroll to browse ]"
-	footer.add_theme_color_override("font_color", Color(0.2, 0.6, 0.2, 0.4))
+	footer.add_theme_color_override("font_color", Color(0.25, 0.65, 0.25, 0.6))
 	footer.add_theme_font_override("font", _terminal_font)
 	footer.add_theme_font_size_override("font_size", 11)
 	footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_apply_shadow(footer)
 	outer_vbox.add_child(footer)
 
 	add_child(_panel)
@@ -179,6 +182,7 @@ func _add_entry(speaker: String, text: String, index: int) -> void:
 	line_lbl.add_theme_font_size_override("font_size", 12)
 	line_lbl.custom_minimum_size = Vector2(40, 0)
 	line_lbl.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	_apply_shadow(line_lbl)
 	hbox.add_child(line_lbl)
 
 	# Speaker tag — colored per speaker, fixed width
@@ -224,6 +228,13 @@ func _add_empty_message(msg: String) -> void:
 	lbl.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_entries_vbox.add_child(lbl)
+
+
+func _apply_shadow(lbl: Label) -> void:
+	lbl.add_theme_color_override("font_shadow_color", TEXT_SHADOW)
+	lbl.add_theme_constant_override("shadow_offset_x", 1)
+	lbl.add_theme_constant_override("shadow_offset_y", 1)
+	lbl.add_theme_constant_override("shadow_outline_size", 2)
 
 
 func _close() -> void:

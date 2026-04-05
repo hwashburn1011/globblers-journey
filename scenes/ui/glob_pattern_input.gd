@@ -53,8 +53,12 @@ func _build_ui() -> void:
 	result_label = Label.new()
 	result_label.name = "ResultLabel"
 	result_label.text = ""
-	result_label.add_theme_color_override("font_color", Color(0.2, 0.7, 0.2, 0.7))
+	result_label.add_theme_color_override("font_color", Color(0.25, 0.75, 0.25, 0.85))
 	result_label.add_theme_font_size_override("font_size", 13)
+	result_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
+	result_label.add_theme_constant_override("shadow_offset_x", 1)
+	result_label.add_theme_constant_override("shadow_offset_y", 1)
+	result_label.add_theme_constant_override("shadow_outline_size", 2)
 	vbox.add_child(result_label)
 
 func _process(delta: float) -> void:

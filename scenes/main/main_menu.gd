@@ -11,6 +11,7 @@ const DARK_PANEL := Color(0.06, 0.1, 0.06, 0.95)
 const DIM_GREEN := Color(0.15, 0.3, 0.15, 1.0)
 const BRIGHT_GREEN := Color(0.3, 1.0, 0.2, 1.0)
 const RED := Color(1.0, 0.2, 0.2, 1.0)
+const TEXT_SHADOW := Color(0.0, 0.0, 0.0, 0.9)
 
 # UI containers
 var _main_panel: VBoxContainer
@@ -295,8 +296,9 @@ func _build_ui() -> void:
 	_subtitle_label = Label.new()
 	_subtitle_label.text = "> An Agentic Action Puzzle Platformer █"
 	_subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_subtitle_label.add_theme_color_override("font_color", DIM_GREEN)
+	_subtitle_label.add_theme_color_override("font_color", Color(0.2, 0.45, 0.2))
 	_subtitle_label.add_theme_font_size_override("font_size", 16)
+	_apply_shadow(_subtitle_label)
 	_main_panel.add_child(_subtitle_label)
 
 	# Spacer
@@ -323,8 +325,9 @@ func _build_ui() -> void:
 	var version_label = Label.new()
 	version_label.text = "v0.4.3-alpha | Globbler Engine | \"Still in beta, like all of us.\""
 	version_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	version_label.add_theme_color_override("font_color", Color(GREEN, 0.3))
+	version_label.add_theme_color_override("font_color", Color(GREEN, 0.5))
 	version_label.add_theme_font_size_override("font_size", 12)
+	_apply_shadow(version_label)
 	_main_panel.add_child(version_label)
 
 	# Build settings and chapter select panels (hidden by default)
@@ -443,9 +446,10 @@ func _build_settings_panel() -> void:
 	# Subtitle
 	var subtitle = Label.new()
 	subtitle.text = "> Adjusting parameters won't fix your skill issue._"
-	subtitle.add_theme_color_override("font_color", Color(0.15, 0.6, 0.1))
+	subtitle.add_theme_color_override("font_color", Color(0.2, 0.65, 0.15))
 	subtitle.add_theme_font_size_override("font_size", 13)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_apply_shadow(subtitle)
 	vbox.add_child(subtitle)
 
 	# ── AUDIO section ──
@@ -586,8 +590,9 @@ func _build_settings_panel() -> void:
 	var controls_label = Label.new()
 	controls_label.text = "WASD/LStick: Move  |  SPACE/A: Jump  |  SHIFT/B: Dash\nE-LClick/RT: Glob  |  R-RClick/LT: Aim  |  F/RB: Wrench\nT/Y: Hack  |  Q/LB: Cycle Glob  |  TAB/Select: Upgrades\nG/D-Up: Agent  |  V/D-Down: Cycle Task  |  RStick: Camera"
 	controls_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	controls_label.add_theme_color_override("font_color", DIM_GREEN)
+	controls_label.add_theme_color_override("font_color", Color(0.2, 0.45, 0.2))
 	controls_label.add_theme_font_size_override("font_size", 12)
+	_apply_shadow(controls_label)
 	vbox.add_child(controls_label)
 
 	# Spacer before back button
@@ -604,12 +609,20 @@ func _build_settings_panel() -> void:
 	# Input hint footer
 	var hint = Label.new()
 	hint.text = "[ESC] Back"
-	hint.add_theme_color_override("font_color", DIM_GREEN)
+	hint.add_theme_color_override("font_color", Color(0.2, 0.45, 0.2))
 	hint.add_theme_font_size_override("font_size", 11)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_apply_shadow(hint)
 	vbox.add_child(hint)
 
 	add_child(_settings_panel)
+
+
+func _apply_shadow(lbl: Label, offset := Vector2(1, 1), outline := 2) -> void:
+	lbl.add_theme_color_override("font_shadow_color", TEXT_SHADOW)
+	lbl.add_theme_constant_override("shadow_offset_x", int(offset.x))
+	lbl.add_theme_constant_override("shadow_offset_y", int(offset.y))
+	lbl.add_theme_constant_override("shadow_outline_size", outline)
 
 
 func _create_section_header(text: String) -> Label:
@@ -806,8 +819,9 @@ func _create_chapter_button(chapter_num: int, title: String, desc: String, unloc
 
 	var desc_label = Label.new()
 	desc_label.text = desc if unlocked else "Complete the previous chapter to unlock."
-	desc_label.add_theme_color_override("font_color", DIM_GREEN if unlocked else Color(DIM_GREEN, 0.3))
+	desc_label.add_theme_color_override("font_color", Color(0.2, 0.45, 0.2) if unlocked else Color(DIM_GREEN, 0.3))
 	desc_label.add_theme_font_size_override("font_size", 12)
+	_apply_shadow(desc_label)
 	info_vbox.add_child(desc_label)
 
 	row.add_child(info_vbox)

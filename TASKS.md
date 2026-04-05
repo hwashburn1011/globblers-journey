@@ -9,12 +9,12 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 0.2 — Removed ASCII Globbler from title screen
-- **Next task to do:** Task 0.3 — Text contrast audit — global pass
+- **Last task completed:** Task 0.3 — Text contrast audit — global pass
+- **Next task to do:** Task 0.4 — Verify text contrast per chapter HUD
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
-  - **Text contrast problems across menus/HUD (green-on-green clashes)**
+  - ~~Text contrast problems across menus/HUD~~ **FIXED in Task 0.3**
   - Duplicate `globbler.glb` at project root (3.4MB waste)
   - `build_log_*.txt` files committed to repo
   - AudioManager uses AudioStreamGenerator procedural synth — no real music/SFX
@@ -43,7 +43,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Removed `GLOBBLER_ASCII` constant (14-line art block) and its Label creation from `_build_ui()` in `scenes/main/main_menu.gd`. Glitchy title text, 3D background, and all other menu elements preserved. Verified via Godot MCP — menu loads with zero errors.
 
 ### 0.3 Text contrast audit — global pass
-- [ ] Audit all visible text against its background for clashing tones (most common problem: green text on green, dark text on dark). Check: main menu, pause menu, game over, settings, HUD labels, dialogue box, dialogue history, chapter summary, tutorial hints, achievement popups, credits, loading screen. For each instance found, adjust either the text color OR add a dark drop-shadow/outline to force ≥4.5:1 contrast ratio. Prefer outlines over color changes to preserve the terminal-green aesthetic. Document which screens were touched in the checkbox note.
+- [x] **DONE:** Audited all UI screens for text contrast. Added dark drop-shadows (font_shadow_color + shadow_outline_size=2) to all dim/secondary text labels across 13 files. Brightened low-alpha and too-dim green colors (e.g. DIM_GREEN from 0.15→0.2+, alpha from 0.3-0.5→0.5-0.85) while preserving terminal-green aesthetic. Screens touched: **HUD** (hud.gd — upgrade hint, timer, combo, thought, level intro, minimap, ability labels, stat counters), **main menu** (main_menu.gd — subtitle, version label, settings subtitle, controls text, ESC hint, chapter descriptions), **pause menu** (globbler.gd — subtitle, ESC hint), **game over** (game_over.gd — error line, skull art, death count, input hint), **chapter summary** (chapter_summary.gd — stat names, dot leaders, sarcastic comment), **dialogue box** (dialogue_box.gd — advance hint), **dialogue history** (dialogue_history.gd — line numbers, entry count, footer), **upgrade menu** (upgrade_menu.gd — DIM_GREEN brightened, all labels get shadow via _make_label, close hint), **first-time hint** (first_time_hint.gd — border labels, footer), **loading screen** (loading_screen.gd — tip label), **credits** (credits.gd — DIM_GREEN brightened, all labels get shadow), **context window bar** (context_window_bar.gd — value label), **glob pattern input** (glob_pattern_input.gd — result label). Verified via Godot MCP — zero runtime errors.
 
 ### 0.4 Verify text contrast per chapter HUD
 - [ ] In each chapter's _ready(), the HUD renders over the chapter's fog/lighting. Chapters 3 (warm amber) and 5 (clinical white-blue) likely clash with terminal-green HUD text. Test each chapter via Godot MCP, capture HUD screenshot, confirm text is readable. Add chapter-appropriate drop-shadow or background panel if any chapter HUD is unreadable.

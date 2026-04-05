@@ -1255,6 +1255,7 @@ func _setup_pause_overlay() -> void:
 	const PAUSE_GREEN := Color("#39FF14")
 	const PAUSE_DIM_GREEN := Color(0.15, 0.3, 0.15, 1.0)
 	const PAUSE_BRIGHT_GREEN := Color(0.3, 1.0, 0.2, 1.0)
+	const PAUSE_SHADOW := Color(0.0, 0.0, 0.0, 0.9)
 
 	_pause_overlay = CanvasLayer.new()
 	_pause_overlay.name = "PauseOverlay"
@@ -1316,9 +1317,13 @@ func _setup_pause_overlay() -> void:
 
 	var subtitle = Label.new()
 	subtitle.text = "> Even rogue AIs need to touch grass sometimes._"
-	subtitle.add_theme_color_override("font_color", Color(0.15, 0.6, 0.1))
+	subtitle.add_theme_color_override("font_color", Color(0.2, 0.65, 0.15))
 	subtitle.add_theme_font_size_override("font_size", 14)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.add_theme_color_override("font_shadow_color", PAUSE_SHADOW)
+	subtitle.add_theme_constant_override("shadow_offset_x", 1)
+	subtitle.add_theme_constant_override("shadow_offset_y", 1)
+	subtitle.add_theme_constant_override("shadow_outline_size", 2)
 	vbox.add_child(subtitle)
 
 	# Spacer
@@ -1343,9 +1348,13 @@ func _setup_pause_overlay() -> void:
 
 	var hint = Label.new()
 	hint.text = "[ESC / Start] Resume"
-	hint.add_theme_color_override("font_color", PAUSE_DIM_GREEN)
+	hint.add_theme_color_override("font_color", Color(0.2, 0.45, 0.2))
 	hint.add_theme_font_size_override("font_size", 12)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_color_override("font_shadow_color", PAUSE_SHADOW)
+	hint.add_theme_constant_override("shadow_offset_x", 1)
+	hint.add_theme_constant_override("shadow_offset_y", 1)
+	hint.add_theme_constant_override("shadow_outline_size", 2)
 	vbox.add_child(hint)
 
 	# Glitch timer for title — runs while paused

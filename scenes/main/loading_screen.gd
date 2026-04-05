@@ -118,9 +118,13 @@ void fragment() {
 	# — Sarcastic tip label
 	_tip_label = Label.new()
 	_tip_label.add_theme_font_size_override("font_size", 16)
-	_tip_label.add_theme_color_override("font_color", Color("#39FF14").darkened(0.25))
+	_tip_label.add_theme_color_override("font_color", Color("#39FF14").darkened(0.15))
 	_tip_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_tip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tip_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
+	_tip_label.add_theme_constant_override("shadow_offset_x", 1)
+	_tip_label.add_theme_constant_override("shadow_offset_y", 1)
+	_tip_label.add_theme_constant_override("shadow_outline_size", 2)
 	_tip_label.set_anchors_and_offsets_preset(PRESET_CENTER)
 	_tip_label.size = Vector2(700, 60)
 	_tip_label.position = Vector2(-350, 100)

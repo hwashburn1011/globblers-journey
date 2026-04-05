@@ -7,7 +7,7 @@ extends Control
 
 const GREEN := Color("#39FF14")
 const DARK_BG := Color(0.02, 0.04, 0.02, 1.0)
-const DIM_GREEN := Color(0.15, 0.3, 0.15, 1.0)
+const DIM_GREEN := Color(0.2, 0.45, 0.2, 1.0)
 const BRIGHT_GREEN := Color(0.3, 1.0, 0.2, 1.0)
 
 # Credits scroll speed in pixels per second — not too fast, not too slow
@@ -373,6 +373,10 @@ func _make_label(text: String, font_size: int, color: Color) -> Label:
 	label.add_theme_color_override("font_color", color)
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
+	label.add_theme_constant_override("shadow_outline_size", 2)
 	return label
 
 
