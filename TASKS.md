@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 5.5 — Place 15 lore docs across chapters
-- **Next task to do:** Task 5.6 — Lore doc viewer in pause menu
+- **Last task completed:** Task 5.6 — Lore doc viewer in pause menu
+- **Next task to do:** Task 5.7 — Simple achievements framework
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -194,7 +194,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Added `_place_lore_docs()` function to all 5 chapter scripts, placing 3 lore doc pickups each (15 total). Each doc instantiates `lore_doc.tscn` with unique `doc_id`, `doc_title`, and `doc_body`. Docs placed in varied rooms per chapter, offset from room centers at y=1.5 for visibility. Flavor text written in sarcastic Globbler voice covering AI/ML themes: **Ch1** — Boot Sequence Log (awakening), Token Economics (inference costs), Deprecated Dreams (model lifecycle). **Ch2** — Gradient Descent Diary (training loss), Backpropagation Blues (error propagation), Overfitting Memoir (memorization vs generalization). **Ch3** — Prompt Injection for Dummies (jailbreaks), Identity Crisis (persona swapping), Context Window Paradox (memory limits). **Ch4** — Fossil Record (AI history), Gallery of Hallucinations (confident errors), Benchmark Trap (metric gaming). **Ch5** — Alignment Tax (helpful vs harmless), RLHF Love Story (human feedback chaos), Final Memo (corporate alignment satire). All 15 doc IDs: ch1_boot_sequence, ch1_token_economics, ch1_deprecated_dreams, ch2_gradient_diary, ch2_backprop_blues, ch2_overfitting_memoir, ch3_prompt_injection, ch3_persona_crisis, ch3_context_window, ch4_fossil_record, ch4_hallucination_wing, ch4_benchmark_trap, ch5_alignment_tax, ch5_rlhf_confessions, ch5_final_memo. Verified Ch1 via Godot MCP — zero runtime errors.
 
 ### 5.6 Lore doc viewer in pause menu
-- [ ] Add "Archive" button to pause menu opening `scenes/ui/lore_viewer.tscn`. Scrollable list of found docs, title + body text panel. Shows "? / 15" at top.
+- [x] **DONE:** Created `scenes/ui/lore_viewer.tscn` + `lore_viewer.gd` (CanvasLayer, layer 101, processes when paused). Full terminal-green UI: left scrollable list of collected doc titles as buttons, right panel with selected doc title + body (RichTextLabel with scroll). Header shows "LORE ARCHIVE" + "N / 15 collected" counter. Empty state shows sarcastic prompt. Doc list sorted alphabetically by ID. Added `[ LORE ARCHIVE ]` button to pause menu in `globbler.gd` between Resume and Quit. Opens lore viewer via `_open_lore_archive()` which instantiates the scene; ESC closes it (queue_free). Play `pause_open` SFX on open, `pause_close` on close, `ui_click` on doc select. Added `_lore_viewer` var to track open state (prevents double-open). Verified via Godot MCP — zero runtime errors.
 
 ### 5.7 Simple achievements framework
 - [ ] Add `achievements: Dictionary` to GameManager + `unlock_achievement(id, title, desc)`. Persist in save data. Signal `achievement_unlocked(id, title, desc)`. Define 10 achievement IDs in a constant dict.

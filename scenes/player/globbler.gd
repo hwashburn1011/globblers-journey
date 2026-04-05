@@ -77,6 +77,7 @@ var is_paused := false
 var _pause_overlay: CanvasLayer
 var _pause_title_label: Label
 var _pause_glitch_timer: Timer
+var _lore_viewer: CanvasLayer
 
 # Photo mode — freeze the action, free the camera, frame the shot
 var is_photo_mode := false
@@ -1364,6 +1365,11 @@ func _setup_pause_overlay() -> void:
 	resume_btn.pressed.connect(_toggle_pause)
 	vbox.add_child(resume_btn)
 
+	# Archive button — for data hoarders
+	var archive_btn = _create_pause_button("[ LORE ARCHIVE ]", PAUSE_GREEN, PAUSE_DIM_GREEN, PAUSE_BRIGHT_GREEN)
+	archive_btn.pressed.connect(_open_lore_archive)
+	vbox.add_child(archive_btn)
+
 	# Quit button — the coward's exit
 	var quit_btn = _create_pause_button("[ QUIT TO MENU ]", PAUSE_GREEN, PAUSE_DIM_GREEN, PAUSE_BRIGHT_GREEN)
 	quit_btn.pressed.connect(_pause_quit_to_menu)
@@ -1433,6 +1439,17 @@ func _on_pause_button_focus() -> void:
 	var audio = get_node_or_null("/root/AudioManager")
 	if audio:
 		audio.play_sfx("menu_hover")
+
+func _open_lore_archive() -> void:
+	if _lore_viewer:
+		return  # Already open
+	var audio = get_node_or_null("/root/AudioManager")
+	if audio:
+		audio.play_sfx("pause_open")
+	var viewer_scene = load("res://scenes/ui/lore_viewer.tscn")
+	_lore_viewer = viewer_scene.instantiate()
+	_lore_viewer.tree_exited.connect(func(): _lore_viewer = null)
+	add_child(_lore_viewer)
 
 func _glitch_pause_title() -> void:
 	if not _pause_title_label:
