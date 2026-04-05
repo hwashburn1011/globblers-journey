@@ -8,9 +8,9 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-05) — Task 13.11 complete
-- **Last task completed:** Task 13.11 — Glob target highlight shader. Created `assets/shaders/glob_target_highlight.gdshader` (pulsing green emission + fresnel outline, cull_front for outline effect, `animate` uniform for reduce_motion). Rewrote `scripts/components/glob_target.gd` to use ShaderMaterial via `next_pass` instead of swapping the entire material to a StandardMaterial3D — base material now stays visible underneath. Removed the separate GlowOverlay MeshInstance3D (no longer needed). Respects reduce_motion.
-- **Next task to do:** Task 13.12 (Hackable terminal beacon pulse)
+- **Last updated by:** Claude (2026-04-05) — Task 13.12 complete
+- **Last task completed:** Task 13.12 — Hackable terminal beacon pulse. Created `assets/shaders/hackable_beacon.gdshader` (additive blend, dual-mode beam/ring shader with scrolling noise, proximity_fade uniform, animate toggle). Updated `scripts/components/hackable.gd` to spawn billboard QuadMesh beam + flat ground ring as children, smooth fade in/out based on player proximity (1.5x interaction_range), fade out on hack completion. Respects reduce_motion.
+- **Next task to do:** Task 14.1 (Hero screenshot gallery)
 - **V2.0 MILESTONE SUMMARY (Passes 1–11):**
   - **Pass 1 — Lighting:** 5 Poly Haven HDRIs, 5 WorldEnvironment .tres resources, DirectionalLight3D tuning (4-split shadows, per-chapter color temp). All chapters have FILMIC tonemap, SSAO, SSIL, SDFGI, volumetric fog.
   - **Pass 2 — Globbler Hero:** Custom Blender-built chibi robot GLB (dark metal + neon green), tuned scale (1.4x), collision capsule (r=0.35, h=1.3), third-person camera (distance=6.0, pitch=-0.3, height=1.1m).
@@ -426,7 +426,7 @@ assets/
 - [x] Replace material-swap highlight in `glob_target.gd` `set_highlighted()` with a ShaderMaterial that pulses green emission + fresnel outline. Created `assets/shaders/glob_target_highlight.gdshader` (cull_front outline, pulsing fresnel, animate uniform). Updated `glob_target.gd` to apply shader via `next_pass` on base material instead of swapping — base material stays visible. Removed old StandardMaterial3D swap and GlowOverlay mesh. Respects reduce_motion.
 
 ### 13.12 Hackable terminal beacon pulse
-- [ ] Add subtle vertical light beam + ring pulse to hackable terminals (`hackable.gd`) when player is within interaction range. Fades out when hacked. Respects reduce_motion.
+- [x] Created `assets/shaders/hackable_beacon.gdshader` — additive spatial shader with dual mode (beam column + ground ring), scrolling noise energy pattern, proximity_fade uniform for smooth fade-in/out. Updated `scripts/components/hackable.gd`: spawns billboard QuadMesh beam (0.4x3.0) + flat ground ring (2.0x2.0) as children of parent Node3D, player proximity detection (1.5x interaction_range triggers fade-in at 3.0/s), fades out smoothly on HACKED state (2.0/s), caches player reference, respects reduce_motion via GameManager. No new runtime errors.
 
 ---
 
