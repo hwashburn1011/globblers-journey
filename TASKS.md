@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 5.5 complete
-- **Last task completed:** Task 5.5 — Chapter 5 Alignment Citadel prop pass
-- **Next task to do:** Task 6.1 (Regex Spider enemy model via blender-mcp)
-- **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. All pre-existing warnings unchanged, zero new runtime errors.
+- **Last updated by:** Claude (2026-04-04) — Task 6.1 complete
+- **Last task completed:** Task 6.1 — Regex Spider enemy model via blender-mcp
+- **Next task to do:** Task 6.2 (Zombie Process enemy model via blender-mcp)
+- **Known issues:** All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is COMPLETE — real GLB model loads in-game with tuned scale (1.4x), tighter collision capsule (r=0.35, h=1.3), and refined third-person camera (distance=6.0, pitch=-0.3, target height=1.1m). No clipping in 6m corridors. Pass 3 COMPLETE — rim-light shader on body mesh, eye pulse shader on eye surfaces, CRT scanline shader on chest screen, damage flash shader on all meshes, death dissolve effect on all meshes. Pass 4 COMPLETE — all prop packs built (electronic, cyberpunk, bazaar, clinical). Pass 5 COMPLETE — all 5 chapters have GLB prop passes with clinical/themed furniture. Pass 6 IN PROGRESS — enemy visual upgrades. All pre-existing warnings unchanged, zero new runtime errors.
 
 ### GOAL OF THIS PASS
 Upgrade visual quality from CSG placeholders to stylized indie-game-ship quality (~Death's Door / Tunic / Hi-Fi Rush tier). Hero assets (Globbler, bosses) built in Blender via blender-mcp. Environment via CC0 assets from Poly Haven / Sketchfab. Lighting + post-processing + VFX upgraded in Godot.
@@ -185,7 +185,7 @@ assets/
 # 14 regular enemies. One model per task.
 
 ### 6.1 Regex Spider model
-- [ ] Via blender-mcp: build a small spider with 8 segmented cable-legs and glowing purple LED body. Low-poly (~500 tris). Export to `assets/models/enemies/regex_spider.glb`. Swap mesh in `scenes/enemies/regex_spider.tscn`. Keep collision+script intact.
+- [x] Via blender-mcp: build a small spider with 8 segmented cable-legs and glowing purple LED body. Low-poly (~500 tris). Export to `assets/models/enemies/regex_spider.glb`. Swap mesh in `scenes/enemies/regex_spider.tscn`. Keep collision+script intact. **Done: Built procedural Regex Spider in Blender — 722 verts, 1296 tris. Abdomen (12-seg UV sphere) + cephalothorax (10-seg) connected by joint cylinder + LED torus ring. 8 segmented cable-legs (upper cylinder + joint sphere + lower cylinder each) with dark cable material and purple-glow joints. 6 green LED eyes (4 front row + 2 top). 2 fangs. 4 materials: spider_body_purple (emission=4.0), spider_leg_cable (dark metal), spider_joint_glow (purple emission=2.0), spider_eye_green (neon green emission=6.0). Exported GLB to assets/models/enemies/regex_spider.glb. Updated regex_spider.gd: replaced _create_visual() CSG code with GLB loader (scale 1.8x) + CSG fallback. Source blend saved to assets/blender_source/regex_spider.blend.**
 
 ### 6.2 Zombie Process model
 - [ ] Via blender-mcp: slouched humanoid husk, old beige server-casing texture, dangling cables. ~800 tris. Export + swap in `zombie_process.tscn`.
