@@ -9,8 +9,8 @@
 
 ## CURRENT STATUS
 - **Last updated by:** Claude (2026-04-05)
-- **Last task completed:** Task 2.10 — Download CC0 gameplay SFX pack
-- **Next task to do:** Task 2.11 — Download CC0 ability SFX
+- **Last task completed:** Task 2.11 — Download CC0 ability SFX
+- **Next task to do:** Task 2.12 — Download CC0 UI SFX
 - **Known issues:**
   - **CRITICAL: New Game from main menu → dark green blank screen (unplayable)**
   - **Title screen has obsolete ASCII Globbler that should be removed**
@@ -101,7 +101,7 @@ Make V2.0 shippable. Real audio assets (music + SFX), verified Windows builds, c
 - [x] **DONE:** Downloaded 7 player SFX from 4 CC0 OpenGameArt sources: (1) yd's "Platformer Sounds" → player_footstep_1.ogg, player_footstep_2.ogg (metal platform steps), player_land.ogg (metal landing impact). (2) qubodup's "15 Vocal Male Strain/Hurt/Pain/Jump Sounds" → player_jump.ogg (effort grunt), player_hurt.ogg (pain grunt). (3) qubodup's "Swish - Bamboo Stick Weapon Swooshes" → player_dash.ogg (swoosh). (4) thebardofblasphemy's "Grunts of Male Death and Pain" → player_death.ogg (2s death grunt clip). All CC0, all saved to assets/audio/sfx/player_*.ogg, all attributions in LICENSES.md.
 
 ### 2.11 Download CC0 ability SFX
-- [ ] Glob cast, wrench impact, hack beep-sequence, agent-spawn pop. Save to `assets/audio/sfx/ability_*.ogg`. Record attributions.
+- [x] **DONE:** Downloaded 4 ability SFX from Kenney's "Sci-Fi Sounds" pack on OpenGameArt.org (CC0). All OGG format, ready to use: (1) ability_glob_cast.ogg ← laserLarge_000 (energy projectile cast, 25KB). (2) ability_wrench.ogg ← impactMetal_000 (metal wrench impact, 15KB). (3) ability_hack.ogg ← computerNoise_000 (computer beep sequence, 119KB). (4) ability_agent_spawn.ogg ← forceField_000 (force field activation pop, 25KB). All saved to assets/audio/sfx/ability_*.ogg. Attribution added to LICENSES.md.
 
 ### 2.12 Download CC0 UI SFX
 - [ ] Menu hover, menu click, dialogue advance, dialogue blip (for typing), pause open/close, token pickup. Save to `assets/audio/sfx/ui_*.ogg`. Record attributions.

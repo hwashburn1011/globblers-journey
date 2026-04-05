@@ -62,5 +62,6 @@ Only CC0 / CC-BY / royalty-free assets are permitted.
 | 15 Vocal Male Strain/Hurt/Pain/Jump Sounds (SFX) | OpenGameArt / qubodup | CC0 | https://opengameart.org/content/15-vocal-male-strainhurtpainjump-sounds | Player jump & hurt — assets/audio/sfx/player_jump.ogg, player_hurt.ogg |
 | Swish - Bamboo Stick Weapon Swooshes (SFX) | OpenGameArt / qubodup | CC0 | https://opengameart.org/content/swish-bamboo-stick-weapon-swhoshes | Player dash — assets/audio/sfx/player_dash.ogg |
 | Grunts of Male Death and Pain (SFX) | OpenGameArt / thebardofblasphemy | CC0 | https://opengameart.org/content/grunts-male-death-and-pain | Player death — assets/audio/sfx/player_death.ogg |
-| *(Audio — SFX: ability/UI/enemy)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Ability, UI, enemy SFX — assets/audio/sfx/* |
+| Sci-Fi Sounds (SFX) | OpenGameArt / Kenney | CC0 | https://opengameart.org/content/sci-fi-sounds | Ability SFX — assets/audio/sfx/ability_glob_cast.ogg (laserLarge), ability_wrench.ogg (impactMetal), ability_hack.ogg (computerNoise), ability_agent_spawn.ogg (forceField) |
+| *(Audio — SFX: UI/enemy)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *UI, enemy SFX — assets/audio/sfx/* |
 | *(Audio — ambient)* | *TBD (CC0 sources)* | *CC0* | *TBD* | *Ambient loops — assets/audio/ambient/* |
