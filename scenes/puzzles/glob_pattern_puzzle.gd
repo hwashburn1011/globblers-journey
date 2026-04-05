@@ -18,7 +18,35 @@ func _ready() -> void:
 	_create_visual()
 
 func _create_visual() -> void:
-	# Terminal display showing the pattern
+	# Wall terminal GLB as visual backing for the puzzle display
+	var terminal_scene = preload("res://assets/models/environment/arch_wall_terminal.glb")
+	var terminal_inst = terminal_scene.instantiate()
+	terminal_inst.name = "TerminalProp"
+	terminal_inst.position = Vector3(0, 1.0, 0.2)
+	terminal_inst.scale = Vector3(1.2, 1.2, 1.2)
+	add_child(terminal_inst)
+
+	# CRT scanline screen quad overlaid on the terminal face
+	var screen_mesh = MeshInstance3D.new()
+	screen_mesh.name = "CRTScreen"
+	var quad = QuadMesh.new()
+	quad.size = Vector2(1.0, 0.8)
+	screen_mesh.mesh = quad
+	screen_mesh.position = Vector3(0, 1.6, 0.45)
+	var crt_mat = ShaderMaterial.new()
+	crt_mat.shader = preload("res://assets/shaders/crt_scanline.gdshader")
+	crt_mat.set_shader_parameter("screen_color", Color(0.224, 1.0, 0.078))
+	crt_mat.set_shader_parameter("bg_color", Color(0.01, 0.03, 0.01))
+	crt_mat.set_shader_parameter("scanline_count", 60.0)
+	crt_mat.set_shader_parameter("glow_energy", 2.0)
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		crt_mat.set_shader_parameter("flicker_amount", 0.0)
+		crt_mat.set_shader_parameter("scroll_speed", 0.0)
+	screen_mesh.material_override = crt_mat
+	add_child(screen_mesh)
+
+	# Terminal display showing the pattern (floating above CRT screen)
 	_puzzle_label = Label3D.new()
 	_puzzle_label.text = "[ GLOB PUZZLE ]\n$ glob %s\n%s" % [required_pattern, hint_text]
 	_puzzle_label.font_size = 16
@@ -28,7 +56,7 @@ func _create_visual() -> void:
 	_puzzle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(_puzzle_label)
 
-	# Door that opens on solve
+	# Door that opens on solve — uses industrial panel GLB for visual
 	_door = StaticBody3D.new()
 	_door.name = "PuzzleDoor"
 	_door.position = Vector3(0, 1.5, -2)
@@ -38,17 +66,11 @@ func _create_visual() -> void:
 	col.shape = shape
 	_door.add_child(col)
 
-	var mesh = MeshInstance3D.new()
-	var box = BoxMesh.new()
-	box.size = Vector3(4, 3, 0.3)
-	mesh.mesh = box
-	var mat = StandardMaterial3D.new()
-	mat.albedo_color = Color(0.15, 0.3, 0.15)
-	mat.emission_enabled = true
-	mat.emission = Color(0.1, 0.2, 0.1)
-	mat.emission_energy_multiplier = 0.5
-	mesh.material_override = mat
-	_door.add_child(mesh)
+	var door_scene = preload("res://assets/models/environment/arch_industrial_panel.glb")
+	var door_inst = door_scene.instantiate()
+	door_inst.name = "DoorMesh"
+	door_inst.scale = Vector3(2.0, 1.5, 1.0)
+	_door.add_child(door_inst)
 	add_child(_door)
 
 func _on_activated() -> void:

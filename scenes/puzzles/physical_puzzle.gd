@@ -119,21 +119,12 @@ func _create_blocks() -> void:
 		block.lock_rotation = true
 		block.add_to_group("pushable")
 
-		# Visual — chunky dark cube with green circuit lines (faked with emission)
-		var mesh := MeshInstance3D.new()
-		mesh.name = "BlockMesh"
-		var box := BoxMesh.new()
-		box.size = Vector3(1.0, 1.0, 1.0)
-		mesh.mesh = box
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = Color(0.08, 0.08, 0.1)
-		mat.emission_enabled = true
-		mat.emission = NEON_GREEN
-		mat.emission_energy_multiplier = 0.15
-		mat.metallic = 0.7
-		mat.roughness = 0.3
-		mesh.material_override = mat
-		block.add_child(mesh)
+		# Visual — electronic prop GLB replacing plain BoxMesh cube
+		var block_scene = preload("res://assets/models/environment/prop_hard_drive.glb")
+		var block_inst = block_scene.instantiate()
+		block_inst.name = "BlockMesh"
+		block_inst.scale = Vector3(1.2, 1.2, 1.2)
+		block.add_child(block_inst)
 
 		# Collision for physics interactions
 		var col := CollisionShape3D.new()
@@ -149,11 +140,15 @@ func _create_blocks() -> void:
 		glob_target.tags.assign(["pushable", "physical"])
 		block.add_child(glob_target)
 
-		# Mark the reflector block with a special look — shinier, more green
+		# Mark the reflector block with a special look — add green glow light
 		if i == _reflector_block_index:
-			mat.emission_energy_multiplier = 0.5
-			mat.metallic = 0.9
-			mat.roughness = 0.1
+			var reflector_light := OmniLight3D.new()
+			reflector_light.name = "ReflectorGlow"
+			reflector_light.light_color = NEON_GREEN
+			reflector_light.light_energy = 2.0
+			reflector_light.omni_range = 1.5
+			block.add_child(reflector_light)
+			block_inst.scale = Vector3(1.3, 1.3, 1.3)
 			glob_target.tags.append("reflector")
 
 		add_child(block)
@@ -181,17 +176,12 @@ func _create_door() -> void:
 	col.shape = shape
 	_door.add_child(col)
 
-	var mesh := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = Vector3(4, 3, 0.3)
-	mesh.mesh = box
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.15, 0.15, 0.2)
-	mat.emission_enabled = true
-	mat.emission = Color(0.1, 0.15, 0.1)
-	mat.emission_energy_multiplier = 0.4
-	mesh.material_override = mat
-	_door.add_child(mesh)
+	# Industrial panel GLB replacing BoxMesh door visual
+	var door_scene := preload("res://assets/models/environment/arch_industrial_panel.glb")
+	var door_inst := door_scene.instantiate()
+	door_inst.name = "DoorMesh"
+	door_inst.scale = Vector3(2.0, 1.5, 1.0)
+	_door.add_child(door_inst)
 
 	add_child(_door)
 
@@ -202,20 +192,12 @@ func _create_beam_emitter() -> void:
 	_beam_emitter.name = "BeamEmitter"
 	_beam_emitter.position = beam_emitter_pos
 
-	# Emitter housing — dark box with a glowing green lens
-	var housing := MeshInstance3D.new()
-	housing.name = "EmitterHousing"
-	var box := BoxMesh.new()
-	box.size = Vector3(0.6, 0.6, 0.6)
-	housing.mesh = box
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = DARK_GRAY
-	mat.emission_enabled = true
-	mat.emission = NEON_GREEN
-	mat.emission_energy_multiplier = 0.8
-	mat.metallic = 0.8
-	housing.material_override = mat
-	_beam_emitter.add_child(housing)
+	# Emitter housing — power supply GLB replacing BoxMesh
+	var emitter_scene := preload("res://assets/models/environment/prop_power_supply.glb")
+	var emitter_inst := emitter_scene.instantiate()
+	emitter_inst.name = "EmitterHousing"
+	emitter_inst.scale = Vector3(0.8, 0.8, 0.8)
+	_beam_emitter.add_child(emitter_inst)
 
 	# The beam itself — a long thin cylinder (we'll update its transform in _process)
 	_beam_mesh = MeshInstance3D.new()
@@ -230,20 +212,20 @@ func _create_beam_receiver() -> void:
 	_beam_receiver.name = "BeamReceiver"
 	_beam_receiver.position = beam_receiver_pos
 
-	# Visual — glowing green target panel
-	var mesh := MeshInstance3D.new()
-	mesh.name = "ReceiverMesh"
-	var box := BoxMesh.new()
-	box.size = Vector3(0.6, 0.6, 0.2)
-	mesh.mesh = box
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.05, 0.15, 0.05)
-	mat.emission_enabled = true
-	mat.emission = Color(0.1, 0.4, 0.1)
-	mat.emission_energy_multiplier = 0.3
-	mat.metallic = 0.5
-	mesh.material_override = mat
-	_beam_receiver.add_child(mesh)
+	# Visual — CRT monitor GLB as the beam target receiver
+	var receiver_scene := preload("res://assets/models/environment/prop_crt_monitor.glb")
+	var receiver_inst := receiver_scene.instantiate()
+	receiver_inst.name = "ReceiverMesh"
+	receiver_inst.scale = Vector3(0.7, 0.7, 0.7)
+	_beam_receiver.add_child(receiver_inst)
+
+	# Glow light on receiver — toggled by beam hit detection
+	var recv_light := OmniLight3D.new()
+	recv_light.name = "ReceiverGlow"
+	recv_light.light_color = NEON_GREEN
+	recv_light.light_energy = 0.0
+	recv_light.omni_range = 2.0
+	_beam_receiver.add_child(recv_light)
 
 	var col := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
@@ -344,11 +326,10 @@ func _update_beam() -> void:
 		var dist_to_receiver = ref_endpoint.distance_to(receiver_global)
 		if dist_to_receiver < 1.0:
 			_beam_hit = true
-			# Make receiver glow brightly when hit
-			var recv_mesh = _beam_receiver.get_node_or_null("ReceiverMesh")
-			if recv_mesh and recv_mesh.material_override:
-				recv_mesh.material_override.emission = NEON_GREEN
-				recv_mesh.material_override.emission_energy_multiplier = 1.5
+			# Make receiver glow brightly when beam hits
+			var recv_glow = _beam_receiver.get_node_or_null("ReceiverGlow")
+			if recv_glow:
+				recv_glow.light_energy = 3.0
 
 		# Draw the second beam (reflected segment)
 		# Create a child mesh for the second segment if needed
@@ -365,10 +346,9 @@ func _update_beam() -> void:
 			second_beam.mesh = null
 		# Dim receiver
 		if _beam_receiver:
-			var recv_mesh = _beam_receiver.get_node_or_null("ReceiverMesh")
-			if recv_mesh and recv_mesh.material_override:
-				recv_mesh.material_override.emission = Color(0.1, 0.4, 0.1)
-				recv_mesh.material_override.emission_energy_multiplier = 0.3
+			var recv_glow = _beam_receiver.get_node_or_null("ReceiverGlow")
+			if recv_glow:
+				recv_glow.light_energy = 0.0
 
 func _draw_beam_segment(mesh_inst: MeshInstance3D, from_pos: Vector3, to_pos: Vector3) -> void:
 	# Draw a beam as a cylinder between two world-space points

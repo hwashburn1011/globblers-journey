@@ -23,7 +23,7 @@ func _ready() -> void:
 	_create_door()
 
 func _create_terminal() -> void:
-	# The hackable terminal object — a chunky screen with green glow
+	# The hackable terminal object — wall terminal GLB with CRT screen
 	_hackable_terminal = StaticBody3D.new()
 	_hackable_terminal.name = "HackTerminal"
 	_hackable_terminal.position = Vector3(0, 0, 0)
@@ -37,33 +37,32 @@ func _create_terminal() -> void:
 	col.position = Vector3(0, 1.0, 0)
 	_hackable_terminal.add_child(col)
 
-	# Terminal body — dark metal slab
-	var body_mesh = MeshInstance3D.new()
-	body_mesh.name = "TerminalBody"
-	var body_box = BoxMesh.new()
-	body_box.size = Vector3(1.5, 2.0, 0.5)
-	body_mesh.mesh = body_box
-	body_mesh.position = Vector3(0, 1.0, 0)
-	var body_mat = StandardMaterial3D.new()
-	body_mat.albedo_color = Color(0.12, 0.12, 0.12)
-	body_mat.metallic = 0.6
-	body_mat.roughness = 0.4
-	body_mesh.material_override = body_mat
-	_hackable_terminal.add_child(body_mesh)
+	# Terminal body — wall terminal GLB prop replacing BoxMesh slab
+	var terminal_scene = preload("res://assets/models/environment/arch_wall_terminal.glb")
+	var terminal_inst = terminal_scene.instantiate()
+	terminal_inst.name = "TerminalBody"
+	terminal_inst.position = Vector3(0, 0.0, 0)
+	terminal_inst.scale = Vector3(1.3, 1.3, 1.3)
+	_hackable_terminal.add_child(terminal_inst)
 
-	# Screen face — green-tinted panel on front
+	# Screen face — CRT scanline shader on a quad overlaid on terminal front
 	var screen_mesh = MeshInstance3D.new()
 	screen_mesh.name = "Screen"
-	var screen_box = BoxMesh.new()
-	screen_box.size = Vector3(1.2, 1.2, 0.05)
-	screen_mesh.mesh = screen_box
-	screen_mesh.position = Vector3(0, 1.2, 0.28)
-	var screen_mat = StandardMaterial3D.new()
-	screen_mat.albedo_color = Color(0.02, 0.08, 0.02)
-	screen_mat.emission_enabled = true
-	screen_mat.emission = Color(0.224, 1.0, 0.078)
-	screen_mat.emission_energy_multiplier = 0.3
-	screen_mesh.material_override = screen_mat
+	var screen_quad = QuadMesh.new()
+	screen_quad.size = Vector2(1.0, 0.9)
+	screen_mesh.mesh = screen_quad
+	screen_mesh.position = Vector3(0, 1.2, 0.35)
+	var crt_mat = ShaderMaterial.new()
+	crt_mat.shader = preload("res://assets/shaders/crt_scanline.gdshader")
+	crt_mat.set_shader_parameter("screen_color", Color(0.224, 1.0, 0.078))
+	crt_mat.set_shader_parameter("bg_color", Color(0.02, 0.08, 0.02))
+	crt_mat.set_shader_parameter("scanline_count", 80.0)
+	crt_mat.set_shader_parameter("glow_energy", 2.5)
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.get("reduce_motion"):
+		crt_mat.set_shader_parameter("flicker_amount", 0.0)
+		crt_mat.set_shader_parameter("scroll_speed", 0.0)
+	screen_mesh.material_override = crt_mat
 	_hackable_terminal.add_child(screen_mesh)
 
 	# Attach the Hackable component — this is what terminal_hack.gd looks for
@@ -99,17 +98,12 @@ func _create_door() -> void:
 	col.shape = shape
 	_door.add_child(col)
 
-	var mesh = MeshInstance3D.new()
-	var box = BoxMesh.new()
-	box.size = Vector3(4, 3, 0.3)
-	mesh.mesh = box
-	var mat = StandardMaterial3D.new()
-	mat.albedo_color = Color(0.15, 0.15, 0.2)
-	mat.emission_enabled = true
-	mat.emission = Color(0.1, 0.15, 0.1)
-	mat.emission_energy_multiplier = 0.4
-	mesh.material_override = mat
-	_door.add_child(mesh)
+	# Industrial panel GLB replacing BoxMesh door visual
+	var door_scene = preload("res://assets/models/environment/arch_industrial_panel.glb")
+	var door_inst = door_scene.instantiate()
+	door_inst.name = "DoorMesh"
+	door_inst.scale = Vector3(2.0, 1.5, 1.0)
+	_door.add_child(door_inst)
 
 	add_child(_door)
 
@@ -141,7 +135,8 @@ func _on_solved() -> void:
 	if _hackable_terminal:
 		var screen = _hackable_terminal.get_node_or_null("Screen")
 		if screen and screen.material_override:
-			screen.material_override.emission_energy_multiplier = 1.5
+			screen.material_override.set_shader_parameter("glow_energy", 4.5)
+			screen.material_override.set_shader_parameter("screen_color", Color(0.4, 1.0, 0.4))
 
 	# Open the door — slide it up and free it
 	if _door:
@@ -154,17 +149,17 @@ func _on_failed() -> void:
 		_puzzle_label.text = "[ ACCESS DENIED ]\nSequence incorrect.\n// Even Clippy could do better."
 		_puzzle_label.modulate = Color(1.0, 0.3, 0.2)
 
-	# Flash screen red briefly
+	# Flash screen red briefly via CRT shader color swap
 	if _hackable_terminal:
 		var screen = _hackable_terminal.get_node_or_null("Screen")
 		if screen and screen.material_override:
-			var orig_emission = screen.material_override.emission
-			screen.material_override.emission = Color(1.0, 0.1, 0.05)
-			screen.material_override.emission_energy_multiplier = 1.0
+			var orig_color = screen.material_override.get_shader_parameter("screen_color")
+			screen.material_override.set_shader_parameter("screen_color", Color(1.0, 0.1, 0.05))
+			screen.material_override.set_shader_parameter("glow_energy", 3.5)
 			get_tree().create_timer(1.5).timeout.connect(func():
 				if screen and screen.material_override:
-					screen.material_override.emission = orig_emission
-					screen.material_override.emission_energy_multiplier = 0.3
+					screen.material_override.set_shader_parameter("screen_color", orig_color)
+					screen.material_override.set_shader_parameter("glow_energy", 2.5)
 			)
 
 func _on_reset() -> void:
