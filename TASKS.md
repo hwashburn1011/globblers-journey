@@ -8,10 +8,10 @@
 # ====================================
 
 ## CURRENT STATUS
-- **Last updated by:** Claude (2026-04-04) — Task 2.8 complete
-- **Last task completed:** Task 2.8 — Apply emission material to eyes
-- **Next task to do:** Task 2.9
-- **Known issues:** All gameplay is CSG placeholder geometry. No real character model in Godot yet. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is in progress — mesh built, materials being applied (body done, eyes done, screen next).
+- **Last updated by:** Claude (2026-04-04) — Task 2.9 complete
+- **Last task completed:** Task 2.9 — Apply emission CRT material to chest screen
+- **Next task to do:** Task 2.10
+- **Known issues:** All gameplay is CSG placeholder geometry. No real character model in Godot yet. All 5 chapters now have HDRI lighting + proper WorldEnvironment resources + tuned directional lights with 4-split shadows. Pass 1 (Lighting) is complete. Pass 2 (Globbler Hero Character) is in progress — mesh built, all materials applied (body dark metal, eyes neon green emission, screen green CRT emission). Next: bake AO and export to GLB.
 
 ### GOAL OF THIS PASS
 Upgrade visual quality from CSG placeholders to stylized indie-game-ship quality (~Death's Door / Tunic / Hi-Fi Rush tier). Hero assets (Globbler, bosses) built in Blender via blender-mcp. Environment via CC0 assets from Poly Haven / Sketchfab. Lighting + post-processing + VFX upgraded in Godot.
@@ -105,7 +105,7 @@ assets/
 - [x] Via `execute_blender_code`: create `globbler_eyes_emissive` material — base_color=(0.22,1.0,0.08), emission_color=(0.22,1.0,0.08), emission_strength=8.0. Assign to eye socket faces. Screenshot. **Done: Created `globbler_eyes_emissive` Principled BSDF material (base_color=(0.22,1.0,0.08), emission_color=(0.22,1.0,0.08), emission_strength=8.0, roughness=0.15 for glossy LED look). Added as second material slot on Globbler_Body. Identified 87 deeply-recessed eye socket faces (Y > -0.15, Z 0.52–0.72, |X| 0.03–0.20) via bmesh analysis and assigned to emissive material. Both angry-tilted eye sockets glow bright neon green against dark metal body. Saved to globbler.blend.**
 
 ### 2.9 Apply emission CRT material to chest screen
-- [ ] Via `execute_blender_code`: create `globbler_screen` material — emission_color=(0.2,0.9,0.2), emission_strength=3.0. Later we'll override with a scanline shader in Godot, but this gives the base glow on export. Screenshot.
+- [x] Via `execute_blender_code`: create `globbler_screen` material — emission_color=(0.2,0.9,0.2), emission_strength=3.0. Later we'll override with a scanline shader in Godot, but this gives the base glow on export. Screenshot. **Done: Created `globbler_screen` Principled BSDF material (base_color=(0.2,0.9,0.2), emission_color=(0.2,0.9,0.2), emission_strength=3.0, roughness=0.08 for glossy screen surface). Assigned to ChestTerminal_Screen object. Fixed bezel slot 0 (was None, now globbler_body). Cleaned up orphan material duplicates. Green CRT glow visible in viewport. Saved to globbler.blend.**
 
 ### 2.10 Bake AO and export to GLB
 - [ ] Via `execute_blender_code`: bake ambient occlusion to a 1024 texture on the combined mesh. Join all Globbler parts (except wrench, keep separate for animation). Select all, export as GLB to `assets/models/player/globbler.glb` with `export_apply=True`, `export_materials='EXPORT'`, `export_yup=True`. Save .blend.
