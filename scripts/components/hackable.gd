@@ -61,8 +61,6 @@ func _create_beacon() -> void:
 	_beam_mat.set_shader_parameter("animate", not _reduce_motion)
 	_beacon_beam.material_override = _beam_mat
 	_beacon_beam.visible = false
-	# Billboard so beam always faces player
-	_beacon_beam.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	parent.add_child(_beacon_beam)
 
 	# Ground ring — flat horizontal disc

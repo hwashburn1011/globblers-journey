@@ -27,10 +27,10 @@ var _corruption_level := 0
 var _max_corruption := 5
 var _vote_cooldown := false
 
-# GLB props — clinical citadel hardware
-var _terminal_scene := preload("res://assets/models/environment/citadel_policy_terminal.glb")
-var _pedestal_scene := preload("res://assets/models/environment/citadel_vote_pedestal.glb")
-var _door_scene := preload("res://assets/models/environment/arch_industrial_panel.glb")
+# GLB props — clinical citadel hardware (runtime load to avoid import-time failures)
+var _terminal_scene: Resource
+var _pedestal_scene: Resource
+var _door_scene: Resource
 
 const NEON_GREEN := Color(0.224, 1.0, 0.078)
 const CITADEL_WHITE := Color(0.92, 0.93, 0.95)
@@ -82,6 +82,9 @@ const ROUNDS := [
 
 
 func _ready() -> void:
+	_terminal_scene = load("res://assets/models/environment/citadel_policy_terminal.glb")
+	_pedestal_scene = load("res://assets/models/environment/citadel_vote_pedestal.glb")
+	_door_scene = load("res://assets/models/environment/arch_industrial_panel.glb")
 	puzzle_name = "rlhf_feedback_%d" % puzzle_id
 	auto_activate = true
 	activation_range = 7.0

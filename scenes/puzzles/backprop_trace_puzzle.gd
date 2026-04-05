@@ -318,13 +318,12 @@ func _build_network() -> void:
 
 
 func _create_connection_line(from: Vector3, to: Vector3) -> void:
-	# TubeMesh synapse connector replacing thin CylinderMesh
+	# Cylinder synapse connector
 	var line = MeshInstance3D.new()
-	var tube = TubeMesh.new()
+	var tube = CylinderMesh.new()
 	var dist = from.distance_to(to)
 	tube.top_radius = 0.04
 	tube.bottom_radius = 0.04
-	tube.inner_radius = 0.02
 	tube.height = dist
 	tube.radial_segments = 12
 	line.mesh = tube

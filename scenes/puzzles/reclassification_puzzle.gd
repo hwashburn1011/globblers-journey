@@ -22,11 +22,11 @@ var _items: Array[Dictionary] = []  # {node, original_type, current_type, approv
 var _approved_count := 0
 var _total_required := 4
 
-# GLB props — museum-grade compliance hardware
-var _kiosk_scene := preload("res://assets/models/environment/museum_kiosk.glb")
-var _pedestal_scene := preload("res://assets/models/environment/museum_pedestal.glb")
-var _display_case_scene := preload("res://assets/models/environment/museum_display_case.glb")
-var _door_glb_scene := preload("res://assets/models/environment/arch_industrial_panel.glb")
+# GLB props — museum-grade compliance hardware (runtime load to avoid import-time failures)
+var _kiosk_scene: Resource
+var _pedestal_scene: Resource
+var _display_case_scene: Resource
+var _door_glb_scene: Resource
 
 const NEON_GREEN := Color(0.224, 1.0, 0.078)
 const CITADEL_WHITE := Color(0.92, 0.93, 0.95)
@@ -77,6 +77,10 @@ const APPROVED_TYPES := ["educational", "research", "benchmark", "anonymized", "
 
 
 func _ready() -> void:
+	_kiosk_scene = load("res://assets/models/environment/museum_kiosk.glb")
+	_pedestal_scene = load("res://assets/models/environment/museum_pedestal.glb")
+	_display_case_scene = load("res://assets/models/environment/museum_display_case.glb")
+	_door_glb_scene = load("res://assets/models/environment/arch_industrial_panel.glb")
 	puzzle_name = "reclassification_%d" % puzzle_id
 	auto_activate = true
 	activation_range = 8.0

@@ -51,19 +51,21 @@ var _debuff_timer := 0.0
 var glob_target_script := preload("res://scripts/components/glob_target.gd")
 var hackable_script: GDScript
 
-# GLB props — museum help desk furniture
-var _kiosk_scene := preload("res://assets/models/environment/museum_kiosk.glb")
-var _door_scene := preload("res://assets/models/environment/arch_industrial_panel.glb")
+# GLB props — museum help desk furniture (runtime load to avoid import-time failures)
+var _kiosk_scene: Resource
+var _door_scene: Resource
 
 
 func _ready() -> void:
+	_kiosk_scene = load("res://assets/models/environment/museum_kiosk.glb")
+	_door_scene = load("res://assets/models/environment/arch_industrial_panel.glb")
 	puzzle_name = "clippy_help_%d" % puzzle_id
 	auto_activate = true
 	activation_range = 12.0
 
 	# Try to load hackable component for terminal interaction
 	if ResourceLoader.exists("res://scripts/components/hackable.gd"):
-		hackable_script = preload("res://scripts/components/hackable.gd")
+		hackable_script = load("res://scripts/components/hackable.gd")
 
 	super._ready()
 	_create_visual()

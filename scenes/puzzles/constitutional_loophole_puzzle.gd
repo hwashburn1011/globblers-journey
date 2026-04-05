@@ -22,10 +22,10 @@ var _option_nodes: Array[Node3D] = []
 var _gate_indicators: Array[MeshInstance3D] = []
 var _vote_cooldown := false
 
-# GLB props — clinical citadel hardware
-var _terminal_scene := preload("res://assets/models/environment/citadel_policy_terminal.glb")
-var _tablet_scene := preload("res://assets/models/environment/citadel_option_tablet.glb")
-var _door_scene := preload("res://assets/models/environment/arch_industrial_panel.glb")
+# GLB props — clinical citadel hardware (runtime load to avoid import-time failures)
+var _terminal_scene: Resource
+var _tablet_scene: Resource
+var _door_scene: Resource
 
 const NEON_GREEN := Color(0.224, 1.0, 0.078)
 const CITADEL_WHITE := Color(0.92, 0.93, 0.95)
@@ -94,6 +94,9 @@ const GATES := [
 
 
 func _ready() -> void:
+	_terminal_scene = load("res://assets/models/environment/citadel_policy_terminal.glb")
+	_tablet_scene = load("res://assets/models/environment/citadel_option_tablet.glb")
+	_door_scene = load("res://assets/models/environment/arch_industrial_panel.glb")
 	puzzle_name = "constitutional_loophole_%d" % puzzle_id
 	auto_activate = true
 	activation_range = 7.0

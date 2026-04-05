@@ -45,13 +45,16 @@ var _terminal_states: Array[int] = [0, 0, 0]  # 0=cycling, 1=looping, 2=captured
 
 var glob_target_script := preload("res://scripts/components/glob_target.gd")
 
-# GLB props — museum-grade exhibit hardware
-var _display_case_scene := preload("res://assets/models/environment/museum_display_case.glb")
-var _pedestal_scene := preload("res://assets/models/environment/museum_pedestal.glb")
-var _door_scene := preload("res://assets/models/environment/arch_industrial_panel.glb")
+# GLB props — museum-grade exhibit hardware (runtime load to avoid import-time failures)
+var _display_case_scene: Resource
+var _pedestal_scene: Resource
+var _door_scene: Resource
 
 
 func _ready() -> void:
+	_display_case_scene = load("res://assets/models/environment/museum_display_case.glb") if ResourceLoader.exists("res://assets/models/environment/museum_display_case.glb") else null
+	_pedestal_scene = load("res://assets/models/environment/museum_pedestal.glb") if ResourceLoader.exists("res://assets/models/environment/museum_pedestal.glb") else null
+	_door_scene = load("res://assets/models/environment/arch_industrial_panel.glb") if ResourceLoader.exists("res://assets/models/environment/arch_industrial_panel.glb") else null
 	puzzle_name = "fossil_exhibit_%d" % puzzle_id
 	auto_activate = true
 	activation_range = 12.0
@@ -155,18 +158,18 @@ func _create_terminal(idx: int, pos: Vector3) -> void:
 	terminal.add_child(t_col)
 
 	# GLB display case instead of BoxMesh
-	var case_instance = _display_case_scene.instantiate()
-	case_instance.scale = Vector3(1.6, 1.6, 1.6)
-	# Apply amber emission tint to all mesh children
-	for child in case_instance.get_children():
-		if child is MeshInstance3D:
-			var mat = StandardMaterial3D.new()
-			mat.albedo_color = Color(0.08, 0.06, 0.03)
-			mat.emission_enabled = true
-			mat.emission = FOSSIL_AMBER * 0.2
-			mat.emission_energy_multiplier = 0.3
-			child.material_override = mat
-	terminal.add_child(case_instance)
+	if _display_case_scene:
+		var case_instance = _display_case_scene.instantiate()
+		case_instance.scale = Vector3(1.6, 1.6, 1.6)
+		for child in case_instance.get_children():
+			if child is MeshInstance3D:
+				var mat = StandardMaterial3D.new()
+				mat.albedo_color = Color(0.08, 0.06, 0.03)
+				mat.emission_enabled = true
+				mat.emission = FOSSIL_AMBER * 0.2
+				mat.emission_energy_multiplier = 0.3
+				child.material_override = mat
+		terminal.add_child(case_instance)
 
 	# Amber exhibit spotlight
 	var spot = OmniLight3D.new()

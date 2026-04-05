@@ -47,12 +47,14 @@ var _pedestal_states: Array[int] = [0, 0, 0]  # 0=empty, 1=filled
 
 var glob_target_script := preload("res://scripts/components/glob_target.gd")
 
-# GLB props — museum gallery hardware
-var _pedestal_scene := preload("res://assets/models/environment/museum_pedestal.glb")
-var _door_scene := preload("res://assets/models/environment/arch_industrial_panel.glb")
+# GLB props — museum gallery hardware (runtime load to avoid import-time failures)
+var _pedestal_scene: Resource
+var _door_scene: Resource
 
 
 func _ready() -> void:
+	_pedestal_scene = load("res://assets/models/environment/museum_pedestal.glb")
+	_door_scene = load("res://assets/models/environment/arch_industrial_panel.glb")
 	puzzle_name = "nightmare_gallery_%d" % puzzle_id
 	auto_activate = true
 	activation_range = 12.0

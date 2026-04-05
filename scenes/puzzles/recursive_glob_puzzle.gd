@@ -89,12 +89,11 @@ func _create_directory_tree() -> void:
 
 		# Depth indicator line connecting to parent
 		if depth > 0:
-			# TubeMesh connector replacing BoxMesh line
+			# Cylinder connector replacing BoxMesh line
 			var line = MeshInstance3D.new()
-			var tube = TubeMesh.new()
+			var tube = CylinderMesh.new()
 			tube.top_radius = 0.04
 			tube.bottom_radius = 0.04
-			tube.inner_radius = 0.02
 			tube.height = 1.5
 			tube.radial_segments = 8
 			line.mesh = tube
